@@ -1,0 +1,163 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --bg-primary: #0A0A0F;
+    --bg-card: #13131A;
+    --bg-secondary: #1C1C26;
+    
+    --accent-teal: #00F5D4;
+    --accent-violet: #7B2FFF;
+    
+    --live-pink: #FF3D71;
+    --pay-yellow: #FFD60A;
+    
+    --text-primary: #F5F5F7;
+    --text-muted: #8B8B96;
+    
+    --semantic-success: #00E676;
+    --semantic-error: #FF5252;
+    --semantic-warning: #FFB300;
+    
+    --font-heading: var(--font-space-grotesk), sans-serif;
+    --font-body: var(--font-inter), sans-serif;
+  }
+}
+
+body {
+  background-color: #0A0A0F;
+  color: #F5F5F7;
+  font-family: var(--font-inter), sans-serif;
+  overflow-x: hidden;
+}
+
+h1, h2, h3, h4, h5, h6, .font-heading {
+  font-family: var(--font-space-grotesk), sans-serif;
+}
+
+/* Brand Gradient Utilities */
+.bg-brand-gradient {
+  background: linear-gradient(135deg, #00F5D4 0%, #7B2FFF 100%);
+}
+
+.text-brand-gradient {
+  background: linear-gradient(135deg, #00F5D4 0%, #7B2FFF 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.border-brand-gradient {
+  border-image: linear-gradient(135deg, #00F5D4, #7B2FFF) 1;
+}
+
+/* Glowing Effects */
+.glow-teal {
+  box-shadow: 0 0 20px rgba(0, 245, 212, 0.25);
+}
+
+.glow-live {
+  box-shadow: 0 0 15px rgba(255, 61, 113, 0.4);
+}
+
+.glow-pay {
+  box-shadow: 0 0 15px rgba(255, 214, 10, 0.35);
+}
+
+/* Live Pulse Animation (1.5s loop, 0.6 to 1.0 opacity) */
+@keyframes livePulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+    box-shadow: 0 0 12px rgba(255, 61, 113, 0.6);
+  }
+  50% {
+    opacity: 0.6;
+    transform: scale(0.98);
+    box-shadow: 0 0 4px rgba(255, 61, 113, 0.2);
+  }
+}
+
+.animate-live-pulse {
+  animation: livePulse 1.5s ease-in-out infinite;
+}
+
+/* Soft dot pulse for system status */
+@keyframes dotPulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.4;
+    transform: scale(0.85);
+  }
+}
+
+.animate-dot-pulse {
+  animation: dotPulse 2s ease-in-out infinite;
+}
+
+/* Marquee Scroll Animations */
+@keyframes scrollLeft {
+  0% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes scrollRight {
+  0% {
+    transform: translateX(-50%);
+  }
+  100% {
+    transform: translateX(0%);
+  }
+}
+
+.animate-marquee-left {
+  display: flex;
+  width: max-content;
+  animation: scrollLeft 35s linear infinite;
+}
+
+.animate-marquee-right {
+  display: flex;
+  width: max-content;
+  animation: scrollRight 35s linear infinite;
+}
+
+.animate-marquee-left:hover,
+.animate-marquee-right:hover {
+  animation-play-state: paused;
+}
+
+/* Accessibility: Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  .animate-live-pulse,
+  .animate-dot-pulse,
+  .animate-marquee-left,
+  .animate-marquee-right {
+    animation: none !important;
+  }
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0A0A0F;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #1C1C26;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #00F5D4;
+}

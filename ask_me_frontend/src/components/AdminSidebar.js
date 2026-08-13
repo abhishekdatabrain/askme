@@ -1,135 +1,291 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Radio,
   Users,
-  DollarSign,
   ShieldCheck,
-  Settings,
-  Activity,
   Tv,
-  HelpCircle,
-  Award,
-  Sparkles,
-  Lock,
+  DollarSign,
   Wallet,
-  BarChart2
+  ArrowUpRight,
+  Sparkles,
+  BarChart2,
+  Bell,
+  Settings,
+  ChevronDown,
+  ChevronRight,
+  Lock,
+  User,
+  CreditCard,
+  Sliders,
+  CheckCircle2,
+  Clock,
+  XCircle,
+  FileText,
+  AlertOctagon,
+  RefreshCw,
+  TrendingUp
 } from 'lucide-react';
 
-export default function AdminSidebar({ activeTab, setActiveTab }) {
-  const menuItems = [
+export default function AdminSidebar({ activeTab, setActiveTab, activeSubTab, setActiveSubTab }) {
+  // Navigation structure definition matching exact requirements
+  const menuStructure = [
     {
       id: 'overview',
       label: 'Dashboard',
-      subtitle: 'Statistics & Platform Metrics',
+      subtitle: 'Metrics & Platform Summary',
       icon: Radio,
       badge: 'LIVE',
       badgeColor: 'bg-[#FF3D71] animate-live-pulse text-white',
     },
     {
-      id: 'creators_mgmt',
-      label: 'Creator Management',
-      subtitle: 'Approve, Block & Delete',
+      id: 'creators',
+      label: 'Creators',
+      subtitle: 'Management & Details',
       icon: Users,
       badge: '1.4k',
       badgeColor: 'bg-brand-gradient text-[#0A0A0F]',
+      children: [
+        { id: 'creators_all', label: 'All Creators' },
+        { id: 'creators_active', label: 'Active Creators' },
+        { id: 'creators_blocked', label: 'Blocked Creators' },
+        { id: 'creators_details', label: 'Creator Details' },
+      ],
     },
     {
       id: 'kyc',
       label: 'KYC Management',
-      subtitle: 'Verify Identity & Bank Info',
+      subtitle: 'Identity & Bank Approvals',
       icon: ShieldCheck,
       count: '1 Pending',
+      children: [
+        { id: 'kyc_pending', label: 'Pending KYC' },
+        { id: 'kyc_approved', label: 'Approved KYC' },
+        { id: 'kyc_rejected', label: 'Rejected KYC' },
+        { id: 'kyc_details', label: 'KYC Details' },
+      ],
     },
     {
       id: 'livesessions',
-      label: 'Live Session Mgmt',
-      subtitle: 'Active Stream QR Overlays',
+      label: 'Live Sessions',
+      subtitle: 'Stream QR Overlays',
       icon: Tv,
       count: '7 Live',
+      children: [
+        { id: 'livesessions_active', label: 'Active Sessions' },
+        { id: 'livesessions_closed', label: 'Closed Sessions' },
+        { id: 'livesessions_suspended', label: 'Suspended Sessions' },
+      ],
     },
     {
       id: 'payments',
-      label: 'Payment Management',
-      subtitle: 'Transactions & Gateway Logs',
+      label: 'Payments',
+      subtitle: 'Transactions & Gateways',
       icon: DollarSign,
+      children: [
+        { id: 'payments_all', label: 'All Transactions' },
+        { id: 'payments_successful', label: 'Successful' },
+        { id: 'payments_failed', label: 'Failed' },
+        { id: 'payments_pending', label: 'Pending' },
+        { id: 'payments_refunds', label: 'Refunds' },
+      ],
     },
     {
       id: 'wallets',
-      label: 'Wallet Management',
-      subtitle: '15% Cut & Creator Balances',
+      label: 'Wallet',
+      subtitle: 'Creator Balances & Ledger',
       icon: Wallet,
+      children: [
+        { id: 'wallets_creators', label: 'Creator Wallets' },
+        { id: 'wallets_ledger', label: 'Wallet Ledger' },
+      ],
     },
     {
       id: 'withdrawals',
-      label: 'Withdrawal Management',
-      subtitle: 'Approve & Mark Paid',
-      icon: DollarSign,
+      label: 'Withdrawals',
+      subtitle: 'Payout Requests & Status',
+      icon: ArrowUpRight,
       count: '2 Request',
+      children: [
+        { id: 'withdrawals_pending', label: 'Pending' },
+        { id: 'withdrawals_approved', label: 'Approved' },
+        { id: 'withdrawals_processing', label: 'Processing' },
+        { id: 'withdrawals_completed', label: 'Completed' },
+        { id: 'withdrawals_rejected', label: 'Rejected' },
+      ],
     },
     {
       id: 'commissions',
-      label: 'Commission Rules',
-      subtitle: '15% Platform Fee & Limits',
+      label: 'Commission',
+      subtitle: '15% Rules & History',
       icon: Sparkles,
       badge: '15%',
       badgeColor: 'bg-[#FFD60A] text-[#0A0A0F]',
+      children: [
+        { id: 'commissions_settings', label: 'Commission Settings' },
+        { id: 'commissions_history', label: 'Commission History' },
+      ],
     },
     {
       id: 'reports',
-      label: 'Reports & Analytics',
-      subtitle: 'Revenue & Top Creators',
+      label: 'Reports',
+      subtitle: 'Revenue & Performance',
       icon: BarChart2,
+      children: [
+        { id: 'reports_revenue', label: 'Revenue Report' },
+        { id: 'reports_payment', label: 'Payment Report' },
+        { id: 'reports_creator', label: 'Creator Report' },
+        { id: 'reports_withdrawal', label: 'Withdrawal Report' },
+      ],
+    },
+    {
+      id: 'notifications',
+      label: 'Notifications',
+      subtitle: 'System Alerts & Logs',
+      icon: Bell,
+      badge: '3',
+      badgeColor: 'bg-[#00F5D4] text-[#0A0A0F]',
+    },
+    {
+      id: 'settings',
+      label: 'Settings',
+      subtitle: 'Profile & Platform Config',
+      icon: Settings,
+      children: [
+        { id: 'settings_profile', label: 'Admin Profile' },
+        { id: 'settings_gateway', label: 'Payment Gateway' },
+        { id: 'settings_platform', label: 'Platform Settings' },
+      ],
     },
   ];
 
+  // Track expanded accordion sections - closed by default
+  const [expandedSections, setExpandedSections] = useState({});
+
+  const toggleSection = (sectionId) => {
+    setExpandedSections(prev => ({ ...prev, [sectionId]: !prev[sectionId] }));
+  };
+
+  const handleParentClick = (item) => {
+    setActiveTab(item.id);
+    if (item.children && item.children.length > 0) {
+      // Toggle expand state
+      toggleSection(item.id);
+      // Select first sub-item if activeSubTab is not already under this parent
+      if (!activeSubTab || !item.children.some(c => c.id === activeSubTab)) {
+        if (setActiveSubTab) {
+          setActiveSubTab(item.children[0].id);
+        }
+      }
+    } else {
+      if (setActiveSubTab) {
+        setActiveSubTab('');
+      }
+    }
+  };
+
+  const handleChildClick = (parentId, childId, e) => {
+    e.stopPropagation();
+    setActiveTab(parentId);
+    if (setActiveSubTab) {
+      setActiveSubTab(childId);
+    }
+  };
+
   return (
-    <aside className="w-64 shrink-0 bg-[#0A0A0F] border-r border-[#1C1C26] p-4 flex flex-col justify-between hidden md:flex min-h-[calc(100vh-61px)]">
-      <div className="space-y-6">
-        {/* Navigation Section Title */}
+    <aside className="w-64 shrink-0 bg-[#0A0A0F] border-r border-[#1C1C26] p-4 flex flex-col justify-between hidden md:flex min-h-[calc(100vh-61px)] overflow-y-auto max-h-[calc(100vh-61px)] custom-scrollbar">
+      <div className="space-y-4">
+        {/* Section Header */}
         <div>
           <span className="text-[11px] font-bold tracking-wider text-[#8B8B96] uppercase px-3">
-            Broadcast Navigation
+            Admin Navigation
           </span>
 
-          <nav className="mt-3 space-y-1">
-            {menuItems.map((item) => {
+          <nav className="mt-2.5 space-y-1">
+            {menuStructure.map((item) => {
               const Icon = item.icon;
-              const isActive = activeTab === item.id;
+              const isParentActive = activeTab === item.id;
+              const hasChildren = item.children && item.children.length > 0;
+              const isExpanded = expandedSections[item.id];
 
               return (
-                <button
-                  key={item.id}
-                  onClick={() => setActiveTab(item.id)}
-                  className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-left transition-all ${isActive
-                      ? 'bg-[#13131A] text-white border border-[#00F5D4]/40 glow-teal'
-                      : 'text-[#8B8B96] hover:bg-[#13131A]/60 hover:text-white border border-transparent'
+                <div key={item.id} className="space-y-1">
+                  {/* Parent Menu Item */}
+                  <button
+                    onClick={() => handleParentClick(item)}
+                    className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-left transition-all ${
+                      isParentActive
+                        ? 'bg-[#13131A] text-white border border-[#00F5D4]/40 glow-teal shadow-sm shadow-[#00F5D4]/10'
+                        : 'text-[#8B8B96] hover:bg-[#13131A]/60 hover:text-white border border-transparent'
                     }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className={`p-1.5 rounded-lg ${isActive ? 'bg-[#00F5D4]/10 text-[#00F5D4]' : 'bg-[#1C1C26] text-[#8B8B96]'
-                      }`}>
-                      <Icon className="h-4 w-4" />
+                  >
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div
+                        className={`p-1.5 rounded-lg shrink-0 ${
+                          isParentActive ? 'bg-[#00F5D4]/10 text-[#00F5D4]' : 'bg-[#1C1C26] text-[#8B8B96]'
+                        }`}
+                      >
+                        <Icon className="h-4 w-4" />
+                      </div>
+                      <div className="flex flex-col truncate">
+                        <span className={`text-xs font-semibold truncate ${isParentActive ? 'text-white font-bold' : ''}`}>
+                          {item.label}
+                        </span>
+                      </div>
                     </div>
-                    <div className="flex flex-col">
-                      <span className={`text-xs font-semibold ${isActive ? 'text-white font-bold' : ''}`}>
-                        {item.label}
-                      </span>
-                      <span className="text-[10px] text-[#8B8B96]">{item.subtitle}</span>
+
+                    <div className="flex items-center gap-1 shrink-0">
+                      {item.badge && (
+                        <span className={`text-[9px] font-extrabold px-1.5 py-0.5 rounded-full ${item.badgeColor}`}>
+                          {item.badge}
+                        </span>
+                      )}
+
+                      {item.count && (
+                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-[#1C1C26] text-[#00F5D4]">
+                          {item.count}
+                        </span>
+                      )}
+
+                      {hasChildren && (
+                        <div
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleSection(item.id);
+                          }}
+                          className="p-1 text-[#8B8B96] hover:text-white rounded transition"
+                        >
+                          {isExpanded ? (
+                            <ChevronDown className="h-3.5 w-3.5 text-[#00F5D4]" />
+                          ) : (
+                            <ChevronRight className="h-3.5 w-3.5" />
+                          )}
+                        </div>
+                      )}
                     </div>
-                  </div>
+                  </button>
 
-                  {item.badge && (
-                    <span className={`text-[9px] font-extrabold px-1.5 py-0.5 rounded-full ${item.badgeColor}`}>
-                      {item.badge}
-                    </span>
+                  {/* Sub-menu items accordion */}
+                  {hasChildren && isExpanded && (
+                    <div className="pl-7 pr-1 py-1 space-y-1 border-l-2 border-[#1C1C26] ml-4 transition-all">
+                      {item.children.map((child) => {
+                        const isChildActive = isParentActive && activeSubTab === child.id;
+                        return (
+                          <button
+                            key={child.id}
+                            onClick={(e) => handleChildClick(item.id, child.id, e)}
+                            className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-left text-xs transition-all ${
+                              isChildActive
+                                ? 'bg-[#00F5D4]/15 text-[#00F5D4] font-bold border-l-2 border-[#00F5D4]'
+                                : 'text-[#8B8B96] hover:text-white hover:bg-[#13131A]/40'
+                            }`}
+                          >
+                            <span className="truncate">{child.label}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
                   )}
-
-                  {item.count && (
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#1C1C26] text-[#00F5D4]">
-                      {item.count}
-                    </span>
-                  )}
-                </button>
+                </div>
               );
             })}
           </nav>
@@ -154,7 +310,7 @@ export default function AdminSidebar({ activeTab, setActiveTab }) {
       </div>
 
       {/* Footer Info */}
-      <div className="pt-4 border-t border-[#1C1C26] flex flex-col gap-1">
+      <div className="pt-3 mt-3 border-t border-[#1C1C26] flex flex-col gap-1">
         <div className="flex items-center gap-2 text-[11px] text-[#8B8B96]">
           <Lock className="h-3 w-3 text-[#00F5D4]" />
           <span>Futurepast ventures LLP</span>

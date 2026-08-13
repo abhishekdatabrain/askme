@@ -12,13 +12,15 @@ if (process.env.DATABASE_URL) {
   });
 } else {
   sequelize = new Sequelize(
-    process.env.PGDATABASE || 'ask_me_db',
+    process.env.PGDATABASE || 'ask_me',
     process.env.PGUSER || 'postgres',
-    process.env.PGPASSWORD || 'postgres',
+    process.env.PGPASSWORD || 'admin123',
     {
       host: process.env.PGHOST || 'localhost',
       port: parseInt(process.env.PGPORT || '5432', 10),
       dialect: 'postgres',
+      schema: process.env.SCHEMA || 'Abhishek',
+      searchPath: process.env.SCHEMA || 'Abhishek',
       logging: process.env.NODE_ENV === 'development' ? console.log : false,
       pool: {
         max: 10,

@@ -19,13 +19,17 @@ import {
   Sparkles,
   Eye,
   EyeOff,
+  AlertCircle,
   X
 } from 'lucide-react';
+import { API_ENDPOINTS } from '@/config/api';
 
 export default function CreatorRegisterForm({ onClose, onComplete }) {
   const [authMode, setAuthMode] = useState('register'); // 'register' | 'kyc_pending'
   const [step, setStep] = useState(1);
   const [showPassword, setShowPassword] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Form State
   const [formData, setFormData] = useState({
@@ -104,16 +108,43 @@ export default function CreatorRegisterForm({ onClose, onComplete }) {
     }
   };
 
-  const handleRegisterSubmit = (e) => {
+  const handleRegisterSubmit = async (e) => {
     e.preventDefault();
-    const newCreator = {
-      ...formData,
-      status: 'Pending KYC Verification',
-      registeredAt: new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }),
-    };
-    setRegisteredCreator(newCreator);
-    setAuthMode('kyc_pending');
-    if (onComplete) onComplete(newCreator);
+    setErrorMsg('');
+    setIsSubmitting(true);
+
+    try {
+      const response = await fetch(API_ENDPOINTS.CREATORS.REGISTER, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      });
+
+      const data = await response.json().catch(() => ({}));
+
+      if (response.ok && data.status === 'success') {
+        const creatorData = data.data?.creator || {
+          ...formData,
+          status: 'Pending KYC Verification',
+          registeredAt: new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }),
+        };
+
+        if (data.data?.token) {
+          localStorage.setItem('askme_token', data.data.token);
+          localStorage.setItem('askme_user', JSON.stringify(creatorData));
+        }
+
+        setRegisteredCreator(creatorData);
+        setAuthMode('kyc_pending');
+        if (onComplete) onComplete(creatorData);
+      } else {
+        setErrorMsg(data.message || data.error || 'Registration failed. Please check form details.');
+      }
+    } catch (err) {
+      setErrorMsg('Unable to connect to backend server at http://localhost:5000/api.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -141,6 +172,14 @@ export default function CreatorRegisterForm({ onClose, onComplete }) {
             Surface live broadcast streams across YouTube, Twitch, Instagram, Kick & X. Keep <strong className="text-[#00E676]">85% net revenue share</strong> on guaranteed paid questions.
           </p>
         </div>
+
+        {/* Error Message Banner */}
+        {errorMsg && (
+          <div className="p-3.5 rounded-2xl bg-[#FF3D71]/10 border border-[#FF3D71]/30 text-[#FF3D71] text-xs font-bold flex items-center gap-2.5 animate-fade-in">
+            <AlertCircle className="h-4 w-4 shrink-0" />
+            <span>{errorMsg}</span>
+          </div>
+        )}
 
         {/* CREATOR REGISTRATION FORM */}
         {authMode === 'register' && (
@@ -366,16 +405,17 @@ export default function CreatorRegisterForm({ onClose, onComplete }) {
 
                 <button
                   type="submit"
-                  className="w-full py-2.5 rounded-xl bg-brand-gradient text-[#0A0A0F] font-bold text-xs shadow-md glow-teal hover:opacity-95 transition-all flex items-center justify-center gap-1.5"
+                  disabled={isSubmitting}
+                  className="w-full py-2.5 rounded-xl bg-brand-gradient text-[#0A0A0F] font-bold text-xs shadow-md glow-teal hover:opacity-95 transition-all flex items-center justify-center gap-1.5 disabled:opacity-50"
                 >
-                  <Sparkles className="h-4 w-4" /> Complete Creator Registration
+                  <Sparkles className="h-4 w-4" /> {isSubmitting ? 'Registering Creator Account...' : 'Complete Creator Registration'}
                 </button>
               </div>
             )}
             <div className="text-center pt-3 border-t border-[#1C1C26]">
-              <span className="text-xs text-[#8B8B96]">Already account ? </span>
-              <Link href="/login" className="text-xs font-bold text-[#00F5D4] hover:underline">
-                Login
+              <span className="text-xs text-[#8B8B96]">Already have a Creator account? </span>
+              <Link href="/creators/login" className="text-xs font-bold text-[#00F5D4] hover:underline">
+                Sign In to Creator Studio
               </Link>
             </div>
           </form>
@@ -428,12 +468,24 @@ export default function CreatorRegisterForm({ onClose, onComplete }) {
               </p>
             </div>
 
-            <button
-              onClick={onClose}
-              className="w-full py-2.5 rounded-xl bg-[#1C1C26] text-white text-xs font-bold hover:bg-[#1C1C26]/80 transition-colors"
-            >
-              Return to Control Room
-            </button>
+            <div className="flex flex-col sm:flex-row items-center gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  window.location.href = '/creators/kyc';
+                }}
+                className="w-full sm:flex-1 py-2.5 rounded-xl bg-brand-gradient text-[#0A0A0F] text-xs font-bold shadow-md glow-teal hover:opacity-95 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+              >
+                Complete KYC Verification Now <ArrowRight className="h-4 w-4" />
+              </button>
+              <button
+                type="button"
+                onClick={onClose}
+                className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-[#1C1C26] text-white text-xs font-bold hover:bg-[#1C1C26]/80 transition-colors border border-[#1C1C26]"
+              >
+                Return to Dashboard
+              </button>
+            </div>
           </div>
         )}
 

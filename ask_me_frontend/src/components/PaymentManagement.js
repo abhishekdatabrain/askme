@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   DollarSign, 
   CheckCircle2, 
@@ -9,10 +9,11 @@ import {
   Calendar, 
   CreditCard,
   User,
-  ArrowUpRight
+  ArrowUpRight,
+  Clock
 } from 'lucide-react';
 
-export default function PaymentManagement() {
+export default function PaymentManagement({ activeSubTab }) {
   const [activeFilter, setActiveFilter] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -59,17 +60,31 @@ export default function PaymentManagement() {
     },
     {
       id: 'TXN-9905',
-      creatorName: 'Sarah AI & Tech',
-      viewerName: 'David Miller',
+      creatorName: 'GamerX Xtreme',
+      viewerName: 'Vikas Roy',
       amount: '₹100',
-      status: 'Successful',
-      gatewayResponse: '200 OK (Razorpay: pay_Kkm99120)',
-      paymentMethod: 'Paytm Wallet',
-      dateTime: '09 Aug 2026, 19:22:30'
+      status: 'Pending',
+      gatewayResponse: '102 Processing Gateway Response',
+      paymentMethod: 'Paytm UPI',
+      dateTime: '10 Aug 2026, 19:02:15'
     }
   ];
 
-  const filteredTxns = transactions.filter(t => {
+  useEffect(() => {
+    if (activeSubTab === 'payments_all') {
+      setActiveFilter('All');
+    } else if (activeSubTab === 'payments_successful') {
+      setActiveFilter('Successful');
+    } else if (activeSubTab === 'payments_failed') {
+      setActiveFilter('Failed');
+    } else if (activeSubTab === 'payments_pending') {
+      setActiveFilter('Pending');
+    } else if (activeSubTab === 'payments_refunds') {
+      setActiveFilter('Refunded');
+    }
+  }, [activeSubTab]);
+
+  const filteredTransactions = transactions.filter(t => {
     const matchesFilter = activeFilter === 'All' || t.status === activeFilter;
     const matchesSearch = t.creatorName.toLowerCase().includes(searchQuery.toLowerCase()) ||
                           t.viewerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -78,113 +93,90 @@ export default function PaymentManagement() {
   });
 
   return (
-    <div className="space-y-6">
+    <div className="rounded-2xl bg-[#13131A] border border-[#1C1C26] p-5 shadow-xl space-y-5 animate-fade-in">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#1C1C26] pb-4">
         <div>
-          <h2 className="font-heading font-black text-2xl text-white flex items-center gap-2">
-            <DollarSign className="h-6 w-6 text-[#FFD60A]" />
-            Payment Management
+          <h2 className="text-lg font-bold text-white flex items-center gap-2">
+            <DollarSign className="h-5 w-5 text-[#00F5D4]" />
+            Payment Management & Gateway Audit Logs
           </h2>
-          <p className="text-xs text-[#8B8B96] mt-1">
-            Monitor real-time viewer transactions, payment gateway status (Razorpay/Stripe), failed attempts, and automatic escrow refunds.
+          <p className="text-xs text-[#8B8B96] mt-0.5">
+            Audit live payment transactions, successful charges, gateway failures, and automatic refunds.
           </p>
         </div>
 
-        {/* Filter Pills */}
-        <div className="flex items-center gap-2 overflow-x-auto">
-          {['All', 'Successful', 'Failed', 'Refunded'].map((filter) => (
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
+          {['All', 'Successful', 'Failed', 'Pending', 'Refunded'].map((status) => (
             <button
-              key={filter}
-              onClick={() => setActiveFilter(filter)}
-              className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all ${
-                activeFilter === filter
-                  ? 'bg-brand-gradient text-[#0A0A0F] shadow-md'
-                  : 'bg-[#13131A] text-[#8B8B96] hover:text-white border border-[#1C1C26]'
+              key={status}
+              onClick={() => setActiveFilter(status)}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                activeFilter === status
+                  ? 'bg-brand-gradient text-[#0A0A0F]'
+                  : 'bg-[#1C1C26] text-[#8B8B96] hover:text-white'
               }`}
             >
-              {filter}
+              {status}
             </button>
           ))}
         </div>
       </div>
 
-      {/* Transactions Table */}
-      <div className="rounded-3xl bg-[#13131A] border border-[#1C1C26] overflow-hidden shadow-2xl">
-        <div className="p-4 border-b border-[#1C1C26] flex items-center justify-between">
-          <span className="text-xs font-bold text-white uppercase tracking-wider">
-            Transaction Ledger ({filteredTxns.length})
-          </span>
-          <div className="relative">
-            <Search className="absolute left-3 top-2 h-3.5 w-3.5 text-[#8B8B96]" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search TXN ID, creator, viewer..."
-              className="rounded-xl bg-[#0A0A0F] border border-[#1C1C26] pl-8 pr-3 py-1.5 text-xs text-white placeholder-[#8B8B96] focus:border-[#00F5D4] focus:outline-none w-56"
-            />
-          </div>
-        </div>
+      {/* Search Bar */}
+      <div className="relative">
+        <Search className="absolute left-3.5 top-2.5 h-4 w-4 text-[#8B8B96]" />
+        <input
+          type="text"
+          placeholder="Search by Transaction ID, Creator or Viewer..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="w-full pl-10 pr-4 py-2 bg-[#0A0A0F] border border-[#1C1C26] rounded-xl text-xs text-white placeholder-[#8B8B96] focus:outline-none focus:border-[#00F5D4]"
+        />
+      </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead className="bg-[#0A0A0F] border-b border-[#1C1C26] text-[#8B8B96] uppercase text-[10px] font-bold tracking-wider">
-              <tr>
-                <th className="px-6 py-4">Transaction ID</th>
-                <th className="px-6 py-4">Creator / Recipient</th>
-                <th className="px-6 py-4">Viewer / Sender</th>
-                <th className="px-6 py-4">Amount</th>
-                <th className="px-6 py-4">Payment Method & Gateway Response</th>
-                <th className="px-6 py-4">Date / Time</th>
-                <th className="px-6 py-4">Status</th>
+      {/* Transactions Table */}
+      <div className="overflow-x-auto">
+        <table className="w-full text-left text-xs">
+          <thead>
+            <tr className="border-b border-[#1C1C26] text-[#8B8B96] font-bold">
+              <th className="pb-3 px-2">TXN ID</th>
+              <th className="pb-3 px-2">CREATOR / VIEWER</th>
+              <th className="pb-3 px-2">AMOUNT</th>
+              <th className="pb-3 px-2">METHOD</th>
+              <th className="pb-3 px-2">STATUS</th>
+              <th className="pb-3 px-2">GATEWAY AUDIT RESPONSE</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-[#1C1C26]">
+            {filteredTransactions.map((t) => (
+              <tr key={t.id} className="hover:bg-[#0A0A0F]/60 transition">
+                <td className="py-3.5 px-2 font-mono text-[#00F5D4] font-bold">{t.id}</td>
+                <td className="py-3.5 px-2">
+                  <div className="font-bold text-white">{t.creatorName}</div>
+                  <div className="text-[10px] text-[#8B8B96]">By {t.viewerName} • {t.dateTime}</div>
+                </td>
+                <td className="py-3.5 px-2 font-bold text-white">{t.amount}</td>
+                <td className="py-3.5 px-2 text-[#8B8B96]">{t.paymentMethod}</td>
+                <td className="py-3.5 px-2">
+                  <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold flex items-center gap-1 w-max ${
+                    t.status === 'Successful' ? 'bg-[#00E676]/10 text-[#00E676] border border-[#00E676]/30' :
+                    t.status === 'Failed' ? 'bg-[#FF3D71]/10 text-[#FF3D71] border border-[#FF3D71]/30' :
+                    t.status === 'Pending' ? 'bg-[#FFD60A]/10 text-[#FFD60A] border border-[#FFD60A]/30' :
+                    'bg-[#7B2FFF]/10 text-[#7B2FFF] border border-[#7B2FFF]/30'
+                  }`}>
+                    {t.status === 'Successful' && <CheckCircle2 className="h-3 w-3" />}
+                    {t.status === 'Failed' && <XCircle className="h-3 w-3" />}
+                    {t.status === 'Pending' && <Clock className="h-3 w-3" />}
+                    {t.status === 'Refunded' && <RotateCcw className="h-3 w-3" />}
+                    {t.status}
+                  </span>
+                </td>
+                <td className="py-3.5 px-2 font-mono text-[10px] text-[#8B8B96]">{t.gatewayResponse}</td>
               </tr>
-            </thead>
-            <tbody className="divide-y divide-[#1C1C26]">
-              {filteredTxns.map((txn) => (
-                <tr key={txn.id} className="hover:bg-[#1C1C26]/40 transition-colors">
-                  <td className="px-6 py-4 font-mono text-[#00F5D4] font-bold">
-                    {txn.id}
-                  </td>
-                  <td className="px-6 py-4 font-bold text-white">
-                    {txn.creatorName}
-                  </td>
-                  <td className="px-6 py-4 text-[#8B8B96]">
-                    {txn.viewerName}
-                  </td>
-                  <td className="px-6 py-4 font-mono font-bold text-[#FFD60A]">
-                    {txn.amount}
-                  </td>
-                  <td className="px-6 py-4 space-y-0.5">
-                    <div className="text-white font-semibold flex items-center gap-1">
-                      <CreditCard className="h-3 w-3 text-[#00F5D4]" /> {txn.paymentMethod}
-                    </div>
-                    <span className="text-[10px] text-[#8B8B96] font-mono block">
-                      {txn.gatewayResponse}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-[#8B8B96] font-mono text-[11px]">
-                    {txn.dateTime}
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold ${
-                      txn.status === 'Successful'
-                        ? 'bg-[#00E676]/10 text-[#00E676] border border-[#00E676]/30'
-                        : txn.status === 'Failed'
-                        ? 'bg-[#FF5252]/10 text-[#FF5252] border border-[#FF5252]/30'
-                        : 'bg-[#7B2FFF]/10 text-[#7B2FFF] border border-[#7B2FFF]/30'
-                    }`}>
-                      {txn.status === 'Successful' && <CheckCircle2 className="h-3 w-3" />}
-                      {txn.status === 'Failed' && <XCircle className="h-3 w-3" />}
-                      {txn.status === 'Refunded' && <RotateCcw className="h-3 w-3" />}
-                      {txn.status}
-                    </span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   );

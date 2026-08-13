@@ -2,53 +2,64 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { Mail, Lock, Eye, EyeOff, ShieldCheck, AlertCircle } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, Radio, Sparkles, CheckCircle2, AlertCircle, ArrowLeft } from 'lucide-react';
 import { API_ENDPOINTS } from '@/config/api';
 
-export default function LoginPage() {
-  const [email, setEmail] = useState('');
+export default function CreatorLoginPage() {
+  const [loginIdentifier, setLoginIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [redirectPath, setRedirectPath] = useState('');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setErrorMsg('');
     setIsSubmitting(true);
 
-    const loginPayload = { email, password };
+    const loginPayload = {
+      email: loginIdentifier,
+      username: loginIdentifier,
+      password,
+    };
 
     try {
-      const response = await fetch(API_ENDPOINTS.AUTH.LOGIN, {
+      const response = await fetch(API_ENDPOINTS.CREATORS.LOGIN, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(loginPayload),
       });
 
       const data = await response.json().catch(() => ({}));
-      const token = data.data?.token || data.token || data.accessToken;
-      const user = data.data?.user || data.user || { email, role: 'admin' };
+      const token = data.data?.token || data.token;
+      const creator = data.data?.creator;
 
-      if (response.ok && (data.status === 'success' || data.success || token)) {
-        // Strict Admin Role Access Guard
-        const userRole = (user.role || '').toLowerCase();
-        if (userRole !== 'admin') {
-          setErrorMsg('Access Denied: Only Admin accounts are authorized to access the Admin Dashboard.');
-          setIsSubmitting(false);
-          return;
+      if (response.ok && (data.status === 'success' || token) && creator) {
+        const validToken = token || 'askme_jwt_creator_token';
+        localStorage.setItem('askme_token', validToken);
+        localStorage.setItem('askme_user', JSON.stringify(creator));
+        setIsSubmitted(true);
+
+        // --- Post-Login Routing Logic Based on Creator KYC Status ---
+        const status = (creator.kycStatus || 'pending').toLowerCase();
+        let targetUrl = '/creators/kyc';
+
+        if (status === 'approved') {
+          targetUrl = '/creators/dashboard';
+        } else if (status === 'pending') {
+          targetUrl = '/creators/kyc';
+        } else if (status === 'rejected') {
+          targetUrl = '/creators/kyc';
         }
 
-        const validToken = token || 'askme_jwt_token_valid';
-        localStorage.setItem('askme_token', validToken);
-        localStorage.setItem('askme_user', JSON.stringify(user));
-        setIsSubmitted(true);
+        setRedirectPath(targetUrl);
         setTimeout(() => {
-          window.location.href = '/';
-        }, 500);
+          window.location.href = targetUrl;
+        }, 600);
       } else {
-        setErrorMsg(data.message || data.error || 'Invalid email or password.');
+        setErrorMsg(data.message || data.error || 'Invalid creator email/username or password.');
       }
     } catch (err) {
       setErrorMsg('Unable to connect to backend server at http://localhost:5000/api.');
@@ -58,24 +69,39 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0A0A0F] text-[#F5F5F7] flex flex-col justify-center items-center p-4">
+    <div className="min-h-screen bg-[#0A0A0F] text-[#F5F5F7] flex flex-col justify-center items-center p-4 selection:bg-[#00F5D4] selection:text-[#0A0A0F]">
       <div className="w-full max-w-md space-y-4">
+        
+        {/* Back Link */}
+        <div className="flex items-center justify-between">
+          <Link
+            href="/"
+            className="text-xs font-semibold text-[#8B8B96] hover:text-white flex items-center gap-1 transition"
+          >
+            <ArrowLeft className="h-3.5 w-3.5" /> Back to Home Page
+          </Link>
+          <span className="text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-full bg-[#00F5D4]/10 text-[#00F5D4] border border-[#00F5D4]/30">
+            CREATOR STUDIO
+          </span>
+        </div>
+
         <div className="rounded-3xl bg-[#13131A] border border-[#1C1C26] p-6 lg:p-8 shadow-2xl space-y-6">
+          
           {/* Header Branding */}
           <div className="text-center space-y-2">
             <div className="inline-flex items-center gap-2">
               <div className="h-9 w-9 rounded-xl bg-brand-gradient flex items-center justify-center text-[#0A0A0F] font-black text-xl shadow-md glow-teal">
                 a
               </div>
-              <span className="font-heading font-black text-2xl text-white">AskMe <span className="text-brand-gradient">PRO</span></span>
+              <span className="font-heading font-black text-2xl text-white">AskMe <span className="text-brand-gradient">STUDIO</span></span>
             </div>
-            <h2 className="font-heading font-bold text-lg text-white">Admin Control Room Sign In</h2>
+            <h2 className="font-heading font-bold text-lg text-white">Creator Control Room Sign In</h2>
             <p className="text-xs text-[#8B8B96]">
-              Sign in to manage live AskMe broadcasts, creators, payouts, and platform operations.
+              Sign in to access your Creator Dashboard, OBS Live Overlays, KYC status, & Payout Ledger.
             </p>
           </div>
 
-          {/* Error Message Banner */}
+          {/* Error Banner */}
           {errorMsg && (
             <div className="p-3.5 rounded-2xl bg-[#FF3D71]/10 border border-[#FF3D71]/30 text-[#FF3D71] text-xs font-bold flex items-center gap-2.5 animate-fade-in">
               <AlertCircle className="h-4 w-4 shrink-0" />
@@ -85,22 +111,26 @@ export default function LoginPage() {
 
           {isSubmitted ? (
             <div className="p-6 rounded-2xl bg-[#00E676]/10 border border-[#00E676]/30 text-center space-y-2">
-              <ShieldCheck className="h-10 w-10 text-[#00E676] mx-auto" />
-              <h4 className="font-heading font-bold text-base text-white">Admin Sign In Successful!</h4>
-              <p className="text-xs text-[#8B8B96]">Redirecting to Super Admin Control Room...</p>
+              <CheckCircle2 className="h-10 w-10 text-[#00E676] mx-auto" />
+              <h4 className="font-heading font-bold text-base text-white">Creator Sign In Successful!</h4>
+              <p className="text-xs text-[#8B8B96]">
+                Checking KYC status & redirecting to Creator Studio...
+              </p>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-[#8B8B96] mb-1">Admin Email or Username</label>
+                <label className="block text-xs font-semibold text-[#8B8B96] mb-1">
+                  Creator Email or Username (@username)
+                </label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-2.5 h-4 w-4 text-[#8B8B96]" />
                   <input
                     type="text"
                     required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="admin@gmail.com or admin@askme.com"
+                    value={loginIdentifier}
+                    onChange={(e) => setLoginIdentifier(e.target.value)}
+                    placeholder="creator@techburner.in or @techburner"
                     className="w-full rounded-xl bg-[#0A0A0F] border border-[#1C1C26] pl-9 pr-3 py-2 text-xs text-white placeholder-[#8B8B96] focus:border-[#00F5D4] focus:outline-none"
                   />
                 </div>
@@ -135,10 +165,28 @@ export default function LoginPage() {
                 disabled={isSubmitting}
                 className="w-full py-2.5 rounded-xl bg-brand-gradient text-[#0A0A0F] font-bold text-xs shadow-xl glow-teal hover:opacity-95 transition-all flex items-center justify-center gap-1.5 disabled:opacity-50"
               >
-                <ShieldCheck className="h-4 w-4" /> {isSubmitting ? 'Signing In...' : 'Sign In to Admin Dashboard'}
+                <Radio className="h-4 w-4" />
+                {isSubmitting ? 'Authenticating Creator...' : 'Sign In to Creator Studio'}
               </button>
             </form>
           )}
+
+          {/* Footer Navigation */}
+          <div className="pt-2 text-center text-xs text-[#8B8B96] border-t border-[#1C1C26] space-y-2">
+            <div>
+              New Creator?{' '}
+              <Link href="/" className="text-[#00F5D4] hover:underline font-bold">
+                Register Creator Account
+              </Link>
+            </div>
+            <div>
+              Super Admin?{' '}
+              <Link href="/login" className="text-[#8B8B96] hover:text-white underline">
+                Admin Sign In Page
+              </Link>
+            </div>
+          </div>
+
         </div>
       </div>
     </div>

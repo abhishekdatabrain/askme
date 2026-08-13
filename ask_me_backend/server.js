@@ -1,9 +1,11 @@
 const dotenv = require('dotenv');
+const cookieParser = require("cookie-parser");
 
 // Load environment variables before importing app
 dotenv.config();
 
 const app = require('./src/app');
+app.use(cookieParser());
 const { connectDB } = require('./src/config/db.js');
 
 const PORT = process.env.PORT || 5000;

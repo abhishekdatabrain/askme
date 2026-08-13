@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Wallet, 
   DollarSign, 
@@ -7,10 +7,13 @@ import {
   CheckCircle2, 
   Clock, 
   ArrowUpRight,
-  PieChart
+  PieChart,
+  FileText
 } from 'lucide-react';
 
-export default function WalletManagement() {
+export default function WalletManagement({ activeSubTab }) {
+  const [activeView, setActiveView] = useState('wallets');
+
   const creatorWallets = [
     {
       creatorName: 'TechBurner Live',
@@ -54,106 +57,146 @@ export default function WalletManagement() {
     }
   ];
 
-  return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h2 className="font-heading font-black text-2xl text-white flex items-center gap-2">
-          <Wallet className="h-6 w-6 text-[#00F5D4]" />
-          Wallet & Settlement Management
-        </h2>
-        <p className="text-xs text-[#8B8B96] mt-1">
-          Manage creator wallet balances, monitor transparent 15% platform fee deductions, and track creator-wise earnings reports.
-        </p>
-      </div>
+  const ledgerEntries = [
+    { id: 'LED-001', date: '10 Aug 2026', description: 'AskMail SuperChat Cut (15%)', type: 'Credit', amount: '+₹1,84,500', balance: '₹18,45,000' },
+    { id: 'LED-002', date: '09 Aug 2026', description: 'Creator Payout Settlement (TechBurner)', type: 'Debit', amount: '-₹38,250', balance: '₹16,60,500' },
+    { id: 'LED-003', date: '08 Aug 2026', description: 'Live Stream QR Question Fee', type: 'Credit', amount: '+₹42,000', balance: '₹16,98,750' },
+    { id: 'LED-004', date: '07 Aug 2026', description: 'Platform Maintenance Reserve', type: 'Transfer', amount: '₹10,000', balance: '₹16,56,750' },
+  ];
 
-      {/* Overview Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="rounded-3xl bg-[#13131A] border border-[#1C1C26] p-6 space-y-2">
-          <span className="text-[10px] font-extrabold text-[#8B8B96] uppercase tracking-wider block">Total Platform Commission (15%)</span>
-          <h3 className="font-heading font-black text-2xl text-[#FFD60A]">₹6,34,500</h3>
-          <p className="text-[11px] text-[#00E676] flex items-center gap-1">
-            <TrendingUp className="h-3 w-3" /> +18.4% this month
+  useEffect(() => {
+    if (activeSubTab === 'wallets_ledger') {
+      setActiveView('ledger');
+    } else {
+      setActiveView('wallets');
+    }
+  }, [activeSubTab]);
+
+  return (
+    <div className="space-y-6 animate-fade-in">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#1C1C26] pb-4">
+        <div>
+          <h2 className="text-lg font-bold text-white flex items-center gap-2">
+            <Wallet className="h-5 w-5 text-[#00F5D4]" />
+            Wallet Management & Commission Ledger
+          </h2>
+          <p className="text-xs text-[#8B8B96] mt-0.5">
+            Monitor creator net balances, platform 15% commission ledger, and settlement status.
           </p>
         </div>
 
-        <div className="rounded-3xl bg-[#13131A] border border-[#1C1C26] p-6 space-y-2">
-          <span className="text-[10px] font-extrabold text-[#8B8B96] uppercase tracking-wider block">Net Creator Revenue (85%)</span>
-          <h3 className="font-heading font-black text-2xl text-[#00E676]">₹35,95,500</h3>
-          <p className="text-[11px] text-[#8B8B96]">Settled via Escrow Protection</p>
-        </div>
-
-        <div className="rounded-3xl bg-[#13131A] border border-[#1C1C26] p-6 space-y-2">
-          <span className="text-[10px] font-extrabold text-[#8B8B96] uppercase tracking-wider block">Available Creator Wallet Holds</span>
-          <h3 className="font-heading font-black text-2xl text-[#00F5D4]">₹5,84,500</h3>
-          <p className="text-[11px] text-[#8B8B96]">Ready for Withdrawal</p>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setActiveView('wallets')}
+            className={`px-4 py-1.5 rounded-xl text-xs font-bold transition-all ${
+              activeView === 'wallets'
+                ? 'bg-brand-gradient text-[#0A0A0F]'
+                : 'bg-[#13131A] text-[#8B8B96] hover:text-white border border-[#1C1C26]'
+            }`}
+          >
+            Creator Wallets
+          </button>
+          <button
+            onClick={() => setActiveView('ledger')}
+            className={`px-4 py-1.5 rounded-xl text-xs font-bold transition-all ${
+              activeView === 'ledger'
+                ? 'bg-brand-gradient text-[#0A0A0F]'
+                : 'bg-[#13131A] text-[#8B8B96] hover:text-white border border-[#1C1C26]'
+            }`}
+          >
+            Wallet Ledger
+          </button>
         </div>
       </div>
 
-      {/* Creator-wise Earnings Report Table */}
-      <div className="rounded-3xl bg-[#13131A] border border-[#1C1C26] overflow-hidden shadow-2xl space-y-4">
-        <div className="p-6 border-b border-[#1C1C26] flex items-center justify-between">
-          <div>
-            <h3 className="font-heading font-bold text-base text-white">Creator-wise Revenue & Settlement Breakdown</h3>
-            <p className="text-xs text-[#8B8B96]">Transparent 85% creator payout / 15% platform cut audit ledger.</p>
+      {activeView === 'wallets' ? (
+        /* Creator Wallets Grid */
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {creatorWallets.map((w, idx) => (
+            <div key={idx} className="p-5 rounded-2xl bg-[#13131A] border border-[#1C1C26] space-y-4">
+              <div className="flex items-center justify-between border-b border-[#1C1C26] pb-3">
+                <div>
+                  <h3 className="font-bold text-white text-sm">{w.creatorName}</h3>
+                  <span className="text-xs text-[#8B8B96]">{w.handle}</span>
+                </div>
+                <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
+                  w.settlementStatus === 'Settled' ? 'bg-[#00E676]/10 text-[#00E676]' : 'bg-[#FFD60A]/10 text-[#FFD60A]'
+                }`}>
+                  {w.settlementStatus}
+                </span>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 text-xs">
+                <div className="p-3 rounded-xl bg-[#0A0A0F] border border-[#1C1C26]">
+                  <span className="text-[10px] text-[#8B8B96] block">Gross Earnings</span>
+                  <span className="font-bold text-white text-sm">{w.grossEarnings}</span>
+                </div>
+                <div className="p-3 rounded-xl bg-[#0A0A0F] border border-[#1C1C26]">
+                  <span className="text-[10px] text-[#8B8B96] block">Platform Fee (15%)</span>
+                  <span className="font-bold text-[#FFD60A] text-sm">{w.platformCommission}</span>
+                </div>
+                <div className="p-3 rounded-xl bg-[#0A0A0F] border border-[#1C1C26]">
+                  <span className="text-[10px] text-[#8B8B96] block">Total Withdrawn</span>
+                  <span className="font-bold text-white">{w.withdrawnTotal}</span>
+                </div>
+                <div className="p-3 rounded-xl bg-[#0A0A0F] border border-[#1C1C26]">
+                  <span className="text-[10px] text-[#8B8B96] block">Available Payout</span>
+                  <span className="font-bold text-[#00F5D4] text-sm">{w.availableBalance}</span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        /* Ledger Table */
+        <div className="rounded-2xl bg-[#13131A] border border-[#1C1C26] p-5 shadow-xl space-y-4">
+          <div className="flex items-center justify-between border-b border-[#1C1C26] pb-3">
+            <h3 className="font-bold text-white text-sm flex items-center gap-2">
+              <FileText className="h-4 w-4 text-[#00F5D4]" />
+              Platform Fee & Wallet Ledger Logs
+            </h3>
+            <span className="text-xs text-[#8B8B96]">Real-time Accounting Ledger</span>
           </div>
 
-          <span className="px-3 py-1 rounded-full bg-[#00F5D4]/10 text-[#00F5D4] text-xs font-bold border border-[#00F5D4]/30">
-            Escrow Protected
-          </span>
-        </div>
-
-        <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
-            <thead className="bg-[#0A0A0F] border-b border-[#1C1C26] text-[#8B8B96] uppercase text-[10px] font-bold tracking-wider">
-              <tr>
-                <th className="px-6 py-4">Creator</th>
-                <th className="px-6 py-4">Gross Earnings</th>
-                <th className="px-6 py-4">Platform Fee (15%)</th>
-                <th className="px-6 py-4">Net Creator Share (85%)</th>
-                <th className="px-6 py-4">Withdrawn Total</th>
-                <th className="px-6 py-4">Available Balance</th>
-                <th className="px-6 py-4">Settlement Status</th>
+            <thead>
+              <tr className="border-b border-[#1C1C26] text-[#8B8B96] font-bold">
+                <th className="pb-3 px-2">LEDGER ID</th>
+                <th className="pb-3 px-2">DATE</th>
+                <th className="pb-3 px-2">DESCRIPTION</th>
+                <th className="pb-3 px-2">TYPE</th>
+                <th className="pb-3 px-2">AMOUNT</th>
+                <th className="pb-3 px-2 text-right">CLOSING BALANCE</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#1C1C26]">
-              {creatorWallets.map((wallet, idx) => (
-                <tr key={idx} className="hover:bg-[#1C1C26]/40 transition-colors">
-                  <td className="px-6 py-4">
-                    <div className="font-bold text-white">{wallet.creatorName}</div>
-                    <div className="text-[10px] text-[#00F5D4] font-mono">{wallet.handle}</div>
-                  </td>
-                  <td className="px-6 py-4 font-mono text-white font-semibold">
-                    {wallet.grossEarnings}
-                  </td>
-                  <td className="px-6 py-4 font-mono text-[#FFD60A] font-bold">
-                    {wallet.platformCommission}
-                  </td>
-                  <td className="px-6 py-4 font-mono text-[#00E676] font-bold">
-                    {wallet.netCreatorShare}
-                  </td>
-                  <td className="px-6 py-4 font-mono text-[#8B8B96]">
-                    {wallet.withdrawnTotal}
-                  </td>
-                  <td className="px-6 py-4 font-mono text-[#00F5D4] font-bold">
-                    {wallet.availableBalance}
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold ${
-                      wallet.settlementStatus === 'Settled'
-                        ? 'bg-[#00E676]/10 text-[#00E676] border border-[#00E676]/30'
-                        : 'bg-[#FFD60A]/10 text-[#FFD60A] border border-[#FFD60A]/30'
+              {ledgerEntries.map((l) => (
+                <tr key={l.id} className="hover:bg-[#0A0A0F]/60 transition">
+                  <td className="py-3 px-2 font-mono text-[#00F5D4] font-bold">{l.id}</td>
+                  <td className="py-3 px-2 text-white">{l.date}</td>
+                  <td className="py-3 px-2 text-[#8B8B96]">{l.description}</td>
+                  <td className="py-3 px-2">
+                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                      l.type === 'Credit' ? 'bg-[#00E676]/10 text-[#00E676]' :
+                      l.type === 'Debit' ? 'bg-[#FF3D71]/10 text-[#FF3D71]' :
+                      'bg-[#FFD60A]/10 text-[#FFD60A]'
                     }`}>
-                      {wallet.settlementStatus === 'Settled' ? <CheckCircle2 className="h-3 w-3" /> : <Clock className="h-3 w-3" />}
-                      {wallet.settlementStatus}
+                      {l.type}
                     </span>
                   </td>
+                  <td className={`py-3 px-2 font-bold ${
+                    l.amount.startsWith('+') ? 'text-[#00E676]' : 'text-[#FF3D71]'
+                  }`}>
+                    {l.amount}
+                  </td>
+                  <td className="py-3 px-2 text-right font-bold text-white">{l.balance}</td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
-      </div>
+      )}
     </div>
   );
 }

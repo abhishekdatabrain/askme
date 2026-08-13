@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Tv,
   Radio,
@@ -9,15 +9,17 @@ import {
   AlertTriangle,
   Sparkles,
   Search,
-  DollarSign
+  DollarSign,
+  Eye
 } from 'lucide-react';
 import PlatformIcon from './PlatformIcon';
 import LiveBadge from './LiveBadge';
+import { API_ENDPOINTS } from '@/config/api';
 
-export default function LiveSessionManagement() {
+export default function LiveSessionManagement({ activeSubTab }) {
   const [sessions, setSessions] = useState([
     {
-      id: 'sess-801',
+      id: 'SESS-9081',
       creatorName: 'TechBurner Live',
       handle: '@techburner',
       platform: 'youtube',
@@ -27,10 +29,12 @@ export default function LiveSessionManagement() {
       donationsTotal: '₹1,24,500',
       questionsCount: 142,
       overlaySocket: 'wss://obs.askme.pro/live/tb-801',
-      isSuspicious: false
+      qrImageUrl: 'https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://askme.pro/ask/@techburner',
+      isSuspicious: false,
+      sessionStatus: 'Active'
     },
     {
-      id: 'sess-802',
+      id: 'SESS-9082',
       creatorName: 'Rachana Ranade',
       handle: '@ca_rachana',
       platform: 'youtube',
@@ -40,142 +44,195 @@ export default function LiveSessionManagement() {
       donationsTotal: '₹84,000',
       questionsCount: 98,
       overlaySocket: 'wss://obs.askme.pro/live/rr-802',
-      isSuspicious: false
+      qrImageUrl: 'https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://askme.pro/ask/@ca_rachana',
+      isSuspicious: false,
+      sessionStatus: 'Active'
     },
-    {
-      id: 'sess-803',
-      creatorName: 'GamerX Xtreme',
-      handle: '@gamerx',
-      platform: 'twitch',
-      viewersCount: '6,400',
-      activeDuration: '3h 10m',
-      qrStatus: 'Flagged',
-      donationsTotal: '₹12,400',
-      questionsCount: 18,
-      overlaySocket: 'wss://obs.askme.pro/live/gx-803',
-      isSuspicious: true
-    },
-    {
-      id: 'sess-804',
-      creatorName: 'Sarah AI & Tech',
-      handle: '@sarah_ai',
-      platform: 'kick',
-      viewersCount: '4,800',
-      activeDuration: '2h 05m',
-      qrStatus: 'Active',
-      donationsTotal: '₹34,800',
-      questionsCount: 52,
-      overlaySocket: 'wss://obs.askme.pro/live/st-804',
-      isSuspicious: false
-    }
   ]);
 
-  const toggleDisableQR = (id) => {
+  const [filter, setFilter] = useState('Active');
+  const [selectedQrModal, setSelectedQrModal] = useState(null);
+
+  useEffect(() => {
+    const fetchLiveSessions = async () => {
+      try {
+        const token = localStorage.getItem('askme_token');
+        const res = await fetch(API_ENDPOINTS.ADMIN.LIVE_SESSIONS, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const data = await res.json();
+        if (data.status === 'success' && data.data?.sessions) {
+          setSessions(data.data.sessions.map(s => ({
+            id: s.id,
+            creatorName: s.creator,
+            handle: `@${s.creator.toLowerCase().replace(/\s+/g, '')}`,
+            platform: 'youtube',
+            viewersCount: typeof s.viewers === 'number' ? s.viewers.toLocaleString() : (s.viewers || '14,200'),
+            activeDuration: s.duration,
+            qrStatus: s.qrStatus,
+            donationsTotal: `₹${(s.totalDonations || 0).toLocaleString()}`,
+            questionsCount: 120,
+            overlaySocket: `wss://obs.askme.pro/live/${s.id.toLowerCase()}`,
+            qrImageUrl: `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(s.streamUrl || 'https://askme.pro')}`,
+            isSuspicious: s.qrStatus === 'Suspended',
+            sessionStatus: s.qrStatus
+          })));
+        }
+      } catch (err) {
+        console.warn('API fetch live sessions warning:', err.message);
+      }
+    };
+    fetchLiveSessions();
+  }, []);
+
+  useEffect(() => {
+    if (activeSubTab === 'livesessions_active') {
+      setFilter('Active');
+    } else if (activeSubTab === 'livesessions_closed') {
+      setFilter('Closed');
+    } else if (activeSubTab === 'livesessions_suspended') {
+      setFilter('Suspended');
+    }
+  }, [activeSubTab]);
+
+  const toggleSuspendSession = async (id) => {
+    const token = localStorage.getItem('askme_token');
+    try {
+      await fetch(`${API_ENDPOINTS.ADMIN.LIVE_SESSIONS}/${id}/disable`, {
+        method: 'PUT',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+    } catch (e) {}
+
     setSessions(prev => prev.map(s => {
       if (s.id === id) {
-        const nextStatus = s.qrStatus === 'Disabled' ? 'Active' : 'Disabled';
-        return { ...s, qrStatus: nextStatus };
+        const nextStatus = s.sessionStatus === 'Suspended' ? 'Active' : 'Suspended';
+        return { ...s, sessionStatus: nextStatus, qrStatus: nextStatus };
       }
       return s;
     }));
   };
 
+  const filteredSessions = sessions.filter(s => {
+    if (filter === 'All') return true;
+    return s.sessionStatus === filter;
+  });
+
   return (
-    <div className="space-y-6">
+    <div className="rounded-2xl bg-[#13131A] border border-[#1C1C26] p-5 shadow-xl space-y-5 animate-fade-in">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#1C1C26] pb-4">
         <div>
-          <h2 className="font-heading font-black text-2xl text-white flex items-center gap-2">
-            <Tv className="h-6 w-6 text-[#FF3D71]" />
-            Live Session Management
+          <h2 className="text-lg font-bold text-white flex items-center gap-2">
+            <Tv className="h-5 w-5 text-[#00F5D4]" />
+            Live Session Management & Stream QR Overlays
           </h2>
-          <p className="text-xs text-[#8B8B96] mt-1">
-            Monitor active livestream broadcast sessions, generated OBS QR overlays, donation telemetry, and disable suspicious sessions.
+          <p className="text-xs text-[#8B8B96] mt-0.5">
+            View active sessions, creator details, generated QR codes, donation activity, and disable suspicious sessions.
           </p>
         </div>
 
-        <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#13131A] border border-[#1C1C26] text-xs">
-          <Radio className="h-4 w-4 text-[#FF3D71] animate-pulse" />
-          <span className="text-white font-bold">{sessions.filter(s => s.qrStatus === 'Active').length} Active Live Sessions</span>
+        <div className="flex items-center gap-2">
+          {['Active', 'Closed', 'Suspended'].map((status) => (
+            <button
+              key={status}
+              onClick={() => setFilter(status)}
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                filter === status
+                  ? 'bg-brand-gradient text-[#0A0A0F]'
+                  : 'bg-[#1C1C26] text-[#8B8B96] hover:text-white'
+              }`}
+            >
+              {status} Sessions
+            </button>
+          ))}
         </div>
       </div>
 
-      {/* Grid of Active Sessions */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {sessions.map((session) => (
+      {/* Grid of Sessions with Generated QR Overlay Preview (Requirement #17) */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {filteredSessions.map((session) => (
           <div
             key={session.id}
-            className={`rounded-3xl bg-[#13131A] border p-6 space-y-4 shadow-xl relative overflow-hidden transition-all ${session.qrStatus === 'Disabled'
-                ? 'border-[#FF5252]/40 opacity-75'
-                : session.isSuspicious
-                  ? 'border-[#FFD60A]/40'
-                  : 'border-[#1C1C26]'
-              }`}
+            className={`p-4 rounded-xl border transition-all ${
+              session.sessionStatus === 'Suspended'
+                ? 'bg-[#1A0A0F] border-[#FF3D71]/40'
+                : 'bg-[#0A0A0F] border-[#1C1C26]'
+            }`}
           >
-            {/* Top Bar */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <LiveBadge />
-                <PlatformIcon platform={session.platform} className="h-4 w-4" />
-                <span className="text-xs font-mono text-[#8B8B96]">{session.handle}</span>
+            <div className="flex items-center justify-between border-b border-[#1C1C26] pb-3 mb-3">
+              <div className="flex items-center gap-2.5">
+                <PlatformIcon platform={session.platform} className="h-6 w-6" />
+                <div>
+                  <h4 className="font-bold text-white text-sm">{session.creatorName}</h4>
+                  <span className="text-[10px] text-[#8B8B96]">{session.handle}</span>
+                </div>
               </div>
-
-              <span className={`text-[10px] font-extrabold px-2.5 py-0.5 rounded-full ${session.qrStatus === 'Active'
-                  ? 'bg-[#00E676]/10 text-[#00E676] border border-[#00E676]/30'
-                  : session.qrStatus === 'Flagged'
-                    ? 'bg-[#FFD60A]/10 text-[#FFD60A] border border-[#FFD60A]/30'
-                    : 'bg-[#FF5252]/10 text-[#FF5252] border border-[#FF5252]/30'
-                }`}>
-                QR Overlay: {session.qrStatus}
+              <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
+                session.sessionStatus === 'Active' ? 'bg-[#00E676]/10 text-[#00E676] border border-[#00E676]/30' :
+                session.sessionStatus === 'Closed' ? 'bg-[#1C1C26] text-[#8B8B96]' :
+                'bg-[#FF3D71]/20 text-[#FF3D71] border border-[#FF3D71]/40'
+              }`}>
+                {session.sessionStatus}
               </span>
             </div>
 
-            {/* Main Info */}
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <h3 className="font-heading font-bold text-lg text-white">{session.creatorName}</h3>
-                <p className="text-xs text-[#8B8B96]">Duration:{session.activeDuration} • Viewers: {session.viewersCount}</p>
+            <div className="flex items-center gap-4 mb-3">
+              {/* Generated QR Code Preview matching requirement #17 */}
+              <div className="p-2 bg-white rounded-xl shrink-0 cursor-pointer hover:scale-105 transition" onClick={() => setSelectedQrModal(session)}>
+                <img src={session.qrImageUrl} alt="Stream QR" className="h-16 w-16 object-contain" />
               </div>
 
-              {/* Generated QR Mock Box */}
-              <div className="p-2 rounded-2xl bg-white text-black text-center shrink-0 shadow-lg">
-                <QrCode className="h-12 w-12" />
-                <span className="text-[9px] font-black uppercase tracking-tighter block text-black">Scan To Ask</span>
+              <div className="flex-1 space-y-2 text-xs">
+                <div className="p-2 rounded-lg bg-[#13131A] border border-[#1C1C26]">
+                  <span className="text-[10px] text-[#8B8B96] block">Viewers / Duration</span>
+                  <span className="font-bold text-white">{session.viewersCount} ({session.activeDuration})</span>
+                </div>
+                <div className="p-2 rounded-lg bg-[#13131A] border border-[#1C1C26]">
+                  <span className="text-[10px] text-[#8B8B96] block">Donation Activity</span>
+                  <span className="font-bold text-[#00F5D4]">{session.questionsCount} Qs ({session.donationsTotal})</span>
+                </div>
               </div>
             </div>
 
-            {/* Telemetry Stats */}
-            <div className="grid grid-cols-2 gap-2 text-xs bg-[#0A0A0F] p-3 rounded-2xl border border-[#1C1C26]">
-              <div>
-                <span className="text-[#8B8B96] text-[10px] block">Donation Activity</span>
-                <span className="text-[#FFD60A] font-bold font-mono text-sm">{session.donationsTotal}</span>
-              </div>
-              <div>
-                <span className="text-[#8B8B96] text-[10px] block">Questions Answered</span>
-                <span className="text-[#00F5D4] font-bold text-sm">{session.questionsCount} Paid Qs</span>
-              </div>
-            </div>
-
-            {/* Socket Info & Disable Action Button */}
-            <div className="flex items-center justify-between pt-2 border-t border-[#1C1C26]">
-              <span className="text-[10px] font-mono text-[#8B8B96] truncate max-w-[220px]">
+            <div className="flex items-center justify-between pt-1 text-xs border-t border-[#1C1C26]">
+              <span className="text-[10px] text-[#8B8B96] font-mono truncate max-w-[180px]">
                 {session.overlaySocket}
               </span>
-
               <button
-                onClick={() => toggleDisableQR(session.id)}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${session.qrStatus === 'Disabled'
+                onClick={() => toggleSuspendSession(session.id)}
+                className={`px-3 py-1.5 rounded-xl font-bold text-xs transition flex items-center gap-1 ${
+                  session.sessionStatus === 'Suspended'
                     ? 'bg-[#00E676] text-[#0A0A0F]'
-                    : 'bg-[#FF5252]/10 text-[#FF5252] border border-[#FF5252]/30 hover:bg-[#FF5252] hover:text-white'
-                  }`}
+                    : 'bg-[#FF3D71]/10 text-[#FF3D71] hover:bg-[#FF3D71]/20 border border-[#FF3D71]/30'
+                }`}
               >
                 <Ban className="h-3.5 w-3.5" />
-                <span>{session.qrStatus === 'Disabled' ? 'Re-enable QR' : 'Disable Suspicious QR'}</span>
+                {session.sessionStatus === 'Suspended' ? 'Enable Session' : 'Disable Suspicious Session'}
               </button>
             </div>
           </div>
         ))}
       </div>
+
+      {/* Enlarged Stream QR Code Modal */}
+      {selectedQrModal && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-[#13131A] border border-[#1C1C26] rounded-2xl w-full max-w-xs p-6 space-y-4 text-center animate-scale-up">
+            <h3 className="font-bold text-white text-base">Generated Stream QR Overlay</h3>
+            <p className="text-xs text-[#8B8B96]">{selectedQrModal.creatorName} ({selectedQrModal.handle})</p>
+            <div className="p-4 bg-white rounded-2xl inline-block mx-auto">
+              <img src={selectedQrModal.qrImageUrl} alt="QR Overlay" className="h-40 w-40 object-contain mx-auto" />
+            </div>
+            <button
+              onClick={() => setSelectedQrModal(null)}
+              className="w-full py-2 rounded-xl bg-brand-gradient text-[#0A0A0F] font-bold text-xs"
+            >
+              Close QR View
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

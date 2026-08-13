@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Users,
   ShieldCheck,
@@ -18,82 +18,73 @@ import {
   Globe
 } from 'lucide-react';
 import PlatformIcon from './PlatformIcon';
+import { API_ENDPOINTS } from '@/config/api';
 
-export default function CreatorManagement() {
+export default function CreatorManagement({ activeSubTab }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('All');
   const [selectedCreatorForView, setSelectedCreatorForView] = useState(null);
 
   // Mock Creators Database
-  const [creators, setCreators] = useState([
-    {
-      id: 'c-101',
-      name: 'TechBurner Live',
-      email: 'creator@techburner.in',
-      mobile: '+91 98765 43210',
-      registeredDate: '12 Jan 2026',
-      kycStatus: 'Approved',
-      walletBalance: '₹1,84,500',
-      accountStatus: 'Active',
-      platform: 'youtube',
-      country: 'India',
-      followers: '3.4M'
-    },
-    {
-      id: 'c-102',
-      name: 'Rachana Ranade',
-      email: 'ca.rachana@finance.in',
-      mobile: '+91 91234 56789',
-      registeredDate: '15 Jan 2026',
-      kycStatus: 'Approved',
-      walletBalance: '₹3,42,000',
-      accountStatus: 'Active',
-      platform: 'youtube',
-      country: 'India',
-      followers: '1.8M'
-    },
-    {
-      id: 'c-103',
-      name: 'CodeWithAnish',
-      email: 'anish@codewithanish.com',
-      mobile: '+91 99887 76655',
-      registeredDate: '28 Jan 2026',
-      kycStatus: 'Pending',
-      walletBalance: '₹45,200',
-      accountStatus: 'Active',
-      platform: 'youtube',
-      country: 'India',
-      followers: '850K'
-    },
-    {
-      id: 'c-104',
-      name: 'GamerX Xtreme',
-      email: 'gamerx@twitch.tv',
-      mobile: '+91 97766 55443',
-      registeredDate: '02 Feb 2026',
-      kycStatus: 'Rejected',
-      walletBalance: '₹0',
-      accountStatus: 'Blocked',
-      platform: 'twitch',
-      country: 'India',
-      followers: '620K'
-    },
-    {
-      id: 'c-105',
-      name: 'Sarah AI & Tech',
-      email: 'sarah@aitech.io',
-      mobile: '+1 415 890 1234',
-      registeredDate: '05 Feb 2026',
-      kycStatus: 'Pending',
-      walletBalance: '₹12,800',
-      accountStatus: 'Active',
-      platform: 'kick',
-      country: 'United States',
-      followers: '410K'
-    }
-  ]);
+  const [creators, setCreators] = useState([]);
 
-  const handleAction = (id, action) => {
+  useEffect(() => {
+    const fetchCreators = async () => {
+      try {
+        const token = localStorage.getItem('askme_token');
+        const res = await fetch(API_ENDPOINTS.ADMIN.CREATORS, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const data = await res.json();
+        if (data.status === 'success' && data.data?.creators) {
+          setCreators(data.data.creators.map(c => ({
+            id: c.id,
+            name: c.name,
+            email: c.email,
+            mobile: c.mobile || '+91 98765 43210',
+            registeredDate: c.regDate || '12 Jan 2026',
+            kycStatus: c.kycStatus || 'Approved',
+            walletBalance: typeof c.balance === 'number' ? `₹${c.balance.toLocaleString()}` : (c.balance || '₹1,84,500'),
+            accountStatus: c.accountStatus || 'Active',
+            platform: c.platform || 'youtube',
+            country: c.country || 'India',
+            followers: c.followers || '100K'
+          })));
+        }
+      } catch (err) {
+        console.warn('API fetch creators warning:', err.message);
+      }
+    };
+    fetchCreators();
+  }, []);
+
+  useEffect(() => {
+    if (activeSubTab === 'creators_all') {
+      setSelectedStatus('All');
+    } else if (activeSubTab === 'creators_active') {
+      setSelectedStatus('Active');
+    } else if (activeSubTab === 'creators_blocked') {
+      setSelectedStatus('Blocked');
+    } else if (activeSubTab === 'creators_details') {
+      if (creators.length > 0) {
+        setSelectedCreatorForView(creators[0]);
+      }
+    }
+  }, [activeSubTab]);
+
+  const handleAction = async (id, action) => {
+    const token = localStorage.getItem('askme_token');
+    const headers = { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` };
+    try {
+      if (action === 'approve') {
+        await fetch(`${API_ENDPOINTS.ADMIN.CREATORS}/${id}/approve-kyc`, { method: 'PUT', headers });
+      } else if (action === 'reject') {
+        await fetch(`${API_ENDPOINTS.ADMIN.CREATORS}/${id}/reject-kyc`, { method: 'PUT', headers, body: JSON.stringify({ reason: 'Invalid documents' }) });
+      } else if (action === 'block') {
+        await fetch(`${API_ENDPOINTS.ADMIN.CREATORS}/${id}/block`, { method: 'PUT', headers });
+      }
+    } catch (e) { }
+
     setCreators(prev => prev.map(c => {
       if (c.id === id) {
         if (action === 'approve') return { ...c, kycStatus: 'Approved', accountStatus: 'Active' };
@@ -101,239 +92,233 @@ export default function CreatorManagement() {
         if (action === 'block') return { ...c, accountStatus: c.accountStatus === 'Blocked' ? 'Active' : 'Blocked' };
       }
       return c;
-    }).filter(c => action === 'delete' ? c.id !== id : true));
+    }));
+  };
+
+  const handleDelete = async (id) => {
+    const token = localStorage.getItem('askme_token');
+    try {
+      await fetch(`${API_ENDPOINTS.ADMIN.CREATORS}/${id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+    } catch (e) { }
+    setCreators(prev => prev.filter(c => c.id !== id));
   };
 
   const filteredCreators = creators.filter(c => {
     const matchesSearch = c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      c.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      c.mobile.includes(searchQuery);
-    const matchesStatus = selectedStatus === 'All' || c.kycStatus === selectedStatus;
+      c.email.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesStatus = selectedStatus === 'All' || c.accountStatus === selectedStatus;
     return matchesSearch && matchesStatus;
   });
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div className="rounded-2xl bg-[#13131A] border border-[#1C1C26] p-5 shadow-xl space-y-5 animate-fade-in">
+      {/* Header & Stats */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#1C1C26] pb-4">
         <div>
-          <h2 className="font-heading font-black text-2xl text-white flex items-center gap-2">
-            <Users className="h-6 w-6 text-[#00F5D4]" />
+          <h2 className="text-lg font-bold text-white flex items-center gap-2">
+            <Users className="h-5 w-5 text-[#00F5D4]" />
             Creator Management
           </h2>
-          <p className="text-xs text-[#8B8B96] mt-1">
-            View registered creators, inspect profile details, manage KYC approvals, block or delete accounts.
+          <p className="text-xs text-[#8B8B96] mt-0.5">
+            Manage registered creators: View Profile, Approve, Reject, Block, and Delete creator accounts.
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
-          <div className="relative">
-            <Search className="absolute left-3 top-2.5 h-4 w-4 text-[#8B8B96]" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search by name, email, mobile..."
-              className="rounded-xl bg-[#13131A] border border-[#1C1C26] pl-9 pr-3 py-2 text-xs text-white placeholder-[#8B8B96] focus:border-[#00F5D4] focus:outline-none w-64"
-            />
-          </div>
-
-          <select
-            value={selectedStatus}
-            onChange={(e) => setSelectedStatus(e.target.value)}
-            className="rounded-xl bg-[#13131A] border border-[#1C1C26] px-3 py-2 text-xs text-white focus:border-[#00F5D4] focus:outline-none"
-          >
-            <option value="All">All KYC Status</option>
-            <option value="Approved">Approved</option>
-            <option value="Pending">Pending</option>
-            <option value="Rejected">Rejected</option>
-          </select>
+        <div className="flex items-center gap-2">
+          {['All', 'Active', 'Blocked'].map((status) => (
+            <button
+              key={status}
+              onClick={() => setSelectedStatus(status)}
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${selectedStatus === status
+                ? 'bg-brand-gradient text-[#0A0A0F] shadow-sm'
+                : 'bg-[#1C1C26] text-[#8B8B96] hover:text-white'
+                }`}
+            >
+              {status}
+            </button>
+          ))}
         </div>
+      </div>
+
+      {/* Search Input */}
+      <div className="relative">
+        <Search className="absolute left-3.5 top-2.5 h-4 w-4 text-[#8B8B96]" />
+        <input
+          type="text"
+          placeholder="Search creator name, email or handle..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="w-full pl-10 pr-4 py-2 bg-[#0A0A0F] border border-[#1C1C26] rounded-xl text-xs text-white placeholder-[#8B8B96] focus:outline-none focus:border-[#00F5D4]"
+        />
       </div>
 
       {/* Creators Table */}
-      <div className="rounded-3xl bg-[#13131A] border border-[#1C1C26] overflow-hidden shadow-2xl">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead className="bg-[#0A0A0F] border-b border-[#1C1C26] text-[#8B8B96] uppercase text-[10px] font-bold tracking-wider">
-              <tr>
-                <th className="px-6 py-4">Creator Details</th>
-                <th className="px-6 py-4">Contact Info</th>
-                <th className="px-6 py-4">Reg. Date</th>
-                <th className="px-6 py-4">KYC Status</th>
-                <th className="px-6 py-4">Wallet Balance</th>
-                <th className="px-6 py-4">Actions</th>
+      <div className="overflow-x-auto">
+        <table className="w-full text-left text-xs">
+          <thead>
+            <tr className="border-b border-[#1C1C26] text-[#8B8B96] font-bold">
+              <th className="pb-3 px-2">CREATOR</th>
+              <th className="pb-3 px-2">CONTACT</th>
+              <th className="pb-3 px-2">KYC STATUS</th>
+              <th className="pb-3 px-2">WALLET BALANCE</th>
+              <th className="pb-3 px-2">ACCOUNT</th>
+              <th className="pb-3 px-2 text-right">ACTIONS</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-[#1C1C26]">
+            {filteredCreators.map((c) => (
+              <tr key={c.id} className="hover:bg-[#0A0A0F]/60 transition">
+                <td className="py-3.5 px-2">
+                  <div className="flex items-center gap-2.5">
+                    <PlatformIcon platform={c.platform} className="h-5 w-5 shrink-0" />
+                    <div>
+                      <span className="font-bold text-white block">{c.name}</span>
+                      <span className="text-[10px] text-[#8B8B96]">{c.followers} Followers • {c.country}</span>
+                    </div>
+                  </div>
+                </td>
+                <td className="py-3.5 px-2 text-[#8B8B96]">
+                  <div>{c.email}</div>
+                  <div className="text-[10px]">{c.mobile}</div>
+                </td>
+                <td className="py-3.5 px-2">
+                  <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${c.kycStatus === 'Approved' ? 'bg-[#00E676]/10 text-[#00E676] border border-[#00E676]/30' :
+                    c.kycStatus === 'Pending' ? 'bg-[#FFD60A]/10 text-[#FFD60A] border border-[#FFD60A]/30' :
+                      'bg-[#FF3D71]/10 text-[#FF3D71] border border-[#FF3D71]/30'
+                    }`}>
+                    {c.kycStatus}
+                  </span>
+                </td>
+                <td className="py-3.5 px-2 font-bold text-white">{c.walletBalance}</td>
+                <td className="py-3.5 px-2">
+                  <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${c.accountStatus === 'Active' ? 'bg-[#00F5D4]/10 text-[#00F5D4]' : 'bg-[#FF3D71]/20 text-[#FF3D71]'
+                    }`}>
+                    {c.accountStatus}
+                  </span>
+                </td>
+                <td className="py-3.5 px-2 text-right">
+                  <div className="flex items-center justify-end gap-1">
+                    {/* 1. View Profile Icon */}
+                    <button
+                      onClick={() => setSelectedCreatorForView(c)}
+                      title="View Profile Details"
+                      className="p-1.5 rounded-lg bg-[#1C1C26] text-[#8B8B96] hover:text-[#00F5D4] hover:bg-[#00F5D4]/10 transition"
+                    >
+                      <Eye className="h-3.5 w-3.5" />
+                    </button>
+
+                    {/* 2. Approve Icon */}
+                    <button
+                      onClick={() => handleAction(c.id, 'approve')}
+                      title="Approve"
+                      className={`p-1.5 rounded-lg transition ${c.kycStatus === 'Approved'
+                        ? 'bg-[#00E676]/10 text-[#00E676] opacity-60 cursor-default'
+                        : 'bg-[#1C1C26] text-[#8B8B96] hover:text-[#00E676] hover:bg-[#00E676]/10'
+                        }`}
+                    >
+                      <CheckCircle2 className="h-3.5 w-3.5" />
+                    </button>
+
+                    {/* 3. Reject Icon */}
+                    <button
+                      onClick={() => handleAction(c.id, 'reject')}
+                      title="Reject"
+                      className={`p-1.5 rounded-lg transition ${c.kycStatus === 'Rejected'
+                        ? 'bg-[#FF3D71]/10 text-[#FF3D71] opacity-60 cursor-default'
+                        : 'bg-[#1C1C26] text-[#8B8B96] hover:text-[#FF3D71] hover:bg-[#FF3D71]/10'
+                        }`}
+                    >
+                      <XCircle className="h-3.5 w-3.5" />
+                    </button>
+
+                    {/* 4. Block / Unblock Icon */}
+                    <button
+                      onClick={() => handleAction(c.id, 'block')}
+                      title={c.accountStatus === 'Blocked' ? 'Unblock Creator' : 'Block Creator'}
+                      className={`p-1.5 rounded-lg transition ${c.accountStatus === 'Blocked'
+                        ? 'bg-[#FFD60A]/10 text-[#FFD60A]'
+                        : 'bg-[#1C1C26] text-[#8B8B96] hover:text-[#FFD60A] hover:bg-[#FFD60A]/10'
+                        }`}
+                    >
+                      <Ban className="h-3.5 w-3.5" />
+                    </button>
+
+                    {/* 5. Delete Icon */}
+                    <button
+                      onClick={() => handleDelete(c.id)}
+                      title="Delete Creator"
+                      className="p-1.5 rounded-lg bg-[#1C1C26] text-[#8B8B96] hover:text-[#FF3D71] hover:bg-[#FF3D71]/10 transition"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                </td>
               </tr>
-            </thead>
-            <tbody className="divide-y divide-[#1C1C26]">
-              {filteredCreators.map((creator) => (
-                <tr key={creator.id} className="hover:bg-[#1C1C26]/40 transition-colors">
-                  {/* Name & Platform */}
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <div className="h-9 w-9 rounded-full bg-gradient-to-tr from-[#7B2FFF] to-[#00F5D4] p-0.5 shrink-0">
-                        <div className="h-full w-full rounded-full bg-[#0A0A0F] flex items-center justify-center font-bold text-white text-xs">
-                          {creator.name.slice(0, 2).toUpperCase()}
-                        </div>
-                      </div>
-                      <div>
-                        <div className="font-bold text-white flex items-center gap-1.5">
-                          {creator.name}
-                          <PlatformIcon platform={creator.platform} className="h-3.5 w-3.5" />
-                        </div>
-                        <span className="text-[10px] text-[#8B8B96]">{creator.country} • {creator.followers}</span>
-                      </div>
-                    </div>
-                  </td>
-
-                  {/* Email & Mobile */}
-                  <td className="px-6 py-4 space-y-0.5">
-                    <div className="text-white flex items-center gap-1">
-                      <Mail className="h-3 w-3 text-[#00F5D4]" /> {creator.email}
-                    </div>
-                    <div className="text-[#8B8B96] text-[11px] font-mono flex items-center gap-1">
-                      <Phone className="h-3 w-3 text-[#8B8B96]" /> {creator.mobile}
-                    </div>
-                  </td>
-
-                  {/* Registration Date */}
-                  <td className="px-6 py-4 text-[#8B8B96] font-mono">
-                    {creator.registeredDate}
-                  </td>
-
-                  {/* KYC Status Badge */}
-                  <td className="px-6 py-4">
-                    <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold ${creator.kycStatus === 'Approved'
-                        ? 'bg-[#00E676]/10 text-[#00E676] border border-[#00E676]/30'
-                        : creator.kycStatus === 'Pending'
-                          ? 'bg-[#FFD60A]/10 text-[#FFD60A] border border-[#FFD60A]/30'
-                          : 'bg-[#FF5252]/10 text-[#FF5252] border border-[#FF5252]/30'
-                      }`}>
-                      {creator.kycStatus === 'Approved' && <CheckCircle2 className="h-3 w-3" />}
-                      {creator.kycStatus === 'Pending' && <Clock className="h-3 w-3" />}
-                      {creator.kycStatus === 'Rejected' && <XCircle className="h-3 w-3" />}
-                      {creator.kycStatus}
-                    </span>
-                  </td>
-
-                  {/* Wallet Balance */}
-                  <td className="px-6 py-4 font-bold text-[#00E676] font-mono">
-                    {creator.walletBalance}
-                  </td>
-
-                  {/* Actions */}
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-1.5">
-                      {/* View Profile */}
-                      <button
-                        onClick={() => setSelectedCreatorForView(creator)}
-                        title="View Profile"
-                        className="p-1.5 rounded-lg bg-[#1C1C26] text-[#00F5D4] hover:bg-[#00F5D4]/10 transition-colors"
-                      >
-                        <Eye className="h-4 w-4" />
-                      </button>
-
-                      {/* Approve */}
-                      {creator.kycStatus !== 'Approved' && (
-                        <button
-                          onClick={() => handleAction(creator.id, 'approve')}
-                          title="Approve KYC"
-                          className="p-1.5 rounded-lg bg-[#1C1C26] text-[#00E676] hover:bg-[#00E676]/10 transition-colors"
-                        >
-                          <CheckCircle2 className="h-4 w-4" />
-                        </button>
-                      )}
-
-                      {/* Reject */}
-                      {creator.kycStatus !== 'Rejected' && (
-                        <button
-                          onClick={() => handleAction(creator.id, 'reject')}
-                          title="Reject KYC"
-                          className="p-1.5 rounded-lg bg-[#1C1C26] text-[#FFD60A] hover:bg-[#FFD60A]/10 transition-colors"
-                        >
-                          <XCircle className="h-4 w-4" />
-                        </button>
-                      )}
-
-                      {/* Block / Unblock */}
-                      <button
-                        onClick={() => handleAction(creator.id, 'block')}
-                        title={creator.accountStatus === 'Blocked' ? 'Unblock' : 'Block'}
-                        className={`p-1.5 rounded-lg transition-colors ${creator.accountStatus === 'Blocked'
-                            ? 'bg-[#FF5252] text-white'
-                            : 'bg-[#1C1C26] text-[#8B8B96] hover:text-[#FF5252] hover:bg-[#FF5252]/10'
-                          }`}
-                      >
-                        <Ban className="h-4 w-4" />
-                      </button>
-
-                      {/* Delete */}
-                      <button
-                        onClick={() => handleAction(creator.id, 'delete')}
-                        title="Delete Creator"
-                        className="p-1.5 rounded-lg bg-[#1C1C26] text-[#8B8B96] hover:text-[#FF5252] hover:bg-[#FF5252]/10 transition-colors"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+            ))}
+          </tbody>
+        </table>
       </div>
 
-      {/* View Creator Profile Modal */}
+      {/* View Creator Details Modal */}
       {selectedCreatorForView && (
-        <div className="fixed inset-0 z-50 bg-[#0A0A0F]/80 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="w-full max-w-md rounded-3xl bg-[#13131A] border border-[#1C1C26] p-6 shadow-2xl space-y-4 relative">
-            <button
-              onClick={() => setSelectedCreatorForView(null)}
-              className="absolute top-4 right-4 p-2 rounded-full bg-[#1C1C26] text-[#8B8B96] hover:text-white"
-            >
-              <X className="h-4 w-4" />
-            </button>
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-[#13131A] border border-[#1C1C26] rounded-2xl w-full max-w-md p-6 space-y-4 animate-scale-up">
+            <div className="flex items-center justify-between border-b border-[#1C1C26] pb-3">
+              <h3 className="font-bold text-white text-base flex items-center gap-2">
+                <Users className="h-4 w-4 text-[#00F5D4]" />
+                Creator Profile Details
+              </h3>
+              <button
+                onClick={() => setSelectedCreatorForView(null)}
+                className="text-[#8B8B96] hover:text-white p-1"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
 
-            <div className="text-center space-y-2">
-              <div className="h-16 w-16 rounded-full bg-gradient-to-tr from-[#7B2FFF] to-[#00F5D4] p-0.5 mx-auto">
-                <div className="h-full w-full rounded-full bg-[#0A0A0F] flex items-center justify-center font-black text-xl text-white">
-                  {selectedCreatorForView.name.slice(0, 2).toUpperCase()}
+            <div className="space-y-3 text-xs">
+              <div className="p-3 rounded-xl bg-[#0A0A0F] border border-[#1C1C26] flex items-center gap-3">
+                <PlatformIcon platform={selectedCreatorForView.platform} className="h-8 w-8" />
+                <div>
+                  <h4 className="font-bold text-white text-sm">{selectedCreatorForView.name}</h4>
+                  <span className="text-[#8B8B96]">{selectedCreatorForView.followers} Followers • Registered {selectedCreatorForView.registeredDate}</span>
                 </div>
               </div>
-              <h3 className="font-heading font-bold text-lg text-white">{selectedCreatorForView.name}</h3>
-              <span className="text-xs text-[#00F5D4] font-mono">ID: {selectedCreatorForView.id}</span>
-            </div>
 
-            <div className="space-y-2 text-xs bg-[#0A0A0F] p-4 rounded-2xl border border-[#1C1C26]">
-              <div className="flex justify-between py-1 border-b border-[#1C1C26]">
-                <span className="text-[#8B8B96]">Email</span>
-                <span className="text-white font-semibold">{selectedCreatorForView.email}</span>
+              <div className="grid grid-cols-2 gap-2">
+                <div className="p-2.5 rounded-xl bg-[#0A0A0F] border border-[#1C1C26]">
+                  <span className="text-[10px] text-[#8B8B96] block">Email</span>
+                  <span className="font-semibold text-white">{selectedCreatorForView.email}</span>
+                </div>
+                <div className="p-2.5 rounded-xl bg-[#0A0A0F] border border-[#1C1C26]">
+                  <span className="text-[10px] text-[#8B8B96] block">Mobile</span>
+                  <span className="font-semibold text-white">{selectedCreatorForView.mobile}</span>
+                </div>
               </div>
-              <div className="flex justify-between py-1 border-b border-[#1C1C26]">
-                <span className="text-[#8B8B96]">Mobile</span>
-                <span className="text-white font-semibold">{selectedCreatorForView.mobile}</span>
-              </div>
-              <div className="flex justify-between py-1 border-b border-[#1C1C26]">
-                <span className="text-[#8B8B96]">Registration Date</span>
-                <span className="text-white font-semibold">{selectedCreatorForView.registeredDate}</span>
-              </div>
-              <div className="flex justify-between py-1 border-b border-[#1C1C26]">
-                <span className="text-[#8B8B96]">KYC Status</span>
-                <span className="text-[#00E676] font-bold">{selectedCreatorForView.kycStatus}</span>
-              </div>
-              <div className="flex justify-between py-1">
-                <span className="text-[#8B8B96]">Wallet Balance</span>
-                <span className="text-[#FFD60A] font-bold">{selectedCreatorForView.walletBalance}</span>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div className="p-2.5 rounded-xl bg-[#0A0A0F] border border-[#1C1C26]">
+                  <span className="text-[10px] text-[#8B8B96] block">KYC Status</span>
+                  <span className="font-bold text-[#00E676]">{selectedCreatorForView.kycStatus}</span>
+                </div>
+                <div className="p-2.5 rounded-xl bg-[#0A0A0F] border border-[#1C1C26]">
+                  <span className="text-[10px] text-[#8B8B96] block">Wallet Balance</span>
+                  <span className="font-bold text-[#00F5D4]">{selectedCreatorForView.walletBalance}</span>
+                </div>
               </div>
             </div>
 
-            <button
-              onClick={() => setSelectedCreatorForView(null)}
-              className="w-full py-2.5 rounded-xl bg-[#1C1C26] text-white text-xs font-bold hover:bg-[#1C1C26]/80"
-            >
-              Close Profile
-            </button>
+            <div className="pt-2 flex justify-end">
+              <button
+                onClick={() => setSelectedCreatorForView(null)}
+                className="px-4 py-2 rounded-xl bg-brand-gradient text-[#0A0A0F] font-bold text-xs"
+              >
+                Close Details
+              </button>
+            </div>
           </div>
         </div>
       )}

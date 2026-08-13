@@ -23,6 +23,7 @@ import LiveSessionManagement from '@/components/LiveSessionManagement';
 import PaymentManagement from '@/components/PaymentManagement';
 import WalletManagement from '@/components/WalletManagement';
 import ReportsAnalytics from '@/components/ReportsAnalytics';
+import AdminNotifications from '@/components/AdminNotifications';
 
 import {
   Radio,
@@ -47,6 +48,7 @@ import {
 export default function Home() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState('overview');
+  const [activeSubTab, setActiveSubTab] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [selectedCreatorForAsk, setSelectedCreatorForAsk] = useState(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
@@ -54,14 +56,62 @@ export default function Home() {
   const [questionText, setQuestionText] = useState('');
   const [questionSubmitted, setQuestionSubmitted] = useState(false);
 
+  const [dashboardStats, setDashboardStats] = useState({
+    totalCreators: '1,482',
+    activeStreamers: '142 Live',
+    totalDonations: '₹24,89,500',
+    totalRevenue: '₹3,73,425',
+    pendingWithdrawals: '18 Requests',
+    pendingKyc: '24 Applications'
+  });
+
+  React.useEffect(() => {
+    const fetchDashboardStats = async () => {
+      try {
+        const token = localStorage.getItem('askme_token');
+        if (!token) return;
+        const res = await fetch(API_ENDPOINTS.ADMIN.DASHBOARD, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const data = await res.json();
+        if (data.status === 'success' && data.data) {
+          const d = data.data;
+          setDashboardStats({
+            totalCreators: typeof d.totalCreators === 'number' ? d.totalCreators.toLocaleString() : (d.totalCreators || '1,482'),
+            activeStreamers: `${d.activeStreamers} Live`,
+            totalDonations: `₹${(d.totalDonations || 0).toLocaleString()}`,
+            totalRevenue: `₹${(d.totalRevenue || 0).toLocaleString()}`,
+            pendingWithdrawals: `${d.pendingWithdrawals} Requests`,
+            pendingKyc: `${d.pendingKyc} Applications`
+          });
+        }
+      } catch (err) {
+        console.warn('API fetch dashboard stats warning:', err.message);
+      }
+    };
+    fetchDashboardStats();
+  }, []);
+
   React.useEffect(() => {
     const token = localStorage.getItem('askme_token');
-    if (token && token !== 'undefined' && token !== 'null') {
+    const userStr = localStorage.getItem('askme_user');
+    let userObj = null;
+    try {
+      userObj = userStr ? JSON.parse(userStr) : null;
+    } catch (e) {
+      userObj = null;
+    }
+
+    const isUserAdmin = !userObj || (userObj.role || '').toLowerCase() === 'admin';
+
+    if (token && token !== 'undefined' && token !== 'null' && isUserAdmin) {
       setIsLoggedIn(true);
       setShowAuthModal(false);
     } else {
       setIsLoggedIn(false);
       setShowAuthModal(false);
+      localStorage.removeItem('askme_token');
+      localStorage.removeItem('askme_user');
       router.push('/login');
     }
   }, [router]);
@@ -221,19 +271,26 @@ export default function Home() {
       {/* Main Workspace Layout */}
       <div className="flex flex-1">
         {/* Left Control Room Sidebar */}
-        <AdminSidebar activeTab={activeTab} setActiveTab={setActiveTab} />
+        <AdminSidebar
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          activeSubTab={activeSubTab}
+          setActiveSubTab={setActiveSubTab}
+        />
 
         {/* Center Main Content Workspace */}
         <main className="flex-1 p-4 lg:p-8 space-y-8 overflow-y-auto max-w-7xl mx-auto w-full">
           {/* Conditional View Rendering based on Platform Owner Tab selection */}
-          {activeTab === 'creators_mgmt' && <CreatorManagement />}
-          {activeTab === 'kyc' && <KycApprovalQueue />}
-          {activeTab === 'livesessions' && <LiveSessionManagement />}
-          {activeTab === 'payments' && <PaymentManagement />}
-          {activeTab === 'wallets' && <WalletManagement />}
-          {activeTab === 'withdrawals' && <WithdrawalsManager />}
-          {activeTab === 'commissions' && <CommissionSettings />}
-          {activeTab === 'reports' && <ReportsAnalytics />}
+          {(activeTab === 'creators' || activeTab === 'creators_mgmt') && <CreatorManagement activeSubTab={activeSubTab} />}
+          {activeTab === 'kyc' && <KycApprovalQueue activeSubTab={activeSubTab} />}
+          {activeTab === 'livesessions' && <LiveSessionManagement activeSubTab={activeSubTab} />}
+          {activeTab === 'payments' && <PaymentManagement activeSubTab={activeSubTab} />}
+          {activeTab === 'wallets' && <WalletManagement activeSubTab={activeSubTab} />}
+          {activeTab === 'withdrawals' && <WithdrawalsManager activeSubTab={activeSubTab} />}
+          {activeTab === 'commissions' && <CommissionSettings activeSubTab={activeSubTab} />}
+          {activeTab === 'reports' && <ReportsAnalytics activeSubTab={activeSubTab} />}
+          {activeTab === 'notifications' && <AdminNotifications activeSubTab={activeSubTab} />}
+          {activeTab === 'settings' && <PlatformOperations activeSubTab={activeSubTab} />}
 
           {activeTab === 'overview' && (
             <>
@@ -278,7 +335,7 @@ export default function Home() {
               <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 <StatCard
                   title="Total Creators"
-                  value="1,482"
+                  value={dashboardStats.totalCreators}
                   change="+34 Registered This Week"
                   subtitle="Active Verified Profiles"
                   icon={Users}
@@ -286,7 +343,7 @@ export default function Home() {
                 />
                 <StatCard
                   title="Active Streamers"
-                  value="142 Live"
+                  value={dashboardStats.activeStreamers}
                   change="+12 from 1h ago"
                   subtitle="YouTube, Twitch, Kick, X"
                   icon={Radio}
@@ -294,7 +351,7 @@ export default function Home() {
                 />
                 <StatCard
                   title="Total Donations"
-                  value="₹24,89,500"
+                  value={dashboardStats.totalDonations}
                   change="+18.4% Volume"
                   subtitle="Gross Viewer Interaction Volume"
                   icon={DollarSign}
@@ -302,7 +359,7 @@ export default function Home() {
                 />
                 <StatCard
                   title="Total Platform Revenue"
-                  value="₹3,73,425"
+                  value={dashboardStats.totalRevenue}
                   change="15% Net Commission"
                   subtitle="Platform Operational Margin"
                   icon={Sparkles}
@@ -310,7 +367,7 @@ export default function Home() {
                 />
                 <StatCard
                   title="Pending Withdrawals"
-                  value="18 Requests"
+                  value={dashboardStats.pendingWithdrawals}
                   change="₹4,12,000 Queued"
                   subtitle="85% Net Payout Queue"
                   icon={DollarSign}
@@ -318,7 +375,7 @@ export default function Home() {
                 />
                 <StatCard
                   title="Pending KYC"
-                  value="24 Creators"
+                  value={dashboardStats.pendingKyc}
                   change="Identity Verification"
                   subtitle="Awaiting Admin Review"
                   icon={CheckCircle2}

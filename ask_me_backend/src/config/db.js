@@ -1,10 +1,12 @@
 const { Sequelize } = require('sequelize');
+const pg = require('pg');
 
 let sequelize;
 
 if (process.env.DATABASE_URL) {
   sequelize = new Sequelize(process.env.DATABASE_URL, {
     dialect: 'postgres',
+    dialectModule: pg,
     logging: process.env.NODE_ENV === 'development' ? console.log : false,
     dialectOptions: {
       ssl: process.env.DB_SSL === 'true' ? { require: true, rejectUnauthorized: false } : false,
@@ -19,6 +21,7 @@ if (process.env.DATABASE_URL) {
       host: process.env.PGHOST || 'localhost',
       port: parseInt(process.env.PGPORT || '5432', 10),
       dialect: 'postgres',
+      dialectModule: pg,
       schema: process.env.SCHEMA || 'Abhishek',
       searchPath: process.env.SCHEMA || 'Abhishek',
       logging: process.env.NODE_ENV === 'development' ? console.log : false,
@@ -39,6 +42,18 @@ const connectDB = async () => {
   try {
     await sequelize.authenticate();
     console.log('Sequelize ORM connected to PostgreSQL successfully.');
+    
+    // Ensure configured schema exists in PostgreSQL database before sync
+    const targetSchema = process.env.SCHEMA || 'Abhishek';
+    if (targetSchema && targetSchema !== 'public') {
+      try {
+        await sequelize.createSchema(targetSchema, { logging: false });
+        console.log(`Schema "${targetSchema}" verified/created successfully.`);
+      } catch (schemaErr) {
+        // Ignore if schema already exists or permission restricted
+      }
+    }
+
     // Synchronize models with PostgreSQL database
     await sequelize.sync({ alter: false });
     console.log('Sequelize database models synchronized successfully.');

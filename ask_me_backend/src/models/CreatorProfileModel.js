@@ -68,7 +68,7 @@ const CreatorProfileModel = sequelize.define(
     },
     {
         tableName: "creator_profiles",
-        schema: "Abhishek",
+        schema: process.env.SCHEMA || "Abhishek",
 
         timestamps: true,
 

@@ -1,20 +1,27 @@
 import React, { useState, useEffect } from 'react';
 import { Sliders, DollarSign, Percent, Save, CheckCircle2, Crown, Sparkles, Clock, History, ArrowRight, Wallet } from 'lucide-react';
 import { API_ENDPOINTS } from '@/config/api';
+import { useToast } from '@/context/ToastContext';
+import { getAdminToken } from '@/utils/cookies';
 
 export default function CommissionSettings({ activeSubTab }) {
+  const { toast } = useToast();
   const [activeTabState, setActiveTabState] = useState('settings');
   const [globalCut, setGlobalCut] = useState(15);
   const [vipCut, setVipCut] = useState(10);
   const [minWithdrawalLimit, setMinWithdrawalLimit] = useState(500);
   const [savedSuccess, setSavedSuccess] = useState(false);
+  const [historyLogs, setHistoryLogs] = useState([
+    { id: 'LOG-101', date: '18 Aug 2026 12:00', title: 'Platform Fee set to 15%', detail: 'Default global commission cut active for all creators.', admin: 'Super Admin' },
+    { id: 'LOG-102', date: '18 Aug 2026 10:30', title: 'Minimum Withdrawal set to ₹500', detail: 'Payout requests enabled for balances above ₹500.', admin: 'Super Admin' }
+  ]);
 
   useEffect(() => {
     const fetchSettings = async () => {
       try {
-        const token = localStorage.getItem('askme_token');
+        const token = getAdminToken();
         const res = await fetch(API_ENDPOINTS.ADMIN.COMMISSION, {
-          headers: { Authorization: `Bearer ${token}` }
+          headers: token ? { Authorization: `Bearer ${token}` } : {}
         });
         const data = await res.json();
         if (data.status === 'success' && data.data?.commissionSettings) {
@@ -22,6 +29,7 @@ export default function CommissionSettings({ activeSubTab }) {
           if (s.platformCommissionPercent !== undefined) setGlobalCut(s.platformCommissionPercent);
           if (s.vipCommissionPercent !== undefined) setVipCut(s.vipCommissionPercent);
           if (s.minWithdrawalLimit !== undefined) setMinWithdrawalLimit(s.minWithdrawalLimit);
+          if (s.historyLogs && Array.isArray(s.historyLogs)) setHistoryLogs(s.historyLogs);
         }
       } catch (err) {
         console.warn('API fetch commission settings warning:', err.message);
@@ -40,25 +48,40 @@ export default function CommissionSettings({ activeSubTab }) {
 
   const handleSave = async (e) => {
     e.preventDefault();
-    const token = localStorage.getItem('askme_token');
+    const token = getAdminToken();
     try {
-      await fetch(API_ENDPOINTS.ADMIN.COMMISSION, {
+      const res = await fetch(API_ENDPOINTS.ADMIN.COMMISSION, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        },
         body: JSON.stringify({
           platformCommissionPercent: globalCut,
           vipCommissionPercent: vipCut,
           minWithdrawalLimit: minWithdrawalLimit
         })
       });
-    } catch (err) {}
+      const data = await res.json();
+      if (data.data?.commissionSettings?.historyLogs) {
+        setHistoryLogs(data.data.commissionSettings.historyLogs);
+      } else {
+        setHistoryLogs(prev => [
+          { id: `LOG-${Date.now().toString().slice(-4)}`, date: 'Just now', title: `Platform Cut set to ${globalCut}%`, detail: `Minimum withdrawal limit set to ₹${minWithdrawalLimit}.`, admin: 'Super Admin' },
+          ...prev
+        ]);
+      }
+      toast.success('Commission rates & payout settings saved to database!', 'Settings Saved');
+    } catch (err) {
+      toast.error('Failed to save commission settings to database.', 'Save Failed');
+    }
 
     setSavedSuccess(true);
     setTimeout(() => setSavedSuccess(false), 2500);
   };
 
   return (
-    <div className="rounded-2xl bg-[#13131A] border border-[#1C1C26] p-5 shadow-xl space-y-6 animate-fade-in">
+    <div className="rounded-2xl bg-[#13131A] border border-[#1C1C26] p-5 lg:p-8 shadow-2xl space-y-6 mt-2 animate-fade-in">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#1C1C26] pb-4">
         <div className="flex items-center gap-3">
@@ -76,21 +99,19 @@ export default function CommissionSettings({ activeSubTab }) {
         <div className="flex items-center gap-2">
           <button
             onClick={() => setActiveTabState('settings')}
-            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
-              activeTabState === 'settings'
-                ? 'bg-brand-gradient text-[#0A0A0F]'
-                : 'bg-[#1C1C26] text-[#8B8B96] hover:text-white'
-            }`}
+            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${activeTabState === 'settings'
+              ? 'bg-brand-gradient text-[#0A0A0F]'
+              : 'bg-[#1C1C26] text-[#8B8B96] hover:text-white'
+              }`}
           >
             Commission Settings
           </button>
           <button
             onClick={() => setActiveTabState('history')}
-            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
-              activeTabState === 'history'
-                ? 'bg-brand-gradient text-[#0A0A0F]'
-                : 'bg-[#1C1C26] text-[#8B8B96] hover:text-white'
-            }`}
+            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${activeTabState === 'history'
+              ? 'bg-brand-gradient text-[#0A0A0F]'
+              : 'bg-[#1C1C26] text-[#8B8B96] hover:text-white'
+              }`}
           >
             Commission History
           </button>

@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import PlatformIcon from './PlatformIcon';
 import LiveBadge from './LiveBadge';
 import Link from 'next/link';
+import { useToast } from '@/context/ToastContext';
+import { setCreatorSession } from '@/utils/cookies';
 
 import {
   User,
@@ -25,6 +27,7 @@ import {
 import { API_ENDPOINTS } from '@/config/api';
 
 export default function CreatorRegisterForm({ onClose, onComplete }) {
+  const { toast } = useToast();
   const [authMode, setAuthMode] = useState('register'); // 'register' | 'kyc_pending'
   const [step, setStep] = useState(1);
   const [showPassword, setShowPassword] = useState(false);
@@ -33,6 +36,8 @@ export default function CreatorRegisterForm({ onClose, onComplete }) {
 
   // Form State
   const [formData, setFormData] = useState({
+    firstname: '',
+    lastname: '',
     fullName: '',
     email: '',
     mobileNumber: '',
@@ -72,6 +77,11 @@ export default function CreatorRegisterForm({ onClose, onComplete }) {
   ];
 
   const handleInputChange = (field, value) => {
+    if (field === 'mobileNumber') {
+      const digitsOnly = String(value || '').replace(/\D/g, '').slice(0, 10);
+      setFormData(prev => ({ ...prev, [field]: digitsOnly }));
+      return;
+    }
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
@@ -108,9 +118,32 @@ export default function CreatorRegisterForm({ onClose, onComplete }) {
     }
   };
 
+  const handleNextStep = (e) => {
+    e.preventDefault();
+    if (!formData.firstname || !formData.lastname || !formData.email || !formData.mobileNumber || !formData.username || !formData.password) {
+      toast.error('Please fill in all required personal details before proceeding.', 'Incomplete Form');
+      return;
+    }
+
+    const cleanMobile = String(formData.mobileNumber || '').replace(/\D/g, '');
+    if (cleanMobile.length !== 10) {
+      toast.error('Mobile number must be exactly 10 digits.', 'Invalid Mobile Number');
+      return;
+    }
+
+    setStep(2);
+  };
+
   const handleRegisterSubmit = async (e) => {
     e.preventDefault();
     setErrorMsg('');
+
+    const cleanMobile = String(formData.mobileNumber || '').replace(/\D/g, '');
+    if (cleanMobile.length !== 10) {
+      toast.error('Mobile number must be exactly 10 digits.', 'Invalid Mobile Number');
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -130,26 +163,30 @@ export default function CreatorRegisterForm({ onClose, onComplete }) {
         };
 
         if (data.data?.token) {
-          localStorage.setItem('askme_token', data.data.token);
-          localStorage.setItem('askme_user', JSON.stringify(creatorData));
+          setCreatorSession(data.data.token, creatorData);
         }
 
         setRegisteredCreator(creatorData);
         setAuthMode('kyc_pending');
+        toast.success('Creator registration completed & saved to database!', 'Registration Successful');
         if (onComplete) onComplete(creatorData);
       } else {
-        setErrorMsg(data.message || data.error || 'Registration failed. Please check form details.');
+        const msg = data.message || data.error || 'Registration failed. Please check form details.';
+        setErrorMsg(msg);
+        toast.error(msg, 'Registration Failed');
       }
     } catch (err) {
-      setErrorMsg('Unable to connect to backend server at http://localhost:5000/api.');
+      const msg = 'Unable to connect to backend server at http://localhost:5000/api.';
+      setErrorMsg(msg);
+      toast.error(msg, 'Network Error');
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-[#0A0A0F]/85 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
-      <div className="w-full max-w-2xl rounded-3xl bg-[#13131A] border border-[#1C1C26] p-6 lg:p-8 shadow-2xl space-y-6 relative animate-in fade-in zoom-in duration-200">
+    <div className="fixed inset-0 z-50 bg-[#0A0A0F]/90 backdrop-blur-md overflow-y-auto p-4 sm:p-6 md:p-8 flex justify-center items-start sm:items-center min-h-full py-8 sm:py-12 my-auto">
+      <div className="w-full max-w-2xl max-h-[88vh] overflow-y-auto my-auto rounded-3xl bg-[#13131A] border border-[#1C1C26] p-6 lg:p-8 shadow-2xl space-y-6 relative animate-in fade-in zoom-in duration-200">
 
         {/* Close Button */}
         <button
@@ -173,71 +210,73 @@ export default function CreatorRegisterForm({ onClose, onComplete }) {
           </p>
         </div>
 
-        {/* Error Message Banner */}
-        {errorMsg && (
-          <div className="p-3.5 rounded-2xl bg-[#FF3D71]/10 border border-[#FF3D71]/30 text-[#FF3D71] text-xs font-bold flex items-center gap-2.5 animate-fade-in">
-            <AlertCircle className="h-4 w-4 shrink-0" />
-            <span>{errorMsg}</span>
-          </div>
-        )}
-
         {/* CREATOR REGISTRATION FORM */}
         {authMode === 'register' && (
           <form onSubmit={handleRegisterSubmit} className="space-y-6">
 
-            {/* Step Progress Bar */}
-            <div className="flex items-center justify-between gap-2 px-4 py-2 rounded-xl bg-[#0A0A0F] border border-[#1C1C26]">
-              <div className="flex items-center gap-2">
-                <span className={`h-6 w-6 rounded-full flex items-center justify-center text-xs font-bold ${step >= 1 ? 'bg-[#00F5D4] text-[#0A0A0F]' : 'bg-[#1C1C26] text-[#8B8B96]'
-                  }`}>
+            {/* Step Progress Indicator Bar */}
+            <div className="flex items-center justify-between gap-2 px-4 py-2.5 rounded-2xl bg-[#0A0A0F] border border-[#1C1C26]">
+              <button
+                type="button"
+                onClick={() => setStep(1)}
+                className="flex items-center gap-2 text-left focus:outline-none"
+              >
+                <span className={`h-6 w-6 rounded-full flex items-center justify-center text-xs font-bold ${step >= 1 ? 'bg-[#00F5D4] text-[#0A0A0F]' : 'bg-[#1C1C26] text-[#8B8B96]'}`}>
                   1
                 </span>
-                <span className="text-xs font-semibold text-white">Personal Details</span>
-              </div>
+                <span className={`text-xs font-bold ${step === 1 ? 'text-white' : 'text-[#8B8B96]'}`}>
+                  Personal Details
+                </span>
+              </button>
 
-              <span className="h-0.5 w-8 bg-[#1C1C26]"></span>
+              <span className="h-0.5 w-12 bg-[#1C1C26]"></span>
 
-              <div className="flex items-center gap-2">
-                <span className={`h-6 w-6 rounded-full flex items-center justify-center text-xs font-bold ${step >= 2 ? 'bg-[#00F5D4] text-[#0A0A0F]' : 'bg-[#1C1C26] text-[#8B8B96]'
-                  }`}>
+              <button
+                type="button"
+                onClick={handleNextStep}
+                className="flex items-center gap-2 text-left focus:outline-none"
+              >
+                <span className={`h-6 w-6 rounded-full flex items-center justify-center text-xs font-bold ${step >= 2 ? 'bg-[#00F5D4] text-[#0A0A0F]' : 'bg-[#1C1C26] text-[#8B8B96]'}`}>
                   2
                 </span>
-                <span className="text-xs font-semibold text-white">Social Links</span>
-              </div>
+                <span className={`text-xs font-bold ${step === 2 ? 'text-white' : 'text-[#8B8B96]'}`}>
+                  Social Media Links
+                </span>
+              </button>
             </div>
 
-            {/* STEP 1: Personal & Identity Info */}
+            {/* STEP 1: Personal Details */}
             {step === 1 && (
               <div className="space-y-4 animate-in fade-in duration-200">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {/* Full Name */}
+                  {/* First Name */}
                   <div>
-                    <label className="block text-xs font-semibold text-[#8B8B96] mb-1">Full Name *</label>
+                    <label className="block text-xs font-semibold text-[#8B8B96] mb-1">First Name *</label>
                     <div className="relative">
                       <User className="absolute left-3 top-2.5 h-4 w-4 text-[#8B8B96]" />
                       <input
                         type="text"
                         required
-                        value={formData.fullName}
-                        onChange={(e) => handleInputChange('fullName', e.target.value)}
-                        placeholder="e.g. Technical Burner"
+                        value={formData.firstname || ''}
+                        onChange={(e) => handleInputChange('firstname', e.target.value)}
+                        placeholder="e.g. Technical"
                         className="w-full rounded-xl bg-[#0A0A0F] border border-[#1C1C26] pl-9 pr-3 py-2 text-xs text-white placeholder-[#8B8B96] focus:border-[#00F5D4] focus:outline-none"
                       />
                     </div>
                   </div>
 
-                  {/* Username */}
+                  {/* Last Name */}
                   <div>
-                    <label className="block text-xs font-semibold text-[#8B8B96] mb-1">Username *</label>
+                    <label className="block text-xs font-semibold text-[#8B8B96] mb-1">Last Name *</label>
                     <div className="relative">
-                      <AtSign className="absolute left-3 top-2.5 h-4 w-4 text-[#00F5D4]" />
+                      <User className="absolute left-3 top-2.5 h-4 w-4 text-[#8B8B96]" />
                       <input
                         type="text"
                         required
-                        value={formData.username}
-                        onChange={(e) => handleInputChange('username', e.target.value)}
-                        placeholder="techburner"
-                        className="w-full rounded-xl bg-[#0A0A0F] border border-[#1C1C26] pl-9 pr-3 py-2 text-xs text-white placeholder-[#8B8B96] focus:border-[#00F5D4] focus:outline-none font-mono"
+                        value={formData.lastname || ''}
+                        onChange={(e) => handleInputChange('lastname', e.target.value)}
+                        placeholder="e.g. Burner"
+                        className="w-full rounded-xl bg-[#0A0A0F] border border-[#1C1C26] pl-9 pr-3 py-2 text-xs text-white placeholder-[#8B8B96] focus:border-[#00F5D4] focus:outline-none"
                       />
                     </div>
                   </div>
@@ -262,15 +301,18 @@ export default function CreatorRegisterForm({ onClose, onComplete }) {
 
                   {/* Mobile Number */}
                   <div>
-                    <label className="block text-xs font-semibold text-[#8B8B96] mb-1">Mobile Number *</label>
+                    <label className="block text-xs font-semibold text-[#8B8B96] mb-1">Mobile Number * (10 Digits)</label>
                     <div className="relative">
                       <Phone className="absolute left-3 top-2.5 h-4 w-4 text-[#8B8B96]" />
                       <input
-                        type="tel"
+                        type="text"
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        maxLength={10}
                         required
-                        value={formData.mobileNumber}
+                        value={formData.mobileNumber || ''}
                         onChange={(e) => handleInputChange('mobileNumber', e.target.value)}
-                        placeholder="+91 98765 43210"
+                        placeholder="9876543210"
                         className="w-full rounded-xl bg-[#0A0A0F] border border-[#1C1C26] pl-9 pr-3 py-2 text-xs text-white placeholder-[#8B8B96] focus:border-[#00F5D4] focus:outline-none font-mono"
                       />
                     </div>
@@ -278,6 +320,22 @@ export default function CreatorRegisterForm({ onClose, onComplete }) {
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {/* Username */}
+                  <div>
+                    <label className="block text-xs font-semibold text-[#8B8B96] mb-1">Username *</label>
+                    <div className="relative">
+                      <AtSign className="absolute left-3 top-2.5 h-4 w-4 text-[#00F5D4]" />
+                      <input
+                        type="text"
+                        required
+                        value={formData.username}
+                        onChange={(e) => handleInputChange('username', e.target.value)}
+                        placeholder="techburner"
+                        className="w-full rounded-xl bg-[#0A0A0F] border border-[#1C1C26] pl-9 pr-3 py-2 text-xs text-white placeholder-[#8B8B96] focus:border-[#00F5D4] focus:outline-none font-mono"
+                      />
+                    </div>
+                  </div>
+
                   {/* Password */}
                   <div>
                     <label className="block text-xs font-semibold text-[#8B8B96] mb-1">Password *</label>
@@ -319,59 +377,6 @@ export default function CreatorRegisterForm({ onClose, onComplete }) {
                   </div>
                 </div>
 
-                {/* Social Media Link Dropdown Section (After Country) */}
-                <div className="space-y-3 pt-3 border-t border-[#1C1C26]">
-                  <div className="flex items-center justify-between">
-                    <label className="text-xs font-semibold text-white flex items-center gap-1.5">
-                      <Sparkles className="h-3.5 w-3.5 text-[#00F5D4]" />
-                      Social Media Links (Select Platform from Dropdown)
-                    </label>
-                    <button
-                      type="button"
-                      onClick={handleAddSocialLink}
-                      className="text-[11px] font-bold text-[#00F5D4] hover:underline flex items-center gap-1"
-                    >
-                      + Add Platform Link
-                    </button>
-                  </div>
-
-                  {formData.socialLinks.map((item, idx) => (
-                    <div key={idx} className="flex items-center gap-2">
-                      {/* Dropdown Selector */}
-                      <select
-                        value={item.platform}
-                        onChange={(e) => handleUpdateSocialLink(idx, 'platform', e.target.value)}
-                        className="w-44 rounded-xl bg-[#0A0A0F] border border-[#1C1C26] px-3 py-2 text-xs text-white focus:border-[#00F5D4] focus:outline-none font-semibold shrink-0"
-                      >
-                        {socialPlatforms.map(p => (
-                          <option key={p.value} value={p.value} className="bg-[#0A0A0F] text-white">
-                            {p.icon} {p.label}
-                          </option>
-                        ))}
-                      </select>
-
-                      {/* URL / Handle Input */}
-                      <input
-                        type="text"
-                        value={item.link}
-                        onChange={(e) => handleUpdateSocialLink(idx, 'link', e.target.value)}
-                        placeholder={`Enter ${item.platform} URL or @handle...`}
-                        className="flex-1 rounded-xl bg-[#0A0A0F] border border-[#1C1C26] px-3 py-2 text-xs text-white placeholder-[#8B8B96] focus:border-[#00F5D4] focus:outline-none font-mono"
-                      />
-
-                      {formData.socialLinks.length > 1 && (
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveSocialLink(idx)}
-                          className="p-2 rounded-xl bg-[#1C1C26] text-[#8B8B96] hover:text-[#FF5252] hover:bg-[#FF5252]/10 transition-colors"
-                        >
-                          <X className="h-3.5 w-3.5" />
-                        </button>
-                      )}
-                    </div>
-                  ))}
-                </div>
-
                 {/* Avatar & Profile Image Upload */}
                 <div>
                   <label className="block text-xs font-semibold text-[#8B8B96] mb-1.5">Profile Image</label>
@@ -404,14 +409,90 @@ export default function CreatorRegisterForm({ onClose, onComplete }) {
                 </div>
 
                 <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="w-full py-2.5 rounded-xl bg-brand-gradient text-[#0A0A0F] font-bold text-xs shadow-md glow-teal hover:opacity-95 transition-all flex items-center justify-center gap-1.5 disabled:opacity-50"
+                  type="button"
+                  onClick={handleNextStep}
+                  className="w-full py-2.5 rounded-xl bg-brand-gradient text-[#0A0A0F] font-bold text-xs shadow-md glow-teal hover:opacity-95 transition-all flex items-center justify-center gap-1.5"
                 >
-                  <Sparkles className="h-4 w-4" /> {isSubmitting ? 'Registering Creator Account...' : 'Complete Creator Registration'}
+                  <span>Next: Social Links</span> <ArrowRight className="h-4 w-4" />
                 </button>
               </div>
             )}
+
+            {/* STEP 2: Social Media Links */}
+            {step === 2 && (
+              <div className="space-y-4 animate-in fade-in duration-200">
+                <div className="p-4 rounded-2xl bg-[#0A0A0F] border border-[#1C1C26] space-y-3">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-semibold text-white flex items-center gap-1.5">
+                      <Sparkles className="h-3.5 w-3.5 text-[#00F5D4]" />
+                      Social Media Links (Select Platform from Dropdown)
+                    </label>
+                    <button
+                      type="button"
+                      onClick={handleAddSocialLink}
+                      className="text-[11px] font-bold text-[#00F5D4] hover:underline flex items-center gap-1"
+                    >
+                      + Add Platform Link
+                    </button>
+                  </div>
+
+                  {formData.socialLinks.map((item, idx) => (
+                    <div key={idx} className="flex items-center gap-2">
+                      {/* Dropdown Selector */}
+                      <select
+                        value={item.platform}
+                        onChange={(e) => handleUpdateSocialLink(idx, 'platform', e.target.value)}
+                        className="w-44 rounded-xl bg-[#13131A] border border-[#1C1C26] px-3 py-2 text-xs text-white focus:border-[#00F5D4] focus:outline-none font-semibold shrink-0"
+                      >
+                        {socialPlatforms.map(p => (
+                          <option key={p.value} value={p.value} className="bg-[#0A0A0F] text-white">
+                            {p.icon} {p.label}
+                          </option>
+                        ))}
+                      </select>
+
+                      {/* URL / Handle Input */}
+                      <input
+                        type="text"
+                        value={item.link}
+                        onChange={(e) => handleUpdateSocialLink(idx, 'link', e.target.value)}
+                        placeholder={`Enter ${item.platform} URL or @handle...`}
+                        className="flex-1 rounded-xl bg-[#13131A] border border-[#1C1C26] px-3 py-2 text-xs text-white placeholder-[#8B8B96] focus:border-[#00F5D4] focus:outline-none font-mono"
+                      />
+
+                      {formData.socialLinks.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveSocialLink(idx)}
+                          className="p-2 rounded-xl bg-[#1C1C26] text-[#8B8B96] hover:text-[#FF5252] hover:bg-[#FF5252]/10 transition-colors"
+                        >
+                          <X className="h-3.5 w-3.5" />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+
+                <div className="flex items-center gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setStep(1)}
+                    className="px-4 py-2.5 rounded-xl bg-[#1C1C26] text-[#8B8B96] hover:text-white font-bold text-xs transition flex items-center gap-1.5"
+                  >
+                    <ArrowLeft className="h-4 w-4" /> Back
+                  </button>
+
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="flex-1 py-2.5 rounded-xl bg-brand-gradient text-[#0A0A0F] font-bold text-xs shadow-md glow-teal hover:opacity-95 transition-all flex items-center justify-center gap-1.5 disabled:opacity-50"
+                  >
+                    <Sparkles className="h-4 w-4" /> {isSubmitting ? 'Registering Creator Account...' : 'Complete Creator Registration'}
+                  </button>
+                </div>
+              </div>
+            )}
+
             <div className="text-center pt-3 border-t border-[#1C1C26]">
               <span className="text-xs text-[#8B8B96]">Already have a Creator account? </span>
               <Link href="/creators/login" className="text-xs font-bold text-[#00F5D4] hover:underline">
@@ -446,7 +527,7 @@ export default function CreatorRegisterForm({ onClose, onComplete }) {
               <div className="grid grid-cols-2 gap-2 text-left text-xs bg-[#13131A] p-4 rounded-2xl border border-[#1C1C26]">
                 <div>
                   <span className="text-[#8B8B96] block text-[10px]">Handle</span>
-                  <span className="font-mono text-[#00F5D4] font-bold">@{registeredCreator.username || 'creator'}</span>
+                  <span className="font-mono text-[#00F5D4] font-bold">@{String(registeredCreator.username || 'creator').replace(/^@+/, '')}</span>
                 </div>
                 <div>
                   <span className="text-[#8B8B96] block text-[10px]">Country</span>
@@ -474,16 +555,9 @@ export default function CreatorRegisterForm({ onClose, onComplete }) {
                 onClick={() => {
                   window.location.href = '/creators/kyc';
                 }}
-                className="w-full sm:flex-1 py-2.5 rounded-xl bg-brand-gradient text-[#0A0A0F] text-xs font-bold shadow-md glow-teal hover:opacity-95 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                className="w-full py-2.5 rounded-xl bg-brand-gradient text-[#0A0A0F] text-xs font-bold shadow-md glow-teal hover:opacity-95 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
               >
                 Complete KYC Verification Now <ArrowRight className="h-4 w-4" />
-              </button>
-              <button
-                type="button"
-                onClick={onClose}
-                className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-[#1C1C26] text-white text-xs font-bold hover:bg-[#1C1C26]/80 transition-colors border border-[#1C1C26]"
-              >
-                Return to Dashboard
               </button>
             </div>
           </div>

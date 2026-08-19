@@ -17,6 +17,7 @@ const {
   getPayments,
   getCreatorWallets,
   getCommissionLedger,
+  updateCreatorBalance,
   getWithdrawals,
   approveWithdrawal,
   rejectWithdrawal,
@@ -59,6 +60,7 @@ router.get('/payments', getPayments);
 
 // 6. Wallets & Commission Ledger
 router.get('/wallets/creators', getCreatorWallets);
+router.put('/wallets/creators/:creatorId', updateCreatorBalance);
 router.get('/wallets/ledger', getCommissionLedger);
 
 // 7. Withdrawals & Payouts

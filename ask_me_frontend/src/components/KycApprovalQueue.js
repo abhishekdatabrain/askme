@@ -2,51 +2,14 @@ import React, { useState, useEffect } from 'react';
 import PlatformIcon from './PlatformIcon';
 import { ShieldCheck, ShieldAlert, Check, X, Eye, FileText, CheckCircle2, AlertCircle, Building2, AlertTriangle } from 'lucide-react';
 import { API_ENDPOINTS } from '@/config/api';
+import { useToast } from '@/context/ToastContext';
+import { getAdminToken } from '@/utils/cookies';
 
 export default function KycApprovalQueue({ activeSubTab }) {
+  const { toast } = useToast();
   const [kycRequests, setKycRequests] = useState([
-    {
-      id: 'KYC-501',
-      creatorName: 'TechBurner Live',
-      handle: '@techburner',
-      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80',
-      docType: 'PAN + GST Verification',
-      idNumber: 'ABCDE1234F',
-      bankDetails: 'HDFC Bank **** 9821 (IFSC: HDFC0000240)',
-      upiId: 'techburner@okaxis',
-      submittedDate: '10 Aug 2026',
-      status: 'pending',
-      platform: 'youtube',
-    },
-    {
-      id: 'KYC-502',
-      creatorName: 'FinCal Strategy',
-      handle: '@fincal_live',
-      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=80',
-      docType: 'Aadhaar + Business License',
-      idNumber: '9982-1234-5678',
-      bankDetails: 'ICICI Bank **** 4410 (IFSC: ICIC0001020)',
-      upiId: 'fincal@icici',
-      submittedDate: '09 Aug 2026',
-      status: 'verified',
-      platform: 'youtube',
-    },
-    {
-      id: 'KYC-503',
-      creatorName: 'GamerX Xtreme',
-      handle: '@gamerx_live',
-      avatar: 'https://images.unsplash.com/photo-1566492031773-4f4e44671857?auto=format&fit=crop&w=400&q=80',
-      docType: 'National ID Passport',
-      idNumber: 'Z8920192',
-      bankDetails: 'State Bank of India **** 1102',
-      upiId: 'gamerx@sbi',
-      submittedDate: '08 Aug 2026',
-      status: 'action_required',
-      rejectionReason: 'ID Document signature illegible. Re-upload clear PAN card.',
-      platform: 'twitch',
-    },
   ]);
-
+  console.log(kycRequests, "kycRequests");
   const [selectedFilter, setSelectedFilter] = useState('all');
   const [selectedDocModal, setSelectedDocModal] = useState(null);
   const [rejectingItem, setRejectingItem] = useState(null);
@@ -55,25 +18,38 @@ export default function KycApprovalQueue({ activeSubTab }) {
   useEffect(() => {
     const fetchKycList = async () => {
       try {
-        const token = localStorage.getItem('askme_token');
+        const token = getAdminToken();
         const res = await fetch(API_ENDPOINTS.ADMIN.KYC, {
           headers: { Authorization: `Bearer ${token}` }
         });
         const data = await res.json();
+        console.log(data, "kyc");
         if (data.status === 'success' && data.data?.kycApplications) {
-          setKycRequests(data.data.kycApplications.map(k => ({
-            id: `KYC-${k.id}`,
-            creatorName: k.name,
-            handle: `@${k.name.toLowerCase().replace(/\s+/g, '')}`,
-            docType: 'PAN + GST Verification',
-            idNumber: k.pan,
-            bankDetails: k.bankAccount,
-            upiId: k.upiId,
-            submittedDate: k.submittedAt,
-            status: k.status === 'Approved' ? 'verified' : k.status === 'Rejected' ? 'action_required' : 'pending',
-            rejectionReason: k.rejectionReason || '',
-            platform: 'youtube'
-          })));
+          const formattedApplications = data.data.kycApplications.map((app, index) => {
+            const rawStatus = String(app.status || app.kycStatus || 'pending').toLowerCase();
+            let status = 'pending';
+            if (rawStatus === 'approved' || rawStatus === 'verified') status = 'verified';
+            else if (rawStatus === 'rejected' || rawStatus === 'action_required') status = 'action_required';
+
+            const id = app.id || app.creatorId || app.kycId || `kyc-${index}`;
+            const creatorId = app.creatorId || app.id || id;
+
+            return {
+              ...app,
+              id,
+              creatorId,
+              creatorName: app.creatorName || app.name || app.accountHolderName || 'Creator',
+              handle: app.handle || (app.username ? `@${app.username}` : '') || app.email || '',
+              platform: app.platform || 'Youtube',
+              docType: app.docType || app.documentType || (app.pan ? 'PAN Card' : 'Government ID'),
+              idNumber: app.idNumber || app.documentNumber || app.pan || 'N/A',
+              bankDetails: app.bankDetails || (app.bankName ? `${app.bankName} ${app.accountNumber ? `(${app.accountNumber})` : ''}`.trim() : 'N/A'),
+              upiId: app.upiId || 'N/A',
+              status,
+              rejectionReason: app.rejectionReason || null,
+            };
+          });
+          setKycRequests(formattedApplications);
         }
       } catch (err) {
         console.warn('API fetch KYC warning:', err.message);
@@ -89,44 +65,117 @@ export default function KycApprovalQueue({ activeSubTab }) {
       setSelectedFilter('verified');
     } else if (activeSubTab === 'kyc_rejected') {
       setSelectedFilter('action_required');
-    } else if (activeSubTab === 'kyc_details') {
-      if (kycRequests.length > 0) {
-        setSelectedDocModal(kycRequests[0]);
-      }
+    } else if (activeSubTab === 'user_agreement' || activeSubTab === 'kyc_details') {
+      setSelectedFilter('user_agreement');
     }
   }, [activeSubTab]);
 
   const handleUpdateStatus = async (id, newStatus, reason = '') => {
-    const token = localStorage.getItem('askme_token');
-    const numericId = id.replace('KYC-', '');
-    const headers = { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` };
-
     try {
-      if (newStatus === 'verified') {
-        await fetch(`${API_ENDPOINTS.ADMIN.KYC}/${numericId}/approve`, { method: 'PUT', headers });
-      } else if (newStatus === 'action_required') {
-        await fetch(`${API_ENDPOINTS.ADMIN.KYC}/${numericId}/reject`, { method: 'PUT', headers, body: JSON.stringify({ reason }) });
+      console.log(newStatus, "newStatus");
+      if (!id) {
+        toast.error('KYC ID is missing.', 'Invalid Request');
+        return;
       }
-    } catch (e) {}
 
-    setKycRequests(prev => prev.map(item => item.id === id ? {
-      ...item,
-      status: newStatus,
-      rejectionReason: reason || item.rejectionReason
-    } : item));
+      const token = getAdminToken();
+
+      // If id is KYC-123, get 123
+      // If id is already 123, keep 123
+      const numericId = String(id).replace(/^KYC-/, '');
+
+      const headers = {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      };
+
+      const targetItem = kycRequests.find(
+        item => String(item.id) === String(id) || String(item.creatorId) === String(id)
+      );
+
+      let response;
+
+      if (newStatus === 'verified') {
+        response = await fetch(
+          `${API_ENDPOINTS.ADMIN.KYC}/${numericId}/approve`,
+          {
+            method: 'PUT',
+            headers,
+          }
+        );
+      } else if (newStatus === 'action_required') {
+        response = await fetch(
+          `${API_ENDPOINTS.ADMIN.KYC}/${numericId}/reject`,
+          {
+            method: 'PUT',
+            headers,
+            body: JSON.stringify({
+              reason,
+            }),
+          }
+        );
+      } else {
+        return;
+      }
+
+      // fetch() does NOT throw for 400/404/500
+      // So we need to check response.ok
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+
+        throw new Error(
+          errorData.message || `Request failed with status ${response.status}`
+        );
+      }
+
+      // Update UI only after backend successfully updates
+      setKycRequests(prev =>
+        prev.map(item =>
+          String(item.id) === String(id) || String(item.creatorId) === String(id)
+            ? {
+              ...item,
+              status: newStatus,
+              rejectionReason:
+                reason || item.rejectionReason,
+            }
+            : item
+        )
+      );
+
+      if (newStatus === 'verified') {
+        toast.success(
+          `KYC Approved for ${targetItem?.creatorName || 'Creator'} & updated in database!`,
+          'KYC Approved'
+        );
+      } else if (newStatus === 'action_required') {
+        toast.error(
+          `KYC Rejected for ${targetItem?.creatorName || 'Creator'}. Rejection reason saved in database.`,
+          'KYC Rejected'
+        );
+      }
+
+    } catch (error) {
+      console.error('KYC status update error:', error);
+
+      toast.error(
+        error.message || 'Failed to update KYC status in backend database.',
+        'Database Sync Error'
+      );
+    }
   };
 
   const confirmRejection = (e) => {
     e.preventDefault();
     if (rejectingItem) {
-      handleUpdateStatus(rejectingItem.id, 'action_required', rejectionReasonText || 'Document verification failed.');
+      handleUpdateStatus(rejectingItem.creatorId || rejectingItem.id, 'action_required', rejectionReasonText || 'Document verification failed.');
       setRejectingItem(null);
       setRejectionReasonText('');
     }
   };
 
   const filteredRequests = kycRequests.filter(item => {
-    if (selectedFilter === 'all') return true;
+    if (selectedFilter === 'pending') return true;
+
     return item.status === selectedFilter;
   });
 
@@ -156,11 +205,10 @@ export default function KycApprovalQueue({ activeSubTab }) {
             <button
               key={f.id}
               onClick={() => setSelectedFilter(f.id)}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
-                selectedFilter === f.id
-                  ? 'bg-brand-gradient text-[#0A0A0F]'
-                  : 'bg-[#1C1C26] text-[#8B8B96] hover:text-white'
-              }`}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${selectedFilter === f.id
+                ? 'bg-brand-gradient text-[#0A0A0F]'
+                : 'bg-[#1C1C26] text-[#8B8B96] hover:text-white'
+                }`}
             >
               {f.label}
             </button>
@@ -170,9 +218,9 @@ export default function KycApprovalQueue({ activeSubTab }) {
 
       {/* Queue Items */}
       <div className="space-y-3">
-        {filteredRequests.map((item) => (
+        {filteredRequests.map((item, index) => (
           <div
-            key={item.id}
+            key={item.id || item.creatorId || item.kycId || `kyc-${index}`}
             className="p-4 rounded-xl bg-[#0A0A0F] border border-[#1C1C26] flex flex-col md:flex-row md:items-center justify-between gap-4"
           >
             <div className="flex items-center gap-3">
@@ -202,11 +250,10 @@ export default function KycApprovalQueue({ activeSubTab }) {
             </div>
 
             <div className="flex items-center justify-between md:justify-end gap-3 border-t md:border-t-0 border-[#1C1C26] pt-3 md:pt-0">
-              <span className={`px-2.5 py-1 rounded-full text-xs font-bold flex items-center gap-1 ${
-                item.status === 'verified' ? 'bg-[#00E676]/10 text-[#00E676] border border-[#00E676]/30' :
+              <span className={`px-2.5 py-1 rounded-full text-xs font-bold flex items-center gap-1 ${item.status === 'verified' ? 'bg-[#00E676]/10 text-[#00E676] border border-[#00E676]/30' :
                 item.status === 'pending' ? 'bg-[#FFD60A]/10 text-[#FFD60A] border border-[#FFD60A]/30' :
-                'bg-[#FF3D71]/10 text-[#FF3D71] border border-[#FF3D71]/30'
-              }`}>
+                  'bg-[#FF3D71]/10 text-[#FF3D71] border border-[#FF3D71]/30'
+                }`}>
                 {item.status === 'verified' && <CheckCircle2 className="h-3.5 w-3.5" />}
                 {item.status === 'pending' && <AlertCircle className="h-3.5 w-3.5" />}
                 {item.status === 'action_required' && <X className="h-3.5 w-3.5" />}
@@ -224,7 +271,7 @@ export default function KycApprovalQueue({ activeSubTab }) {
                 {item.status === 'pending' && (
                   <>
                     <button
-                      onClick={() => handleUpdateStatus(item.id, 'verified')}
+                      onClick={() => handleUpdateStatus(item.creatorId || item.id, 'verified')}
                       className="px-3 py-1.5 rounded-xl bg-[#00E676] text-[#0A0A0F] font-bold text-xs hover:opacity-90 transition"
                     >
                       Approve KYC
@@ -248,8 +295,8 @@ export default function KycApprovalQueue({ activeSubTab }) {
 
       {/* Reject KYC with Reason Modal (Requirement #16) */}
       {rejectingItem && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <form onSubmit={confirmRejection} className="bg-[#13131A] border border-[#1C1C26] rounded-2xl w-full max-w-md p-6 space-y-4 animate-scale-up">
+        <div className="fixed inset-0 bg-black/85 backdrop-blur-md z-50 overflow-y-auto p-4 sm:p-6 flex justify-center items-start sm:items-center min-h-full py-8 my-auto">
+          <form onSubmit={confirmRejection} className="bg-[#13131A] border border-[#1C1C26] rounded-2xl w-full max-w-md p-6 space-y-4 max-h-[85vh] overflow-y-auto my-auto animate-scale-up">
             <div className="flex items-center justify-between border-b border-[#1C1C26] pb-3">
               <h3 className="font-bold text-white text-base flex items-center gap-2">
                 <AlertTriangle className="h-5 w-5 text-[#FF3D71]" />
@@ -295,8 +342,8 @@ export default function KycApprovalQueue({ activeSubTab }) {
 
       {/* KYC Details Modal */}
       {selectedDocModal && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-[#13131A] border border-[#1C1C26] rounded-2xl w-full max-w-lg p-6 space-y-4 animate-scale-up">
+        <div className="fixed inset-0 bg-black/85 backdrop-blur-md z-50 overflow-y-auto p-4 sm:p-6 flex justify-center items-start sm:items-center min-h-full py-8 my-auto">
+          <div className="bg-[#13131A] border border-[#1C1C26] rounded-2xl w-full max-w-lg p-6 space-y-4 max-h-[85vh] overflow-y-auto my-auto animate-scale-up">
             <div className="flex items-center justify-between border-b border-[#1C1C26] pb-3">
               <h3 className="font-bold text-white text-base flex items-center gap-2">
                 <ShieldCheck className="h-5 w-5 text-[#00F5D4]" />

@@ -278,10 +278,10 @@ const login = async (req, res, next) => {
       {
         httpOnly: true,
 
-        secure: process.env.NODE_ENV === "production",
+        secure: process.env.NODE_ENV === "development",
 
         sameSite:
-          process.env.NODE_ENV === "production"
+          process.env.NODE_ENV === "development"
             ? "none"
             : "lax",
 

@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Activity, Radio, Shield, Send, CheckCircle2, Server, Key, Lock, AlertCircle, User, CreditCard, Sliders, Save } from 'lucide-react';
 import { API_ENDPOINTS } from '@/config/api';
+import { useToast } from '@/context/ToastContext';
+import { getAdminToken } from '@/utils/cookies';
 
 export default function PlatformOperations({ activeSubTab }) {
+  const { toast } = useToast();
   const [activeSection, setActiveSection] = useState('platform');
   const [broadcastMessage, setBroadcastMessage] = useState('');
   const [broadcastSent, setBroadcastSent] = useState(false);
@@ -13,23 +16,23 @@ export default function PlatformOperations({ activeSubTab }) {
   const [adminEmail, setAdminEmail] = useState('admin@askme.pro');
 
   useEffect(() => {
-    const fetchOperations = async () => {
+    const fetchSettings = async () => {
       try {
-        const token = localStorage.getItem('askme_token');
+        const token = getAdminToken();
         const res = await fetch(API_ENDPOINTS.ADMIN.OPERATIONS, {
           headers: { Authorization: `Bearer ${token}` }
         });
         const data = await res.json();
-        if (data.status === 'success' && data.data?.settings) {
-          if (data.data.settings.broadcastMessage) {
-            setBroadcastMessage(data.data.settings.broadcastMessage);
-          }
+        if (data.status === 'success' && data.data?.platformSettings) {
+          const s = data.data.platformSettings;
+          if (s.adminName) setAdminName(s.adminName);
+          if (s.adminEmail) setAdminEmail(s.adminEmail);
         }
       } catch (err) {
-        console.warn('API fetch operations warning:', err.message);
+        console.warn('API fetch platform settings warning:', err.message);
       }
     };
-    fetchOperations();
+    fetchSettings();
   }, []);
 
   useEffect(() => {
@@ -44,14 +47,17 @@ export default function PlatformOperations({ activeSubTab }) {
 
   const handleSendBroadcast = async (e) => {
     e.preventDefault();
-    const token = localStorage.getItem('askme_token');
+    const token = getAdminToken();
     try {
       await fetch(API_ENDPOINTS.ADMIN.OPERATIONS, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ broadcastMessage })
       });
-    } catch (err) {}
+      toast.success('System broadcast announcement dispatched to live stream overlays!', 'Broadcast Dispatched');
+    } catch (err) {
+      toast.error('Failed to send system broadcast message.', 'Broadcast Failed');
+    }
 
     setBroadcastSent(true);
     setTimeout(() => {
@@ -60,8 +66,20 @@ export default function PlatformOperations({ activeSubTab }) {
     }, 2500);
   };
 
-  const handleSaveProfile = (e) => {
+  const handleSaveProfile = async (e) => {
     e.preventDefault();
+    const token = getAdminToken();
+    try {
+      await fetch(API_ENDPOINTS.ADMIN.OPERATIONS, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ adminName, adminEmail })
+      });
+      toast.success('Admin profile & platform configurations saved to database!', 'Settings Saved');
+    } catch (err) {
+      toast.error('Failed to save settings to database.', 'Save Error');
+    }
+
     setSavedSettings(true);
     setTimeout(() => setSavedSettings(false), 2500);
   };

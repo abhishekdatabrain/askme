@@ -2,8 +2,11 @@ import React, { useState, useEffect } from 'react';
 import AskMePayBadge from './AskMePayBadge';
 import { DollarSign, ArrowUpRight, CheckCircle2, Clock, AlertTriangle, Send, Wallet, Download, XCircle, Ban } from 'lucide-react';
 import { API_ENDPOINTS } from '@/config/api';
+import { useToast } from '@/context/ToastContext';
+import { getAdminToken } from '@/utils/cookies';
 
 export default function WithdrawalsManager({ activeSubTab }) {
+  const { toast } = useToast();
   const [withdrawals, setWithdrawals] = useState([
     {
       id: 'WTH-501',
@@ -32,21 +35,21 @@ export default function WithdrawalsManager({ activeSubTab }) {
   useEffect(() => {
     const fetchWithdrawals = async () => {
       try {
-        const token = localStorage.getItem('askme_token');
+        const token = getAdminToken();
         const res = await fetch(API_ENDPOINTS.ADMIN.WITHDRAWALS, {
           headers: { Authorization: `Bearer ${token}` }
         });
         const data = await res.json();
         if (data.status === 'success' && data.data?.withdrawals) {
-          setWithdrawals(data.data.withdrawals.map(w => ({
-            id: w.id,
-            creator: w.creator,
+          setWithdrawals(data.data.withdrawals.map((w, idx) => ({
+            id: w.id ? (w.id.toString().startsWith('WTH') ? w.id : `WTH-${w.id}`) : `WTH-${idx + 500}`,
+            creator: w.creator || w.creatorName || 'Creator',
             grossRevenue: `₹${(w.amount || 0).toLocaleString()}`,
-            payoutAmount: `₹${(w.creatorNet || 0).toLocaleString()} (85%)`,
-            platformCut: `₹${(w.platformCut || 0).toLocaleString()} (15%)`,
-            bankDetails: w.bankAccount || 'HDFC Bank **** 4321',
-            status: w.status.toLowerCase(),
-            requestedDate: w.requestedAt || '10 Aug 2026',
+            payoutAmount: `₹${(w.creatorNet || (w.amount || 0) * 0.85).toLocaleString()} (85%)`,
+            platformCut: `₹${(w.platformCut || (w.amount || 0) * 0.15).toLocaleString()} (15%)`,
+            bankDetails: w.bankAccount || 'Bank Account Provided',
+            status: (w.status || 'pending').toLowerCase(),
+            requestedDate: w.requestedAt || 'Recent',
           })));
         }
       } catch (err) {
@@ -71,17 +74,24 @@ export default function WithdrawalsManager({ activeSubTab }) {
   }, [activeSubTab]);
 
   const handleUpdateStatus = async (id, newStatus) => {
-    const token = localStorage.getItem('askme_token');
+    const token = getAdminToken();
     const headers = { Authorization: `Bearer ${token}` };
+    const targetW = withdrawals.find(w => w.id === id);
+
     try {
       if (newStatus === 'approved') {
         await fetch(`${API_ENDPOINTS.ADMIN.WITHDRAWALS}/${id}/approve`, { method: 'PUT', headers });
+        toast.success(`Payout of ${targetW?.payoutAmount || ''} approved for ${targetW?.creator || 'Creator'}!`, 'Payout Approved');
       } else if (newStatus === 'rejected') {
         await fetch(`${API_ENDPOINTS.ADMIN.WITHDRAWALS}/${id}/reject`, { method: 'PUT', headers });
+        toast.error(`Payout request rejected for ${targetW?.creator || 'Creator'}.`, 'Payout Rejected');
       } else if (newStatus === 'paid' || newStatus === 'completed') {
         await fetch(`${API_ENDPOINTS.ADMIN.WITHDRAWALS}/${id}/mark-paid`, { method: 'PUT', headers });
+        toast.success(`Payout marked as Paid & transferred to ${targetW?.creator || 'Creator'}!`, 'Payout Completed');
       }
-    } catch (e) {}
+    } catch (e) {
+      toast.error('Failed to update payout status in backend database.', 'Database Sync Error');
+    }
 
     setWithdrawals(prev => prev.map(w => w.id === id ? { ...w, status: newStatus } : w));
   };

@@ -4,8 +4,11 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { Mail, Lock, Eye, EyeOff, Radio, Sparkles, CheckCircle2, AlertCircle, ArrowLeft } from 'lucide-react';
 import { API_ENDPOINTS } from '@/config/api';
+import { useToast } from '@/context/ToastContext';
+import { setCreatorSession } from '@/utils/cookies';
 
 export default function CreatorLoginPage() {
+  const { toast } = useToast();
   const [loginIdentifier, setLoginIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -38,9 +41,9 @@ export default function CreatorLoginPage() {
 
       if (response.ok && (data.status === 'success' || token) && creator) {
         const validToken = token || 'askme_jwt_creator_token';
-        localStorage.setItem('askme_token', validToken);
-        localStorage.setItem('askme_user', JSON.stringify(creator));
+        setCreatorSession(validToken, creator);
         setIsSubmitted(true);
+        toast.success('Creator Sign In Successful! Redirecting to Creator Studio...', 'Welcome Back');
 
         // --- Post-Login Routing Logic Based on Creator KYC Status ---
         const status = (creator.kycStatus || 'pending').toLowerCase();
@@ -59,10 +62,14 @@ export default function CreatorLoginPage() {
           window.location.href = targetUrl;
         }, 600);
       } else {
-        setErrorMsg(data.message || data.error || 'Invalid creator email/username or password.');
+        const msg = data.message || data.error || 'Invalid creator email/username or password.';
+        setErrorMsg(msg);
+        toast.error(msg, 'Login Failed');
       }
     } catch (err) {
-      setErrorMsg('Unable to connect to backend server at http://localhost:5000/api.');
+      const msg = 'Unable to connect to backend server at http://localhost:5000/api.';
+      setErrorMsg(msg);
+      toast.error(msg, 'Connection Error');
     } finally {
       setIsSubmitting(false);
     }
@@ -71,22 +78,11 @@ export default function CreatorLoginPage() {
   return (
     <div className="min-h-screen bg-[#0A0A0F] text-[#F5F5F7] flex flex-col justify-center items-center p-4 selection:bg-[#00F5D4] selection:text-[#0A0A0F]">
       <div className="w-full max-w-md space-y-4">
-        
+
         {/* Back Link */}
-        <div className="flex items-center justify-between">
-          <Link
-            href="/"
-            className="text-xs font-semibold text-[#8B8B96] hover:text-white flex items-center gap-1 transition"
-          >
-            <ArrowLeft className="h-3.5 w-3.5" /> Back to Home Page
-          </Link>
-          <span className="text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-full bg-[#00F5D4]/10 text-[#00F5D4] border border-[#00F5D4]/30">
-            CREATOR STUDIO
-          </span>
-        </div>
 
         <div className="rounded-3xl bg-[#13131A] border border-[#1C1C26] p-6 lg:p-8 shadow-2xl space-y-6">
-          
+
           {/* Header Branding */}
           <div className="text-center space-y-2">
             <div className="inline-flex items-center gap-2">
@@ -96,18 +92,10 @@ export default function CreatorLoginPage() {
               <span className="font-heading font-black text-2xl text-white">AskMe <span className="text-brand-gradient">STUDIO</span></span>
             </div>
             <h2 className="font-heading font-bold text-lg text-white">Creator Control Room Sign In</h2>
-            <p className="text-xs text-[#8B8B96]">
+            {/* <p className="text-xs text-[#8B8B96]">
               Sign in to access your Creator Dashboard, OBS Live Overlays, KYC status, & Payout Ledger.
-            </p>
+            </p> */}
           </div>
-
-          {/* Error Banner */}
-          {errorMsg && (
-            <div className="p-3.5 rounded-2xl bg-[#FF3D71]/10 border border-[#FF3D71]/30 text-[#FF3D71] text-xs font-bold flex items-center gap-2.5 animate-fade-in">
-              <AlertCircle className="h-4 w-4 shrink-0" />
-              <span>{errorMsg}</span>
-            </div>
-          )}
 
           {isSubmitted ? (
             <div className="p-6 rounded-2xl bg-[#00E676]/10 border border-[#00E676]/30 text-center space-y-2">
@@ -121,7 +109,7 @@ export default function CreatorLoginPage() {
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label className="block text-xs font-semibold text-[#8B8B96] mb-1">
-                  Creator Email or Username (@username)
+                  Email or Username
                 </label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-2.5 h-4 w-4 text-[#8B8B96]" />

@@ -1,5 +1,6 @@
 import { Space_Grotesk, Inter } from "next/font/google";
 import "./globals.css";
+import { ToastProvider } from "@/context/ToastContext";
 
 const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
@@ -25,7 +26,7 @@ export default function RootLayout({ children }) {
       className={`${spaceGrotesk.variable} ${inter.variable} dark h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-[#0A0A0F] text-[#F5F5F7] font-sans selection:bg-[#00F5D4] selection:text-[#0A0A0F]">
-        {children}
+        <ToastProvider>{children}</ToastProvider>
       </body>
     </html>
   );

@@ -15,40 +15,12 @@ import {
 import PlatformIcon from './PlatformIcon';
 import LiveBadge from './LiveBadge';
 import { API_ENDPOINTS } from '@/config/api';
+import { useToast } from '@/context/ToastContext';
+import { getAdminToken } from '@/utils/cookies';
 
 export default function LiveSessionManagement({ activeSubTab }) {
-  const [sessions, setSessions] = useState([
-    {
-      id: 'SESS-9081',
-      creatorName: 'TechBurner Live',
-      handle: '@techburner',
-      platform: 'youtube',
-      viewersCount: '18,400',
-      activeDuration: '1h 45m',
-      qrStatus: 'Active',
-      donationsTotal: '₹1,24,500',
-      questionsCount: 142,
-      overlaySocket: 'wss://obs.askme.pro/live/tb-801',
-      qrImageUrl: 'https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://askme.pro/ask/@techburner',
-      isSuspicious: false,
-      sessionStatus: 'Active'
-    },
-    {
-      id: 'SESS-9082',
-      creatorName: 'Rachana Ranade',
-      handle: '@ca_rachana',
-      platform: 'youtube',
-      viewersCount: '12,100',
-      activeDuration: '45m',
-      qrStatus: 'Active',
-      donationsTotal: '₹84,000',
-      questionsCount: 98,
-      overlaySocket: 'wss://obs.askme.pro/live/rr-802',
-      qrImageUrl: 'https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://askme.pro/ask/@ca_rachana',
-      isSuspicious: false,
-      sessionStatus: 'Active'
-    },
-  ]);
+  const { toast } = useToast();
+  const [sessions, setSessions] = useState([]);
 
   const [filter, setFilter] = useState('Active');
   const [selectedQrModal, setSelectedQrModal] = useState(null);
@@ -56,26 +28,26 @@ export default function LiveSessionManagement({ activeSubTab }) {
   useEffect(() => {
     const fetchLiveSessions = async () => {
       try {
-        const token = localStorage.getItem('askme_token');
+        const token = getAdminToken();
         const res = await fetch(API_ENDPOINTS.ADMIN.LIVE_SESSIONS, {
           headers: { Authorization: `Bearer ${token}` }
         });
         const data = await res.json();
         if (data.status === 'success' && data.data?.sessions) {
-          setSessions(data.data.sessions.map(s => ({
-            id: s.id,
-            creatorName: s.creator,
-            handle: `@${s.creator.toLowerCase().replace(/\s+/g, '')}`,
+          setSessions(data.data.sessions.map((s, idx) => ({
+            id: s.id ? (s.id.toString().startsWith('SES') ? s.id : `SES-${s.id}`) : `SES-${idx + 900}`,
+            creatorName: s.creator || '',
+            handle: `@${(s.creator || '').toLowerCase().replace(/\s+/g, '')}`,
             platform: 'youtube',
             viewersCount: typeof s.viewers === 'number' ? s.viewers.toLocaleString() : (s.viewers || '14,200'),
-            activeDuration: s.duration,
-            qrStatus: s.qrStatus,
+            activeDuration: s.duration || '',
+            qrStatus: s.qrStatus || '',
             donationsTotal: `₹${(s.totalDonations || 0).toLocaleString()}`,
             questionsCount: 120,
-            overlaySocket: `wss://obs.askme.pro/live/${s.id.toLowerCase()}`,
+            overlaySocket: `wss://obs.askme.pro/live/${(s.id || 'sess').toString().toLowerCase()}`,
             qrImageUrl: `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(s.streamUrl || 'https://askme.pro')}`,
             isSuspicious: s.qrStatus === 'Suspended',
-            sessionStatus: s.qrStatus
+            sessionStatus: s.qrStatus || 'Active'
           })));
         }
       } catch (err) {
@@ -96,13 +68,17 @@ export default function LiveSessionManagement({ activeSubTab }) {
   }, [activeSubTab]);
 
   const toggleSuspendSession = async (id) => {
-    const token = localStorage.getItem('askme_token');
+    const token = getAdminToken();
+    const targetSession = sessions.find(s => s.id === id);
     try {
       await fetch(`${API_ENDPOINTS.ADMIN.LIVE_SESSIONS}/${id}/disable`, {
         method: 'PUT',
         headers: { Authorization: `Bearer ${token}` }
       });
-    } catch (e) {}
+      toast.warning(`Live stream broadcast status toggled in database for ${targetSession?.creatorName || id}!`, 'Live Session Updated');
+    } catch (e) {
+      toast.error('Failed to update live session status in database.', 'Database Error');
+    }
 
     setSessions(prev => prev.map(s => {
       if (s.id === id) {
@@ -137,11 +113,10 @@ export default function LiveSessionManagement({ activeSubTab }) {
             <button
               key={status}
               onClick={() => setFilter(status)}
-              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
-                filter === status
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${filter === status
                   ? 'bg-brand-gradient text-[#0A0A0F]'
                   : 'bg-[#1C1C26] text-[#8B8B96] hover:text-white'
-              }`}
+                }`}
             >
               {status} Sessions
             </button>
@@ -154,11 +129,10 @@ export default function LiveSessionManagement({ activeSubTab }) {
         {filteredSessions.map((session) => (
           <div
             key={session.id}
-            className={`p-4 rounded-xl border transition-all ${
-              session.sessionStatus === 'Suspended'
+            className={`p-4 rounded-xl border transition-all ${session.sessionStatus === 'Suspended'
                 ? 'bg-[#1A0A0F] border-[#FF3D71]/40'
                 : 'bg-[#0A0A0F] border-[#1C1C26]'
-            }`}
+              }`}
           >
             <div className="flex items-center justify-between border-b border-[#1C1C26] pb-3 mb-3">
               <div className="flex items-center gap-2.5">
@@ -168,11 +142,10 @@ export default function LiveSessionManagement({ activeSubTab }) {
                   <span className="text-[10px] text-[#8B8B96]">{session.handle}</span>
                 </div>
               </div>
-              <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
-                session.sessionStatus === 'Active' ? 'bg-[#00E676]/10 text-[#00E676] border border-[#00E676]/30' :
-                session.sessionStatus === 'Closed' ? 'bg-[#1C1C26] text-[#8B8B96]' :
-                'bg-[#FF3D71]/20 text-[#FF3D71] border border-[#FF3D71]/40'
-              }`}>
+              <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${session.sessionStatus === 'Active' ? 'bg-[#00E676]/10 text-[#00E676] border border-[#00E676]/30' :
+                  session.sessionStatus === 'Closed' ? 'bg-[#1C1C26] text-[#8B8B96]' :
+                    'bg-[#FF3D71]/20 text-[#FF3D71] border border-[#FF3D71]/40'
+                }`}>
                 {session.sessionStatus}
               </span>
             </div>
@@ -201,11 +174,10 @@ export default function LiveSessionManagement({ activeSubTab }) {
               </span>
               <button
                 onClick={() => toggleSuspendSession(session.id)}
-                className={`px-3 py-1.5 rounded-xl font-bold text-xs transition flex items-center gap-1 ${
-                  session.sessionStatus === 'Suspended'
+                className={`px-3 py-1.5 rounded-xl font-bold text-xs transition flex items-center gap-1 ${session.sessionStatus === 'Suspended'
                     ? 'bg-[#00E676] text-[#0A0A0F]'
                     : 'bg-[#FF3D71]/10 text-[#FF3D71] hover:bg-[#FF3D71]/20 border border-[#FF3D71]/30'
-                }`}
+                  }`}
               >
                 <Ban className="h-3.5 w-3.5" />
                 {session.sessionStatus === 'Suspended' ? 'Enable Session' : 'Disable Suspicious Session'}

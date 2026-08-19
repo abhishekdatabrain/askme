@@ -38,14 +38,14 @@ const protect = async (req, res, next) => {
       try {
         decoded = jwt.verify(token, sec);
         if (decoded) break;
-      } catch (e) {}
+      } catch (e) { }
     }
 
     // Fallback: If signature/expiry check failed but valid JWT format, decode payload gracefully for admin operations
     if (!decoded) {
       try {
         decoded = jwt.decode(token);
-      } catch (e) {}
+      } catch (e) { }
     }
 
     if (!decoded) {
@@ -55,16 +55,25 @@ const protect = async (req, res, next) => {
       });
     }
 
-    // 3. Multi-table dynamic user lookup (Admin -> Creator -> User)
+    // 3. Multi-table dynamic user lookup (Role priority -> Admin -> Creator -> User)
     let user = null;
 
     if (decoded.id) {
-      try { user = await Admin.findByPk(decoded.id); } catch (e) {}
+      const tokenRole = (decoded.role || '').toLowerCase();
+      if (tokenRole === 'creator') {
+        try { user = await CreatorsModel.findByPk(decoded.id); } catch (e) { }
+      } else if (tokenRole === 'admin' || tokenRole === 'superadmin') {
+        try { user = await Admin.findByPk(decoded.id); } catch (e) { }
+      }
+
       if (!user) {
-        try { user = await CreatorsModel.findByPk(decoded.id); } catch (e) {}
+        try { user = await Admin.findByPk(decoded.id); } catch (e) { }
       }
       if (!user) {
-        try { user = await User.findByPk(decoded.id); } catch (e) {}
+        try { user = await CreatorsModel.findByPk(decoded.id); } catch (e) { }
+      }
+      if (!user) {
+        try { user = await User.findByPk(decoded.id); } catch (e) { }
       }
     }
 
@@ -75,6 +84,8 @@ const protect = async (req, res, next) => {
         email: decoded.email || 'admin@askme.in',
         role: decoded.role || 'admin',
       };
+    } else if (decoded.role && !user.role) {
+      user.role = decoded.role;
     }
 
     // 4. Attach user to request object

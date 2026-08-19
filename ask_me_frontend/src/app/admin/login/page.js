@@ -4,8 +4,11 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { Mail, Lock, Eye, EyeOff, ShieldCheck, AlertCircle } from 'lucide-react';
 import { API_ENDPOINTS } from '@/config/api';
+import { useToast } from '@/context/ToastContext';
+import { setAdminSession } from '@/utils/cookies';
 
 export default function LoginPage() {
+  const { toast } = useToast();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -35,23 +38,29 @@ export default function LoginPage() {
         // Strict Admin Role Access Guard
         const userRole = (user.role || '').toLowerCase();
         if (userRole !== 'admin') {
-          setErrorMsg('Access Denied: Only Admin accounts are authorized to access the Admin Dashboard.');
+          const msg = 'Access Denied: Only Admin accounts are authorized to access the Admin Dashboard.';
+          setErrorMsg(msg);
+          toast.error(msg, 'Access Denied');
           setIsSubmitting(false);
           return;
         }
 
         const validToken = token || 'askme_jwt_token_valid';
-        localStorage.setItem('askme_token', validToken);
-        localStorage.setItem('askme_user', JSON.stringify(user));
+        setAdminSession(validToken, user);
         setIsSubmitted(true);
+        toast.success('Admin Sign In Successful! Redirecting to Control Room...', 'Login Success');
         setTimeout(() => {
-          window.location.href = '/';
+          window.location.href = '/admin/dashboard';
         }, 500);
       } else {
-        setErrorMsg(data.message || data.error || 'Invalid email or password.');
+        const msg = data.message || data.error || 'Invalid email or password.';
+        setErrorMsg(msg);
+        toast.error(msg, 'Login Failed');
       }
     } catch (err) {
-      setErrorMsg('Unable to connect to backend server at http://localhost:5000/api.');
+      const msg = 'Unable to connect to backend server at http://localhost:5000/api.';
+      setErrorMsg(msg);
+      toast.error(msg, 'Connection Error');
     } finally {
       setIsSubmitting(false);
     }
@@ -74,14 +83,6 @@ export default function LoginPage() {
               Sign in to manage live AskMe broadcasts, creators, payouts, and platform operations.
             </p>
           </div>
-
-          {/* Error Message Banner */}
-          {errorMsg && (
-            <div className="p-3.5 rounded-2xl bg-[#FF3D71]/10 border border-[#FF3D71]/30 text-[#FF3D71] text-xs font-bold flex items-center gap-2.5 animate-fade-in">
-              <AlertCircle className="h-4 w-4 shrink-0" />
-              <span>{errorMsg}</span>
-            </div>
-          )}
 
           {isSubmitted ? (
             <div className="p-6 rounded-2xl bg-[#00E676]/10 border border-[#00E676]/30 text-center space-y-2">

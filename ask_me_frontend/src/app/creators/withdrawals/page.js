@@ -1,11 +1,19 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import Link from 'next/link';
 import CreatorSidebar from '@/components/CreatorSidebar';
 import { ArrowUpRight, Building2, Clock, CheckCircle2, ArrowLeft } from 'lucide-react';
+import { getCreatorToken, getCreatorUser } from '@/utils/cookies';
 
 export default function CreatorWithdrawalsPage() {
+  useEffect(() => {
+    const token = getCreatorToken();
+    const u = getCreatorUser();
+    if (!token || !u || !u.id) {
+      window.location.href = '/creators/login';
+    }
+  }, []);
   return (
     <div className="min-h-screen bg-[#0A0A0F] text-[#F5F5F7] font-sans flex">
       <CreatorSidebar />

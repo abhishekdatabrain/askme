@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import CreatorSidebar from '@/components/CreatorSidebar';
+import { useToast } from '@/context/ToastContext';
 import {
     ShieldCheck,
     CheckCircle2,
@@ -24,12 +25,23 @@ import {
     RefreshCw,
     Check,
     XCircle,
-    AlertTriangle
+    AlertTriangle,
+    LogOut
 } from 'lucide-react';
 import { API_ENDPOINTS } from '@/config/api';
+import { getCreatorToken, getCreatorUser, clearCreatorSession } from '@/utils/cookies';
 
 export default function CreatorKycPage() {
+    const { toast } = useToast();
     const router = useRouter();
+
+    const handleLogout = () => {
+        clearCreatorSession();
+        toast.info('Logged out successfully from Creator Studio.', 'Logged Out');
+        setTimeout(() => {
+            window.location.href = '/creators/login';
+        }, 400);
+    };
 
     // Authentication & Creator State
     const [creatorUser, setCreatorUser] = useState(null);
@@ -73,27 +85,26 @@ export default function CreatorKycPage() {
     const [submittedKycResult, setSubmittedKycResult] = useState(null);
 
     useEffect(() => {
-        const savedToken = localStorage.getItem('askme_token');
-        const savedUserStr = localStorage.getItem('askme_user');
+        const savedToken = getCreatorToken();
+        const user = getCreatorUser();
 
-        if (savedToken) setToken(savedToken);
-
-        if (savedUserStr) {
-            try {
-                const user = JSON.parse(savedUserStr);
-                setCreatorUser(user);
-                setFormData(prev => ({
-                    ...prev,
-                    fullName: user.fullName || user.full_name || user.name || '',
-                    accountHolderName: user.fullName || user.full_name || user.name || '',
-                }));
-            } catch (e) { }
+        if (!savedToken || !user || !user.id) {
+            window.location.href = '/creators/login';
+            return;
         }
+
+        setCreatorUser(user);
+        setToken(savedToken);
+        setFormData(prev => ({
+            ...prev,
+            fullName: user.fullName || user.full_name || user.name || '',
+            accountHolderName: user.fullName || user.full_name || user.name || '',
+        }));
 
         const checkKycStatus = async () => {
             try {
                 setIsLoadingStatus(true);
-                const creatorId = savedUserStr ? JSON.parse(savedUserStr).id : 1;
+                const creatorId = user.id;
                 const res = await fetch(`${API_ENDPOINTS.CREATORS.KYC_STATUS}?creatorId=${creatorId}`, {
                     headers: savedToken ? { Authorization: `Bearer ${savedToken}` } : {},
                 });
@@ -216,41 +227,56 @@ export default function CreatorKycPage() {
                 setSubmittedKycResult(data.data);
                 setSuccessMsg('KYC Verification Details Submitted Successfully!');
                 setFlowState('kyc_submitted');
+                toast.success('KYC Documents & Bank Details saved to database successfully!', 'KYC Submitted');
             } else {
-                setErrorMsg(data.message || 'KYC submission failed. Please check details.');
+                const msg = data.message || 'KYC submission failed. Please check details.';
+                setErrorMsg(msg);
+                toast.error(msg, 'KYC Submission Failed');
             }
         } catch (err) {
-            setErrorMsg('Unable to connect to backend server. Please try again.');
+            const msg = 'Unable to connect to backend server. Please try again.';
+            setErrorMsg(msg);
+            toast.error(msg, 'Connection Error');
         } finally {
             setIsSubmitting(false);
         }
     };
 
     return (
-        <div className="min-h-screen bg-[#0A0A0F] text-[#F5F5F7] font-sans flex selection:bg-[#00F5D4] selection:text-[#0A0A0F]">
+        <div className="min-h-screen bg-[#0A0A0F] text-[#F5F5F7] font-sans flex flex-col selection:bg-[#00F5D4] selection:text-[#0A0A0F]">
             
-            {/* 1. Creator Dashboard Sidebar */}
-            <CreatorSidebar />
-
-            {/* 2. Main Studio Workspace */}
-            <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
-                
-                {/* Header */}
-                <header className="border-b border-[#1C1C26] bg-[#0A0A0F]/80 backdrop-blur-md sticky top-0 z-20 px-6 py-4 flex items-center justify-between">
-                    <div>
-                        <h1 className="font-heading font-black text-xl text-white">KYC & Identity Verification</h1>
-                        <p className="text-xs text-[#8B8B96]">Tax compliance, identity proof, & bank account payout verification</p>
-                    </div>
-
-                    <Link
-                        href="/creators/dashboard"
-                        className="px-3.5 py-1.5 rounded-xl bg-[#1C1C26] text-white text-xs font-semibold hover:bg-[#1C1C26]/80 transition-colors border border-[#1C1C26] flex items-center gap-1"
-                    >
-                        <ArrowLeft className="h-3.5 w-3.5" /> Back to Dashboard
+            {/* Standalone Header */}
+            <header className="border-b border-[#1C1C26] bg-[#13131A] sticky top-0 z-20 px-6 py-4 flex items-center justify-between shadow-xl">
+                <div className="flex items-center gap-3">
+                    <Link href="/creators/dashboard" className="flex items-center gap-2.5 group">
+                        <div className="h-9 w-9 rounded-xl bg-brand-gradient flex items-center justify-center text-[#0A0A0F] font-black text-xl shadow-md glow-teal group-hover:scale-105 transition">
+                            a
+                        </div>
+                        <div>
+                            <span className="font-heading font-black text-lg text-white block leading-none">
+                                AskMe <span className="text-brand-gradient">STUDIO</span>
+                            </span>
+                            <span className="text-[10px] font-bold text-[#8B8B96] uppercase tracking-wider block mt-1">
+                                Standalone KYC Portal
+                            </span>
+                        </div>
                     </Link>
-                </header>
+                    <div className="h-6 w-px bg-[#1C1C26] hidden sm:block mx-1" />
+                    <div className="hidden sm:block">
+                        <h1 className="font-heading font-bold text-sm text-white">KYC & Identity Verification</h1>
+                        <p className="text-[11px] text-[#8B8B96]">Tax compliance, identity proof, & bank account payout verification</p>
+                    </div>
+                </div>
 
-                <main className="flex-1 p-6 max-w-5xl w-full mx-auto space-y-6">
+                <button
+                    onClick={handleLogout}
+                    className="px-4 py-2 rounded-xl bg-[#1C1C26] text-[#8B8B96] hover:text-[#FF3D71] hover:bg-[#FF3D71]/10 text-xs font-bold transition-all border border-[#1C1C26] flex items-center gap-1.5 shadow-md"
+                >
+                    <LogOut className="h-4 w-4" /> Logout Studio
+                </button>
+            </header>
+
+            <main className="flex-1 p-4 sm:p-6 md:p-8 max-w-4xl w-full mx-auto space-y-6">
 
                     {isLoadingStatus ? (
                         <div className="p-12 text-center space-y-3">
@@ -467,6 +493,16 @@ export default function CreatorKycPage() {
                                                 />
                                             </div>
                                         </div>
+
+                                        <div>
+                                            <label className="block text-xs font-semibold text-[#8B8B96] mb-1">Date of Birth (Optional)</label>
+                                            <input
+                                                type="date"
+                                                value={formData.dateOfBirth}
+                                                onChange={(e) => handleInputChange('dateOfBirth', e.target.value)}
+                                                className="w-full rounded-xl bg-[#0A0A0F] border border-[#1C1C26] px-3 py-2 text-xs text-white focus:border-[#00F5D4] focus:outline-none"
+                                            />
+                                        </div>
                                     </div>
 
                                     <div className="pt-4 flex justify-end">
@@ -626,7 +662,6 @@ export default function CreatorKycPage() {
                     )}
 
                 </main>
-            </div>
         </div>
     );
 }

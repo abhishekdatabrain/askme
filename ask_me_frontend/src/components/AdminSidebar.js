@@ -56,12 +56,11 @@ export default function AdminSidebar({ activeTab, setActiveTab, activeSubTab, se
       label: 'KYC Management',
       subtitle: 'Identity & Bank Approvals',
       icon: ShieldCheck,
-      count: '1 Pending',
       children: [
         { id: 'kyc_pending', label: 'Pending KYC' },
         { id: 'kyc_approved', label: 'Approved KYC' },
         { id: 'kyc_rejected', label: 'Rejected KYC' },
-        { id: 'kyc_details', label: 'KYC Details' },
+        { id: 'user_agreement', label: 'User Agreement' },
       ],
     },
     {
@@ -145,17 +144,6 @@ export default function AdminSidebar({ activeTab, setActiveTab, activeSubTab, se
       badge: '3',
       badgeColor: 'bg-[#00F5D4] text-[#0A0A0F]',
     },
-    {
-      id: 'settings',
-      label: 'Settings',
-      subtitle: 'Profile & Platform Config',
-      icon: Settings,
-      children: [
-        { id: 'settings_profile', label: 'Admin Profile' },
-        { id: 'settings_gateway', label: 'Payment Gateway' },
-        { id: 'settings_platform', label: 'Platform Settings' },
-      ],
-    },
   ];
 
   // Track expanded accordion sections - closed by default
@@ -212,17 +200,15 @@ export default function AdminSidebar({ activeTab, setActiveTab, activeSubTab, se
                   {/* Parent Menu Item */}
                   <button
                     onClick={() => handleParentClick(item)}
-                    className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-left transition-all ${
-                      isParentActive
-                        ? 'bg-[#13131A] text-white border border-[#00F5D4]/40 glow-teal shadow-sm shadow-[#00F5D4]/10'
-                        : 'text-[#8B8B96] hover:bg-[#13131A]/60 hover:text-white border border-transparent'
-                    }`}
+                    className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-left transition-all ${isParentActive
+                      ? 'bg-[#13131A] text-white border border-[#00F5D4]/40 glow-teal shadow-sm shadow-[#00F5D4]/10'
+                      : 'text-[#8B8B96] hover:bg-[#13131A]/60 hover:text-white border border-transparent'
+                      }`}
                   >
                     <div className="flex items-center gap-2.5 min-w-0">
                       <div
-                        className={`p-1.5 rounded-lg shrink-0 ${
-                          isParentActive ? 'bg-[#00F5D4]/10 text-[#00F5D4]' : 'bg-[#1C1C26] text-[#8B8B96]'
-                        }`}
+                        className={`p-1.5 rounded-lg shrink-0 ${isParentActive ? 'bg-[#00F5D4]/10 text-[#00F5D4]' : 'bg-[#1C1C26] text-[#8B8B96]'
+                          }`}
                       >
                         <Icon className="h-4 w-4" />
                       </div>
@@ -273,11 +259,10 @@ export default function AdminSidebar({ activeTab, setActiveTab, activeSubTab, se
                           <button
                             key={child.id}
                             onClick={(e) => handleChildClick(item.id, child.id, e)}
-                            className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-left text-xs transition-all ${
-                              isChildActive
-                                ? 'bg-[#00F5D4]/15 text-[#00F5D4] font-bold border-l-2 border-[#00F5D4]'
-                                : 'text-[#8B8B96] hover:text-white hover:bg-[#13131A]/40'
-                            }`}
+                            className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-left text-xs transition-all ${isChildActive
+                              ? 'bg-[#00F5D4]/15 text-[#00F5D4] font-bold border-l-2 border-[#00F5D4]'
+                              : 'text-[#8B8B96] hover:text-white hover:bg-[#13131A]/40'
+                              }`}
                           >
                             <span className="truncate">{child.label}</span>
                           </button>

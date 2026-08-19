@@ -48,6 +48,22 @@ const CreatorProfileModel = sequelize.define(
             },
         },
 
+        streaming_platform: {
+            type: DataTypes.STRING(100),
+            allowNull: true,
+            defaultValue: "YouTube Live",
+        },
+
+        stream_url: {
+            type: DataTypes.STRING(500),
+            allowNull: true,
+        },
+
+        channel_handle: {
+            type: DataTypes.STRING(150),
+            allowNull: true,
+        },
+
         is_payment_enabled: {
             type: DataTypes.BOOLEAN,
             allowNull: false,
@@ -78,5 +94,9 @@ const CreatorProfileModel = sequelize.define(
         freezeTableName: true,
     }
 );
+
+CreatorProfileModel.sync({ alter: true }).catch((err) => {
+    console.warn('CreatorProfileModel sync alter notice:', err.message);
+});
 
 module.exports = CreatorProfileModel;

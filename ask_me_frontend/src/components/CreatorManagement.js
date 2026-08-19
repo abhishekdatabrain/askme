@@ -19,36 +19,70 @@ import {
 } from 'lucide-react';
 import PlatformIcon from './PlatformIcon';
 import { API_ENDPOINTS } from '@/config/api';
+import { useToast } from '@/context/ToastContext';
+import { getAdminToken } from '@/utils/cookies';
 
 export default function CreatorManagement({ activeSubTab }) {
+  const { toast } = useToast();
+  const [creators, setCreators] = useState([
+    {
+      id: 1,
+      name: 'TechBurner Live',
+      email: 'contact@techburner.in',
+      mobile: '+91 98765 43210',
+      category: 'Tech & Gadgets',
+      kycStatus: 'Approved',
+      accountStatus: 'Active',
+      totalDonations: '₹14,50,000',
+      platform: 'youtube',
+    },
+    {
+      id: 2,
+      name: 'FinCal Strategy',
+      email: 'hello@fincal.com',
+      mobile: '+91 98111 22334',
+      category: 'Finance & Stocks',
+      kycStatus: 'Pending',
+      accountStatus: 'Active',
+      totalDonations: '₹8,20,000',
+      platform: 'youtube',
+    },
+    {
+      id: 3,
+      name: 'GamerX Xtreme',
+      email: 'gamerx@twitch.tv',
+      mobile: '+91 97777 88899',
+      category: 'Gaming',
+      kycStatus: 'Rejected',
+      accountStatus: 'Blocked',
+      totalDonations: '₹2,19,500',
+      platform: 'twitch',
+    },
+  ]);
+
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('All');
   const [selectedCreatorForView, setSelectedCreatorForView] = useState(null);
 
-  // Mock Creators Database
-  const [creators, setCreators] = useState([]);
-
   useEffect(() => {
     const fetchCreators = async () => {
       try {
-        const token = localStorage.getItem('askme_token');
+        const token = getAdminToken();
         const res = await fetch(API_ENDPOINTS.ADMIN.CREATORS, {
           headers: { Authorization: `Bearer ${token}` }
         });
         const data = await res.json();
         if (data.status === 'success' && data.data?.creators) {
-          setCreators(data.data.creators.map(c => ({
-            id: c.id,
-            name: c.name,
-            email: c.email,
-            mobile: c.mobile || '+91 98765 43210',
-            registeredDate: c.regDate || '12 Jan 2026',
+          setCreators(data.data.creators.map((c, idx) => ({
+            id: c.id || (idx + 100),
+            name: c.name || c.fullName || 'Creator Host',
+            email: c.email || 'N/A',
+            mobile: c.mobile || 'N/A',
+            category: c.category || 'Creator',
             kycStatus: c.kycStatus || 'Approved',
-            walletBalance: typeof c.balance === 'number' ? `₹${c.balance.toLocaleString()}` : (c.balance || '₹1,84,500'),
-            accountStatus: c.accountStatus || 'Active',
-            platform: c.platform || 'youtube',
-            country: c.country || 'India',
-            followers: c.followers || '100K'
+            accountStatus: c.status ? (c.status.charAt(0).toUpperCase() + c.status.slice(1)) : 'Active',
+            totalDonations: `₹${(c.totalRevenue || 0).toLocaleString()}`,
+            platform: 'youtube',
           })));
         }
       } catch (err) {
@@ -73,17 +107,24 @@ export default function CreatorManagement({ activeSubTab }) {
   }, [activeSubTab]);
 
   const handleAction = async (id, action) => {
-    const token = localStorage.getItem('askme_token');
+    const token = getAdminToken();
     const headers = { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` };
+    const targetCreator = creators.find(c => c.id === id);
+
     try {
       if (action === 'approve') {
         await fetch(`${API_ENDPOINTS.ADMIN.CREATORS}/${id}/approve-kyc`, { method: 'PUT', headers });
+        toast.success(`Creator KYC approved & activated in database! (${targetCreator?.name || id})`, 'Creator Approved');
       } else if (action === 'reject') {
         await fetch(`${API_ENDPOINTS.ADMIN.CREATORS}/${id}/reject-kyc`, { method: 'PUT', headers, body: JSON.stringify({ reason: 'Invalid documents' }) });
+        toast.error(`Creator KYC rejected for ${targetCreator?.name || id}.`, 'Creator Rejected');
       } else if (action === 'block') {
         await fetch(`${API_ENDPOINTS.ADMIN.CREATORS}/${id}/block`, { method: 'PUT', headers });
+        toast.warning(`Account status toggled for ${targetCreator?.name || id} in database!`, 'Status Updated');
       }
-    } catch (e) { }
+    } catch (e) {
+      toast.error('Failed to update creator action in backend database.', 'Database Sync Error');
+    }
 
     setCreators(prev => prev.map(c => {
       if (c.id === id) {
@@ -96,13 +137,17 @@ export default function CreatorManagement({ activeSubTab }) {
   };
 
   const handleDelete = async (id) => {
-    const token = localStorage.getItem('askme_token');
+    const token = getAdminToken();
+    const targetCreator = creators.find(c => c.id === id);
     try {
       await fetch(`${API_ENDPOINTS.ADMIN.CREATORS}/${id}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` }
       });
-    } catch (e) { }
+      toast.error(`Creator account (${targetCreator?.name || id}) deleted from database.`, 'Creator Deleted');
+    } catch (e) {
+      toast.error('Failed to delete creator from database.', 'Delete Error');
+    }
     setCreators(prev => prev.filter(c => c.id !== id));
   };
 
@@ -264,8 +309,8 @@ export default function CreatorManagement({ activeSubTab }) {
 
       {/* View Creator Details Modal */}
       {selectedCreatorForView && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-[#13131A] border border-[#1C1C26] rounded-2xl w-full max-w-md p-6 space-y-4 animate-scale-up">
+        <div className="fixed inset-0 bg-black/85 backdrop-blur-md z-50 overflow-y-auto p-4 sm:p-6 flex justify-center items-start sm:items-center min-h-full py-8 my-auto">
+          <div className="bg-[#13131A] border border-[#1C1C26] rounded-2xl w-full max-w-md p-6 space-y-4 max-h-[85vh] overflow-y-auto my-auto animate-scale-up">
             <div className="flex items-center justify-between border-b border-[#1C1C26] pb-3">
               <h3 className="font-bold text-white text-base flex items-center gap-2">
                 <Users className="h-4 w-4 text-[#00F5D4]" />

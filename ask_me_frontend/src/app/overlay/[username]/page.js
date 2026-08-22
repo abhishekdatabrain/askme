@@ -78,7 +78,7 @@ function StreamOverlayContent() {
             setTimeout(() => setActiveAlert(null), 7000); // Alert pops up for 7 seconds
           }
         }
-      } catch (e) {}
+      } catch (e) { }
     };
 
     const alertInterval = setInterval(fetchAlerts, 5000);
@@ -98,10 +98,10 @@ function StreamOverlayContent() {
 
   return (
     <div className="min-h-screen bg-transparent p-4 font-sans select-none flex flex-col justify-between items-start pointer-events-none">
-      
+
       {/* 1. CONTINUOUS LIVE SMALL QR WIDGET FOR OBS / STREAMLABS */}
       <div className="w-56 p-3.5 rounded-3xl bg-[#0A0A0F]/90 backdrop-blur-xl border-2 border-[#00F5D4]/40 shadow-2xl space-y-2.5 text-center text-white glow-teal pointer-events-auto animate-scale-up">
-        
+
         {/* Support Creator Text Header */}
         <div className="flex items-center justify-between border-b border-[#1C1C26] pb-2">
           <div className="flex items-center gap-1.5 min-w-0">

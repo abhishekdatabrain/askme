@@ -177,11 +177,13 @@ export default function CreatorDashboardPage() {
             headers: token ? { Authorization: `Bearer ${token}` } : {},
           });
           const dataWallet = await resWallet.json();
+          console.log("Wallet Data:", dataWallet);
+
           if (resWallet.ok && dataWallet.status === 'success' && dataWallet.data) {
             const w = dataWallet.data.wallet || {};
             const txs = dataWallet.data.transactions || [];
-            const successfulCount = txs.filter(t => t.status === 'Successful' || t.status === 'success').length;
-
+            const successfulCount = txs.filter(t => t.payment_status === 'Successful' || t.payment_status === 'success').length;
+            console.log("Wallet Data:", successfulCount);
             setWalletMetrics({
               totalEarnings: parseFloat(w.totalEarnings || 0),
               availableBalance: parseFloat(w.availableBalance || 0),

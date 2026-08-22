@@ -69,6 +69,22 @@ export default function Home() {
         pendingKyc: '24 Applications'
     });
 
+    // Dark / Light Theme Toggle State
+    const [theme, setTheme] = useState('dark');
+
+    React.useEffect(() => {
+        const savedTheme = typeof window !== 'undefined' ? (localStorage.getItem('askme_admin_theme') || 'dark') : 'dark';
+        setTheme(savedTheme);
+    }, []);
+
+    const toggleTheme = () => {
+        const nextTheme = theme === 'dark' ? 'light' : 'dark';
+        setTheme(nextTheme);
+        if (typeof window !== 'undefined') {
+            localStorage.setItem('askme_admin_theme', nextTheme);
+        }
+    };
+
     React.useEffect(() => {
         const token = getAdminToken();
         const userObj = getAdminUser();
@@ -278,14 +294,20 @@ export default function Home() {
     }
 
     return (
-        <div className="min-h-screen bg-[#0A0A0F] text-[#F5F5F7] flex flex-col font-sans">
-            {/* Top Navbar */}
+        <div className={`min-h-screen flex flex-col font-sans transition-colors ${
+            theme === 'light'
+                ? 'bg-[#F8F9FA] text-[#212529]'
+                : 'bg-[#0A0A0F] text-[#F5F5F7]'
+        }`}>
+            {/* Top Navbar with Theme Toggle */}
             <AdminNavbar
                 activeView={activeTab}
                 setActiveView={setActiveTab}
                 onOpenAuthModal={() => setShowAuthModal(true)}
                 isLoggedIn={isLoggedIn}
                 onLogout={handleLogout}
+                theme={theme}
+                onToggleTheme={toggleTheme}
             />
 
             {/* Main Workspace Layout */}
@@ -296,6 +318,8 @@ export default function Home() {
                     setActiveTab={setActiveTab}
                     activeSubTab={activeSubTab}
                     setActiveSubTab={setActiveSubTab}
+                    theme={theme}
+                    onToggleTheme={toggleTheme}
                 />
 
                 {/* Center Main Content Workspace */}

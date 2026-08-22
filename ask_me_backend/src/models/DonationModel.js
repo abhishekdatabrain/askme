@@ -57,7 +57,7 @@ const Donation = sequelize.define(
             defaultValue: false,
         },
 
-        status: {
+        payment_status: {
             type: DataTypes.ENUM(
                 "pending",
                 "success",
@@ -67,7 +67,9 @@ const Donation = sequelize.define(
             ),
             defaultValue: "pending",
         },
-
+        status: {
+            type: DataTypes.STRING(150),
+        },
         paid_at: {
             type: DataTypes.DATE,
         },

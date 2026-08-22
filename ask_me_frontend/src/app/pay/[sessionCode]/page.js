@@ -23,6 +23,7 @@ import {
   Wallet
 } from 'lucide-react';
 import { API_ENDPOINTS } from '@/config/api';
+import { getViewerUser } from '@/utils/cookies';
 
 function ViewerPaymentContent() {
   const params = useParams();
@@ -39,6 +40,7 @@ function ViewerPaymentContent() {
   // Session & Creator State
   const [sessionData, setSessionData] = useState(null);
   const [creatorData, setCreatorData] = useState(null);
+  const [viewerUser, setViewerUser] = useState(null);
 
   // Payment Form State
   const [amount, setAmount] = useState('100');
@@ -46,6 +48,15 @@ function ViewerPaymentContent() {
   const [isAnonymous, setIsAnonymous] = useState(false);
   const [message, setMessage] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('upi'); // 'upi' | 'card' | 'netbanking'
+
+  useEffect(() => {
+    // Auto-detect logged-in viewer account
+    const u = getViewerUser();
+    if (u) {
+      setViewerUser(u);
+      if (u.name) setViewerName(u.name);
+    }
+  }, []);
 
   useEffect(() => {
     const fetchSession = async () => {
@@ -75,19 +86,6 @@ function ViewerPaymentContent() {
           });
         }
       } catch (err) {
-        // console.warn('Payment session fetch notice:', err.message);
-        // setSessionData({
-        //   id: querySessionId || 101,
-        //   sessionCode: sessionCodeParam,
-        //   title: 'Live Stream Broadcast',
-        //   category: 'Live Q&A',
-        //   description: 'Send paid questions & instant UPI donations live on screen.',
-        // });
-        // setCreatorData({
-        //   id: queryCreatorId || 1,
-        //   fullName: 'Creator Host',
-        //   username: '@creator',
-        // });
       } finally {
         setIsLoading(false);
       }
@@ -199,7 +197,7 @@ function ViewerPaymentContent() {
                 PAYMENT COMPLETED
               </span>
               <h2 className="font-heading font-black text-3xl text-white tracking-tight mt-2">
-                ₹{parseFloat(paymentSuccess.amount).toFixed(2)}
+                ₹{(parseFloat(paymentSuccess?.amount || paymentSuccess?.grossAmount || 0)).toFixed(2)}
               </h2>
               <p className="text-xs text-[#8B8B96] mt-1">
                 Sent to <span className="text-[#00F5D4] font-bold">{creatorData?.fullName || 'Creator Host'}</span>
@@ -227,6 +225,19 @@ function ViewerPaymentContent() {
                   </p>
                 </div>
               )}
+            </div>
+
+            {/* Queue Position Notification Banner */}
+            <div className="p-4 rounded-2xl bg-[#00E676]/10 border-2 border-[#00E676]/40 text-[#00E676] space-y-1 text-center shadow-lg glow-teal animate-pulse">
+              <div className="flex items-center justify-center gap-2 font-black text-xs uppercase tracking-wider">
+                <CheckCircle2 className="h-4 w-4 text-[#00E676]" /> Live Queue Notification
+              </div>
+              <p className="text-sm font-extrabold text-white">
+                Aap <span className="text-[#00F5D4] font-black underline text-base">#{paymentSuccess.queuePosition || 1}</span> number pe hain queue mein!
+              </p>
+              <p className="text-[11px] text-[#8B8B96]">
+                Creator turns to your question next on the live stream broadcast.
+              </p>
             </div>
 
             <div className="p-3 rounded-xl bg-[#00F5D4]/10 border border-[#00F5D4]/30 text-[#00F5D4] text-xs font-bold flex items-center justify-center gap-2">
@@ -285,11 +296,11 @@ function ViewerPaymentContent() {
 
             {/* QR Metadata Badge */}
             <div className="p-3 rounded-2xl bg-[#0A0A0F] border border-[#1C1C26] flex items-center justify-between text-[11px] text-[#8B8B96]">
-              <span className="flex items-center gap-1 font-mono text-white">
-                <QrCode className="h-3.5 w-3.5 text-[#00F5D4]" /> Creator ID: <strong className="text-[#00F5D4]">#{creatorData?.id || queryCreatorId || 1}</strong>
+              <span className="flex items-center gap-1 font-mono text-[#00F5D4]">
+                <QrCode className="h-3.5 w-3.5" /> Creator ID: <strong className="text-white">#{creatorData?.id || queryCreatorId || 1}</strong>
               </span>
-              <span className="font-mono text-white">
-                Session ID: <strong className="text-[#00F5D4]">#{sessionData?.id || querySessionId || 101}</strong>
+              <span className="font-mono text-[#00F5D4]">
+                Session ID: <strong className="text-white">#{sessionData?.id || querySessionId || 101}</strong>
               </span>
             </div>
 
@@ -334,6 +345,26 @@ function ViewerPaymentContent() {
                 </div>
               </div>
 
+              {/* Viewer Account Badge */}
+              <div className="p-3 rounded-2xl bg-[#0A0A0F] border border-[#1C1C26] flex items-center justify-between text-xs">
+                {viewerUser ? (
+                  <div className="flex items-center gap-2 text-[#00E676] font-bold">
+                    <User className="h-4 w-4" />
+                    <span>Logged in as {viewerUser.name}</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-between w-full">
+                    <span className="text-[#8B8B96] text-[11px]">Want saved supporter details?</span>
+                    <Link
+                      href={`/viewers/register?redirect=/pay/${sessionCodeParam}`}
+                      className="text-[#00F5D4] font-bold text-[11px] hover:underline"
+                    >
+                      Register Viewer Account
+                    </Link>
+                  </div>
+                )}
+              </div>
+
               {/* 2. Name (Optional) */}
               <div>
                 <div className="flex items-center justify-between mb-1.5">
@@ -373,7 +404,7 @@ function ViewerPaymentContent() {
                 />
               </div>
 
-              {/* Payment Method Selector (Requirement 9) */}
+              {/* Payment Method Selector */}
               <div>
                 <label className="block text-xs font-bold text-[#8B8B96] mb-2">Select Payment Gateway Method</label>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">

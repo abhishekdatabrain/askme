@@ -3,13 +3,24 @@ const pg = require('pg');
 
 let sequelize;
 
+const getLocalTimezoneOffset = () => {
+  const offset = -new Date().getTimezoneOffset();
+  const sign = offset >= 0 ? '+' : '-';
+  const pad = (n) => String(Math.floor(Math.abs(n))).padStart(2, '0');
+  return `${sign}${pad(offset / 60)}:${pad(offset % 60)}`;
+};
+
+const dbTimezone = process.env.DB_TIMEZONE || getLocalTimezoneOffset();
+
 if (process.env.DATABASE_URL) {
   sequelize = new Sequelize(process.env.DATABASE_URL, {
     dialect: 'postgres',
     dialectModule: pg,
+    timezone: dbTimezone,
     logging: process.env.NODE_ENV === 'development' ? console.log : false,
     dialectOptions: {
       ssl: process.env.DB_SSL === 'true' ? { require: true, rejectUnauthorized: false } : false,
+      useUTC: false,
     },
   });
 } else {
@@ -22,9 +33,13 @@ if (process.env.DATABASE_URL) {
       port: parseInt(process.env.PGPORT || '5432', 10),
       dialect: 'postgres',
       dialectModule: pg,
+      timezone: dbTimezone,
       schema: process.env.SCHEMA || 'Abhishek',
       searchPath: process.env.SCHEMA || 'Abhishek',
       logging: process.env.NODE_ENV === 'development' ? console.log : false,
+      dialectOptions: {
+        useUTC: false,
+      },
       pool: {
         max: 10,
         min: 0,

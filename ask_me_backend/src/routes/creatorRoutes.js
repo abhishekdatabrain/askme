@@ -17,8 +17,52 @@ const {
   getOverlayAlerts,
   handlePaymentWebhook,
   getCreatorWalletDetails,
-  requestWithdrawal
+  requestWithdrawal,
+  getCreatorWithdrawals,
+  getCreatorBankAccount,
+  saveCreatorBankAccount,
+  getSessionMessages,
+  replyToDonation,
+  getCreatorNotifications,
+  markCreatorNotificationsRead,
+  markSingleCreatorNotificationRead,
+  updateDonationStatus,
 } = require('../controllers/creatorController');
+
+/**
+ * @route   GET /api/creators/live-sessions/:sessionId/messages
+ * @desc    Get Chat History for a Live Session
+ * @access  Public
+ */
+router.get('/live-sessions/:sessionId/messages', getSessionMessages);
+
+/**
+ * @route   POST /api/creators/live-sessions/chat/reply
+ * @desc    Creator Replies to a Viewer Donation
+ * @access  Public / Private
+ */
+router.post('/live-sessions/chat/reply', replyToDonation);
+
+/**
+ * @route   GET /api/creators/wallet/withdrawals
+ * @desc    Get Creator's Withdrawal Requests history
+ * @access  Public / Private
+ */
+router.get('/wallet/withdrawals', getCreatorWithdrawals);
+
+/**
+ * @route   GET /api/creators/bank-account
+ * @desc    Get Creator's Bank Account / UPI details
+ * @access  Public / Private
+ */
+router.get('/bank-account', getCreatorBankAccount);
+
+/**
+ * @route   POST /api/creators/bank-account
+ * @desc    Save/Update Creator's Bank Account / UPI details
+ * @access  Public / Private
+ */
+router.post('/bank-account', saveCreatorBankAccount);
 
 /**
  * @route   POST /api/creators/register
@@ -82,6 +126,10 @@ router.get('/live-sessions', getLiveSessions);
  * @access  Public / Private
  */
 router.put('/live-sessions/:id/close', closeLiveSession);
+router.put('/live-sessions/:id', closeLiveSession);
+router.patch('/live-sessions/:id/close', closeLiveSession);
+router.patch('/live-sessions/:id', closeLiveSession);
+router.delete('/live-sessions/:id', closeLiveSession);
 
 /**
  * @route   PUT /api/creators/live-sessions/:id/start
@@ -138,6 +186,34 @@ router.get('/wallet/details', getCreatorWalletDetails);
  * @access  Public / Private
  */
 router.post('/wallet/withdraw', requestWithdrawal);
+
+/**
+ * @route   GET /api/creators/notifications
+ * @desc    Get Creator Notifications (Requirement 13)
+ * @access  Public / Private
+ */
+router.get('/notifications', getCreatorNotifications);
+
+/**
+ * @route   PUT /api/creators/notifications/mark-read
+ * @desc    Mark all creator notifications as read
+ * @access  Public / Private
+ */
+router.put('/notifications/mark-read', markCreatorNotificationsRead);
+
+/**
+ * @route   PUT /api/creators/notifications/:id/read
+ * @desc    Mark single creator notification as read
+ * @access  Public / Private
+ */
+router.put('/notifications/:id/read', markSingleCreatorNotificationRead);
+
+/**
+ * @route   PUT /api/creators/donations/:id/status
+ * @desc    Update donation status to read or cancelled (Requirement: Tick/Cross actions)
+ * @access  Public / Private
+ */
+router.put('/donations/:id/status', updateDonationStatus);
 
 module.exports = router;
 

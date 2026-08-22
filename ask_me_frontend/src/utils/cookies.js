@@ -70,3 +70,22 @@ export function clearCreatorSession() {
   removeCookie('askme_token');
   removeCookie('askme_user');
 }
+
+// Dedicated Viewer Session Helpers
+export function getViewerToken() {
+  return getCookie('askme_viewer_token');
+}
+
+export function getViewerUser() {
+  return getCookieJson('askme_viewer_user');
+}
+
+export function setViewerSession(token, user) {
+  if (token) setCookie('askme_viewer_token', token);
+  if (user) setCookie('askme_viewer_user', user);
+}
+
+export function clearViewerSession() {
+  removeCookie('askme_viewer_token');
+  removeCookie('askme_viewer_user');
+}

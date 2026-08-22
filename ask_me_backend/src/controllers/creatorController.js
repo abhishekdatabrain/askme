@@ -14,6 +14,9 @@ let CreatorBankAccountModel;
 let QrCodeModel;
 let DonationModel;
 let WithdrawalRequestModel;
+let WalletTransactionModel;
+let PaymentTransactionModel;
+let ChatMessageModel;
 
 try { KycVerificationModel = require('../models/KycVerificationModel'); } catch (e) { }
 try { KycDocumentModel = require('../models/KycDocumentModel'); } catch (e) { }
@@ -21,6 +24,9 @@ try { CreatorBankAccountModel = require('../models/CreatorBankAccountModel'); } 
 try { QrCodeModel = require('../models/QrCodeModel'); } catch (e) { }
 try { DonationModel = require('../models/DonationModel'); } catch (e) { }
 try { WithdrawalRequestModel = require('../models/WithdrawalRequestModel'); } catch (e) { }
+try { WalletTransactionModel = require('../models/WalletTransactionModel'); } catch (e) { }
+try { PaymentTransactionModel = require('../models/PaymentTransactionModel'); } catch (e) { }
+try { ChatMessageModel = require('../models/ChatMessageModel'); } catch (e) { }
 
 const sequelize = require("../config/database");
 
@@ -194,24 +200,76 @@ const registerCreator = async (req, res, next) => {
       }
     }
 
-    // try {
-    //   await WalletModel.create(
-    //     {
-    //       creator_id: creator.id,
-    //       creatorId: creator.id,
-    //       total_earnings: 0,
-    //       available_balance: 0,
-    //       pending_balance: 0,
-    //       withdrawn_amount: 0,
-    //     },
-    //     { transaction }
-    //   );
-    //   console.log("WALLET CREATED:", creator.id);
-    // } catch (err) {
-    //   console.warn("Notice saving Wallet:", err.message);
-    // }
+    try {
+      await WalletModel.create(
+        {
+          creator_id: creator.id,
+          creatorId: creator.id,
+          total_earnings: 0,
+          available_balance: 0,
+          pending_balance: 0,
+          withdrawn_amount: 0,
+        },
+        { transaction }
+      );
+      console.log("WALLET CREATED:", creator.id);
+    } catch (err) {
+      console.warn("Notice saving Wallet:", err.message);
+    }
 
     await transaction.commit();
+
+    // Trigger Admin Notification for New Creator Registration
+    const notifObj = {
+      id: Date.now(),
+      title: "New Creator Registered",
+      message: `New Creator ${creatorName} (@${cleanUsername}) registered on AskMe PRO.`,
+      time: "Just now",
+      isRead: false,
+      status: "unread",
+      type: "creator_registration",
+      reference_id: creator.id,
+      createdAt: new Date().toISOString()
+    };
+
+    // 1. Save Notification in DB
+    try {
+      const NotificationModel = require("../models/NotificationModel");
+      await NotificationModel.create({
+        user_id: 0,
+        type: "creator_registration",
+        title: notifObj.title,
+        message: notifObj.message,
+        reference_type: "creator",
+        reference_id: creator.id,
+        is_read: false
+      });
+      console.log("DB NOTIFICATION CREATED FOR CREATOR REGISTRATION");
+    } catch (nErr) {
+      console.warn("Notice saving Creator Registration Notification to DB:", nErr.message);
+    }
+
+    // 2. Add to in-memory notifications for instant REST API response
+    try {
+      const { addAdminNotification } = require("./adminController");
+      if (typeof addAdminNotification === "function") {
+        addAdminNotification(notifObj);
+      }
+    } catch (mErr) {
+      console.warn("Notice updating in-memory notification:", mErr.message);
+    }
+
+    // 3. Socket broadcast for real-time live notification to Admin
+    try {
+      const { getIO } = require("../config/socket");
+      const io = getIO();
+      if (io) {
+        io.emit("admin_notification", notifObj);
+        console.log("SOCKET EMITTED admin_notification FOR CREATOR REGISTRATION");
+      }
+    } catch (sErr) {
+      console.warn("Notice broadcasting socket notification:", sErr.message);
+    }
 
     const token = generateToken(creator.id, "creator");
 
@@ -621,47 +679,52 @@ const getCreatorProfile = async (req, res, next) => {
       profile = await CreatorProfileModel.findOne({ where: { creator_id: creatorId } }).catch(() => null);
     }
     if (CreatorSocialLinkModel) {
-      socialLinks = await CreatorSocialLinkModel.findAll({ where: { creator_id: creatorId } }).catch(() => []);
-    }
-    if (CreatorBankAccountModel) {
-      bankAccount = await CreatorBankAccountModel.findOne({ where: { creator_id: creatorId } }).catch(() => null);
+      socialLinks = await CreatorSocialLinkModel.findAll({ where: { creator_id: creatorId }, raw: true }).catch(() => []);
     }
 
-    const socialMap = {};
-    socialLinks.forEach(link => {
-      if (link.platform) socialMap[link.platform.toLowerCase()] = link.url || link.handle || '';
-    });
+    if (CreatorBankAccountModel) {
+      bankAccount = await CreatorBankAccountModel.findOne({ where: { creator_id: creatorId }, raw: true }).catch(() => null);
+    }
+    // const socialMap = {};
+    // socialLinks.forEach(link => {
+    //   if (link.platform) socialMap[link.platform.toLowerCase()] = link.url || link.handle || '';
+    // });
 
     return res.status(200).json({
       status: 'success',
       data: {
-        creatorId: creator.id,
-        fullName: creator.full_name,
-        username: `@${creator.username}`,
-        email: creator.email,
-        mobile: creator.mobile,
-        country: creator.country,
-        profileImage: creator.profile_image || '',
-        bio: profile?.bio || '',
-        streamingChannels: {
-          platform: profile?.streaming_platform || 'YouTube Live',
-          streamUrl: profile?.stream_url || '',
-          channelHandle: profile?.channel_handle || `@${creator.username}`,
-        },
-        socialLinks: {
-          youtube: socialMap.youtube || '',
-          instagram: socialMap.instagram || '',
-          twitter: socialMap.twitter || socialMap.x || '',
-          twitch: socialMap.twitch || '',
-          discord: socialMap.discord || '',
-        },
-        paymentInfo: {
-          upiId: bankAccount?.upi_id || '',
-          bankName: bankAccount?.bank_name || '',
-          accountNumber: bankAccount?.account_number || '',
-          ifscCode: bankAccount?.ifsc_code || '',
-          accountHolderName: bankAccount?.account_holder_name || creator.full_name || '',
-        }
+        // creatorId: creator.id,
+        // fullName: creator.full_name,
+        // username: `@${creator.username}`,
+        // email: creator.email,
+        // mobile: creator.mobile,
+        // country: creator.country,
+        // profileImage: creator.profile_image || '',
+        // bio: profile?.bio || '',
+        // streamingChannels: {
+        //   platform: profile?.streaming_platform || 'YouTube Live',
+        //   streamUrl: profile?.stream_url || '',
+        //   channelHandle: profile?.channel_handle || `@${creator.username}`,
+        // },
+        // socialLinks: {
+        //   youtube: socialMap.youtube || '',
+        //   instagram: socialMap.instagram || '',
+        //   twitter: socialMap.twitter || socialMap.x || '',
+        //   twitch: socialMap.twitch || '',
+        //   discord: socialMap.discord || '',
+        // },
+        // paymentInfo: {
+        //   upiId: bankAccount?.upi_id || '',
+        //   bankName: bankAccount?.bank_name || '',
+        //   accountNumber: bankAccount?.account_number || '',
+        //   ifscCode: bankAccount?.ifsc_code || '',
+        //   accountHolderName: bankAccount?.account_holder_name || creator.full_name || '',
+        // }
+
+        creator,
+        bankAccount,
+        socialLinks,
+        profile,
       }
     });
   } catch (error) {
@@ -724,9 +787,9 @@ const updateCreatorProfile = async (req, res, next) => {
         if (!url) continue;
         const [linkRec] = await CreatorSocialLinkModel.findOrCreate({
           where: { creator_id: targetId, platform },
-          defaults: { creator_id: targetId, platform, url }
+          defaults: { creator_id: targetId, platform, profile_url: url, url }
         });
-        await linkRec.update({ url });
+        await linkRec.update({ profile_url: url, url }).catch(() => null);
       }
     }
 
@@ -734,7 +797,14 @@ const updateCreatorProfile = async (req, res, next) => {
     if (CreatorBankAccountModel && paymentInfo) {
       const [bankRec] = await CreatorBankAccountModel.findOrCreate({
         where: { creator_id: targetId },
-        defaults: { creator_id: targetId }
+        defaults: {
+          creator_id: targetId,
+          account_holder_name: paymentInfo.accountHolderName || fullName || creator.full_name || 'Creator',
+          account_number: paymentInfo.accountNumber || '0',
+          bank_name: paymentInfo.bankName || '',
+          ifsc_code: paymentInfo.ifscCode || '',
+          upi_id: paymentInfo.upiId || ''
+        }
       });
       await bankRec.update({
         upi_id: paymentInfo.upiId !== undefined ? paymentInfo.upiId : bankRec.upi_id,
@@ -782,7 +852,8 @@ const createLiveSession = async (req, res, next) => {
       thumbnailUrl,
       description,
       streamingPlatform,
-      streamUrl
+      streamUrl,
+      durationHours
     } = req.body;
 
     const targetCreatorId = creatorId || req.user?.id || 1;
@@ -794,6 +865,9 @@ const createLiveSession = async (req, res, next) => {
     if (!title) {
       return res.status(400).json({ status: 'fail', message: 'Stream Title is required.' });
     }
+
+    const durationNum = Number(durationHours || 2);
+    const endsAt = new Date(Date.now() + durationNum * 3600 * 1000);
 
     // Generate unique session code
     const uniqueSlug = (title || 'live-session')
@@ -818,6 +892,8 @@ const createLiveSession = async (req, res, next) => {
       description: description || '',
       thumbnail_url: thumbnailUrl || '',
       stream_url: streamUrl || '',
+      duration_hours: durationNum,
+      ends_at: endsAt,
       status: 'active',
       started_at: new Date(),
       total_donations: 0,
@@ -857,8 +933,11 @@ const createLiveSession = async (req, res, next) => {
           thumbnailUrl: newSession.thumbnail_url,
           streamUrl: newSession.stream_url,
           streamingPlatform: streamingPlatform || 'YouTube Live',
+          durationHours: newSession.duration_hours || durationNum,
+          endsAt: newSession.ends_at || endsAt,
           status: newSession.status,
           startedAt: newSession.started_at,
+          createdAt: newSession.createdAt || newSession.started_at,
           totalDonations: newSession.total_donations,
           totalAmount: newSession.total_amount,
         },
@@ -892,6 +971,14 @@ const getLiveSessions = async (req, res, next) => {
     const formatted = sessions.map(s => {
       const paymentLink = `${origin}/pay/${s.session_code}?creatorId=${s.creator_id}&sessionId=${s.id}`;
       const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=350x350&data=${encodeURIComponent(paymentLink)}`;
+
+      // Auto-expire session if ends_at is past
+      let curStatus = s.status;
+      if (curStatus === 'active' && s.ends_at && new Date() > new Date(s.ends_at)) {
+        curStatus = 'closed';
+        s.update({ status: 'closed', ended_at: s.ends_at }).catch(() => { });
+      }
+
       return {
         id: s.id,
         sessionCode: s.session_code,
@@ -900,8 +987,11 @@ const getLiveSessions = async (req, res, next) => {
         description: s.description,
         thumbnailUrl: s.thumbnail_url,
         streamUrl: s.stream_url,
-        status: s.status,
+        durationHours: s.duration_hours || 2,
+        endsAt: s.ends_at,
+        status: curStatus,
         startedAt: s.started_at,
+        createdAt: s.createdAt || s.started_at,
         endedAt: s.ended_at,
         totalDonations: s.total_donations || 0,
         totalAmount: s.total_amount || 0,
@@ -968,10 +1058,14 @@ const startLiveSessionById = async (req, res, next) => {
       { where: { creator_id: session.creator_id, status: 'active' } }
     );
 
+    const durationNum = Number(session.duration_hours || 2);
+    const endsAt = new Date(Date.now() + durationNum * 3600 * 1000);
+
     // Set target session as active
     await session.update({
       status: 'active',
       started_at: new Date(),
+      ends_at: endsAt,
       ended_at: null
     });
 
@@ -990,6 +1084,8 @@ const startLiveSessionById = async (req, res, next) => {
           category: session.category,
           description: session.description,
           thumbnailUrl: session.thumbnail_url,
+          durationHours: durationNum,
+          endsAt: endsAt,
           status: 'active',
           startedAt: session.started_at,
           paymentLink,
@@ -1083,7 +1179,8 @@ const processViewerDonation = async (req, res, next) => {
       viewerMobile,
       message,
       anonymous,
-      paymentMethod
+      paymentMethod,
+      gateway
     } = req.body;
 
     const parsedAmount = parseFloat(amount);
@@ -1108,7 +1205,7 @@ const processViewerDonation = async (req, res, next) => {
     const targetCreatorId = creatorId || session?.creator_id || 1;
     const targetSessionId = session?.id || sessionId || 1;
 
-    // Create Donation Record in DB
+    // STEP 1: Main Donation Record (`donations` table)
     let donationRecord = null;
     if (DonationModel) {
       donationRecord = await DonationModel.create({
@@ -1121,7 +1218,8 @@ const processViewerDonation = async (req, res, next) => {
         currency: 'INR',
         message: message ? message.trim() : '',
         anonymous: !!anonymous,
-        status: 'success',
+        payment_status: 'success',
+        status: 'not_read',
         paid_at: new Date(),
       }).catch((e) => {
         console.warn('DonationModel create notice:', e.message);
@@ -1129,7 +1227,44 @@ const processViewerDonation = async (req, res, next) => {
       });
     }
 
-    // Update Session Stats
+    // Trigger Creator Notification for Payment Received (Requirement 13)
+    createCreatorNotification({
+      creatorId: targetCreatorId,
+      type: 'payment_received',
+      title: 'New Viewer Payment Received! 💰',
+      message: `₹${parsedAmount.toFixed(2)} payment received from ${viewerName ? viewerName.trim() : 'Anonymous Supporter'}${message ? `: "${message.trim()}"` : ''}`,
+      referenceType: 'donation',
+      referenceId: donationRecord?.id || null,
+    });
+
+    // STEP 2: Payment Gateway Information (`payment_transactions` table)
+    let paymentTxnRecord = null;
+    if (PaymentTransactionModel && donationRecord) {
+      const gatewayName = gateway || 'Razorpay';
+      paymentTxnRecord = await PaymentTransactionModel.create({
+        donation_id: donationRecord.id,
+        gateway: gatewayName,
+        gateway_order_id: `order_${Math.random().toString(36).substring(2, 10)}`,
+        gateway_payment_id: `pay_${Math.random().toString(36).substring(2, 10)}`,
+        gateway_transaction_id: donationRecord.donation_uuid || `txn_${Date.now()}`,
+        payment_method: paymentMethod ? paymentMethod.toUpperCase() : 'UPI',
+        amount: parsedAmount,
+        currency: 'INR',
+        status: 'success',
+        gateway_response: {
+          status: 'success',
+          gateway: gatewayName,
+          amount: parsedAmount,
+          paidAt: new Date(),
+        },
+        paid_at: new Date(),
+      }).catch((e) => {
+        console.warn('PaymentTransactionModel create notice:', e.message);
+        return null;
+      });
+    }
+
+    // Update Session Stats (`donation_sessions` table)
     if (session) {
       try {
         await session.increment({
@@ -1139,25 +1274,112 @@ const processViewerDonation = async (req, res, next) => {
       } catch (e) { }
     }
 
-    // Update Creator Wallet (Dynamic Net Revenue Share based on Admin Commission Config)
+    // STEP 3: Creator's Balance (`wallets` table - 85% Net Share, 15% Platform Commission)
+    let wallet = null;
+    const netSharePercent = getCreatorNetSharePercent(); // 0.85
+    const creatorEarnings = parsedAmount * netSharePercent; // e.g. 1000 * 0.85 = 850
+    let balBefore = 0;
+    let balAfter = 0;
+
     if (WalletModel) {
       try {
-        const netShare = parsedAmount * getCreatorNetSharePercent();
-        const [wallet] = await WalletModel.findOrCreate({
+        const [w] = await WalletModel.findOrCreate({
           where: { creator_id: targetCreatorId },
           defaults: {
             creator_id: targetCreatorId,
-            balance: 0,
             total_earnings: 0,
             available_balance: 0,
             pending_balance: 0,
             withdrawn_amount: 0
           }
         });
-        await wallet.increment(['balance', 'total_earnings', 'available_balance'], { by: netShare });
+        wallet = w;
+        balBefore = parseFloat(wallet.available_balance || 0);
+        await wallet.increment(['total_earnings', 'available_balance'], { by: creatorEarnings });
+        balAfter = balBefore + creatorEarnings;
       } catch (e) {
         console.warn('WalletModel increment error:', e.message);
       }
+    }
+
+    // STEP 4: Wallet History (`wallet_transactions` table)
+    if (WalletTransactionModel && wallet) {
+      try {
+        const donorDisplayName = anonymous ? 'Anonymous Supporter' : (viewerName ? viewerName.trim() : 'Supporter');
+        await WalletTransactionModel.create({
+          wallet_id: wallet.id,
+          creator_id: targetCreatorId,
+          donation_id: donationRecord?.id || null,
+          transaction_type: 'donation',
+          direction: 'credit',
+          amount: creatorEarnings,
+          balance_before: balBefore,
+          balance_after: balAfter,
+          description: `Donation received from ${donorDisplayName}`,
+          reference: donationRecord?.donation_uuid || `DON-${Date.now()}`
+        }).catch((e) => console.warn('WalletTransactionModel create notice:', e.message));
+      } catch (e) {
+        console.warn('WalletTransactionModel insert error:', e.message);
+      }
+    }
+
+    // STEP 5: Save Donation Chat Message & Broadcast Real-Time via Socket.IO
+    try {
+      const donorDisplayName = anonymous ? 'Anonymous Supporter' : (viewerName ? viewerName.trim() : 'Anonymous Supporter');
+      let chatRecord = null;
+      if (ChatMessageModel) {
+        chatRecord = await ChatMessageModel.create({
+          session_id: targetSessionId,
+          sender_type: 'viewer',
+          sender_id: req.user?.id || 0,
+          sender_name: donorDisplayName,
+          donation_id: donationRecord?.id || null,
+          message: message ? message.trim() : `Supported the stream with ₹${parsedAmount}`,
+          message_type: 'donation',
+          is_deleted: false,
+        }).catch((e) => console.warn('ChatMessageModel donation create notice:', e.message));
+      }
+
+      // Calculate Queue Position for Viewer Notification
+      let queuePosition = 1;
+      if (DonationModel && targetSessionId) {
+        try {
+          const count = await DonationModel.count({
+            where: { session_id: targetSessionId, payment_status: 'success', status: 'not_read' }
+          });
+          queuePosition = Math.max(1, count);
+        } catch (e) { }
+      }
+
+      // Broadcast Socket.IO event to room: live_session_{session_id}
+      const { getIO } = require('../config/socket');
+      const io = getIO();
+      if (io) {
+        const socketPayload = {
+          id: chatRecord?.id || Date.now(),
+          sessionId: targetSessionId,
+          senderType: 'viewer',
+          senderId: req.user?.id || 0,
+          senderName: donorDisplayName,
+          donationId: donationRecord?.id,
+          amount: parsedAmount,
+          message: message ? message.trim() : `Supported the stream with ₹${parsedAmount}`,
+          messageType: 'donation',
+          queuePosition,
+          createdAt: new Date(),
+        };
+        io.to(`live_session_${targetSessionId}`).emit('new_donation', socketPayload);
+        io.to(`live_session_${targetSessionId}`).emit('new_message', socketPayload);
+        io.to(`live_session_${targetSessionId}`).emit('viewer_queue_position', {
+          sessionId: targetSessionId,
+          donationId: donationRecord?.id,
+          viewerName: donorDisplayName,
+          queuePosition,
+          message: `Aap ${queuePosition} number pe hain queue mein.`,
+        });
+      }
+    } catch (sErr) {
+      console.warn('Socket donation broadcast notice:', sErr.message);
     }
 
     const methodLabels = {
@@ -1173,18 +1395,121 @@ const processViewerDonation = async (req, res, next) => {
       message: `Payment of ₹${parsedAmount.toFixed(2)} via ${methodLabels[paymentMethod] || 'UPI'} completed successfully!`,
       data: {
         donationUuid: donationRecord?.donation_uuid || `DON-${Date.now()}`,
+        donationId: donationRecord?.id,
         sessionId: targetSessionId,
         creatorId: targetCreatorId,
         amount: parsedAmount,
+        grossAmount: parsedAmount,
+        netCreatorEarning: creatorEarnings,
+        platformCommission: parsedAmount - creatorEarnings,
         paymentMethod: methodLabels[paymentMethod] || 'Instant UPI',
         viewerName: viewerName || 'Anonymous Supporter',
         message: message || '',
+        queuePosition: queuePosition,
+        queueMessage: `Aap ${queuePosition} number pe hain queue mein.`,
         paidAt: new Date(),
       }
     });
 
   } catch (error) {
     console.error('DONATION PAYMENT PROCESS ERROR:', error);
+    next(error);
+  }
+};
+
+/**
+ * @desc    Get Chat History for a Live Session (Requirement)
+ * @route   GET /api/creators/live-sessions/:sessionId/messages
+ * @access  Public
+ */
+const getSessionMessages = async (req, res, next) => {
+  try {
+    const { sessionId } = req.params;
+    let messages = [];
+
+    if (ChatMessageModel) {
+      const records = await ChatMessageModel.findAll({
+        where: { session_id: sessionId, is_deleted: false },
+        order: [['created_at', 'ASC']],
+        limit: 100,
+      });
+
+      messages = records.map(m => ({
+        id: m.id,
+        sessionId: m.session_id,
+        senderType: m.sender_type,
+        senderId: m.sender_id,
+        senderName: m.sender_name || (m.sender_type === 'creator' ? 'Creator Host' : 'Viewer'),
+        donationId: m.donation_id,
+        message: m.message,
+        messageType: m.message_type,
+        createdAt: m.created_at || m.createdAt,
+      }));
+    }
+
+    return res.status(200).json({
+      status: 'success',
+      data: { messages }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @desc    Creator Replies to a Viewer Donation (Requirement)
+ * @route   POST /api/creators/live-sessions/chat/reply
+ * @access  Private / Public
+ */
+const replyToDonation = async (req, res, next) => {
+  try {
+    const { sessionId, donationId, message, senderName } = req.body;
+    const creatorId = req.user?.id || req.body.creatorId || 1;
+
+    if (!sessionId || !donationId || !message || !message.trim()) {
+      return res.status(400).json({ status: 'error', message: 'Missing required parameters (sessionId, donationId, message).' });
+    }
+
+    let replyRecord = null;
+    if (ChatMessageModel) {
+      replyRecord = await ChatMessageModel.create({
+        session_id: sessionId,
+        sender_type: 'creator',
+        sender_id: creatorId,
+        sender_name: senderName || 'Creator Host',
+        donation_id: donationId,
+        message: message.trim(),
+        message_type: 'donation_reply',
+        is_deleted: false,
+      });
+    }
+
+    const replyPayload = {
+      id: replyRecord?.id || Date.now(),
+      sessionId: parseInt(sessionId, 10),
+      senderType: 'creator',
+      senderId: creatorId,
+      senderName: senderName || 'Creator Host',
+      donationId: parseInt(donationId, 10),
+      message: message.trim(),
+      messageType: 'donation_reply',
+      createdAt: new Date(),
+    };
+
+    // Broadcast via Socket.IO
+    const { getIO } = require('../config/socket');
+    const io = getIO();
+    if (io) {
+      io.to(`live_session_${sessionId}`).emit('donation_replied', replyPayload);
+      io.to(`live_session_${sessionId}`).emit('new_message', replyPayload);
+    }
+
+    return res.status(200).json({
+      status: 'success',
+      message: 'Donation reply sent successfully!',
+      data: { reply: replyPayload }
+    });
+  } catch (error) {
     next(error);
   }
 };
@@ -1272,9 +1597,9 @@ const getOverlayAlerts = async (req, res, next) => {
 
     if (DonationModel) {
       const donations = await DonationModel.findAll({
-        where: { creator_id: creatorId, status: 'success' },
+        where: { creator_id: creatorId, payment_status: 'success', status: 'not_read' },
         order: [['created_at', 'DESC']],
-        limit: 5
+
       });
 
       alerts = donations.map(d => ({
@@ -1373,7 +1698,7 @@ const getCreatorWalletDetails = async (req, res, next) => {
         amount: parseFloat(d.amount || 0),
         netAmount: parseFloat(d.amount || 0) * 0.85,
         message: d.message || '',
-        status: d.status === 'success' ? 'Successful' : (d.status === 'pending' ? 'Pending' : (d.status === 'refunded' ? 'Refunded' : 'Failed')),
+        payment_status: d.payment_status === 'success' ? 'Successful' : (d.payment_status === 'pending' ? 'Pending' : (d.payment_status === 'refunded' ? 'Refunded' : 'Failed')),
       }));
     }
 
@@ -1451,6 +1776,8 @@ const requestWithdrawal = async (req, res, next) => {
 
     // Create Withdrawal Record in DB
     let withdrawalRecord = null;
+    const bankSummary = bankAccountInfo || (req.body.bankName ? `${req.body.bankName} (A/C: ****${(req.body.accountNumber || '').slice(-4)})` : 'Bank Transfer Requested');
+
     if (WithdrawalRequestModel) {
       withdrawalRecord = await WithdrawalRequestModel.create({
         creator_id: creatorId,
@@ -1458,7 +1785,24 @@ const requestWithdrawal = async (req, res, next) => {
         amount: parsedAmount,
         net_amount: parsedAmount,
         status: 'pending',
-        rejection_reason: bankAccountInfo ? `Payout to ${bankAccountInfo}` : 'Bank Transfer Requested'
+        rejection_reason: bankSummary,
+        requested_at: new Date(),
+      }).catch(() => null);
+    }
+
+    // Record Ledger Transaction
+    if (WalletTransactionModel && wallet) {
+      await WalletTransactionModel.create({
+        wallet_id: wallet.id,
+        creator_id: creatorId,
+        withdrawal_id: withdrawalRecord?.id || null,
+        transaction_type: 'withdrawal',
+        direction: 'debit',
+        amount: parsedAmount,
+        balance_before: availableBal,
+        balance_after: availableBal - parsedAmount,
+        description: `Payout Withdrawal Request (Pending Admin Settlement)`,
+        reference: withdrawalRecord?.withdrawal_uuid || `WTH-${Date.now()}`
       }).catch(() => null);
     }
 
@@ -1467,7 +1811,9 @@ const requestWithdrawal = async (req, res, next) => {
       message: `Payout withdrawal request of ₹${parsedAmount.toFixed(2)} submitted successfully! Admin will settle to your bank account.`,
       data: {
         withdrawalId: withdrawalRecord?.withdrawal_uuid || `WTH-${Date.now()}`,
+        rawId: withdrawalRecord?.id,
         amount: parsedAmount,
+        bankDetails: bankSummary,
         status: 'pending',
         requestedAt: new Date()
       }
@@ -1475,6 +1821,392 @@ const requestWithdrawal = async (req, res, next) => {
 
   } catch (error) {
     console.error('REQUEST WITHDRAWAL ERROR:', error);
+    next(error);
+  }
+};
+
+/**
+ * @desc    Get List of Withdrawal Requests for Logged-in Creator
+ * @route   GET /api/creators/wallet/withdrawals
+ * @access  Public / Private
+ */
+const getCreatorWithdrawals = async (req, res, next) => {
+  try {
+    const creatorId = req.user?.id || req.query.creatorId || 1;
+
+    let withdrawals = [];
+    if (WithdrawalRequestModel) {
+      const records = await WithdrawalRequestModel.findAll({
+        where: { creator_id: creatorId },
+        order: [['id', 'DESC']],
+        limit: 50,
+      }).catch(() => []);
+
+      withdrawals = records.map(w => ({
+        id: w.withdrawal_uuid || `WTH-${w.id}`,
+        rawId: w.id,
+        amount: parseFloat(w.amount || 0),
+        netAmount: parseFloat(w.net_amount || w.amount || 0),
+        bankDetails: w.rejection_reason && (w.status === 'pending' || w.status === 'approved' || w.status === 'processing')
+          ? w.rejection_reason
+          : 'Bank Account / UPI Settlement',
+        status: (w.status || 'pending').toLowerCase(),
+        requestedDate: w.requested_at || w.createdAt,
+        approvedAt: w.approved_at,
+        completedAt: w.completed_at,
+        transactionReference: w.transaction_reference || null,
+        rejectionReason: w.status === 'rejected' ? w.rejection_reason : null,
+      }));
+    }
+
+    return res.status(200).json({
+      status: 'success',
+      data: { withdrawals }
+    });
+  } catch (error) {
+    console.error('GET CREATOR WITHDRAWALS ERROR:', error);
+    next(error);
+  }
+};
+
+/**
+ * @desc    Get Creator Saved Bank Account / UPI Details
+ * @route   GET /api/creators/bank-account
+ * @access  Public / Private
+ */
+const getCreatorBankAccount = async (req, res, next) => {
+  try {
+    const creatorId = req.user?.id || req.query.creatorId || 1;
+
+    let bankAccount = null;
+    if (CreatorBankAccountModel) {
+      bankAccount = await CreatorBankAccountModel.findOne({
+        where: { creator_id: creatorId, status: 'active' },
+        order: [['id', 'DESC']],
+      }).catch(() => null);
+    }
+
+    return res.status(200).json({
+      status: 'success',
+      data: { bankAccount }
+    });
+  } catch (error) {
+    console.error('GET BANK ACCOUNT ERROR:', error);
+    next(error);
+  }
+};
+
+/**
+ * @desc    Add or Update Creator Bank Account / UPI Details
+ * @route   POST /api/creators/bank-account
+ * @access  Public / Private
+ */
+const saveCreatorBankAccount = async (req, res, next) => {
+  try {
+    const creatorId = req.user?.id || req.body.creatorId || 1;
+    const { accountHolderName, bankName, accountNumber, ifscCode, upiId, accountType } = req.body;
+
+    if (!accountHolderName || (!accountNumber && !upiId)) {
+      return res.status(400).json({
+        status: 'fail',
+        message: 'Please provide Account Holder Name and Bank Account Number or UPI ID.'
+      });
+    }
+
+    let bankRecord = null;
+    if (CreatorBankAccountModel) {
+      bankRecord = await CreatorBankAccountModel.create({
+        creator_id: creatorId,
+        account_holder_name: accountHolderName,
+        bank_name: bankName || 'Bank',
+        account_number: accountNumber || 'N/A',
+        ifsc_code: ifscCode || '',
+        upi_id: upiId || '',
+        account_type: accountType || (upiId ? 'upi' : 'bank'),
+        is_primary: true,
+        is_verified: true,
+        status: 'active'
+      }).catch(() => null);
+    }
+
+    return res.status(200).json({
+      status: 'success',
+      message: 'Bank account / payout details saved successfully!',
+      data: { bankAccount: bankRecord }
+    });
+  } catch (error) {
+    console.error('SAVE BANK ACCOUNT ERROR:', error);
+    next(error);
+  }
+};
+
+// Requirement 13: Creator Notifications Store & Methods
+let mockCreatorNotifications = [];
+
+/**
+ * Helper to trigger and save a Creator Notification (Requirement 13)
+ * Types: 'kyc_approved', 'payment_received', 'withdrawal_approved', 'withdrawal_rejected', 'system_update'
+ */
+const createCreatorNotification = async ({ creatorId, type, title, message, referenceType = null, referenceId = null }) => {
+  if (!creatorId) return null;
+  let notifRecord = null;
+  try {
+    const NotificationModel = require('../models/NotificationModel');
+    notifRecord = await NotificationModel.create({
+      user_id: creatorId,
+      type: type || 'system_update',
+      title: title || 'New Notification',
+      message: message || '',
+      reference_type: referenceType,
+      reference_id: referenceId,
+      is_read: false,
+    });
+  } catch (err) {
+    console.warn('Notice saving Creator Notification to DB:', err.message);
+  }
+
+  const notifObj = {
+    id: notifRecord?.id || Date.now(),
+    creatorId: Number(creatorId),
+    type: type || 'system_update',
+    title,
+    message,
+    referenceType,
+    referenceId,
+    isRead: false,
+    date: new Date(),
+  };
+
+  mockCreatorNotifications.unshift(notifObj);
+
+  // Broadcast real-time Socket.IO event
+  try {
+    const { getIO } = require('../config/socket');
+    const io = getIO();
+    if (io) {
+      io.emit(`creator_notification_${creatorId}`, notifObj);
+      io.emit('creator_notification', notifObj);
+    }
+  } catch (sErr) {
+    console.warn('Notice emitting creator notification socket:', sErr.message);
+  }
+
+  return notifObj;
+};
+
+/**
+ * @desc Get Creator Notifications (Requirement 13)
+ * @route GET /api/creators/notifications
+ */
+const getCreatorNotifications = async (req, res, next) => {
+  try {
+    const creatorId = req.query.creatorId || req.user?.id || 1;
+    let notificationsList = [];
+
+    try {
+      const NotificationModel = require('../models/NotificationModel');
+      const dbRecords = await NotificationModel.findAll({
+        where: { user_id: creatorId },
+        order: [['id', 'DESC']],
+        limit: 50,
+      });
+
+      notificationsList = dbRecords.map(n => ({
+        id: n.id,
+        creatorId: n.user_id,
+        type: n.type,
+        title: n.title,
+        message: n.message,
+        referenceType: n.reference_type,
+        referenceId: n.reference_id,
+        isRead: !!n.is_read,
+        date: n.createdAt || n.read_at || new Date(),
+      }));
+    } catch (e) {
+      console.warn('DB Creator notifications query notice:', e.message);
+    }
+
+    // Merge in-memory notifications for this creator
+    const memoryNotifs = mockCreatorNotifications.filter(n => Number(n.creatorId) === Number(creatorId));
+    memoryNotifs.forEach(mn => {
+      if (!notificationsList.some(dn => String(dn.id) === String(mn.id))) {
+        notificationsList.unshift(mn);
+      }
+    });
+
+    // Seed default notifications for Requirement 13 if empty
+    if (notificationsList.length === 0) {
+      notificationsList = [
+        {
+          id: 501,
+          creatorId: Number(creatorId),
+          type: 'kyc_approved',
+          title: 'KYC Verified & Approved! 🎉',
+          message: 'Congratulations! Your identity documents and bank account payout details have been verified & approved by Super Admin.',
+          isRead: false,
+          date: new Date(Date.now() - 3600000 * 2),
+        },
+        {
+          id: 502,
+          creatorId: Number(creatorId),
+          type: 'payment_received',
+          title: 'New Viewer Payment Received! 💰',
+          message: '₹500.00 donation received from CarryFan: "Love your live broadcast streams! Keep up the great work."',
+          isRead: false,
+          date: new Date(Date.now() - 3600000 * 5),
+        },
+        {
+          id: 503,
+          creatorId: Number(creatorId),
+          type: 'withdrawal_approved',
+          title: 'Payout Withdrawal Approved! ✅',
+          message: 'Your payout withdrawal request for ₹1,200.00 has been approved and settled to your bank account.',
+          isRead: true,
+          date: new Date(Date.now() - 86400000),
+        },
+        {
+          id: 504,
+          creatorId: Number(creatorId),
+          type: 'withdrawal_rejected',
+          title: 'Payout Withdrawal Rejected ❌',
+          message: 'Your payout withdrawal request for ₹300.00 was rejected. Reason: Minimum withdrawal limit is ₹500.00.',
+          isRead: true,
+          date: new Date(Date.now() - 86400000 * 2),
+        },
+        {
+          id: 505,
+          creatorId: Number(creatorId),
+          type: 'system_update',
+          title: 'New Platform Feature Update 🚀',
+          message: 'AskMe Creator Studio v2.0 released with live OBS overlay themes, instant viewer donation alerts, & bank settlement tracking.',
+          isRead: true,
+          date: new Date(Date.now() - 86400000 * 3),
+        },
+      ];
+    }
+
+    return res.status(200).json({
+      status: 'success',
+      data: { notifications: notificationsList }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @desc Mark all notifications read for creator
+ * @route PUT /api/creators/notifications/mark-read
+ */
+const markCreatorNotificationsRead = async (req, res, next) => {
+  try {
+    const creatorId = req.query.creatorId || req.body.creatorId || 1;
+    mockCreatorNotifications.forEach(n => {
+      if (Number(n.creatorId) === Number(creatorId)) {
+        n.isRead = true;
+      }
+    });
+
+    try {
+      const NotificationModel = require('../models/NotificationModel');
+      await NotificationModel.update(
+        { is_read: true, read_at: new Date() },
+        { where: { user_id: creatorId } }
+      );
+    } catch (e) { }
+
+    return res.status(200).json({
+      status: 'success',
+      message: 'All creator notifications marked as read'
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @desc Mark single notification read
+ * @route PUT /api/creators/notifications/:id/read
+ */
+const markSingleCreatorNotificationRead = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const target = mockCreatorNotifications.find(n => String(n.id) === String(id));
+    if (target) {
+      target.isRead = true;
+    }
+
+    try {
+      const NotificationModel = require('../models/NotificationModel');
+      await NotificationModel.update(
+        { is_read: true, read_at: new Date() },
+        { where: { id } }
+      );
+    } catch (e) { }
+
+    return res.status(200).json({
+      status: 'success',
+      message: 'Notification marked as read'
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @desc    Update Donation Status in donations table (status: 'read' or 'cancelled')
+ * @route   PUT /api/creators/donations/:id/status
+ * @access  Public / Private
+ */
+const updateDonationStatus = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body; // 'read' or 'cancelled'
+
+    if (!['read', 'cancelled'].includes(status)) {
+      return res.status(400).json({ status: 'fail', message: 'Invalid status. Must be read or cancelled.' });
+    }
+
+    if (DonationModel) {
+      const isUuid = typeof id === 'string' && /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(id);
+
+      let donation = null;
+      if (isUuid) {
+        donation = await DonationModel.findOne({ where: { donation_uuid: id } });
+      } else {
+        const numId = Number(id);
+        if (!isNaN(numId)) {
+          donation = await DonationModel.findOne({ where: { id: numId } });
+        }
+      }
+
+      if (donation) {
+        donation.status = status;
+        await donation.save();
+
+        // Broadcast Socket.IO event so remaining viewers queue updates live
+        try {
+          const { getIO } = require('../config/socket');
+          const io = getIO();
+          if (io && donation.session_id) {
+            io.to(`live_session_${donation.session_id}`).emit('queue_item_completed', {
+              donationId: donation.id,
+              donationUuid: donation.donation_uuid,
+              status
+            });
+          }
+        } catch (sErr) { }
+
+        return res.status(200).json({
+          status: 'success',
+          message: `Donation status updated to ${status}`,
+          data: { donation }
+        });
+      }
+    }
+
+    return res.status(404).json({ status: 'fail', message: 'Donation record not found' });
+  } catch (error) {
     next(error);
   }
 };
@@ -1497,4 +2229,14 @@ module.exports = {
   handlePaymentWebhook,
   getCreatorWalletDetails,
   requestWithdrawal,
+  getCreatorWithdrawals,
+  getCreatorBankAccount,
+  saveCreatorBankAccount,
+  getSessionMessages,
+  replyToDonation,
+  createCreatorNotification,
+  getCreatorNotifications,
+  markCreatorNotificationsRead,
+  markSingleCreatorNotificationRead,
+  updateDonationStatus,
 };

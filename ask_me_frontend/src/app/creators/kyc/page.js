@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import CreatorSidebar from '@/components/CreatorSidebar';
+import CreatorNotificationDropdown from '@/components/CreatorNotificationDropdown';
 import { useToast } from '@/context/ToastContext';
 import {
     ShieldCheck,
@@ -26,7 +27,10 @@ import {
     Check,
     XCircle,
     AlertTriangle,
-    LogOut
+    LogOut,
+    Sun,
+    Moon,
+    Bell
 } from 'lucide-react';
 import { API_ENDPOINTS } from '@/config/api';
 import { getCreatorToken, getCreatorUser, clearCreatorSession } from '@/utils/cookies';
@@ -34,6 +38,38 @@ import { getCreatorToken, getCreatorUser, clearCreatorSession } from '@/utils/co
 export default function CreatorKycPage() {
     const { toast } = useToast();
     const router = useRouter();
+
+    // Theme State
+    const [theme, setTheme] = useState('dark');
+
+    useEffect(() => {
+        const savedTheme = typeof window !== 'undefined' ? (localStorage.getItem('askme_creator_theme') || 'dark') : 'dark';
+        setTheme(savedTheme);
+    }, []);
+
+    useEffect(() => {
+        const handleThemeChange = () => {
+            const savedTheme = typeof window !== 'undefined' ? (localStorage.getItem('askme_creator_theme') || 'dark') : 'dark';
+            setTheme(savedTheme);
+        };
+        if (typeof window !== 'undefined') {
+            window.addEventListener('creator-theme-changed', handleThemeChange);
+        }
+        return () => {
+            if (typeof window !== 'undefined') {
+                window.removeEventListener('creator-theme-changed', handleThemeChange);
+            }
+        };
+    }, []);
+
+    const toggleTheme = () => {
+        const nextTheme = theme === 'dark' ? 'light' : 'dark';
+        setTheme(nextTheme);
+        if (typeof window !== 'undefined') {
+            localStorage.setItem('askme_creator_theme', nextTheme);
+            window.dispatchEvent(new Event('creator-theme-changed'));
+        }
+    };
 
     const handleLogout = () => {
         clearCreatorSession();
@@ -119,14 +155,15 @@ export default function CreatorKycPage() {
                         setFlowState('kyc_approved');
                     } else if (status === 'rejected') {
                         setFlowState('kyc_rejected');
-                    } else if (kycInfo.isSubmitted) {
+                        setErrorMsg(kycInfo.rejectionReason || 'Identity document unclear or bank detail mismatch.');
+                    } else if (status === 'pending' || status === 'under_review') {
                         setFlowState('kyc_submitted');
                     } else {
                         setFlowState('kyc_form');
                     }
                 }
             } catch (err) {
-                console.warn('KYC status fetch notice:', err.message);
+                console.warn('KYC check notice:', err.message);
             } finally {
                 setIsLoadingStatus(false);
             }
@@ -137,63 +174,71 @@ export default function CreatorKycPage() {
 
     const handleInputChange = (field, value) => {
         setFormData(prev => ({ ...prev, [field]: value }));
+        setErrorMsg('');
     };
 
     const handleFileUpload = (e) => {
         const file = e.target.files?.[0];
         if (file) {
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                handleInputChange('documentPreview', reader.result);
-            };
-            reader.readAsDataURL(file);
+            const fakeUrl = URL.createObjectURL(file);
+            setFormData(prev => ({ ...prev, documentPreview: fakeUrl }));
+            toast.success('Document uploaded for KYC submission preview.', 'File Selected');
         }
     };
 
-    const handleNextToStep2 = (e) => {
-        e.preventDefault();
-        setErrorMsg('');
-        if (!formData.fullName.trim()) {
-            setErrorMsg('Please enter your full legal name matching identity document.');
-            return;
-        }
-        if (!formData.panNumber.trim()) {
-            setErrorMsg('Please enter your PAN Card / Government Document number.');
-            return;
-        }
-        setStep(2);
+    const validateStep1 = () => {
+        if (!formData.fullName.trim()) return 'Full Name is required.';
+        if (!formData.panNumber.trim()) return 'PAN Number / Document Number is required.';
+        return null;
     };
 
-    const handleNextToStep3 = (e) => {
+    const validateStep2 = () => {
+        if (!formData.accountHolderName.trim()) return 'Bank Account Holder Name is required.';
+        if (!formData.bankName.trim()) return 'Bank Name is required.';
+        if (!formData.accountNumber.trim()) return 'Account Number is required.';
+        if (formData.confirmAccountNumber && formData.accountNumber !== formData.confirmAccountNumber) {
+            return 'Account numbers do not match.';
+        }
+        if (!formData.ifscCode.trim()) return 'IFSC Code is required.';
+        return null;
+    };
+
+    const handleNextStep = (e) => {
         e.preventDefault();
-        setErrorMsg('');
-        if (!formData.accountNumber.trim()) {
-            setErrorMsg('Please enter your Bank Account number for payouts.');
-            return;
+        if (step === 1) {
+            const err = validateStep1();
+            if (err) {
+                setErrorMsg(err);
+                toast.error(err, 'Validation Error');
+                return;
+            }
+            setStep(2);
+        } else if (step === 2) {
+            const err = validateStep2();
+            if (err) {
+                setErrorMsg(err);
+                toast.error(err, 'Validation Error');
+                return;
+            }
+            setStep(3);
         }
-        if (formData.accountNumber !== formData.confirmAccountNumber) {
-            setErrorMsg('Bank Account number and Confirmation do not match.');
-            return;
-        }
-        if (!formData.ifscCode.trim()) {
-            setErrorMsg('Please enter valid IFSC Code.');
-            return;
-        }
-        setStep(3);
     };
 
     const handleSubmitKyc = async (e) => {
         e.preventDefault();
-        setErrorMsg('');
         if (!formData.agreeTerms) {
-            setErrorMsg('You must agree to the legal payout declaration to submit KYC.');
+            setErrorMsg('Please confirm legal agreement terms to submit.');
+            toast.error('Legal Agreement Required', 'Form Error');
             return;
         }
 
-        setIsSubmitting(true);
         try {
+            setIsSubmitting(true);
+            setErrorMsg('');
+            const creatorId = creatorUser?.id;
+
             const payload = {
-                creatorId: creatorUser?.id || 1,
+                creatorId,
                 fullName: formData.fullName,
                 dateOfBirth: formData.dateOfBirth,
                 address: formData.address,
@@ -243,37 +288,83 @@ export default function CreatorKycPage() {
     };
 
     return (
-        <div className="min-h-screen bg-[#0A0A0F] text-[#F5F5F7] font-sans flex flex-col selection:bg-[#00F5D4] selection:text-[#0A0A0F]">
+        <div className={`min-h-screen font-sans flex flex-col transition-colors duration-200 ${
+            theme === 'light' ? 'bg-[#F4F5F7] text-[#1A1D20] selection:bg-[#00F5D4] selection:text-[#0A0A0F]' : 'bg-[#0A0A0F] text-[#F5F5F7] selection:bg-[#00F5D4] selection:text-[#0A0A0F]'
+        }`}>
             
             {/* Standalone Header */}
-            <header className="border-b border-[#1C1C26] bg-[#13131A] sticky top-0 z-20 px-6 py-4 flex items-center justify-between shadow-xl">
+            <header className={`border-b sticky top-0 z-20 px-6 py-4 flex items-center justify-between shadow-xl transition-colors duration-200 ${
+                theme === 'light' ? 'border-[#E9ECEF] bg-white' : 'border-[#1C1C26] bg-[#13131A]'
+            }`}>
                 <div className="flex items-center gap-3">
                     <Link href="/creators/dashboard" className="flex items-center gap-2.5 group">
                         <div className="h-9 w-9 rounded-xl bg-brand-gradient flex items-center justify-center text-[#0A0A0F] font-black text-xl shadow-md glow-teal group-hover:scale-105 transition">
                             a
                         </div>
                         <div>
-                            <span className="font-heading font-black text-lg text-white block leading-none">
+                            <span className={`font-heading font-black text-lg block leading-none ${
+                                theme === 'light' ? 'text-[#1A1D20]' : 'text-white'
+                            }`}>
                                 AskMe <span className="text-brand-gradient">STUDIO</span>
                             </span>
-                            <span className="text-[10px] font-bold text-[#8B8B96] uppercase tracking-wider block mt-1">
+                            <span className={`text-[10px] font-bold uppercase tracking-wider block mt-1 ${
+                                theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'
+                            }`}>
                                 Standalone KYC Portal
                             </span>
                         </div>
                     </Link>
-                    <div className="h-6 w-px bg-[#1C1C26] hidden sm:block mx-1" />
+                    <div className={`h-6 w-px hidden sm:block mx-1 ${
+                        theme === 'light' ? 'bg-[#E9ECEF]' : 'bg-[#1C1C26]'
+                    }`} />
                     <div className="hidden sm:block">
-                        <h1 className="font-heading font-bold text-sm text-white">KYC & Identity Verification</h1>
-                        <p className="text-[11px] text-[#8B8B96]">Tax compliance, identity proof, & bank account payout verification</p>
+                        <h1 className={`font-heading font-bold text-sm ${
+                            theme === 'light' ? 'text-[#1A1D20]' : 'text-white'
+                        }`}>KYC & Identity Verification</h1>
+                        <p className={`text-[11px] ${
+                            theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'
+                        }`}>Tax compliance, identity proof, & bank account payout verification</p>
                     </div>
                 </div>
 
-                <button
-                    onClick={handleLogout}
-                    className="px-4 py-2 rounded-xl bg-[#1C1C26] text-[#8B8B96] hover:text-[#FF3D71] hover:bg-[#FF3D71]/10 text-xs font-bold transition-all border border-[#1C1C26] flex items-center gap-1.5 shadow-md"
-                >
-                    <LogOut className="h-4 w-4" /> Logout Studio
-                </button>
+                <div className="flex items-center gap-3">
+                    {/* Notification Bell Icon Popup Dropdown */}
+                    <CreatorNotificationDropdown theme={theme} />
+
+                    {/* Header Theme Switcher Button */}
+                    <button
+                        onClick={toggleTheme}
+                        className={`px-3 py-1.5 rounded-xl border text-xs font-bold transition-all flex items-center gap-1.5 ${
+                            theme === 'light'
+                                ? 'bg-[#F1F3F5] text-[#212529] border-[#E9ECEF] hover:bg-[#E9ECEF]'
+                                : 'bg-[#1C1C26] text-white border-[#1C1C26] hover:border-[#00F5D4]/40'
+                        }`}
+                        title={theme === 'dark' ? 'Switch to Light Theme' : 'Switch to Dark Theme'}
+                    >
+                        {theme === 'dark' ? (
+                            <>
+                                <Sun className="h-4 w-4 text-[#FFD60A]" />
+                                <span className="hidden sm:inline">Light Theme</span>
+                            </>
+                        ) : (
+                            <>
+                                <Moon className="h-4 w-4 text-[#7B2FFF]" />
+                                <span className="hidden sm:inline">Dark Theme</span>
+                            </>
+                        )}
+                    </button>
+
+                    <button
+                        onClick={handleLogout}
+                        className={`px-4 py-2 rounded-xl text-xs font-bold transition-all border flex items-center gap-1.5 shadow-md ${
+                            theme === 'light'
+                                ? 'bg-[#E9ECEF] border-[#DEE2E6] text-[#495057] hover:text-[#FF3D71] hover:bg-[#FF3D71]/10'
+                                : 'bg-[#1C1C26] border-[#1C1C26] text-[#8B8B96] hover:text-[#FF3D71] hover:bg-[#FF3D71]/10'
+                        }`}
+                    >
+                        <LogOut className="h-4 w-4" /> Logout Studio
+                    </button>
+                </div>
             </header>
 
             <main className="flex-1 p-4 sm:p-6 md:p-8 max-w-4xl w-full mx-auto space-y-6">
@@ -281,227 +372,198 @@ export default function CreatorKycPage() {
                     {isLoadingStatus ? (
                         <div className="p-12 text-center space-y-3">
                             <Clock className="h-8 w-8 text-[#00F5D4] animate-spin mx-auto" />
-                            <p className="text-xs font-bold text-[#8B8B96]">Checking Creator KYC Status...</p>
+                            <p className={`text-xs font-bold ${
+                                theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'
+                            }`}>Checking Creator KYC Status...</p>
                         </div>
                     ) : flowState === 'kyc_approved' ? (
                         /* --- 1. APPROVED SCREEN --- */
-                        <div className="p-8 rounded-3xl bg-[#13131A] border border-[#00E676]/30 shadow-2xl space-y-6 animate-scale-up">
-                            <div className="flex items-center gap-4 border-b border-[#1C1C26] pb-6">
+                        <div className={`p-8 rounded-3xl border shadow-2xl space-y-6 animate-scale-up ${
+                            theme === 'light' ? 'bg-white border-[#00E676]/40' : 'bg-[#13131A] border-[#00E676]/30'
+                        }`}>
+                            <div className={`flex items-center gap-4 border-b pb-6 ${
+                                theme === 'light' ? 'border-[#E9ECEF]' : 'border-[#1C1C26]'
+                            }`}>
                                 <div className="p-3.5 rounded-2xl bg-[#00E676]/10 text-[#00E676] border border-[#00E676]/30 shrink-0">
                                     <CheckCircle2 className="h-8 w-8" />
                                 </div>
                                 <div>
-                                    <span className="px-3 py-1 rounded-full bg-[#00E676]/10 text-[#00E676] text-xs font-extrabold border border-[#00E676]/30 uppercase tracking-wider">
-                                        ✓ KYC VERIFIED & COMPLIANT
+                                    <span className="px-3 py-1 rounded-full bg-[#00E676]/10 text-[#00E676] border border-[#00E676]/30 text-xs font-extrabold uppercase tracking-wider">
+                                        ✓ KYC VERIFIED & APPROVED
                                     </span>
-                                    <h2 className="font-heading font-black text-2xl text-white mt-1">KYC Verification Approved!</h2>
-                                    <p className="text-xs text-[#8B8B96]">Your tax documents and bank account have been verified by Super Admin.</p>
+                                    <h2 className={`font-heading font-black text-2xl mt-1 ${
+                                        theme === 'light' ? 'text-[#1A1D20]' : 'text-white'
+                                    }`}>KYC Identity Verification Complete</h2>
+                                    <p className={`text-xs ${
+                                        theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'
+                                    }`}>Your identity documents and bank account have been verified by super admin auditors.</p>
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                                <div className="p-4 rounded-2xl bg-[#0A0A0F] border border-[#1C1C26] space-y-1">
-                                    <span className="text-[10px] text-[#8B8B96] font-bold uppercase">Payout Status</span>
-                                    <p className="font-extrabold text-[#00E676] text-sm">85% Revenue Payout Enabled</p>
-                                </div>
-                                <div className="p-4 rounded-2xl bg-[#0A0A0F] border border-[#1C1C26] space-y-1">
-                                    <span className="text-[10px] text-[#8B8B96] font-bold uppercase">Verified Bank Account</span>
-                                    <p className="font-extrabold text-white text-sm">
-                                        {submittedKycResult?.bank?.bankName || 'HDFC Bank'} ({submittedKycResult?.bank?.accountNumber || 'XXXX-1234'})
-                                    </p>
-                                </div>
-                                <div className="p-4 rounded-2xl bg-[#0A0A0F] border border-[#1C1C26] space-y-1">
-                                    <span className="text-[10px] text-[#8B8B96] font-bold uppercase">Tax Proof</span>
-                                    <p className="font-extrabold text-[#00F5D4] text-sm">
-                                        PAN Card Verified ({submittedKycResult?.kyc?.panNumber || 'ABCDE1234F'})
-                                    </p>
-                                </div>
-                            </div>
-
-                            <div className="pt-2 flex justify-end">
+                            <div className="pt-2">
                                 <Link
                                     href="/creators/dashboard"
-                                    className="px-6 py-3 rounded-2xl bg-brand-gradient text-[#0A0A0F] font-bold text-xs shadow-xl glow-teal hover:opacity-95 transition"
+                                    className="px-6 py-3 rounded-xl bg-brand-gradient text-[#0A0A0F] font-bold text-xs shadow-md glow-teal hover:opacity-95 transition inline-flex items-center gap-2"
                                 >
-                                    Go to Creator Control Room Dashboard →
+                                    <ShieldCheck className="h-4 w-4" /> Go to Creator Control Room Dashboard
                                 </Link>
                             </div>
                         </div>
-                    ) : flowState === 'kyc_rejected' ? (
-                        /* --- 2. REJECTED SCREEN WITH REASON BANNER --- */
-                        <div className="p-8 rounded-3xl bg-[#13131A] border border-[#FF3D71]/30 shadow-2xl space-y-6 animate-scale-up">
-                            <div className="flex items-center gap-4 border-b border-[#1C1C26] pb-6">
-                                <div className="p-3.5 rounded-2xl bg-[#FF3D71]/10 text-[#FF3D71] border border-[#FF3D71]/30 shrink-0">
-                                    <XCircle className="h-8 w-8" />
-                                </div>
-                                <div>
-                                    <span className="px-3 py-1 rounded-full bg-[#FF3D71]/10 text-[#FF3D71] text-xs font-extrabold border border-[#FF3D71]/30 uppercase tracking-wider">
-                                        ✕ KYC VERIFICATION REJECTED
-                                    </span>
-                                    <h2 className="font-heading font-black text-2xl text-white mt-1">KYC Application Action Required</h2>
-                                    <p className="text-xs text-[#8B8B96]">Your KYC verification application was reviewed and requires correction.</p>
-                                </div>
-                            </div>
-
-                            {/* Prominent Red Rejection Reason Box */}
-                            <div className="p-5 rounded-2xl bg-[#FF3D71]/10 border border-[#FF3D71]/30 space-y-2">
-                                <div className="flex items-center gap-2 text-[#FF3D71] font-bold text-xs uppercase tracking-wider">
-                                    <AlertTriangle className="h-4 w-4" /> Admin Rejection Reason:
-                                </div>
-                                <p className="text-sm font-semibold text-white">
-                                    {submittedKycResult?.rejectionReason || submittedKycResult?.kyc?.rejectionReason || 'Document information unreadable or PAN mismatch. Please re-upload clear government identity proof.'}
-                                </p>
-                            </div>
-
-                            <div className="p-4 rounded-2xl bg-[#0A0A0F] border border-[#1C1C26] text-xs text-[#8B8B96]">
-                                Please click the button below to update your legal identity documents or bank payout details and re-submit for review.
-                            </div>
-
-                            <div className="pt-2 flex justify-end">
-                                <button
-                                    onClick={() => setFlowState('kyc_form')}
-                                    className="px-6 py-3 rounded-2xl bg-[#FF3D71] text-white font-bold text-xs shadow-xl hover:opacity-90 transition flex items-center gap-2"
-                                >
-                                    <RefreshCw className="h-4 w-4" /> Re-submit Corrected KYC Verification Now
-                                </button>
-                            </div>
-                        </div>
                     ) : flowState === 'kyc_submitted' ? (
-                        /* --- 3. SUBMITTED PENDING AUDIT SCREEN --- */
-                        <div className="p-8 rounded-3xl bg-[#13131A] border border-[#1C1C26] shadow-2xl space-y-6 animate-scale-up">
-                            <div className="flex items-center gap-4 border-b border-[#1C1C26] pb-6">
+                        /* --- 2. SUBMITTED & PENDING SCREEN --- */
+                        <div className={`p-8 rounded-3xl border shadow-2xl space-y-6 animate-scale-up ${
+                            theme === 'light' ? 'bg-white border-[#FFD60A]/40' : 'bg-[#13131A] border-[#FFD60A]/30'
+                        }`}>
+                            <div className={`flex items-center gap-4 border-b pb-6 ${
+                                theme === 'light' ? 'border-[#E9ECEF]' : 'border-[#1C1C26]'
+                            }`}>
                                 <div className="p-3.5 rounded-2xl bg-[#FFD60A]/10 text-[#FFD60A] border border-[#FFD60A]/30 shrink-0">
                                     <Clock className="h-8 w-8 animate-spin" />
                                 </div>
                                 <div>
-                                    <span className="px-3 py-1 rounded-full bg-[#FFD60A]/10 text-[#FFD60A] text-xs font-extrabold border border-[#FFD60A]/30 uppercase tracking-wider">
-                                        ● KYC VERIFICATION PENDING
+                                    <span className="px-3 py-1 rounded-full bg-[#FFD60A]/10 text-[#FFD60A] border border-[#FFD60A]/30 text-xs font-extrabold uppercase tracking-wider">
+                                        ● KYC APPLICATION UNDER REVIEW
                                     </span>
-                                    <h2 className="font-heading font-black text-2xl text-white mt-1">Verification Under Review</h2>
-                                    <p className="text-xs text-[#8B8B96]">Estimated audit time: 12-24 Hours</p>
+                                    <h2 className={`font-heading font-black text-2xl mt-1 ${
+                                        theme === 'light' ? 'text-[#1A1D20]' : 'text-white'
+                                    }`}>Documents Submitted & Pending Audit</h2>
+                                    <p className={`text-xs ${
+                                        theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'
+                                    }`}>Your PAN Card, identity proof, and bank payout details have been submitted for super admin verification.</p>
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <div className="p-4 rounded-2xl bg-[#0A0A0F] border border-[#1C1C26] space-y-1">
-                                    <span className="text-[10px] text-[#8B8B96] font-bold uppercase">Submitted Account Holder</span>
-                                    <p className="font-bold text-white text-sm">{submittedKycResult?.bank?.accountHolderName || creatorUser?.fullName || 'Creator'}</p>
-                                </div>
-                                <div className="p-4 rounded-2xl bg-[#0A0A0F] border border-[#1C1C26] space-y-1">
-                                    <span className="text-[10px] text-[#8B8B96] font-bold uppercase">Submitted Bank Details</span>
-                                    <p className="font-bold text-white text-sm">
-                                        {submittedKycResult?.bank?.bankName || 'HDFC Bank'} ({submittedKycResult?.bank?.accountNumber || 'XXXX-1234'})
-                                    </p>
-                                </div>
-                            </div>
-
-                            <div className="pt-2 flex justify-between items-center border-t border-[#1C1C26] pt-4">
-                                <span className="text-xs text-[#8B8B96]">Need to make changes? You can update submitted details anytime.</span>
-                                <button
-                                    onClick={() => setFlowState('kyc_form')}
-                                    className="px-4 py-2 rounded-xl bg-[#1C1C26] text-white hover:bg-[#252533] text-xs font-bold transition"
+                            <div className="pt-2">
+                                <Link
+                                    href="/creators/dashboard"
+                                    className="px-6 py-3 rounded-xl bg-brand-gradient text-[#0A0A0F] font-bold text-xs shadow-md glow-teal hover:opacity-95 transition inline-flex items-center gap-2"
                                 >
-                                    Edit Submitted Details
-                                </button>
+                                    Go to Studio Dashboard
+                                </Link>
                             </div>
                         </div>
                     ) : (
-                        /* --- 4. KYC VERIFICATION MULTI-STEP FORM --- */
-                        <div className="rounded-3xl bg-[#13131A] border border-[#1C1C26] p-6 lg:p-8 shadow-2xl space-y-6">
-                            
-                            {/* Step Progress Bar */}
-                            <div className="grid grid-cols-3 gap-2 border-b border-[#1C1C26] pb-6">
-                                <div className={`p-3 rounded-2xl text-xs font-bold flex items-center gap-2 ${step >= 1 ? 'bg-[#00F5D4]/10 text-[#00F5D4] border border-[#00F5D4]/30' : 'bg-[#0A0A0F] text-[#8B8B96]'}`}>
-                                    <User className="h-4 w-4 shrink-0" />
-                                    <span>1. Personal & ID Proof</span>
+                        /* --- 3. FORM INPUT STEPPER --- */
+                        <div className={`p-6 sm:p-8 rounded-3xl border shadow-2xl space-y-6 transition-colors duration-200 ${
+                            theme === 'light' ? 'bg-white border-[#E9ECEF]' : 'bg-[#13131A] border-[#1C1C26]'
+                        }`}>
+                            <div className={`flex items-center justify-between border-b pb-4 ${
+                                theme === 'light' ? 'border-[#E9ECEF]' : 'border-[#1C1C26]'
+                            }`}>
+                                <div>
+                                    <h2 className={`font-heading font-black text-xl ${
+                                        theme === 'light' ? 'text-[#1A1D20]' : 'text-white'
+                                    }`}>Submit KYC Verification Details</h2>
+                                    <p className={`text-xs ${
+                                        theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'
+                                    }`}>Provide legally accurate PAN, government ID proof, & bank account details.</p>
                                 </div>
-                                <div className={`p-3 rounded-2xl text-xs font-bold flex items-center gap-2 ${step >= 2 ? 'bg-[#00F5D4]/10 text-[#00F5D4] border border-[#00F5D4]/30' : 'bg-[#0A0A0F] text-[#8B8B96]'}`}>
-                                    <Building2 className="h-4 w-4 shrink-0" />
-                                    <span>2. Bank Account & Payout</span>
-                                </div>
-                                <div className={`p-3 rounded-2xl text-xs font-bold flex items-center gap-2 ${step >= 3 ? 'bg-[#00F5D4]/10 text-[#00F5D4] border border-[#00F5D4]/30' : 'bg-[#0A0A0F] text-[#8B8B96]'}`}>
-                                    <ShieldCheck className="h-4 w-4 shrink-0" />
-                                    <span>3. Review & Submit</span>
-                                </div>
+                                <span className="px-3 py-1 rounded-full bg-[#00F5D4]/10 text-[#00F5D4] border border-[#00F5D4]/30 text-xs font-bold">
+                                    Step {step} of 3
+                                </span>
                             </div>
 
-                            {errorMsg && (
-                                <div className="p-3.5 rounded-2xl bg-[#FF3D71]/10 border border-[#FF3D71]/30 text-[#FF3D71] text-xs font-bold flex items-center gap-2">
-                                    <AlertCircle className="h-4 w-4 shrink-0" />
-                                    <span>{errorMsg}</span>
-                                </div>
-                            )}
+                            {/* Stepper Tabs */}
+                            <div className="grid grid-cols-3 gap-2">
+                                <button
+                                    onClick={() => setStep(1)}
+                                    className={`py-2 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition ${
+                                        step === 1 ? 'bg-brand-gradient text-[#0A0A0F] shadow-md' : theme === 'light' ? 'bg-[#F1F3F5] text-[#6C757D]' : 'bg-[#0A0A0F] text-[#8B8B96]'
+                                    }`}
+                                >
+                                    <User className="h-3.5 w-3.5" /> 1. Identity & PAN
+                                </button>
+                                <button
+                                    onClick={() => step > 1 && setStep(2)}
+                                    className={`py-2 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition ${
+                                        step === 2 ? 'bg-brand-gradient text-[#0A0A0F] shadow-md' : theme === 'light' ? 'bg-[#F1F3F5] text-[#6C757D]' : 'bg-[#0A0A0F] text-[#8B8B96]'
+                                    }`}
+                                >
+                                    <Building2 className="h-3.5 w-3.5" /> 2. Bank Details
+                                </button>
+                                <button
+                                    onClick={() => step > 2 && setStep(3)}
+                                    className={`py-2 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition ${
+                                        step === 3 ? 'bg-brand-gradient text-[#0A0A0F] shadow-md' : theme === 'light' ? 'bg-[#F1F3F5] text-[#6C757D]' : 'bg-[#0A0A0F] text-[#8B8B96]'
+                                    }`}
+                                >
+                                    <CheckCircle2 className="h-3.5 w-3.5" /> 3. Submit
+                                </button>
+                            </div>
 
+                            {/* Form Steps */}
                             {step === 1 && (
-                                <form onSubmit={handleNextToStep2} className="space-y-4">
-                                    <h3 className="font-bold text-white text-base">Step 1: Personal Details & Identity Proof</h3>
+                                <form onSubmit={handleNextStep} className="space-y-4">
+                                    <div>
+                                        <label className={`block text-xs font-bold mb-1 ${
+                                            theme === 'light' ? 'text-[#1A1D20]' : 'text-white'
+                                        }`}>Legal Full Name (Matching PAN/ID)</label>
+                                        <input
+                                            type="text"
+                                            required
+                                            value={formData.fullName}
+                                            onChange={(e) => handleInputChange('fullName', e.target.value)}
+                                            placeholder="e.g. Abhishek Kumar"
+                                            className={`w-full px-4 py-2.5 rounded-xl border text-xs focus:outline-none focus:border-[#00F5D4] ${
+                                                theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6] text-[#1A1D20]' : 'bg-[#0A0A0F] border-[#1C1C26] text-white'
+                                            }`}
+                                        />
+                                    </div>
+
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                         <div>
-                                            <label className="block text-xs font-semibold text-[#8B8B96] mb-1">Full Legal Name (matching document)</label>
-                                            <input
-                                                type="text"
-                                                required
-                                                value={formData.fullName}
-                                                onChange={(e) => handleInputChange('fullName', e.target.value)}
-                                                placeholder="Abhishek Kumar"
-                                                className="w-full rounded-xl bg-[#0A0A0F] border border-[#1C1C26] px-3 py-2 text-xs text-white focus:border-[#00F5D4] focus:outline-none"
-                                            />
-                                        </div>
-
-                                        <div>
-                                            <label className="block text-xs font-semibold text-[#8B8B96] mb-1">Document Type</label>
-                                            <select
-                                                value={formData.documentType}
-                                                onChange={(e) => handleInputChange('documentType', e.target.value)}
-                                                className="w-full rounded-xl bg-[#0A0A0F] border border-[#1C1C26] px-3 py-2 text-xs text-white focus:border-[#00F5D4] focus:outline-none"
-                                            >
-                                                <option value="pan_card">PAN Card (Recommended for Tax Payouts)</option>
-                                                <option value="adhar_card">Aadhaar Card / National ID</option>
-                                                <option value="driving_license">Driving License</option>
-                                                <option value="passport">Passport</option>
-                                            </select>
-                                        </div>
-
-                                        <div>
-                                            <label className="block text-xs font-semibold text-[#8B8B96] mb-1">PAN Card / ID Document Number</label>
+                                            <label className={`block text-xs font-bold mb-1 ${
+                                                theme === 'light' ? 'text-[#1A1D20]' : 'text-white'
+                                            }`}>PAN Number / ID Number</label>
                                             <input
                                                 type="text"
                                                 required
                                                 value={formData.panNumber}
-                                                onChange={(e) => handleInputChange('panNumber', e.target.value)}
-                                                placeholder="ABCDE1234F"
-                                                className="w-full rounded-xl bg-[#0A0A0F] border border-[#1C1C26] px-3 py-2 text-xs text-white uppercase focus:border-[#00F5D4] focus:outline-none"
+                                                onChange={(e) => handleInputChange('panNumber', e.target.value.toUpperCase())}
+                                                placeholder="e.g. ABCDE1234F"
+                                                className={`w-full px-4 py-2.5 rounded-xl border text-xs focus:outline-none focus:border-[#00F5D4] ${
+                                                    theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6] text-[#1A1D20]' : 'bg-[#0A0A0F] border-[#1C1C26] text-white'
+                                                }`}
                                             />
                                         </div>
 
                                         <div>
-                                            <label className="block text-xs font-semibold text-[#8B8B96] mb-1">State & City</label>
-                                            <div className="grid grid-cols-2 gap-2">
-                                                <input
-                                                    type="text"
-                                                    value={formData.state}
-                                                    onChange={(e) => handleInputChange('state', e.target.value)}
-                                                    placeholder="State (e.g. Maharashtra)"
-                                                    className="w-full rounded-xl bg-[#0A0A0F] border border-[#1C1C26] px-3 py-2 text-xs text-white focus:border-[#00F5D4] focus:outline-none"
-                                                />
-                                                <input
-                                                    type="text"
-                                                    value={formData.city}
-                                                    onChange={(e) => handleInputChange('city', e.target.value)}
-                                                    placeholder="City (e.g. Mumbai)"
-                                                    className="w-full rounded-xl bg-[#0A0A0F] border border-[#1C1C26] px-3 py-2 text-xs text-white focus:border-[#00F5D4] focus:outline-none"
-                                                />
-                                            </div>
+                                            <label className={`block text-xs font-bold mb-1 ${
+                                                theme === 'light' ? 'text-[#1A1D20]' : 'text-white'
+                                            }`}>Document Type</label>
+                                            <select
+                                                value={formData.documentType}
+                                                onChange={(e) => handleInputChange('documentType', e.target.value)}
+                                                className={`w-full px-4 py-2.5 rounded-xl border text-xs focus:outline-none focus:border-[#00F5D4] ${
+                                                    theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6] text-[#1A1D20]' : 'bg-[#0A0A0F] border-[#1C1C26] text-white'
+                                                }`}
+                                            >
+                                                <option value="pan_card">PAN Card (India)</option>
+                                                <option value="aadhaar_card">Aadhaar Card</option>
+                                                <option value="passport">Passport</option>
+                                            </select>
                                         </div>
+                                    </div>
 
-                                        <div>
-                                            <label className="block text-xs font-semibold text-[#8B8B96] mb-1">Date of Birth (Optional)</label>
+                                    <div>
+                                        <label className={`block text-xs font-bold mb-1 ${
+                                            theme === 'light' ? 'text-[#1A1D20]' : 'text-white'
+                                        }`}>Upload Identity Document Image</label>
+                                        <div className="flex gap-2">
                                             <input
-                                                type="date"
-                                                value={formData.dateOfBirth}
-                                                onChange={(e) => handleInputChange('dateOfBirth', e.target.value)}
-                                                className="w-full rounded-xl bg-[#0A0A0F] border border-[#1C1C26] px-3 py-2 text-xs text-white focus:border-[#00F5D4] focus:outline-none"
+                                                type="text"
+                                                value={formData.documentPreview}
+                                                onChange={(e) => handleInputChange('documentPreview', e.target.value)}
+                                                className={`flex-1 px-4 py-2.5 rounded-xl border text-xs focus:outline-none focus:border-[#00F5D4] ${
+                                                    theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6] text-[#1A1D20]' : 'bg-[#0A0A0F] border-[#1C1C26] text-white'
+                                                }`}
                                             />
+                                            <label className={`px-4 py-2.5 rounded-xl text-xs font-bold cursor-pointer flex items-center gap-1.5 ${
+                                                theme === 'light' ? 'bg-[#E9ECEF] text-[#1A1D20] hover:bg-[#DEE2E6]' : 'bg-[#1C1C26] text-white hover:bg-[#252533]'
+                                            }`}>
+                                                <Upload className="h-4 w-4 text-[#00F5D4]" /> Pick File
+                                                <input type="file" accept="image/*" className="hidden" onChange={handleFileUpload} />
+                                            </label>
                                         </div>
                                     </div>
 
@@ -510,84 +572,93 @@ export default function CreatorKycPage() {
                                             type="submit"
                                             className="px-6 py-2.5 rounded-xl bg-brand-gradient text-[#0A0A0F] font-bold text-xs shadow-md hover:opacity-90 transition flex items-center gap-1.5"
                                         >
-                                            Proceed to Bank Account Setup →
+                                            Continue to Bank Details →
                                         </button>
                                     </div>
                                 </form>
                             )}
 
                             {step === 2 && (
-                                <form onSubmit={handleNextToStep3} className="space-y-4">
-                                    <h3 className="font-bold text-white text-base">Step 2: Bank Account & Payout Setup</h3>
+                                <form onSubmit={handleNextStep} className="space-y-4">
+                                    <div>
+                                        <label className={`block text-xs font-bold mb-1 ${
+                                            theme === 'light' ? 'text-[#1A1D20]' : 'text-white'
+                                        }`}>Bank Account Holder Name</label>
+                                        <input
+                                            type="text"
+                                            required
+                                            value={formData.accountHolderName}
+                                            onChange={(e) => handleInputChange('accountHolderName', e.target.value)}
+                                            placeholder="e.g. Abhishek Kumar"
+                                            className={`w-full px-4 py-2.5 rounded-xl border text-xs focus:outline-none focus:border-[#00F5D4] ${
+                                                theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6] text-[#1A1D20]' : 'bg-[#0A0A0F] border-[#1C1C26] text-white'
+                                            }`}
+                                        />
+                                    </div>
+
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                         <div>
-                                            <label className="block text-xs font-semibold text-[#8B8B96] mb-1">Account Holder Name</label>
-                                            <input
-                                                type="text"
-                                                required
-                                                value={formData.accountHolderName}
-                                                onChange={(e) => handleInputChange('accountHolderName', e.target.value)}
-                                                placeholder="Abhishek Kumar"
-                                                className="w-full rounded-xl bg-[#0A0A0F] border border-[#1C1C26] px-3 py-2 text-xs text-white focus:border-[#00F5D4] focus:outline-none"
-                                            />
-                                        </div>
-
-                                        <div>
-                                            <label className="block text-xs font-semibold text-[#8B8B96] mb-1">Bank Name</label>
+                                            <label className={`block text-xs font-bold mb-1 ${
+                                                theme === 'light' ? 'text-[#1A1D20]' : 'text-white'
+                                            }`}>Bank Name</label>
                                             <input
                                                 type="text"
                                                 required
                                                 value={formData.bankName}
                                                 onChange={(e) => handleInputChange('bankName', e.target.value)}
-                                                placeholder="HDFC Bank / ICICI Bank"
-                                                className="w-full rounded-xl bg-[#0A0A0F] border border-[#1C1C26] px-3 py-2 text-xs text-white focus:border-[#00F5D4] focus:outline-none"
+                                                placeholder="e.g. HDFC Bank"
+                                                className={`w-full px-4 py-2.5 rounded-xl border text-xs focus:outline-none focus:border-[#00F5D4] ${
+                                                    theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6] text-[#1A1D20]' : 'bg-[#0A0A0F] border-[#1C1C26] text-white'
+                                                }`}
                                             />
                                         </div>
 
                                         <div>
-                                            <label className="block text-xs font-semibold text-[#8B8B96] mb-1">Account Number</label>
+                                            <label className={`block text-xs font-bold mb-1 ${
+                                                theme === 'light' ? 'text-[#1A1D20]' : 'text-white'
+                                            }`}>Account Number</label>
                                             <input
                                                 type="text"
                                                 required
                                                 value={formData.accountNumber}
                                                 onChange={(e) => handleInputChange('accountNumber', e.target.value)}
-                                                placeholder="5010023456789"
-                                                className="w-full rounded-xl bg-[#0A0A0F] border border-[#1C1C26] px-3 py-2 text-xs text-white focus:border-[#00F5D4] focus:outline-none"
+                                                placeholder="e.g. 50100298410294"
+                                                className={`w-full px-4 py-2.5 rounded-xl border text-xs focus:outline-none focus:border-[#00F5D4] ${
+                                                    theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6] text-[#1A1D20]' : 'bg-[#0A0A0F] border-[#1C1C26] text-white'
+                                                }`}
                                             />
                                         </div>
+                                    </div>
 
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                         <div>
-                                            <label className="block text-xs font-semibold text-[#8B8B96] mb-1">Confirm Account Number</label>
-                                            <input
-                                                type="text"
-                                                required
-                                                value={formData.confirmAccountNumber}
-                                                onChange={(e) => handleInputChange('confirmAccountNumber', e.target.value)}
-                                                placeholder="Confirm account number"
-                                                className="w-full rounded-xl bg-[#0A0A0F] border border-[#1C1C26] px-3 py-2 text-xs text-white focus:border-[#00F5D4] focus:outline-none"
-                                            />
-                                        </div>
-
-                                        <div>
-                                            <label className="block text-xs font-semibold text-[#8B8B96] mb-1">IFSC Code</label>
+                                            <label className={`block text-xs font-bold mb-1 ${
+                                                theme === 'light' ? 'text-[#1A1D20]' : 'text-white'
+                                            }`}>IFSC Code</label>
                                             <input
                                                 type="text"
                                                 required
                                                 value={formData.ifscCode}
-                                                onChange={(e) => handleInputChange('ifscCode', e.target.value)}
-                                                placeholder="HDFC0001234"
-                                                className="w-full rounded-xl bg-[#0A0A0F] border border-[#1C1C26] px-3 py-2 text-xs text-white uppercase focus:border-[#00F5D4] focus:outline-none"
+                                                onChange={(e) => handleInputChange('ifscCode', e.target.value.toUpperCase())}
+                                                placeholder="e.g. HDFC0000240"
+                                                className={`w-full px-4 py-2.5 rounded-xl border text-xs focus:outline-none focus:border-[#00F5D4] ${
+                                                    theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6] text-[#1A1D20]' : 'bg-[#0A0A0F] border-[#1C1C26] text-white'
+                                                }`}
                                             />
                                         </div>
 
                                         <div>
-                                            <label className="block text-xs font-semibold text-[#8B8B96] mb-1">Instant UPI VPA ID (Optional)</label>
+                                            <label className={`block text-xs font-bold mb-1 ${
+                                                theme === 'light' ? 'text-[#1A1D20]' : 'text-white'
+                                            }`}>UPI ID (Optional Payout VPA)</label>
                                             <input
                                                 type="text"
                                                 value={formData.upiId}
                                                 onChange={(e) => handleInputChange('upiId', e.target.value)}
-                                                placeholder="creator@okaxis"
-                                                className="w-full rounded-xl bg-[#0A0A0F] border border-[#1C1C26] px-3 py-2 text-xs text-white focus:border-[#00F5D4] focus:outline-none"
+                                                placeholder="e.g. creator@upi"
+                                                className={`w-full px-4 py-2.5 rounded-xl border text-xs text-[#00F5D4] focus:outline-none focus:border-[#00F5D4] ${
+                                                    theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6]' : 'bg-[#0A0A0F] border-[#1C1C26]'
+                                                }`}
                                             />
                                         </div>
                                     </div>
@@ -596,7 +667,9 @@ export default function CreatorKycPage() {
                                         <button
                                             type="button"
                                             onClick={() => setStep(1)}
-                                            className="px-4 py-2 rounded-xl bg-[#1C1C26] text-white text-xs font-bold"
+                                            className={`px-4 py-2 rounded-xl text-xs font-bold ${
+                                                theme === 'light' ? 'bg-[#E9ECEF] text-[#1A1D20] hover:bg-[#DEE2E6]' : 'bg-[#1C1C26] text-white hover:bg-[#252533]'
+                                            }`}
                                         >
                                             ← Back to Step 1
                                         </button>
@@ -612,24 +685,34 @@ export default function CreatorKycPage() {
 
                             {step === 3 && (
                                 <form onSubmit={handleSubmitKyc} className="space-y-4">
-                                    <h3 className="font-bold text-white text-base">Step 3: Legal Declaration & Submission</h3>
+                                    <h3 className={`font-bold text-base ${
+                                        theme === 'light' ? 'text-[#1A1D20]' : 'text-white'
+                                    }`}>Step 3: Legal Declaration & Submission</h3>
 
-                                    <div className="p-4 rounded-2xl bg-[#0A0A0F] border border-[#1C1C26] space-y-2 text-xs">
-                                        <div className="flex justify-between border-b border-[#1C1C26] pb-2">
-                                            <span className="text-[#8B8B96]">Legal Name:</span>
-                                            <span className="font-bold text-white">{formData.fullName}</span>
+                                    <div className={`p-4 rounded-2xl border space-y-2 text-xs ${
+                                        theme === 'light' ? 'bg-[#F8F9FA] border-[#E9ECEF]' : 'bg-[#0A0A0F] border-[#1C1C26]'
+                                    }`}>
+                                        <div className={`flex justify-between border-b pb-2 ${
+                                            theme === 'light' ? 'border-[#E9ECEF]' : 'border-[#1C1C26]'
+                                        }`}>
+                                            <span className={theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'}>Legal Name:</span>
+                                            <span className={`font-bold ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'}`}>{formData.fullName}</span>
                                         </div>
-                                        <div className="flex justify-between border-b border-[#1C1C26] pb-2">
-                                            <span className="text-[#8B8B96]">PAN Number:</span>
+                                        <div className={`flex justify-between border-b pb-2 ${
+                                            theme === 'light' ? 'border-[#E9ECEF]' : 'border-[#1C1C26]'
+                                        }`}>
+                                            <span className={theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'}>PAN Number:</span>
                                             <span className="font-bold text-[#00F5D4]">{formData.panNumber}</span>
                                         </div>
                                         <div className="flex justify-between">
-                                            <span className="text-[#8B8B96]">Payout Account:</span>
-                                            <span className="font-bold text-white">{formData.bankName} ({formData.accountNumber})</span>
+                                            <span className={theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'}>Payout Account:</span>
+                                            <span className={`font-bold ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'}`}>{formData.bankName} ({formData.accountNumber})</span>
                                         </div>
                                     </div>
 
-                                    <label className="flex items-start gap-2 text-xs text-[#8B8B96] cursor-pointer">
+                                    <label className={`flex items-start gap-2 text-xs cursor-pointer ${
+                                        theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'
+                                    }`}>
                                         <input
                                             type="checkbox"
                                             checked={formData.agreeTerms}
@@ -643,7 +726,9 @@ export default function CreatorKycPage() {
                                         <button
                                             type="button"
                                             onClick={() => setStep(2)}
-                                            className="px-4 py-2 rounded-xl bg-[#1C1C26] text-white text-xs font-bold"
+                                            className={`px-4 py-2 rounded-xl text-xs font-bold ${
+                                                theme === 'light' ? 'bg-[#E9ECEF] text-[#1A1D20] hover:bg-[#DEE2E6]' : 'bg-[#1C1C26] text-white hover:bg-[#252533]'
+                                            }`}
                                         >
                                             ← Back to Step 2
                                         </button>

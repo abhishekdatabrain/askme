@@ -16,15 +16,57 @@ import {
   AlertCircle,
   XCircle,
   Sparkles,
+  MessageSquare,
+  Sun,
+  Moon
 } from 'lucide-react';
 import { API_ENDPOINTS } from '@/config/api';
 import { getCreatorToken, getCreatorUser, setCookie, clearCreatorSession } from '@/utils/cookies';
 
-export default function CreatorSidebar() {
+export default function CreatorSidebar({ theme: propTheme, onToggleTheme }) {
   const pathname = usePathname();
   const router = useRouter();
   const [creatorUser, setCreatorUser] = useState(null);
   const [kycStatus, setKycStatus] = useState('pending'); // 'pending' | 'approved' | 'rejected'
+  const [theme, setTheme] = useState(propTheme || 'dark');
+
+  // Sync theme prop or localStorage
+  useEffect(() => {
+    if (propTheme) {
+      setTheme(propTheme);
+    } else {
+      const saved = typeof window !== 'undefined' ? (localStorage.getItem('askme_creator_theme') || 'dark') : 'dark';
+      setTheme(saved);
+    }
+  }, [propTheme]);
+
+  useEffect(() => {
+    const handleThemeChange = () => {
+      const saved = typeof window !== 'undefined' ? (localStorage.getItem('askme_creator_theme') || 'dark') : 'dark';
+      setTheme(saved);
+    };
+    if (typeof window !== 'undefined') {
+      window.addEventListener('creator-theme-changed', handleThemeChange);
+    }
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('creator-theme-changed', handleThemeChange);
+      }
+    };
+  }, []);
+
+  const handleToggleThemeClick = () => {
+    if (onToggleTheme) {
+      onToggleTheme();
+    } else {
+      const nextTheme = theme === 'dark' ? 'light' : 'dark';
+      setTheme(nextTheme);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('askme_creator_theme', nextTheme);
+        window.dispatchEvent(new Event('creator-theme-changed'));
+      }
+    }
+  };
 
   useEffect(() => {
     // 1. Retrieve stored creator user
@@ -85,6 +127,11 @@ export default function CreatorSidebar() {
       href: '/creators/live-sessions',
       icon: Radio,
     },
+    // {
+    //   name: 'Live Chat Panel',
+    //   href: '/creators/live-chat',
+    //   icon: MessageSquare,
+    // },
     {
       name: 'Wallet',
       href: '/creators/wallet',
@@ -103,18 +150,26 @@ export default function CreatorSidebar() {
   ];
 
   return (
-    <aside className="w-64 bg-[#13131A] border-r border-[#1C1C26] flex flex-col h-screen sticky top-0 shrink-0 z-30 select-none">
+    <aside className={`w-64 border-r flex flex-col h-screen sticky top-0 shrink-0 z-30 select-none transition-colors duration-200 ${
+      theme === 'light' ? 'bg-[#F8F9FA] border-[#E9ECEF]' : 'bg-[#13131A] border-[#1C1C26]'
+    }`}>
       {/* Studio Header & Branding */}
-      <div className="p-5 border-b border-[#1C1C26] flex items-center justify-between">
+      <div className={`p-5 border-b flex items-center justify-between ${
+        theme === 'light' ? 'border-[#E9ECEF]' : 'border-[#1C1C26]'
+      }`}>
         <Link href="/creators/dashboard" className="flex items-center gap-2.5 group">
           <div className="h-9 w-9 rounded-xl bg-brand-gradient flex items-center justify-center text-[#0A0A0F] font-black text-xl shadow-md glow-teal group-hover:scale-105 transition">
             a
           </div>
           <div>
-            <span className="font-heading font-black text-lg text-white block leading-none">
+            <span className={`font-heading font-black text-lg block leading-none ${
+              theme === 'light' ? 'text-[#1A1D20]' : 'text-white'
+            }`}>
               AskMe <span className="text-brand-gradient">STUDIO</span>
             </span>
-            <span className="text-[10px] font-bold text-[#8B8B96] uppercase tracking-wider block mt-1">
+            <span className={`text-[10px] font-bold uppercase tracking-wider block mt-1 ${
+              theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'
+            }`}>
               Creator Control Room
             </span>
           </div>
@@ -123,8 +178,12 @@ export default function CreatorSidebar() {
 
       {/* Creator Profile Summary Pill */}
       {creatorUser && (
-        <div className="mx-4 mt-4 p-3 rounded-2xl bg-[#0A0A0F] border border-[#1C1C26] flex items-center gap-3">
-          <div className="h-9 w-9 rounded-xl bg-[#1C1C26] border border-[#252533] overflow-hidden shrink-0 flex items-center justify-center text-[#00F5D4] font-bold text-sm">
+        <div className={`mx-4 mt-4 p-3 rounded-2xl border flex items-center gap-3 ${
+          theme === 'light' ? 'bg-[#F1F3F5] border-[#E9ECEF]' : 'bg-[#0A0A0F] border-[#1C1C26]'
+        }`}>
+          <div className={`h-9 w-9 rounded-xl border overflow-hidden shrink-0 flex items-center justify-center font-bold text-sm ${
+            theme === 'light' ? 'bg-[#E9ECEF] border-[#DEE2E6] text-[#00B49F]' : 'bg-[#1C1C26] border-[#252533] text-[#00F5D4]'
+          }`}>
             {creatorUser.profileImage ? (
               <img src={creatorUser.profileImage} alt={creatorUser.fullName} className="h-full w-full object-cover" />
             ) : (
@@ -132,8 +191,12 @@ export default function CreatorSidebar() {
             )}
           </div>
           <div className="min-w-0 flex-1">
-            <h4 className="font-bold text-xs text-white truncate">{creatorUser.fullName || 'Creator'}</h4>
-            <p className="text-[10px] text-[#8B8B96] truncate">{creatorUser.username || '@creator'}</p>
+            <h4 className={`font-bold text-xs truncate ${
+              theme === 'light' ? 'text-[#1A1D20]' : 'text-white'
+            }`}>{creatorUser.fullName || 'Creator'}</h4>
+            <p className={`text-[10px] truncate ${
+              theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'
+            }`}>{creatorUser.username || '@creator'}</p>
           </div>
         </div>
       )}
@@ -148,13 +211,18 @@ export default function CreatorSidebar() {
             <Link
               key={item.name}
               href={item.href}
-              className={`flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${isActive
-                ? 'bg-brand-gradient text-[#0A0A0F] shadow-lg glow-teal font-black'
-                : 'text-[#8B8B96] hover:text-white hover:bg-[#1C1C26]'
-                }`}
+              className={`flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${
+                isActive
+                  ? 'bg-brand-gradient text-[#0A0A0F] shadow-lg glow-teal font-black'
+                  : theme === 'light'
+                    ? 'text-[#495057] hover:text-[#1A1D20] hover:bg-[#E9ECEF]'
+                    : 'text-[#8B8B96] hover:text-white hover:bg-[#1C1C26]'
+              }`}
             >
               <div className="flex items-center gap-2.5 min-w-0">
-                <Icon className={`h-4 w-4 shrink-0 ${isActive ? 'text-[#0A0A0F]' : 'text-[#8B8B96]'}`} />
+                <Icon className={`h-4 w-4 shrink-0 ${
+                  isActive ? 'text-[#0A0A0F]' : theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'
+                }`} />
                 <span className="truncate">{item.name}</span>
               </div>
 
@@ -190,10 +258,16 @@ export default function CreatorSidebar() {
       </nav>
 
       {/* Footer & Logout */}
-      <div className="p-3 border-t border-[#1C1C26]">
+      <div className={`p-3 border-t ${
+        theme === 'light' ? 'border-[#E9ECEF]' : 'border-[#1C1C26]'
+      }`}>
         <button
           onClick={handleLogout}
-          className="w-full px-3 py-2 rounded-xl bg-[#1C1C26]/60 hover:bg-[#FF3D71]/10 hover:text-[#FF3D71] text-[#8B8B96] text-xs font-bold transition-all flex items-center justify-between"
+          className={`w-full px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-between ${
+            theme === 'light'
+              ? 'bg-[#E9ECEF] hover:bg-[#FF3D71]/10 text-[#495057] hover:text-[#FF3D71]'
+              : 'bg-[#1C1C26]/60 hover:bg-[#FF3D71]/10 text-[#8B8B96] hover:text-[#FF3D71]'
+          }`}
         >
           <div className="flex items-center gap-2">
             <LogOut className="h-4 w-4" />
@@ -204,3 +278,4 @@ export default function CreatorSidebar() {
     </aside>
   );
 }
+

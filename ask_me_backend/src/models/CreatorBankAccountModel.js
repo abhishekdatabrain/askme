@@ -38,7 +38,8 @@ const CreatorBankAccount = sequelize.define(
     },
 
     account_type: {
-      type: DataTypes.ENUM("bank", "upi"),
+      type: DataTypes.STRING(50),
+      defaultValue: "bank",
     },
 
     is_primary: {
@@ -52,7 +53,7 @@ const CreatorBankAccount = sequelize.define(
     },
 
     status: {
-      type: DataTypes.ENUM("active", "inactive", "blocked"),
+      type: DataTypes.STRING(50),
       defaultValue: "active",
     },
   },

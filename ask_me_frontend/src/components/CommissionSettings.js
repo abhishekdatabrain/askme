@@ -66,8 +66,9 @@ export default function CommissionSettings({ activeSubTab }) {
       if (data.data?.commissionSettings?.historyLogs) {
         setHistoryLogs(data.data.commissionSettings.historyLogs);
       } else {
+        const nowStr = new Date().toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true });
         setHistoryLogs(prev => [
-          { id: `LOG-${Date.now().toString().slice(-4)}`, date: 'Just now', title: `Platform Cut set to ${globalCut}%`, detail: `Minimum withdrawal limit set to ₹${minWithdrawalLimit}.`, admin: 'Super Admin' },
+          { id: `LOG-${Date.now().toString().slice(-4)}`, date: nowStr, title: `Platform Cut set to ${globalCut}%`, detail: `Minimum withdrawal limit set to ₹${minWithdrawalLimit}.`, admin: 'Super Admin' },
           ...prev
         ]);
       }

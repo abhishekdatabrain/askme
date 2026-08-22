@@ -73,6 +73,16 @@ const DonationSession = sequelize.define(
             type: DataTypes.DECIMAL(18, 2),
             defaultValue: 0,
         },
+
+        duration_hours: {
+            type: DataTypes.INTEGER,
+            defaultValue: 2,
+        },
+
+        ends_at: {
+            type: DataTypes.DATE,
+            allowNull: true,
+        },
     },
     {
         tableName: "donation_sessions",

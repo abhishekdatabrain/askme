@@ -189,12 +189,12 @@ export default function CreatorRegisterForm({ onClose, onComplete }) {
       <div className="w-full max-w-2xl max-h-[88vh] overflow-y-auto my-auto rounded-3xl bg-[#13131A] border border-[#1C1C26] p-6 lg:p-8 shadow-2xl space-y-6 relative animate-in fade-in zoom-in duration-200">
 
         {/* Close Button */}
-        <button
+        {/* <button
           onClick={onClose}
           className="absolute top-5 right-5 p-2 rounded-full bg-[#1C1C26] text-[#8B8B96] hover:text-white transition-colors z-10"
         >
           <X className="h-4 w-4" />
-        </button>
+        </button> */}
 
         {/* Header Branding */}
         <div className="text-center space-y-2">

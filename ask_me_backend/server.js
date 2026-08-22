@@ -1,3 +1,4 @@
+const http = require('http');
 const dotenv = require('dotenv');
 const cookieParser = require("cookie-parser");
 
@@ -7,16 +8,21 @@ dotenv.config();
 const app = require('./src/app');
 app.use(cookieParser());
 const { connectDB } = require('./src/config/db.js');
+const { initSocket } = require('./src/config/socket.js');
 
 const PORT = process.env.PORT || 5000;
 
 // Initialize Sequelize Connection & Model Sync
 connectDB();
 
+// Create HTTP Server & Attach Socket.IO
+const server = http.createServer(app);
+initSocket(server);
+
 // Start Server
-const server = app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(
-    `Server running in ${process.env.NODE_ENV || 'development'} mode on port ${PORT}`
+    `Server running in ${process.env.NODE_ENV || 'development'} mode on port ${PORT} with Socket.IO initialized`
   );
 });
 

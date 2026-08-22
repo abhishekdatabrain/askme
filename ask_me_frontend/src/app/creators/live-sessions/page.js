@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import CreatorSidebar from '@/components/CreatorSidebar';
+import CreatorNotificationDropdown from '@/components/CreatorNotificationDropdown';
 import { useToast } from '@/context/ToastContext';
 import { getCreatorToken, getCreatorUser } from '@/utils/cookies';
 import {
@@ -21,7 +22,11 @@ import {
   Layers,
   Sparkles,
   RefreshCw,
-  PlayCircle
+  PlayCircle,
+  MessageSquare,
+  Sun,
+  Moon,
+  Bell
 } from 'lucide-react';
 import { API_ENDPOINTS } from '@/config/api';
 
@@ -31,7 +36,78 @@ export default function CreatorLiveSessionsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [creator, setCreator] = useState(null);
   const [activatingId, setActivatingId] = useState(null);
-  console.log("sessions", sessions);
+  const [liveTimers, setLiveTimers] = useState({});
+
+  // Countdown Effect for Active Sessions in Live Sessions Page
+  useEffect(() => {
+    const activeSessions = sessions.filter(s => s.status === 'active');
+    if (activeSessions.length === 0) {
+      setLiveTimers({});
+      return;
+    }
+
+    const updateTimers = () => {
+      const newTimers = {};
+      const now = Date.now();
+
+      activeSessions.forEach(s => {
+        const durationMs = (Number(s.durationHours) || 2) * 3600 * 1000;
+        const endTime = s.endsAt
+          ? new Date(s.endsAt).getTime()
+          : new Date(s.startedAt || s.createdAt || now).getTime() + durationMs;
+
+        const diff = endTime - now;
+        if (diff <= 0) {
+          newTimers[s.id] = '00h 00m 00s (Expired)';
+          handleCloseSession(s.id);
+        } else {
+          const hours = Math.floor(diff / (1000 * 60 * 60));
+          const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+          const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+          newTimers[s.id] = `${String(hours).padStart(2, '0')}h ${String(minutes).padStart(2, '0')}m ${String(seconds).padStart(2, '0')}s`;
+        }
+      });
+
+      setLiveTimers(newTimers);
+    };
+
+    updateTimers();
+    const interval = setInterval(updateTimers, 1000);
+    return () => clearInterval(interval);
+  }, [sessions]);
+
+  // Theme State
+  const [theme, setTheme] = useState('dark');
+
+  useEffect(() => {
+    const savedTheme = typeof window !== 'undefined' ? (localStorage.getItem('askme_creator_theme') || 'dark') : 'dark';
+    setTheme(savedTheme);
+  }, []);
+
+  useEffect(() => {
+    const handleThemeChange = () => {
+      const savedTheme = typeof window !== 'undefined' ? (localStorage.getItem('askme_creator_theme') || 'dark') : 'dark';
+      setTheme(savedTheme);
+    };
+    if (typeof window !== 'undefined') {
+      window.addEventListener('creator-theme-changed', handleThemeChange);
+    }
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('creator-theme-changed', handleThemeChange);
+      }
+    };
+  }, []);
+
+  const toggleTheme = () => {
+    const nextTheme = theme === 'dark' ? 'light' : 'dark';
+    setTheme(nextTheme);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('askme_creator_theme', nextTheme);
+      window.dispatchEvent(new Event('creator-theme-changed'));
+    }
+  };
+
   const fetchSessions = async (uId, token) => {
     try {
       setIsLoading(true);
@@ -65,7 +141,6 @@ export default function CreatorLiveSessionsPage() {
   // 1-Click Start Live Session (for specific session or new session)
   const handleStartLiveSession = async (targetSessionId = null) => {
     try {
-      console.log("targetSessionId", targetSessionId);
       setActivatingId(targetSessionId || '');
       const token = getCreatorToken();
 
@@ -77,47 +152,56 @@ export default function CreatorLiveSessionsPage() {
         });
         const data = await res.json();
         if (res.ok && data.status === 'success') {
-          setSessions(prev => prev.map(s => String(s.id) === String(targetSessionId) ? { ...s, status: 'active' } : { ...s, status: 'closed' }));
-          toast.success(`Live session "${data.data?.session?.title || 'Session'}" is NOW LIVE!`, 'Stream Live!');
+          const returnedSession = data.data?.session;
+          setSessions(prev => prev.map(s => String(s.id) === String(targetSessionId) ? {
+            ...s,
+            ...returnedSession,
+            status: 'active',
+            startedAt: returnedSession?.startedAt || new Date().toISOString(),
+            endsAt: returnedSession?.endsAt || new Date(Date.now() + (s.durationHours || 2) * 3600 * 1000).toISOString(),
+          } : { ...s, status: 'closed' }));
+          toast.success(`Live session "${returnedSession?.title || 'Session'}" is NOW LIVE!`, 'Stream Live!');
         } else {
           // Fallback optimistic activation
           setSessions(prev => prev.map(s => String(s.id) === String(targetSessionId) ? { ...s, status: 'active' } : { ...s, status: 'closed' }));
           toast.success('Live session started!', 'Stream Live!');
         }
-      } else {
-        // Create & Start new live session
-        const payload = {
-          creatorId: creator?.id || 1,
-          title: `Live Session #${sessions.length + 1}`,
-          category: 'Gaming',
-          description: 'Welcome to our live broadcast! Ask questions & support live on OBS stream.',
-          streamingPlatform: 'YouTube Live',
-        };
-
-        const res = await fetch(API_ENDPOINTS.CREATORS.LIVE_SESSIONS, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            ...(token ? { Authorization: `Bearer ${token}` } : {})
-          },
-          body: JSON.stringify(payload),
-        });
-
-        const data = await res.json();
-        if (res.ok && data.status === 'success' && data.data) {
-          const sessData = data.data;
-          const generatedPaymentLink = sessData.paymentLink || `${window.location.origin}/pay/${sessData.session.sessionCode}?creatorId=${creator?.id || 1}&sessionId=${sessData.session.id}`;
-          const generatedQrUrl = sessData.qrCodeUrl || `https://api.qrserver.com/v1/create-qr-code/?size=350x350&data=${encodeURIComponent(generatedPaymentLink)}`;
-
-          const newSess = {
-            ...sessData.session,
-            paymentLink: generatedPaymentLink,
-            qrCodeUrl: generatedQrUrl,
-          };
-          setSessions(prev => [newSess, ...prev.map(s => ({ ...s, status: 'closed' }))]);
-          toast.success(`Live Session "${newSess.title}" is NOW LIVE! Unique QR Code generated.`, 'Stream Live!');
-        }
       }
+      //   else {
+      //     // Create & Start new live session
+      //     const payload = {
+      //       creatorId: creator?.id || 1,
+      //       title: `Live Session #${sessions.length + 1}`,
+      //       category: 'Gaming',
+      //       description: 'Welcome to our live broadcast! Ask questions & support live on OBS stream.',
+      //       streamingPlatform: 'YouTube Live',
+      //       durationHours: 2,
+      //     };
+
+      //   const res = await fetch(API_ENDPOINTS.CREATORS.LIVE_SESSIONS, {
+      //     method: 'POST',
+      //     headers: {
+      //       'Content-Type': 'application/json',
+      //       ...(token ? { Authorization: `Bearer ${token}` } : {})
+      //     },
+      //     body: JSON.stringify(payload),
+      //   });
+
+      //   const data = await res.json();
+      //   if (res.ok && data.status === 'success' && data.data) {
+      //     const sessData = data.data;
+      //     const generatedPaymentLink = sessData.paymentLink || `${window.location.origin}/pay/${sessData.session.sessionCode}?creatorId=${creator?.id || 1}&sessionId=${sessData.session.id}`;
+      //     const generatedQrUrl = sessData.qrCodeUrl || `https://api.qrserver.com/v1/create-qr-code/?size=350x350&data=${encodeURIComponent(generatedPaymentLink)}`;
+
+      //     const newSess = {
+      //       ...sessData.session,
+      //       paymentLink: generatedPaymentLink,
+      //       qrCodeUrl: generatedQrUrl,
+      //     };
+      //     setSessions(prev => [newSess, ...prev.map(s => ({ ...s, status: 'closed' }))]);
+      //     toast.success(`Live Session "${newSess.title}" is NOW LIVE! Unique QR Code generated.`, 'Stream Live!');
+      //   }
+      // }
     } catch (err) {
       console.error('Start session error:', err);
       if (targetSessionId) {
@@ -149,49 +233,69 @@ export default function CreatorLiveSessionsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0A0A0F] text-[#F5F5F7] font-sans flex selection:bg-[#00F5D4] selection:text-[#0A0A0F]">
-      <CreatorSidebar />
+    <div className={`min-h-screen font-sans flex transition-colors duration-200 ${theme === 'light' ? 'bg-[#F4F5F7] text-[#1A1D20] selection:bg-[#00F5D4] selection:text-[#0A0A0F]' : 'bg-[#0A0A0F] text-[#F5F5F7] selection:bg-[#00F5D4] selection:text-[#0A0A0F]'
+      }`}>
+      <CreatorSidebar theme={theme} onToggleTheme={toggleTheme} />
       <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
-        <header className="border-b border-[#1C1C26] bg-[#0A0A0F]/80 backdrop-blur-md sticky top-0 z-20 px-6 py-4 flex items-center justify-between">
+        <header className={`border-b sticky top-0 z-20 px-6 py-4 flex items-center justify-between transition-colors duration-200 ${theme === 'light' ? 'border-[#E9ECEF] bg-white/90 backdrop-blur-md' : 'border-[#1C1C26] bg-[#0A0A0F]/80 backdrop-blur-md'
+          }`}>
           <div>
-            <h1 className="font-heading font-black text-xl text-white">Live Broadcast Sessions</h1>
-            <p className="text-xs text-[#8B8B96]">Create, manage live donation sessions, generated QR codes & payment links</p>
+            <h1 className={`font-heading font-black text-xl flex items-center gap-2 ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'
+              }`}>
+              <Radio className="h-5 w-5 text-[#00F5D4]" /> Live Broadcast Sessions
+            </h1>
+            <p className={`text-xs ${theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'
+              }`}>Create & manage live donation sessions, generated QR codes & payment links</p>
           </div>
           <div className="flex items-center gap-3">
-            <Link
-              href="/creators/dashboard"
-              className="px-4 py-2 rounded-xl bg-brand-gradient text-[#0A0A0F] text-xs font-extrabold shadow-md glow-teal hover:opacity-95 transition-all flex items-center gap-1.5"
+            {/* Header Theme Switcher Button */}
+            <button
+              onClick={toggleTheme}
+              className={`px-3 py-1.5 rounded-xl border text-xs font-bold transition-all flex items-center gap-1.5 ${theme === 'light'
+                ? 'bg-[#F1F3F5] text-[#212529] border-[#E9ECEF] hover:bg-[#E9ECEF]'
+                : 'bg-[#1C1C26] text-white border-[#1C1C26] hover:border-[#00F5D4]/40'
+                }`}
+              title={theme === 'dark' ? 'Switch to Light Theme' : 'Switch to Dark Theme'}
             >
-              <PlusCircle className="h-4 w-4" /> Go to Dashboard
-            </Link>
+              {theme === 'dark' ? (
+                <>
+                  <Sun className="h-4 w-4 text-[#FFD60A]" />
+                  <span className="hidden sm:inline">Light Theme</span>
+                </>
+              ) : (
+                <>
+                  <Moon className="h-4 w-4 text-[#7B2FFF]" />
+                  <span className="hidden sm:inline">Dark Theme</span>
+                </>
+              )}
+            </button>
+
+            {/* Notification Bell Icon Popup Dropdown */}
+            <CreatorNotificationDropdown theme={theme} />
           </div>
         </header>
 
         <main className="p-6 max-w-6xl w-full mx-auto space-y-6">
           {/* Top Info Banner */}
-          <div className="p-6 rounded-3xl bg-[#13131A] border border-[#1C1C26] space-y-4 shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+          <div className={`p-6 rounded-3xl border space-y-4 shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4 transition-colors duration-200 ${theme === 'light' ? 'bg-white border-[#E9ECEF]' : 'bg-[#13131A] border-[#1C1C26]'
+            }`}>
             <div className="flex items-center gap-3">
               <div className="p-3 rounded-2xl bg-[#00F5D4]/10 text-[#00F5D4] border border-[#00F5D4]/30">
                 <Radio className="h-6 w-6" />
               </div>
               <div>
-                <h3 className="font-heading font-bold text-base text-white">Live Donation Sessions Overview</h3>
-                <p className="text-xs text-[#8B8B96]">Click "Start Live Session" to activate instant UPI payment QR & Payment link.</p>
+                <h3 className={`font-heading font-bold text-base ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'
+                  }`}>Live Sessions Overview</h3>
+                <p className={`text-xs ${theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'
+                  }`}>Click "Start Live Session" to activate instant UPI payment QR & Payment link.</p>
               </div>
             </div>
-
-            {/* <button
-              onClick={() => handleStartLiveSession()}
-              disabled={activatingId === 'new'}
-              className="px-5 py-2.5 rounded-xl bg-brand-gradient text-[#0A0A0F] font-black text-xs shadow-md glow-teal hover:scale-105 transition-all flex items-center gap-2 shrink-0"
-            >
-              <Radio className="h-4 w-4 stroke-[2.5]" /> Start Live Session Now
-            </button> */}
           </div>
 
           {/* Sessions List */}
           <div className="space-y-4">
-            <h3 className="font-heading font-bold text-lg text-white flex items-center gap-2">
+            <h3 className={`font-heading font-bold text-lg flex items-center gap-2 ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'
+              }`}>
               <Layers className="h-5 w-5 text-[#00F5D4]" /> All Created Live Sessions ({sessions.length})
             </h3>
 
@@ -201,10 +305,13 @@ export default function CreatorLiveSessionsPage() {
                 <p>Loading sessions...</p>
               </div>
             ) : sessions.length === 0 ? (
-              <div className="p-12 rounded-3xl bg-[#13131A] border border-[#1C1C26] text-center space-y-3">
+              <div className={`p-12 rounded-3xl border text-center space-y-3 ${theme === 'light' ? 'bg-white border-[#E9ECEF]' : 'bg-[#13131A] border-[#1C1C26]'
+                }`}>
                 <Radio className="h-12 w-12 text-[#8B8B96] mx-auto stroke-1" />
-                <h4 className="font-bold text-white text-base">No Live Donation Sessions Created Yet</h4>
-                <p className="text-xs text-[#8B8B96] max-w-md mx-auto">
+                <h4 className={`font-bold text-base ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'
+                  }`}>No Live Sessions Created Yet</h4>
+                <p className={`text-xs max-w-md mx-auto ${theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'
+                  }`}>
                   Click the button below to start your broadcast session and generate unique QR Codes for your viewers.
                 </p>
                 <button
@@ -217,93 +324,126 @@ export default function CreatorLiveSessionsPage() {
             ) : (
               <div className="grid grid-cols-1 gap-4">
                 {sessions.map(s => (
-                  <div key={s.id} className={`p-5 rounded-3xl bg-[#13131A] border space-y-4 shadow-xl transition-all ${s.status === 'active' ? 'border-[#00F5D4]/50 glow-teal bg-gradient-to-r from-[#13131A] via-[#1A1A26] to-[#13131A]' : 'border-[#1C1C26]'
-                    }`}>
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#1C1C26] pb-3">
+                  <div
+                    key={s.id}
+                    className={`p-5 rounded-3xl border space-y-4 shadow-xl transition-all ${s.status === 'active'
+                      ? theme === 'light'
+                        ? 'border-[#00F5D4]/60 glow-teal bg-gradient-to-r from-white via-[#F8F9FA] to-white'
+                        : 'border-[#00F5D4]/50 glow-teal bg-gradient-to-r from-[#13131A] via-[#1A1A26] to-[#13131A]'
+                      : theme === 'light'
+                        ? 'bg-white border-[#E9ECEF]'
+                        : 'bg-[#13131A] border-[#1C1C26]'
+                      }`}
+                  >
+                    <div className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b pb-3 ${theme === 'light' ? 'border-[#E9ECEF]' : 'border-[#1C1C26]'
+                      }`}>
                       <div className="flex items-center gap-3">
                         {s.thumbnailUrl ? (
                           <img src={s.thumbnailUrl} alt={s.title} className="h-14 w-14 rounded-xl object-cover border border-[#1C1C26] shrink-0" />
                         ) : (
-                          <div className="h-14 w-14 rounded-xl bg-[#0A0A0F] border border-[#1C1C26] flex items-center justify-center text-[#00F5D4] shrink-0">
+                          <div className={`h-14 w-14 rounded-xl border flex items-center justify-center text-[#00F5D4] shrink-0 ${theme === 'light' ? 'bg-[#F8F9FA] border-[#E9ECEF]' : 'bg-[#0A0A0F] border-[#1C1C26]'
+                            }`}>
                             <Radio className="h-6 w-6" />
                           </div>
                         )}
                         <div>
-                          <div className="flex items-center gap-2">
-                            <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase ${s.status === 'active' ? 'bg-[#00E676]/10 text-[#00E676] border border-[#00E676]/30 animate-pulse' : 'bg-[#1C1C26] text-[#8B8B96]'
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase ${s.status === 'active' ? 'bg-[#00E676]/10 text-[#00E676] border border-[#00E676]/30 animate-pulse' : theme === 'light' ? 'bg-[#E9ECEF] text-[#6C757D]' : 'bg-[#1C1C26] text-[#8B8B96]'
                               }`}>
                               {s.status === 'active' ? '● LIVE ACTIVE' : 'CLOSED'}
                             </span>
-                            <span className="text-xs text-[#8B8B96]">[{s.category || 'General'}]</span>
+                            <span className="px-2.5 py-0.5 rounded-full bg-[#FFD60A]/10 text-[#FFD60A] border border-[#FFD60A]/30 text-[10px] font-bold flex items-center gap-1">
+                              <Clock className="h-3 w-3" /> {s.durationHours || 2} Hours Limit
+                            </span>
+                            <span className={`text-xs ${theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'
+                              }`}>[{s.category || 'General'}]</span>
                           </div>
-                          <h4 className="font-heading font-bold text-base text-white mt-0.5">{s.title}</h4>
-                          <p className="text-xs text-[#8B8B96] line-clamp-1">{s.description}</p>
+                          <h4 className={`font-heading font-bold text-base mt-0.5 ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'
+                            }`}>{s.title}</h4>
+                          <p className={`text-xs line-clamp-1 ${theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'
+                            }`}>{s.description}</p>
                         </div>
                       </div>
 
-                      {/* 1-CLICK START LIVE SESSION BUTTON ON EACH CARD */}
-                      {s.status === 'active' ? (
-                        <button
-                          onClick={() => handleCloseSession(s.id)}
-                          className="px-4 py-2 rounded-xl bg-[#FF3D71]/10 text-[#FF3D71] border border-[#FF3D71]/30 hover:bg-[#FF3D71]/20 font-bold text-xs transition flex items-center gap-1.5 shrink-0"
-                        >
-                          <StopCircle className="h-4 w-4" /> Close QR / End Donation
-                        </button>
-                      ) : (
-                        <button
-                          onClick={() => handleStartLiveSession(s.id)}
-                          disabled={activatingId === s.id}
-                          className="px-5 py-2.5 rounded-xl bg-brand-gradient text-[#0A0A0F] font-black text-xs shadow-lg glow-teal hover:scale-105 transition-all flex items-center gap-1.5 shrink-0"
-                        >
-                          {activatingId === s.id ? (
-                            <>
-                              <RefreshCw className="h-4 w-4 animate-spin" /> Starting Live...
-                            </>
-                          ) : (
-                            <>
-                              <Radio className="h-4 w-4 stroke-[2.5]" /> Start Live Session
-                            </>
-                          )}
-                        </button>
-                      )}
+                      <div className="flex items-center gap-2">
+                        {s.status === 'active' ? (
+                          <button
+                            onClick={() => handleCloseSession(s.id)}
+                            className="px-4 py-2 rounded-xl bg-[#FF3D71]/10 text-[#FF3D71] border border-[#FF3D71]/30 hover:bg-[#FF3D71]/20 font-bold text-xs transition flex items-center gap-1.5 shrink-0"
+                          >
+                            <StopCircle className="h-4 w-4" /> End Session
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => handleStartLiveSession(s.id)}
+                            disabled={activatingId === s.id}
+                            className="px-5 py-2.5 rounded-xl bg-brand-gradient text-[#0A0A0F] font-black text-xs shadow-lg glow-teal hover:scale-105 transition-all flex items-center gap-1.5 shrink-0"
+                          >
+                            {activatingId === s.id ? (
+                              <>
+                                <RefreshCw className="h-4 w-4 animate-spin" /> Starting Live...
+                              </>
+                            ) : (
+                              <>
+                                <Radio className="h-4 w-4 stroke-[2.5]" /> Start Live Session
+                              </>
+                            )}
+                          </button>
+                        )}
+                      </div>
                     </div>
 
-                    {/* QR Session Totals */}
-                    <div className="grid grid-cols-2 gap-3 p-2.5 rounded-2xl bg-[#0A0A0F] border border-[#1C1C26] text-xs">
+                    {/* Session Totals */}
+                    <div className={`grid grid-cols-1 sm:grid-cols-3 gap-3 p-2.5 rounded-2xl border text-xs ${theme === 'light' ? 'bg-[#F8F9FA] border-[#E9ECEF]' : 'bg-[#0A0A0F] border-[#1C1C26]'
+                      }`}>
                       <div>
-                        <span className="text-[#8B8B96] text-[11px] block font-semibold">Total Donations</span>
-                        <span className="font-heading font-black text-white">{s.totalDonations || 0} Payments</span>
+                        <span className={`text-[11px] block font-semibold ${theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'
+                          }`}>Total Donations</span>
+                        <span className={`font-heading font-black ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'
+                          }`}>{s.totalDonations || 0} Payments</span>
                       </div>
                       <div>
-                        <span className="text-[#8B8B96] text-[11px] block font-semibold">Total Amount Collected</span>
+                        <span className={`text-[11px] block font-semibold ${theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'
+                          }`}>Total Amount Collected</span>
                         <span className="font-heading font-black text-[#00E676]">₹{(s.totalAmount || 0).toLocaleString()}</span>
                       </div>
+                      <div>
+                        <span className={`text-[11px] block font-semibold ${theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'
+                          }`}>Auto-Close Timer</span>
+                        <span className="font-heading font-black text-[#FFD60A] text-xs">
+                          {s.status === 'active' ? (liveTimers[s.id] || 'Counting down...') : `${s.durationHours || 2} Hours Limit`}
+                        </span>
+                      </div>
                     </div>
 
+                    {/* QR & Link Details */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-                      {/* Unique QR Code */}
-                      <div className="p-3 rounded-2xl bg-[#0A0A0F] border border-[#1C1C26] flex items-center gap-3">
-                        <img src={s.qrCodeUrl} alt="QR Code" className="h-16 w-16 rounded-lg bg-white p-1 shrink-0" />
+                      <div className={`p-3 rounded-2xl border flex items-center gap-3 ${theme === 'light' ? 'bg-[#F8F9FA] border-[#E9ECEF]' : 'bg-[#0A0A0F] border-[#1C1C26]'
+                        }`}>
+                        <img src={s.qrCodeUrl} alt="QR Code" className="h-16 w-16 rounded-lg bg-white p-1 shrink-0 border border-[#00F5D4]/30" />
                         <div>
                           <span className="text-[10px] font-bold text-[#00F5D4] uppercase tracking-wider block">Generated Unique QR</span>
-                          <p className="text-xs text-white font-bold">Scan for UPI Payment</p>
+                          <p className={`text-xs font-bold ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'
+                            }`}>Scan for UPI Payment</p>
                           <a href={s.qrCodeUrl} target="_blank" rel="noopener noreferrer" className="text-[11px] text-[#00F5D4] hover:underline font-semibold flex items-center gap-0.5 mt-0.5">
                             Open QR <ExternalLink className="h-3 w-3" />
                           </a>
                         </div>
                       </div>
 
-                      {/* Payment Link */}
-                      <div className="p-3 rounded-2xl bg-[#0A0A0F] border border-[#1C1C26] flex flex-col justify-between space-y-2">
+                      <div className={`p-3 rounded-2xl border flex flex-col justify-between space-y-2 ${theme === 'light' ? 'bg-[#F8F9FA] border-[#E9ECEF]' : 'bg-[#0A0A0F] border-[#1C1C26]'
+                        }`}>
                         <div>
                           <span className="text-[10px] font-bold text-[#00F5D4] uppercase tracking-wider block">Generated Payment Link</span>
-                          <p className="text-xs text-white font-mono truncate">{s.paymentLink}</p>
+                          <p className={`text-xs font-mono truncate ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'
+                            }`}>{s.paymentLink}</p>
                         </div>
                         <div className="flex gap-2">
                           <button onClick={() => copyLink(s.paymentLink)} className="px-3 py-1 rounded-lg bg-[#00F5D4] text-[#0A0A0F] font-bold text-[11px] hover:opacity-90 transition flex items-center gap-1">
                             <Copy className="h-3 w-3" /> Copy Link
                           </button>
-                          <a href={s.paymentLink} target="_blank" rel="noopener noreferrer" className="px-3 py-1 rounded-lg bg-[#1C1C26] text-white text-[11px] font-bold hover:bg-[#252533] transition flex items-center gap-1">
+                          <a href={s.paymentLink} target="_blank" rel="noopener noreferrer" className={`px-3 py-1 rounded-lg text-[11px] font-bold transition flex items-center gap-1 ${theme === 'light' ? 'bg-[#E9ECEF] text-[#1A1D20] hover:bg-[#DEE2E6]' : 'bg-[#1C1C26] text-white hover:bg-[#252533]'
+                            }`}>
                             Visit <ExternalLink className="h-3 w-3 text-[#00F5D4]" />
                           </a>
                         </div>

@@ -91,7 +91,7 @@ export default function CreatorLoginPage() {
               </div>
               <span className="font-heading font-black text-2xl text-white">AskMe <span className="text-brand-gradient">STUDIO</span></span>
             </div>
-            <h2 className="font-heading font-bold text-lg text-white">Creator Control Room Sign In</h2>
+            <h2 className="font-heading font-bold text-lg text-white">Creator Sign In</h2>
             {/* <p className="text-xs text-[#8B8B96]">
               Sign in to access your Creator Dashboard, OBS Live Overlays, KYC status, & Payout Ledger.
             </p> */}
@@ -163,16 +163,16 @@ export default function CreatorLoginPage() {
           <div className="pt-2 text-center text-xs text-[#8B8B96] border-t border-[#1C1C26] space-y-2">
             <div>
               New Creator?{' '}
-              <Link href="/" className="text-[#00F5D4] hover:underline font-bold">
+              <Link href="/creators/register" className="text-[#00F5D4] hover:underline font-bold">
                 Register Creator Account
               </Link>
             </div>
-            <div>
+            {/* <div>
               Super Admin?{' '}
               <Link href="/login" className="text-[#8B8B96] hover:text-white underline">
                 Admin Sign In Page
               </Link>
-            </div>
+            </div> */}
           </div>
 
         </div>

@@ -27,9 +27,13 @@ const updateCommissionConfig = (newSettings, adminName = 'Super Admin') => {
   }
 
   // Add audit log
+  const now = new Date();
+  const pad = (n) => String(n).padStart(2, '0');
+  const localDateStr = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
+
   commissionSettings.historyLogs.unshift({
     id: `LOG-${Date.now().toString().slice(-4)}`,
-    date: new Date().toISOString().replace('T', ' ').slice(0, 16),
+    date: localDateStr,
     title: `Platform Cut updated to ${commissionSettings.platformCommissionPercent}%`,
     detail: `Minimum withdrawal limit set to ₹${commissionSettings.minWithdrawalLimit}.`,
     admin: adminName

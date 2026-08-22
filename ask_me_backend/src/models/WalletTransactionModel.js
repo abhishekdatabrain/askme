@@ -29,18 +29,12 @@ const WalletTransaction = sequelize.define(
         },
 
         transaction_type: {
-            type: DataTypes.ENUM(
-                "donation",
-                "commission",
-                "withdrawal",
-                "refund",
-                "adjustment"
-            ),
+            type: DataTypes.STRING,
             allowNull: false,
         },
 
         direction: {
-            type: DataTypes.ENUM("credit", "debit"),
+            type: DataTypes.STRING,
             allowNull: false,
         },
 
@@ -70,6 +64,7 @@ const WalletTransaction = sequelize.define(
     {
         tableName: "wallet_transactions",
         timestamps: true,
+        updatedAt: false,
         underscored: true,
     }
 );

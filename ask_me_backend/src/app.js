@@ -3,6 +3,7 @@ const cors = require('cors');
 const authRoutes = require('./routes/adminAuthRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const creatorRoutes = require('./routes/creatorRoutes');
+const viewerRoutes = require('./routes/viewerRoutes');
 const { notFound, errorHandler } = require('./middlewares/errorMiddleware');
 
 const app = express();
@@ -23,12 +24,13 @@ app.use(express.urlencoded({ limit: '50mb', extended: true }));
 app.get('/', (req, res) => {
   res.status(200).json({
     status: 'success',
-    message: 'AskMe Backend API is live on Vercel!',
+    message: 'AskMe Backend API is live!',
     endpoints: {
       health: '/api/health',
       adminAuth: '/api/adminauth',
       admin: '/api/admin',
       creators: '/api/creators',
+      viewers: '/api/viewers',
     },
     timestamp: new Date().toISOString(),
   });
@@ -54,6 +56,7 @@ app.get('/api/health', (req, res) => {
 app.use('/api/adminauth', authRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/creators', creatorRoutes);
+app.use('/api/viewers', viewerRoutes);
 
 // Error Handling Middlewares
 app.use(notFound);

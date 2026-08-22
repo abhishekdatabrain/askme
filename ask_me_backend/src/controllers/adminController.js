@@ -9,7 +9,11 @@ const KycDocumentModel = require('../models/KycDocumentModel');
 const CreatorBankAccountModel = require('../models/CreatorBankAccountModel');
 const { getCommissionConfig, updateCommissionConfig } = require('../config/commissionConfig');
 let DonationSession;
-try { DonationSession = require('../models/DonationSessionModels'); } catch (e) {}
+let WithdrawalRequestModel;
+let WalletTransactionModel;
+try { DonationSession = require('../models/DonationSessionModels'); } catch (e) { }
+try { WithdrawalRequestModel = require('../models/WithdrawalRequestModel'); } catch (e) { }
+try { WalletTransactionModel = require('../models/WalletTransactionModel'); } catch (e) { }
 
 // Live Sessions, Payments, Withdrawals & Settings
 // let mockLiveSessions = [
@@ -25,11 +29,11 @@ let mockPayments = [
   { id: 'TXN-882193', creator: 'Mythpat', viewer: 'Rohan Mehta', amount: 1500, method: 'Netbanking (ICICI)', status: 'Refunded', gatewayResponse: 'REFUND_PROCESSED_200', timestamp: '2026-08-12 09:15:20' },
 ];
 
-let mockWithdrawals = [
-  { id: 'WTH-501', creator: 'Tech Burner', amount: 100000, platformCut: 15000, creatorNet: 85000, bankAccount: 'HDFC Bank ****4321', requestedAt: '2026-08-11 18:00', status: 'Pending' },
-  { id: 'WTH-502', creator: 'Finance With Sharan', amount: 150000, platformCut: 22500, creatorNet: 127500, bankAccount: 'ICICI Bank ****9876', requestedAt: '2026-08-10 12:30', status: 'Approved' },
-  { id: 'WTH-503', creator: 'Mythpat', amount: 50000, platformCut: 7500, creatorNet: 42500, bankAccount: 'SBI Bank ****1122', requestedAt: '2026-08-09 15:45', status: 'Completed' },
-];
+// let mockWithdrawals = [
+//   { id: 'WTH-501', creator: 'Tech Burner', amount: 100000, platformCut: 15000, creatorNet: 85000, bankAccount: 'HDFC Bank ****4321', requestedAt: '2026-08-11 18:00', status: 'Pending' },
+//   { id: 'WTH-502', creator: 'Finance With Sharan', amount: 150000, platformCut: 22500, creatorNet: 127500, bankAccount: 'ICICI Bank ****9876', requestedAt: '2026-08-10 12:30', status: 'Approved' },
+//   { id: 'WTH-503', creator: 'Mythpat', amount: 50000, platformCut: 7500, creatorNet: 42500, bankAccount: 'SBI Bank ****1122', requestedAt: '2026-08-09 15:45', status: 'Completed' },
+// ];
 
 let mockCommissionSettings = {
   platformCommissionPercent: 15,
@@ -45,11 +49,15 @@ let mockPlatformSettings = {
   maintenanceMode: false,
 };
 
-let mockNotifications = [
-  { id: 1, title: 'KYC Submitted', message: 'New Creator submitted PAN & Bank verification documents.', time: '10 mins ago', isRead: false, type: 'kyc' },
-  { id: 2, title: 'Payout Requested', message: 'Creator requested a payout of ₹85,000.', time: '1 hour ago', isRead: false, type: 'payout' },
-  { id: 3, title: 'High Donation Volume', message: 'Live session crossed ₹89,000 in viewer payments.', time: '2 hours ago', isRead: true, type: 'system' },
-];
+// let mockNotifications = [
+//   { id: 1, title: 'KYC Submitted', message: 'New Creator submitted PAN & Bank verification documents.', time: '10 mins ago', isRead: false, status: 'unread', type: 'kyc' },
+//   { id: 2, title: 'Payout Requested', message: 'Creator requested a payout of ₹85,000.', time: '1 hour ago', isRead: false, status: 'unread', type: 'payout' },
+//   { id: 3, title: 'High Donation Volume', message: 'Live session crossed ₹89,000 in viewer payments.', time: '2 hours ago', isRead: true, status: 'read', type: 'system' },
+// ];
+
+const addAdminNotification = (notif) => {
+  mockNotifications.unshift(notif);
+};
 
 /**
  * 1. Admin Dashboard Overview Statistics (Dynamic DB Counts)
@@ -233,6 +241,19 @@ const approveCreatorKyc = async (req, res, next) => {
 
     await creator.update({ status: 'active' });
 
+    // Trigger Creator Notification for KYC Approved (Requirement 13)
+    try {
+      const { createCreatorNotification } = require('./creatorController');
+      if (typeof createCreatorNotification === 'function') {
+        createCreatorNotification({
+          creatorId: id,
+          type: 'kyc_approved',
+          title: 'KYC Verified & Approved! 🎉',
+          message: 'Congratulations! Your identity documents and bank payout details have been verified & approved by Super Admin.',
+        });
+      }
+    } catch (nErr) { }
+
     return res.status(200).json({
       status: 'success',
       message: 'Creator KYC Approved successfully.',
@@ -266,6 +287,19 @@ const rejectCreatorKyc = async (req, res, next) => {
         { where: { creator_id: id } }
       );
     } catch (e) { }
+
+    // Trigger Creator Notification for KYC Rejected (Requirement 13)
+    try {
+      const { createCreatorNotification } = require('./creatorController');
+      if (typeof createCreatorNotification === 'function') {
+        createCreatorNotification({
+          creatorId: id,
+          type: 'kyc_rejected',
+          title: 'KYC Verification Rejected ❌',
+          message: `Your KYC verification was rejected. Reason: ${reason || 'Documents invalid or detail mismatch'}`,
+        });
+      }
+    } catch (nErr) { }
 
     return res.status(200).json({
       status: 'success',
@@ -682,7 +716,7 @@ const getLiveSessions = async (req, res, next) => {
           if (CreatorsModel) {
             creator = await CreatorsModel.findByPk(s.creator_id);
           }
-        } catch (e) {}
+        } catch (e) { }
 
         const durationMinutes = s.started_at ? Math.max(1, Math.floor((new Date() - new Date(s.started_at)) / (1000 * 60))) : 0;
         const durationFormatted = s.status === 'active' ? `${Math.floor(durationMinutes / 60)}h ${durationMinutes % 60}m` : 'Ended';
@@ -802,7 +836,7 @@ const getCommissionLedger = async (req, res, next) => {
             const creator = await CreatorsModel.findByPk(d.creator_id);
             if (creator) creatorName = creator.full_name || creator.email;
           }
-        } catch (e) {}
+        } catch (e) { }
 
         const gross = parseFloat(d.amount || 0);
         const platformCut = Math.round(gross * platformRate);
@@ -845,45 +879,251 @@ const getCommissionLedger = async (req, res, next) => {
  * 7. Withdrawal Payout Management
  * @route GET /api/admin/withdrawals
  */
+/**
+ * 7. Withdrawal Payout Management (Requirement 12)
+ * @route GET /api/admin/withdrawals
+ */
 const getWithdrawals = async (req, res, next) => {
   try {
-    return res.status(200).json({ status: 'success', data: { withdrawals: mockWithdrawals } });
+    let withdrawalsList = [];
+
+    if (WithdrawalRequestModel) {
+      const records = await WithdrawalRequestModel.findAll({
+        order: [['id', 'DESC']],
+        limit: 100,
+      }).catch(() => []);
+
+      for (const w of records) {
+        let creatorName = `Creator #${w.creator_id}`;
+        let creatorEmail = '';
+
+        try {
+          if (CreatorsModel) {
+            const creator = await CreatorsModel.findByPk(w.creator_id);
+            if (creator) {
+              creatorName = creator.full_name || creator.email || creatorName;
+              creatorEmail = creator.email || '';
+            }
+          }
+        } catch (e) { }
+
+        // Find primary bank account details if available
+        let bankAccountStr = w.rejection_reason && (w.status === 'pending' || w.status === 'approved' || w.status === 'processing')
+          ? w.rejection_reason
+          : 'Bank Transfer Requested';
+
+        if (CreatorBankAccountModel) {
+          const bank = await CreatorBankAccountModel.findOne({
+            where: { creator_id: w.creator_id, status: 'active' },
+            order: [['id', 'DESC']]
+          }).catch(() => null);
+
+          if (bank) {
+            bankAccountStr = bank.upi_id
+              ? `UPI ID: ${bank.upi_id} (${bank.account_holder_name})`
+              : `${bank.bank_name || 'Bank'} A/C: ****${(bank.account_number || '').slice(-4)} (IFSC: ${bank.ifsc_code || 'N/A'}) - ${bank.account_holder_name}`;
+          }
+        }
+
+        const gross = parseFloat(w.amount || 0);
+
+        withdrawalsList.push({
+          id: w.withdrawal_uuid || `WTH-${w.id}`,
+          rawId: w.id,
+          creatorId: w.creator_id,
+          creator: creatorName,
+          creatorEmail,
+          amount: gross,
+          grossRevenue: `₹${gross.toLocaleString()}`,
+          payoutAmount: `₹${gross.toLocaleString()}`,
+          platformCut: `₹0`,
+          bankDetails: bankAccountStr,
+          status: (w.status || 'pending').toLowerCase(),
+          requestedDate: w.requested_at || w.createdAt,
+          approvedAt: w.approved_at,
+          completedAt: w.completed_at,
+          transactionReference: w.transaction_reference || null,
+          rejectionReason: w.status === 'rejected' ? w.rejection_reason : null,
+        });
+      }
+    }
+
+    if (withdrawalsList.length === 0 && typeof mockWithdrawals !== 'undefined') {
+      withdrawalsList = mockWithdrawals.map((w, idx) => ({
+        id: w.id || `WTH-${idx + 500}`,
+        rawId: idx + 500,
+        creator: w.creator || 'Creator',
+        grossRevenue: w.grossRevenue || `₹${(w.amount || 0).toLocaleString()}`,
+        payoutAmount: w.payoutAmount || `₹${(w.amount || 0).toLocaleString()}`,
+        platformCut: w.platformCut || '₹0',
+        bankDetails: w.bankDetails || 'Bank Details Provided',
+        status: (w.status || 'pending').toLowerCase(),
+        requestedDate: w.requestedDate || 'Recent',
+      }));
+    }
+
+    return res.status(200).json({ status: 'success', data: { withdrawals: withdrawalsList } });
   } catch (error) {
+    console.error('GET ADMIN WITHDRAWALS ERROR:', error);
+    next(error);
+  }
+};
+
+const updateWithdrawalStatus = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { status, rejectionReason, transactionReference } = req.body;
+
+    const targetStatus = (status || '').toLowerCase();
+    if (!['pending', 'approved', 'processing', 'completed', 'paid', 'rejected'].includes(targetStatus)) {
+      return res.status(400).json({ status: 'fail', message: 'Invalid withdrawal status.' });
+    }
+
+    const normalizedStatus = targetStatus === 'paid' ? 'completed' : targetStatus;
+
+    let withdrawal = null;
+    if (WithdrawalRequestModel) {
+      const isNum = !isNaN(id) && Number.isInteger(Number(id));
+      withdrawal = await WithdrawalRequestModel.findOne({
+        where: isNum ? { id: Number(id) } : { withdrawal_uuid: id }
+      }).catch(() => null);
+    }
+
+    if (!withdrawal) {
+      return res.status(404).json({ status: 'fail', message: 'Withdrawal request not found.' });
+    }
+
+    const previousStatus = (withdrawal.status || 'pending').toLowerCase();
+    const amount = parseFloat(withdrawal.amount || 0);
+    const creatorId = withdrawal.creator_id;
+
+    // Fetch Wallet
+    let wallet = null;
+    if (WalletModel) {
+      wallet = await WalletModel.findOne({ where: { creator_id: creatorId } }).catch(() => null);
+    }
+
+    // Handle Status Transition Logic
+    if (normalizedStatus === 'approved') {
+      withdrawal.status = 'approved';
+      withdrawal.approved_at = new Date();
+      await withdrawal.save();
+    } else if (normalizedStatus === 'processing') {
+      withdrawal.status = 'processing';
+      await withdrawal.save();
+    } else if (normalizedStatus === 'completed') {
+      // Transition to Completed (Paid): Move balance from pending_balance to withdrawn_amount
+      if (wallet && previousStatus !== 'completed') {
+        const pendingBal = parseFloat(wallet.pending_balance || 0);
+        const withdrawnAmt = parseFloat(wallet.withdrawn_amount || 0);
+
+        wallet.pending_balance = Math.max(0, pendingBal - amount);
+        wallet.withdrawn_amount = withdrawnAmt + amount;
+        await wallet.save();
+
+        if (WalletTransactionModel) {
+          await WalletTransactionModel.create({
+            wallet_id: wallet.id,
+            creator_id: creatorId,
+            withdrawal_id: withdrawal.id,
+            transaction_type: 'withdrawal_settled',
+            direction: 'debit',
+            amount: amount,
+            balance_before: pendingBal,
+            balance_after: Math.max(0, pendingBal - amount),
+            description: `Payout Completed & Transferred by Admin`,
+            reference: transactionReference || withdrawal.transaction_reference || `PAYOUT-SETTLED-${Date.now()}`
+          }).catch(() => null);
+        }
+      }
+
+      withdrawal.status = 'completed';
+      withdrawal.completed_at = new Date();
+      if (transactionReference) withdrawal.transaction_reference = transactionReference;
+      await withdrawal.save();
+    } else if (normalizedStatus === 'rejected') {
+      // Transition to Rejected: Refund reserved balance back to available_balance
+      if (wallet && previousStatus !== 'rejected') {
+        const pendingBal = parseFloat(wallet.pending_balance || 0);
+        const availableBal = parseFloat(wallet.available_balance || 0);
+
+        wallet.pending_balance = Math.max(0, pendingBal - amount);
+        wallet.available_balance = availableBal + amount;
+        await wallet.save();
+
+        if (WalletTransactionModel) {
+          await WalletTransactionModel.create({
+            wallet_id: wallet.id,
+            creator_id: creatorId,
+            withdrawal_id: withdrawal.id,
+            transaction_type: 'withdrawal_refund',
+            direction: 'credit',
+            amount: amount,
+            balance_before: availableBal,
+            balance_after: availableBal + amount,
+            description: `Withdrawal Request Rejected (Funds Refunded to Available Balance)`,
+            reference: `REFUND-${withdrawal.id}`
+          }).catch(() => null);
+        }
+      }
+
+      withdrawal.status = 'rejected';
+      if (rejectionReason) withdrawal.rejection_reason = rejectionReason;
+      await withdrawal.save();
+    }
+
+    // Trigger Creator Notification for Withdrawal Status Update (Requirement 13)
+    try {
+      const { createCreatorNotification } = require('./creatorController');
+      if (typeof createCreatorNotification === 'function' && creatorId) {
+        if (normalizedStatus === 'approved' || normalizedStatus === 'completed') {
+          createCreatorNotification({
+            creatorId: creatorId,
+            type: 'withdrawal_approved',
+            title: 'Payout Withdrawal Approved! ✅',
+            message: `Your payout withdrawal request for ₹${amount.toFixed(2)} has been approved and settled to your bank account.`,
+          });
+        } else if (normalizedStatus === 'rejected') {
+          createCreatorNotification({
+            creatorId: creatorId,
+            type: 'withdrawal_rejected',
+            title: 'Payout Withdrawal Rejected ❌',
+            message: `Your payout withdrawal request for ₹${amount.toFixed(2)} was rejected. Reason: ${rejectionReason || 'Detail mismatch'}`,
+          });
+        }
+      }
+    } catch (nErr) { }
+
+    return res.status(200).json({
+      status: 'success',
+      message: `Withdrawal request status updated to '${normalizedStatus}'!`,
+      data: {
+        id: withdrawal.withdrawal_uuid || `WTH-${withdrawal.id}`,
+        status: normalizedStatus,
+        completedAt: withdrawal.completed_at,
+        approvedAt: withdrawal.approved_at,
+      }
+    });
+
+  } catch (error) {
+    console.error('UPDATE WITHDRAWAL STATUS ERROR:', error);
     next(error);
   }
 };
 
 const approveWithdrawal = async (req, res, next) => {
-  try {
-    const { id } = req.params;
-    const w = mockWithdrawals.find(item => item.id === id);
-    if (w) w.status = 'Approved';
-    return res.status(200).json({ status: 'success', message: 'Withdrawal Approved', data: { withdrawal: w } });
-  } catch (error) {
-    next(error);
-  }
+  req.body.status = 'approved';
+  return updateWithdrawalStatus(req, res, next);
 };
 
 const rejectWithdrawal = async (req, res, next) => {
-  try {
-    const { id } = req.params;
-    const w = mockWithdrawals.find(item => item.id === id);
-    if (w) w.status = 'Rejected';
-    return res.status(200).json({ status: 'success', message: 'Withdrawal Rejected', data: { withdrawal: w } });
-  } catch (error) {
-    next(error);
-  }
+  req.body.status = 'rejected';
+  return updateWithdrawalStatus(req, res, next);
 };
 
 const markWithdrawalPaid = async (req, res, next) => {
-  try {
-    const { id } = req.params;
-    const w = mockWithdrawals.find(item => item.id === id);
-    if (w) w.status = 'Completed';
-    return res.status(200).json({ status: 'success', message: 'Withdrawal marked as Paid', data: { withdrawal: w } });
-  } catch (error) {
-    next(error);
-  }
+  req.body.status = 'completed';
+  return updateWithdrawalStatus(req, res, next);
 };
 
 /**
@@ -935,7 +1175,45 @@ const getReportsAnalytics = async (req, res, next) => {
  */
 const getNotifications = async (req, res, next) => {
   try {
-    return res.status(200).json({ status: 'success', data: { notifications: mockNotifications } });
+    let dbNotifs = [];
+    try {
+      const NotificationModel = require('../models/NotificationModel');
+      dbNotifs = await NotificationModel.findAll({
+        order: [['createdAt', 'DESC']],
+        limit: 50
+      });
+    } catch (e) {
+      // Notification table might not exist or failed
+    }
+
+    if (dbNotifs && dbNotifs.length > 0) {
+      const formatted = dbNotifs.map(n => ({
+        id: n.id,
+        title: n.title,
+        message: n.message,
+        time: n.createdAt ? new Date(n.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Recently',
+        isRead: Boolean(n.is_read),
+        status: n.is_read ? 'read' : 'unread',
+        type: n.type || 'system',
+        reference_id: n.reference_id,
+        createdAt: n.createdAt
+      }));
+
+      const combined = [...formatted];
+      mockNotifications.forEach(m => {
+        if (!combined.some(c => String(c.id) === String(m.id) || c.title === m.title)) {
+          combined.push(m);
+        }
+      });
+      return res.status(200).json({ status: 'success', data: { notifications: combined } });
+    }
+
+    const formattedMock = mockNotifications.map(n => ({
+      ...n,
+      status: n.isRead ? 'read' : 'unread'
+    }));
+
+    return res.status(200).json({ status: 'success', data: { notifications: formattedMock } });
   } catch (error) {
     next(error);
   }
@@ -943,8 +1221,43 @@ const getNotifications = async (req, res, next) => {
 
 const markNotificationsRead = async (req, res, next) => {
   try {
-    mockNotifications.forEach(n => (n.isRead = true));
+    mockNotifications.forEach(n => {
+      n.isRead = true;
+      n.status = 'read';
+    });
+
+    try {
+      const NotificationModel = require('../models/NotificationModel');
+      await NotificationModel.update(
+        { is_read: true, read_at: new Date() },
+        { where: { is_read: false } }
+      );
+    } catch (e) { }
+
     return res.status(200).json({ status: 'success', message: 'All notifications marked as read' });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const markSingleNotificationRead = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const target = mockNotifications.find(n => String(n.id) === String(id));
+    if (target) {
+      target.isRead = true;
+      target.status = 'read';
+    }
+
+    try {
+      const NotificationModel = require('../models/NotificationModel');
+      await NotificationModel.update(
+        { is_read: true, read_at: new Date() },
+        { where: { id: id } }
+      );
+    } catch (e) { }
+
+    return res.status(200).json({ status: 'success', message: 'Notification marked as read' });
   } catch (error) {
     next(error);
   }
@@ -1036,11 +1349,14 @@ module.exports = {
   approveWithdrawal,
   rejectWithdrawal,
   markWithdrawalPaid,
+  updateWithdrawalStatus,
   getCommissionSettings,
   updateCommissionSettings,
   getReportsAnalytics,
+  addAdminNotification,
   getNotifications,
   markNotificationsRead,
+  markSingleNotificationRead,
   getPlatformSettings,
   updatePlatformSettings,
 };

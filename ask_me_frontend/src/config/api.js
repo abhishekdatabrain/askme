@@ -1,5 +1,6 @@
 // AskMe Frontend Central API Configuration
 export const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000/api';
+export const SOCKET_URL = process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:5000';
 
 export const API_ENDPOINTS = {
   AUTH: {
@@ -23,6 +24,12 @@ export const API_ENDPOINTS = {
     OVERLAY_ALERTS: `${API_BASE_URL}/creators/overlay/alerts`,
     WALLET_DETAILS: `${API_BASE_URL}/creators/wallet/details`,
     WALLET_WITHDRAW: `${API_BASE_URL}/creators/wallet/withdraw`,
+    WALLET_WITHDRAWALS: `${API_BASE_URL}/creators/wallet/withdrawals`,
+    BANK_ACCOUNT: `${API_BASE_URL}/creators/bank-account`,
+    CHAT_MESSAGES: `${API_BASE_URL}/creators/live-sessions`,
+    CHAT_REPLY: `${API_BASE_URL}/creators/live-sessions/chat/reply`,
+    NOTIFICATIONS: `${API_BASE_URL}/creators/notifications`,
+    DONATION_STATUS: `${API_BASE_URL}/creators/donations`,
   },
   ADMIN: {
     DASHBOARD: `${API_BASE_URL}/admin/dashboard`,
@@ -36,6 +43,11 @@ export const API_ENDPOINTS = {
     REPORTS: `${API_BASE_URL}/admin/reports`,
     NOTIFICATIONS: `${API_BASE_URL}/admin/notifications`,
     OPERATIONS: `${API_BASE_URL}/admin/operations`,
+  },
+  VIEWERS: {
+    REGISTER: `${API_BASE_URL}/viewers/register`,
+    LOGIN: `${API_BASE_URL}/viewers/login`,
+    PROFILE: `${API_BASE_URL}/viewers/profile`,
   },
   KYC: `${API_BASE_URL}/admin/kyc`,
   PAYOUTS: `${API_BASE_URL}/admin/withdrawals`,

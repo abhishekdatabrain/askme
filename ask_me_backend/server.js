@@ -9,11 +9,15 @@ const app = require('./src/app');
 app.use(cookieParser());
 const { connectDB } = require('./src/config/db.js');
 const { initSocket } = require('./src/config/socket.js');
+const { startSessionScheduler } = require('./src/utils/sessionScheduler.js');
 
 const PORT = process.env.PORT || 5000;
 
 // Initialize Sequelize Connection & Model Sync
 connectDB();
+
+// Initialize Live Session Auto-Expiry Cron/Scheduler Runner
+startSessionScheduler(30000);
 
 // Create HTTP Server & Attach Socket.IO
 const server = http.createServer(app);

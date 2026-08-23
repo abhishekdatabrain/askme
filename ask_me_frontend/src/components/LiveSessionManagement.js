@@ -114,8 +114,8 @@ export default function LiveSessionManagement({ activeSubTab }) {
               key={status}
               onClick={() => setFilter(status)}
               className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${filter === status
-                  ? 'bg-brand-gradient text-[#0A0A0F]'
-                  : 'bg-[#1C1C26] text-[#8B8B96] hover:text-white'
+                ? 'bg-brand-gradient text-[#0A0A0F]'
+                : 'bg-[#1C1C26] text-[#8B8B96] hover:text-white'
                 }`}
             >
               {status} Sessions
@@ -130,8 +130,8 @@ export default function LiveSessionManagement({ activeSubTab }) {
           <div
             key={session.id}
             className={`p-4 rounded-xl border transition-all ${session.sessionStatus === 'Suspended'
-                ? 'bg-[#1A0A0F] border-[#FF3D71]/40'
-                : 'bg-[#0A0A0F] border-[#1C1C26]'
+              ? 'bg-[#1A0A0F] border-[#FF3D71]/40'
+              : 'bg-[#0A0A0F] border-[#1C1C26]'
               }`}
           >
             <div className="flex items-center justify-between border-b border-[#1C1C26] pb-3 mb-3">
@@ -143,8 +143,8 @@ export default function LiveSessionManagement({ activeSubTab }) {
                 </div>
               </div>
               <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${session.sessionStatus === 'Active' ? 'bg-[#00E676]/10 text-[#00E676] border border-[#00E676]/30' :
-                  session.sessionStatus === 'Closed' ? 'bg-[#1C1C26] text-[#8B8B96]' :
-                    'bg-[#FF3D71]/20 text-[#FF3D71] border border-[#FF3D71]/40'
+                session.sessionStatus === 'Closed' ? 'bg-[#1C1C26] text-[#8B8B96]' :
+                  'bg-[#FF3D71]/20 text-[#FF3D71] border border-[#FF3D71]/40'
                 }`}>
                 {session.sessionStatus}
               </span>
@@ -175,8 +175,8 @@ export default function LiveSessionManagement({ activeSubTab }) {
               <button
                 onClick={() => toggleSuspendSession(session.id)}
                 className={`px-3 py-1.5 rounded-xl font-bold text-xs transition flex items-center gap-1 ${session.sessionStatus === 'Suspended'
-                    ? 'bg-[#00E676] text-[#0A0A0F]'
-                    : 'bg-[#FF3D71]/10 text-[#FF3D71] hover:bg-[#FF3D71]/20 border border-[#FF3D71]/30'
+                  ? 'bg-[#00E676] text-[#0A0A0F]'
+                  : 'bg-[#FF3D71]/10 text-[#FF3D71] hover:bg-[#FF3D71]/20 border border-[#FF3D71]/30'
                   }`}
               >
                 <Ban className="h-3.5 w-3.5" />

@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import CreatorSidebar from '@/components/CreatorSidebar';
 import CreatorNotificationDropdown from '@/components/CreatorNotificationDropdown';
 import { useToast } from '@/context/ToastContext';
@@ -11,10 +12,12 @@ import {
   Copy,
   ExternalLink,
   CheckCircle2,
+  Sparkles,
   RefreshCw,
   Sun,
   Moon,
   Monitor,
+  QrCode,
   Clock,
   StopCircle,
   Upload,
@@ -22,8 +25,9 @@ import {
 } from 'lucide-react';
 import { API_ENDPOINTS } from '@/config/api';
 
-export default function CreatorLiveSessionsPage() {
+export default function StartLivePage() {
   const { toast } = useToast();
+  const router = useRouter();
   const [creator, setCreator] = useState(null);
   const [activeSession, setActiveSession] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -181,8 +185,8 @@ export default function CreatorLiveSessionsPage() {
           overlayUrl: oUrl,
         };
 
-        setActiveSession(outputObj);
-        toast.success('Live donation session started! QR Code and OBS Overlay URL generated.', 'Session Launched!');
+        toast.success('Live donation session started! Redirecting to Active Session...', 'Session Launched!');
+        router.push('/creators/active-session');
       } else {
         toast.error(data?.message || 'Failed to start live session', 'Error');
       }
@@ -223,10 +227,10 @@ export default function CreatorLiveSessionsPage() {
           }`}>
           <div>
             <h1 className={`font-heading font-black text-xl flex items-center gap-2 ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'}`}>
-              <Radio className="h-5 w-5 text-[#00F5D4]" /> Live Sessions
+              <Radio className="h-5 w-5 text-[#00F5D4]" /> Start Live Session
             </h1>
             <p className={`text-xs ${theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'}`}>
-              Create & manage live sessions to generate instant payment QR codes and OBS overlays.
+              Fill required stream details below to generate instant QR payment code & OBS stream overlay.
             </p>
           </div>
           <div className="flex items-center gap-3">
@@ -239,78 +243,6 @@ export default function CreatorLiveSessionsPage() {
         </header>
 
         <main className="p-6 max-w-5xl w-full mx-auto space-y-6">
-          {/* Active Live Session Card (If Currently Active) */}
-          {activeSession && (
-            <div className={`p-6 rounded-3xl border space-y-6 shadow-2xl glow-teal animate-fade-in ${theme === 'light' ? 'bg-white border-[#00F5D4]/60' : 'bg-[#13131A] border-[#00F5D4]/40'
-              }`}>
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b pb-4 border-[#1C1C26]">
-                <div className="flex items-center gap-3">
-                  <div className="p-3.5 rounded-2xl bg-[#00F5D4]/10 text-[#00F5D4] border border-[#00F5D4]/30 animate-pulse">
-                    <Radio className="h-7 w-7" />
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="px-2.5 py-0.5 rounded-full bg-[#00E676]/10 text-[#00E676] border border-[#00E676]/30 text-[10px] font-black uppercase tracking-wider animate-pulse">
-                        ● CURRENTLY BROADCASTING LIVE
-                      </span>
-                      {timeRemaining && (
-                        <span className="px-2.5 py-0.5 rounded-full bg-[#FFD60A]/10 text-[#FFD60A] text-[10px] font-bold flex items-center gap-1">
-                          <Clock className="h-3 w-3 animate-spin" /> Timer: {timeRemaining}
-                        </span>
-                      )}
-                    </div>
-                    <h3 className={`font-heading font-black text-2xl mt-1 ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'}`}>
-                      {activeSession.title}
-                    </h3>
-                  </div>
-                </div>
-
-                <button onClick={handleEndSession} className="px-5 py-2.5 rounded-xl bg-[#FF3D71]/10 text-[#FF3D71] border border-[#FF3D71]/30 hover:bg-[#FF3D71]/20 font-bold text-xs flex items-center gap-1.5 shrink-0">
-                  <StopCircle className="h-4 w-4" /> End Live Session
-                </button>
-              </div>
-
-              {/* Generated Outputs Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* QR & Payment Link */}
-                <div className={`p-4 rounded-2xl border flex items-center gap-4 ${theme === 'light' ? 'bg-[#F8F9FA] border-[#E9ECEF]' : 'bg-[#0A0A0F] border-[#1C1C26]'}`}>
-                  <img src={activeSession.qrCodeUrl} alt="QR Code" className="h-24 w-24 rounded-xl bg-white p-1 shrink-0 border border-[#00F5D4]/40 shadow-md" />
-                  <div className="space-y-1 min-w-0 flex-1">
-                    <span className="text-[10px] font-bold text-[#00F5D4] uppercase">Instant UPI Payment Link & QR</span>
-                    <p className="text-xs font-mono truncate">{activeSession.paymentLink}</p>
-                    <div className="flex gap-2 pt-1">
-                      <button onClick={() => copyText(activeSession.paymentLink, 'Payment Link')} className="px-3 py-1.5 rounded-lg bg-[#00F5D4] text-[#0A0A0F] font-bold text-[11px] shadow-sm">
-                        <Copy className="h-3.5 w-3.5 inline mr-1" /> Copy Link
-                      </button>
-                      <a href={activeSession.paymentLink} target="_blank" rel="noopener noreferrer" className="px-3 py-1.5 rounded-lg bg-[#1C1C26] text-white text-[11px]">
-                        Test Link <ExternalLink className="h-3.5 w-3.5 inline text-[#00F5D4]" />
-                      </a>
-                    </div>
-                  </div>
-                </div>
-
-                {/* OBS Overlay */}
-                <div className={`p-4 rounded-2xl border flex items-center gap-4 ${theme === 'light' ? 'bg-[#F8F9FA] border-[#E9ECEF]' : 'bg-[#0A0A0F] border-[#1C1C26]'}`}>
-                  <div className="h-24 w-24 rounded-xl bg-[#7B2FFF]/10 border border-[#7B2FFF]/30 flex flex-col items-center justify-center text-[#7B2FFF] shrink-0">
-                    <Monitor className="h-8 w-8" />
-                    <span className="text-[9px] font-black mt-1">OBS SOURCE</span>
-                  </div>
-                  <div className="space-y-1 min-w-0 flex-1">
-                    <span className="text-[10px] font-bold text-[#7B2FFF] uppercase">OBS Overlay Browser Source URL</span>
-                    <p className="text-xs font-mono truncate text-[#7B2FFF]">{activeSession.overlayUrl}</p>
-                    <div className="flex gap-2 pt-1">
-                      <button onClick={() => copyText(activeSession.overlayUrl, 'OBS Overlay URL')} className="px-3 py-1.5 rounded-lg bg-[#7B2FFF] text-white font-bold text-[11px] shadow-sm">
-                        <Copy className="h-3.5 w-3.5 inline mr-1" /> Copy Overlay
-                      </button>
-                      <a href={activeSession.overlayUrl} target="_blank" rel="noopener noreferrer" className="px-3 py-1.5 rounded-lg bg-[#1C1C26] text-white text-[11px]">
-                        Preview Overlay <ExternalLink className="h-3.5 w-3.5 inline text-[#7B2FFF]" />
-                      </a>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
 
           {/* Simple Live Session Form with ALL Required Fields */}
           <form onSubmit={handleCreateSession} className={`p-6 rounded-3xl border space-y-6 shadow-xl ${theme === 'light' ? 'bg-white border-[#E9ECEF]' : 'bg-[#13131A] border-[#1C1C26]'
@@ -396,7 +328,7 @@ export default function CreatorLiveSessionsPage() {
             <div>
               <label className="block text-xs font-bold mb-1.5 text-[#8B8B96]">● Stream Description *</label>
               <textarea
-                rows={2}
+                rows={3}
                 value={form.description}
                 onChange={(e) => setForm(prev => ({ ...prev, description: e.target.value }))}
                 placeholder="Welcome to our live broadcast! Ask questions & support live on stream."

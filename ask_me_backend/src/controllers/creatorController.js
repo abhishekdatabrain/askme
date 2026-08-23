@@ -1119,6 +1119,11 @@ const getPublicSessionDetails = async (req, res, next) => {
       return res.status(404).json({ status: 'fail', message: 'Live Donation Session not found' });
     }
 
+    // Auto-expire session if ends_at is past
+    if (session.status === 'active' && session.ends_at && new Date() > new Date(session.ends_at)) {
+      await session.update({ status: 'closed', ended_at: session.ends_at }).catch(() => {});
+    }
+
     const creator = await CreatorsModel.findByPk(session.creator_id);
     let profile = null;
     if (CreatorProfileModel) {
@@ -1141,6 +1146,7 @@ const getPublicSessionDetails = async (req, res, next) => {
           thumbnailUrl: session.thumbnail_url,
           streamUrl: session.stream_url,
           status: session.status,
+          endsAt: session.ends_at,
           startedAt: session.started_at,
           totalDonations: session.total_donations || 0,
           totalAmount: session.total_amount || 0,

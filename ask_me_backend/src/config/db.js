@@ -57,7 +57,7 @@ const connectDB = async () => {
   try {
     await sequelize.authenticate();
     console.log('Sequelize ORM connected to PostgreSQL successfully.');
-    
+
     // Ensure configured schema exists in PostgreSQL database before sync
     const targetSchema = process.env.SCHEMA || 'Abhishek';
     if (targetSchema && targetSchema !== 'public') {

@@ -73,6 +73,10 @@ const Donation = sequelize.define(
         paid_at: {
             type: DataTypes.DATE,
         },
+        is_vip: {
+            type: DataTypes.BOOLEAN,
+            defaultValue: false,
+        },
     },
     {
         tableName: "donations",

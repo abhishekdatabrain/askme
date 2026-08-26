@@ -247,108 +247,123 @@ export default function CreatorNotificationsPage() {
                   }`}>Database records are saved safely. New viewer donations will arrive here in real-time.</p>
               </div>
             ) : (
-              notifications.map((n, index) => {
-                const itemKey = String(n.id || n.donationUuid);
-                const queuePos = index + 1;
-                const isCurrentTurn = queuePos === 1;
+              [...notifications]
+                .sort((a, b) => {
+                  const aVip = a.isVip ? 1 : 0;
+                  const bVip = b.isVip ? 1 : 0;
+                  if (bVip !== aVip) return bVip - aVip;
+                  return new Date(a.paidAt || 0) - new Date(b.paidAt || 0);
+                })
+                .map((n, index) => {
+                  const itemKey = String(n.id || n.donationUuid);
+                  const queuePos = index + 1;
+                  const isCurrentTurn = queuePos === 1;
+                  const isVipQuestion = !!n.isVip;
 
-                return (
-                  <div
-                    key={itemKey}
-                    className={`p-4 rounded-2xl border space-y-3 shadow-md transition-all ${isCurrentTurn
-                      ? theme === 'light'
-                        ? 'bg-[#F0FDF4] border-2 border-[#00E676]/60 shadow-lg glow-teal'
-                        : 'bg-[#0E1A16] border-2 border-[#00E676]/60 shadow-lg glow-teal'
-                      : theme === 'light'
-                        ? 'bg-white border-[#E9ECEF]'
-                        : 'bg-[#13131A] border-[#1C1C26]'
-                      }`}
-                  >
-                    <div className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b pb-3 ${theme === 'light' ? 'border-[#E9ECEF]' : 'border-[#1C1C26]'
-                      }`}>
-                      <div className="flex items-center gap-2.5">
-                        {/* Queue Position Badge */}
-                        <span className={`px-2.5 py-1 rounded-xl text-xs font-black flex items-center gap-1 ${isCurrentTurn
-                          ? 'bg-[#00E676] text-[#0A0A0F] glow-teal'
-                          : 'bg-[#00F5D4]/10 text-[#00F5D4] border border-[#00F5D4]/30'
-                          }`}>
-                          #{queuePos} {isCurrentTurn ? 'CURRENT TURN' : ''}
-                        </span>
-
-                        <div className="p-2 rounded-xl bg-[#00E676]/10 text-[#00E676] border border-[#00E676]/30">
-                          <Heart className="h-4 w-4 fill-current" />
-                        </div>
-                        <div>
-                          <h4 className={`font-bold text-xs ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'
+                  return (
+                    <div
+                      key={itemKey}
+                      className={`p-4 rounded-2xl border space-y-3 shadow-md transition-all ${isVipQuestion
+                          ? 'bg-[#1C1805] border-2 border-[#FFD60A]/80 shadow-xl glow-gold'
+                          : isCurrentTurn
+                            ? theme === 'light'
+                              ? 'bg-[#F0FDF4] border-2 border-[#00E676]/60 shadow-lg glow-teal'
+                              : 'bg-[#0E1A16] border-2 border-[#00E676]/60 shadow-lg glow-teal'
+                            : theme === 'light'
+                              ? 'bg-white border-[#E9ECEF]'
+                              : 'bg-[#13131A] border-[#1C1C26]'
+                        }`}
+                    >
+                      <div className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b pb-3 ${theme === 'light' ? 'border-[#E9ECEF]' : 'border-[#1C1C26]'
+                        }`}>
+                        <div className="flex items-center gap-2.5 flex-wrap">
+                          {/* Queue Position Badge */}
+                          <span className={`px-2.5 py-1 rounded-xl text-xs font-black flex items-center gap-1 ${isCurrentTurn
+                            ? 'bg-[#00E676] text-[#0A0A0F] glow-teal'
+                            : 'bg-[#00F5D4]/10 text-[#00F5D4] border border-[#00F5D4]/30'
                             }`}>
-                            <strong className="text-[#00F5D4]">{n.viewerName}</strong> donated <span className="text-[#00E676] font-black text-sm">₹{n.amount?.toFixed(2)}</span>
-                          </h4>
-                          <span className={`text-[10px] ${theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'
-                            }`}>ID: {n.donationUuid}</span>
+                            #{queuePos} {isCurrentTurn ? 'CURRENT TURN' : ''}
+                          </span>
+
+                          <div className="p-2 rounded-xl bg-[#00E676]/10 text-[#00E676] border border-[#00E676]/30">
+                            <Heart className="h-4 w-4 fill-current" />
+                          </div>
+                          <div>
+                            <h4 className={`font-bold text-xs ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'
+                              }`}>
+                              <strong className="text-[#00F5D4]">{n.viewerName}</strong> donated <span className="text-[#00E676] font-black text-sm">₹{n.amount?.toFixed(2)}</span>
+                            </h4>
+                            <span className={`text-[10px] ${theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'
+                              }`}>ID: {n.donationUuid}</span>
+                          </div>
                         </div>
-                      </div>
-
-                      {/* Right Action Bar: Timestamp, Tick (Answer) & Cross (Reject) Buttons for Current Turn Only */}
-                      <div className="flex items-center gap-2">
-                        <span className={`text-[10px] font-mono mr-1 ${theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'
-                          }`}>
-                          {n.paidAt && !isNaN(new Date(n.paidAt).getTime())
-                            ? new Date(n.paidAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true })
-                            : 'Just now'}
-                        </span>
-
-                        {isCurrentTurn ? (
-                          <>
-                            {/* TICK BUTTON (Approve / Mark Answered & Remove Row) */}
-                            <button
-                              type="button"
-                              onClick={() => handleMarkAnsweredAndRemoveRow(itemKey, queuePos)}
-                              className="px-3 py-1.5 rounded-xl bg-[#00E676]/15 border border-[#00E676]/40 text-[#00E676] hover:bg-[#00E676] hover:text-[#0A0A0F] hover:scale-105 transition-all shadow-md glow-teal flex items-center gap-1.5"
-                              title="Answer current turn question & remove from row"
-                            >
-                              <CheckCircle2 className="h-4 w-4" />
-                              {/* <span className="text-xs font-bold hidden sm:inline">Answered</span> */}
-                            </button>
-
-                            {/* CROSS BUTTON (Reject & Remove Row) */}
-                            <button
-                              type="button"
-                              onClick={() => handleRejectAndRemoveRow(itemKey, queuePos)}
-                              className="px-3 py-1.5 rounded-xl bg-[#FF3D71]/15 border border-[#FF3D71]/40 text-[#FF3D71] hover:bg-[#FF3D71] hover:text-white hover:scale-105 transition-all shadow-md glow-red flex items-center gap-1.5"
-                              title="Reject current turn question & remove from row"
-                            >
-                              <XCircle className="h-4 w-4" />
-                              {/* <span className="text-xs font-bold hidden sm:inline">Reject</span> */}
-                            </button>
-                          </>
-                        ) : (
-                          /* Waiting in Queue Badge for non-#1 items */
-                          <span className={`px-3 py-1.5 rounded-xl border text-xs font-semibold flex items-center gap-1.5 ${theme === 'light'
-                            ? 'bg-[#F8F9FA] border-[#E9ECEF] text-[#6C757D]'
-                            : 'bg-[#1C1C26] border-[#1C1C26] text-[#8B8B96]'
-                            }`}>
-                            <Clock className="h-3.5 w-3.5 text-[#FFD60A]" />
-                            <span>Waiting Turn</span>
+                        {/* VIP Member Priority Question Badge */}
+                        {isVipQuestion && (
+                          <span className="px-2.5 py-1 rounded-xl bg-gradient-to-r from-[#FFD60A] to-[#FF9500] text-[#0A0A0F] text-xs font-black flex items-center gap-1 shadow-md animate-pulse">
+                            👑 VIP Question
                           </span>
                         )}
-                      </div>
-                    </div>
+                        {/* Right Action Bar: Timestamp, Tick (Answer) & Cross (Reject) Buttons for Current Turn Only */}
+                        <div className="flex items-center gap-2">
+                          <span className={`text-[10px] font-mono mr-1 ${theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'
+                            }`}>
+                            {n.paidAt && !isNaN(new Date(n.paidAt).getTime())
+                              ? new Date(n.paidAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true })
+                              : 'Just now'}
+                          </span>
 
-                    {n.message && (
-                      <div className="pt-1">
-                        <span className={`text-[10px] font-extrabold block mb-0.5 ${theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'
-                          }`}>Viewer Question / Message:</span>
-                        <p className={`p-2.5 rounded-xl text-xs italic border ${theme === 'light'
-                          ? 'bg-[#F8F9FA] border-[#E9ECEF] text-[#00B49F]'
-                          : 'bg-[#0A0A0F] text-[#00F5D4] border-[#1C1C26]'
-                          }`}>
-                          "{n.message}"
-                        </p>
+                          {isCurrentTurn ? (
+                            <>
+                              {/* TICK BUTTON (Approve / Mark Answered & Remove Row) */}
+                              <button
+                                type="button"
+                                onClick={() => handleMarkAnsweredAndRemoveRow(itemKey, queuePos)}
+                                className="px-3 py-1.5 rounded-xl bg-[#00E676]/15 border border-[#00E676]/40 text-[#00E676] hover:bg-[#00E676] hover:text-[#0A0A0F] hover:scale-105 transition-all shadow-md glow-teal flex items-center gap-1.5"
+                                title="Answer current turn question & remove from row"
+                              >
+                                <CheckCircle2 className="h-4 w-4" />
+                                {/* <span className="text-xs font-bold hidden sm:inline">Answered</span> */}
+                              </button>
+
+                              {/* CROSS BUTTON (Reject & Remove Row) */}
+                              <button
+                                type="button"
+                                onClick={() => handleRejectAndRemoveRow(itemKey, queuePos)}
+                                className="px-3 py-1.5 rounded-xl bg-[#FF3D71]/15 border border-[#FF3D71]/40 text-[#FF3D71] hover:bg-[#FF3D71] hover:text-white hover:scale-105 transition-all shadow-md glow-red flex items-center gap-1.5"
+                                title="Reject current turn question & remove from row"
+                              >
+                                <XCircle className="h-4 w-4" />
+                                {/* <span className="text-xs font-bold hidden sm:inline">Reject</span> */}
+                              </button>
+                            </>
+                          ) : (
+                            /* Waiting in Queue Badge for non-#1 items */
+                            <span className={`px-3 py-1.5 rounded-xl border text-xs font-semibold flex items-center gap-1.5 ${theme === 'light'
+                              ? 'bg-[#F8F9FA] border-[#E9ECEF] text-[#6C757D]'
+                              : 'bg-[#1C1C26] border-[#1C1C26] text-[#8B8B96]'
+                              }`}>
+                              <Clock className="h-3.5 w-3.5 text-[#FFD60A]" />
+                              <span>Waiting Turn</span>
+                            </span>
+                          )}
+                        </div>
                       </div>
-                    )}
-                  </div>
-                );
-              })
+
+                      {n.message && (
+                        <div className="pt-1">
+                          <span className={`text-[10px] font-extrabold block mb-0.5 ${theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'
+                            }`}>Viewer Question / Message:</span>
+                          <p className={`p-2.5 rounded-xl text-xs italic border ${theme === 'light'
+                            ? 'bg-[#F8F9FA] border-[#E9ECEF] text-[#00B49F]'
+                            : 'bg-[#0A0A0F] text-[#00F5D4] border-[#1C1C26]'
+                            }`}>
+                            "{n.message}"
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })
             )}
           </div>
         </main>

@@ -27,6 +27,7 @@ import WalletManagement from '@/components/WalletManagement';
 import ReportsAnalytics from '@/components/ReportsAnalytics';
 import AdminNotifications from '@/components/AdminNotifications';
 import UserAgreement from '@/components/UserAgreement';
+import AdminMembershipsManager from '@/components/AdminMembershipsManager';
 
 import {
     Radio,
@@ -148,38 +149,6 @@ export default function Home() {
     // Mock Creators Database matching PDF design references
     const creators = [
         {
-            id: 'c1',
-            name: 'TechBurner Live',
-            handle: '@techburner',
-            avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80',
-            banner: 'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=800&q=80',
-            category: 'Technology',
-            platform: 'youtube',
-            minFee: '₹100',
-            subscribers: '3.4M',
-            rating: '4.9',
-            answeredCount: '382',
-            bio: 'Tech reviews, startup breakdowns, and live gadget Q&A. Ask me anything about AI, phones, or coding!',
-            isLive: true,
-            isVip: true,
-        },
-        {
-            id: 'c2',
-            name: 'FinCal Strategy',
-            handle: '@fincal_live',
-            avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=80',
-            banner: 'https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?auto=format&fit=crop&w=800&q=80',
-            category: 'Finance',
-            platform: 'youtube',
-            minFee: '₹200',
-            subscribers: '1.8M',
-            rating: '4.95',
-            answeredCount: '520',
-            bio: 'Personal finance, stock market analysis, SIPs, and tax saving advice.',
-            isLive: true,
-            isVip: true,
-        },
-        {
             id: 'c3',
             name: 'CodeWithAnish',
             handle: '@codewithanish',
@@ -211,54 +180,7 @@ export default function Home() {
             isLive: true,
             isVip: true,
         },
-        {
-            id: 'c5',
-            name: 'Dr. Priya HealthTalk',
-            handle: '@dr_priya_health',
-            avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=400&q=80',
-            banner: 'https://images.unsplash.com/photo-1505751172876-fa1923c5c528?auto=format&fit=crop&w=800&q=80',
-            category: 'Health & Fitness',
-            platform: 'youtube',
-            minFee: '₹250',
-            subscribers: '620K',
-            rating: '4.97',
-            answeredCount: '180',
-            bio: 'Clinical Nutritionist & Fitness Coach. Ask about fat loss, muscle gain, meal plans, and longevity.',
-            isLive: false,
-            isVip: true,
-        },
-        {
-            id: 'c6',
-            name: 'Startup Unfiltered',
-            handle: '@startup_unfiltered',
-            avatar: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=400&q=80',
-            banner: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=800&q=80',
-            category: 'Business',
-            platform: 'youtube',
-            minFee: '₹500',
-            subscribers: '410K',
-            rating: '4.92',
-            answeredCount: '60',
-            bio: 'Angel investor & 2x founder answering fundraising, pitch deck, and scaling questions.',
-            isLive: false,
-            isVip: true,
-        },
-        {
-            id: 'c7',
-            name: 'Ajeet Bharti',
-            handle: '@AjeetBharti',
-            avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=400&q=80',
-            banner: 'https://images.unsplash.com/photo-1585829365295-ab7cd400c167?auto=format&fit=crop&w=800&q=80',
-            category: 'Podcasts',
-            platform: 'youtube',
-            minFee: '₹150',
-            subscribers: '1.25M',
-            rating: '4.98',
-            answeredCount: '620',
-            bio: 'Journalist, author & socio-political commentator. Live analysis on political discourse & media critique.',
-            isLive: true,
-            isVip: true,
-        },
+
     ];
 
     const categories = ['All', 'Following', 'Technology', 'Gaming', 'Education', 'Finance', 'Business', 'Health & Fitness', 'Podcasts'];
@@ -294,11 +216,10 @@ export default function Home() {
     }
 
     return (
-        <div className={`min-h-screen flex flex-col font-sans transition-colors ${
-            theme === 'light'
+        <div className={`min-h-screen flex flex-col font-sans transition-colors ${theme === 'light'
                 ? 'bg-[#F8F9FA] text-[#212529]'
                 : 'bg-[#0A0A0F] text-[#F5F5F7]'
-        }`}>
+            }`}>
             {/* Top Navbar with Theme Toggle */}
             <AdminNavbar
                 activeView={activeTab}
@@ -330,6 +251,7 @@ export default function Home() {
                     {activeTab === 'kyc' && activeSubTab !== 'user_agreement' && <KycApprovalQueue activeSubTab={activeSubTab} />}
                     {activeTab === 'user_agreement' && <UserAgreement activeSubTab={activeSubTab} />}
                     {activeTab === 'livesessions' && <LiveSessionManagement activeSubTab={activeSubTab} />}
+                    {activeTab === 'memberships' && <AdminMembershipsManager activeSubTab={activeSubTab} theme={theme} />}
                     {activeTab === 'payments' && <PaymentManagement activeSubTab={activeSubTab} />}
                     {activeTab === 'wallets' && <WalletManagement activeSubTab={activeSubTab} />}
                     {activeTab === 'withdrawals' && <WithdrawalsManager activeSubTab={activeSubTab} />}

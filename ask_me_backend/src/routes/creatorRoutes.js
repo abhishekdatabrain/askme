@@ -27,7 +27,15 @@ const {
   markCreatorNotificationsRead,
   markSingleCreatorNotificationRead,
   updateDonationStatus,
+  verifyCreatorUpi,
 } = require('../controllers/creatorController');
+
+/**
+ * @route   POST /api/creators/verify-upi
+ * @desc    Verify UPI ID format & duplicate check
+ * @access  Public / Private
+ */
+router.post('/verify-upi', verifyCreatorUpi);
 
 /**
  * @route   GET /api/creators/live-sessions/:sessionId/messages
@@ -98,6 +106,8 @@ router.get('/kyc/status', getKycStatus);
  * @access  Public / Private
  */
 router.get('/profile', getCreatorProfile);
+router.get('/profile/:id', getCreatorProfile);
+router.get('/profile/creator/:creatorId', getCreatorProfile);
 
 /**
  * @route   PUT /api/creators/profile
@@ -105,6 +115,7 @@ router.get('/profile', getCreatorProfile);
  * @access  Public / Private
  */
 router.put('/profile', updateCreatorProfile);
+router.put('/profile/:id', updateCreatorProfile);
 
 /**
  * @route   POST /api/creators/live-sessions

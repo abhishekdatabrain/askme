@@ -48,6 +48,7 @@ function ViewerPaymentContent() {
   const [isAnonymous, setIsAnonymous] = useState(false);
   const [message, setMessage] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('upi'); // 'upi' | 'card' | 'netbanking'
+  const [isVipMember, setIsVipMember] = useState(false);
 
   useEffect(() => {
     // Auto-detect logged-in viewer account
@@ -57,6 +58,37 @@ function ViewerPaymentContent() {
       if (u.name) setViewerName(u.name);
     }
   }, []);
+
+  // Check if viewer has active VIP membership for creator
+  useEffect(() => {
+    const checkVipStatus = async () => {
+      try {
+        const token = typeof window !== 'undefined' ? localStorage.getItem('askme_token') : null;
+        const targetCid = creatorData?.id || queryCreatorId;
+        const res = await fetch(API_ENDPOINTS.VIEWERS.VIP_MY_MEMBERSHIPS, {
+          headers: {
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+        });
+        const data = await res.json();
+        if (res.ok && data.data?.memberships) {
+          const hasVip = data.data.memberships.some(
+            (m) => m.status === 'active' && (
+              !targetCid || String(m.creator_id) === String(targetCid) ||
+              (creatorData?.username && String(m.creatorUsername || '').toLowerCase() === String(creatorData.username).toLowerCase())
+            )
+          );
+          if (hasVip) setIsVipMember(true);
+        }
+      } catch (e) {
+        console.warn('VIP check notice on payment page:', e.message);
+      }
+    };
+
+    if (creatorData) {
+      checkVipStatus();
+    }
+  }, [creatorData, queryCreatorId]);
 
   useEffect(() => {
     const fetchSession = async () => {
@@ -114,6 +146,7 @@ function ViewerPaymentContent() {
         viewerName: isAnonymous ? 'Anonymous Supporter' : viewerName || 'Supporter',
         message: message || '',
         anonymous: isAnonymous,
+        isVip: isVipMember,
       };
 
       const res = await fetch(API_ENDPOINTS.CREATORS.PAY_PROCESS, {
@@ -228,17 +261,31 @@ function ViewerPaymentContent() {
             </div>
 
             {/* Queue Position Notification Banner */}
-            <div className="p-4 rounded-2xl bg-[#00E676]/10 border-2 border-[#00E676]/40 text-[#00E676] space-y-1 text-center shadow-lg glow-teal animate-pulse">
-              <div className="flex items-center justify-center gap-2 font-black text-xs uppercase tracking-wider">
-                <CheckCircle2 className="h-4 w-4 text-[#00E676]" /> Live Queue Notification
+            {paymentSuccess.isVip || isVipMember ? (
+              <div className="p-4 rounded-2xl bg-[#1C1805] border-2 border-[#FFD60A] text-[#FFD60A] space-y-1 text-center shadow-xl glow-gold animate-pulse">
+                <div className="flex items-center justify-center gap-2 font-black text-xs uppercase tracking-wider">
+                  <span>👑 VIP Member Priority Question</span>
+                </div>
+                <p className="text-sm font-extrabold text-white">
+                  Aap <span className="text-[#FFD60A] font-black underline text-base">TOP VIP Priority</span> pe hain queue mein!
+                </p>
+                <p className="text-[11px] text-[#8B8B96]">
+                  Aapka question creator live dashboard pe highest priority queue par show hoga.
+                </p>
               </div>
-              <p className="text-sm font-extrabold text-white">
-                Aap <span className="text-[#00F5D4] font-black underline text-base">#{paymentSuccess.queuePosition || 1}</span> number pe hain queue mein!
-              </p>
-              <p className="text-[11px] text-[#8B8B96]">
-                Creator turns to your question next on the live stream broadcast.
-              </p>
-            </div>
+            ) : (
+              <div className="p-4 rounded-2xl bg-[#00E676]/10 border-2 border-[#00E676]/40 text-[#00E676] space-y-1 text-center shadow-lg glow-teal animate-pulse">
+                <div className="flex items-center justify-center gap-2 font-black text-xs uppercase tracking-wider">
+                  <CheckCircle2 className="h-4 w-4 text-[#00E676]" /> Live Queue Notification
+                </div>
+                <p className="text-sm font-extrabold text-white">
+                  Aap <span className="text-[#00F5D4] font-black underline text-base">#{paymentSuccess.queuePosition || 1}</span> number pe hain queue mein!
+                </p>
+                <p className="text-[11px] text-[#8B8B96]">
+                  Creator turns to your question next on the live stream broadcast.
+                </p>
+              </div>
+            )}
 
             <div className="p-3 rounded-xl bg-[#00F5D4]/10 border border-[#00F5D4]/30 text-[#00F5D4] text-xs font-bold flex items-center justify-center gap-2">
               <Sparkles className="h-4 w-4" /> Message broadcasted to live stream overlay!
@@ -256,6 +303,18 @@ function ViewerPaymentContent() {
           </div>
         ) : (
           <div className="p-6 sm:p-8 rounded-3xl bg-[#13131A] border border-[#1C1C26] shadow-2xl space-y-6">
+
+            {/* VIP Priority Badge if viewer is VIP Member */}
+            {isVipMember && (
+              <div className="p-3.5 rounded-2xl bg-[#1C1805] border-2 border-[#FFD60A]/80 text-[#FFD60A] space-y-1 text-xs shadow-lg glow-gold animate-pulse">
+                <div className="flex items-center gap-2 font-black text-xs uppercase tracking-wider">
+                  <span>👑 VIP Member Priority Access Active!</span>
+                </div>
+                <p className="text-[11px] text-white">
+                  Aap creator ke VIP Member hain. Aapka paid question creator dashboard live question queue mein <strong>normal question se HIGHER PRIORITY (TOP)</strong> par dikhega!
+                </p>
+              </div>
+            )}
 
             {/* Creator Header Info */}
             <div className="flex items-center gap-4 border-b border-[#1C1C26] pb-5">

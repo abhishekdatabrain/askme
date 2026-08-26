@@ -590,9 +590,8 @@ function CreatorDashboardContent() {
             <div className="space-y-6 animate-fade-in">
               {/* Active Session Callout Banner with QR & OBS Overlay Grid if Live */}
               {activeSession && (
-                <div className={`p-6 rounded-3xl border-2 shadow-2xl space-y-6 glow-teal transition-colors ${
-                  theme === 'light' ? 'bg-white border-[#00F5D4]/60' : 'bg-[#13131A] border-[#00F5D4]/40'
-                }`}>
+                <div className={`p-6 rounded-3xl border-2 shadow-2xl space-y-6 glow-teal transition-colors ${theme === 'light' ? 'bg-white border-[#00F5D4]/60' : 'bg-[#13131A] border-[#00F5D4]/40'
+                  }`}>
                   <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border-b pb-4 border-[#1C1C26]">
                     <div className="flex items-center gap-3">
                       <div className="p-3.5 rounded-2xl bg-[#00F5D4]/10 text-[#00F5D4] border border-[#00F5D4]/30 animate-pulse">
@@ -668,9 +667,8 @@ function CreatorDashboardContent() {
               )}
 
               {/* Welcome Banner */}
-              <div className={`p-6 rounded-3xl border shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4 transition-colors ${
-                theme === 'light' ? 'bg-white border-[#E9ECEF]' : 'bg-[#13131A] border-[#1C1C26]'
-              }`}>
+              <div className={`p-6 rounded-3xl border shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4 transition-colors ${theme === 'light' ? 'bg-white border-[#E9ECEF]' : 'bg-[#13131A] border-[#1C1C26]'
+                }`}>
                 <div>
                   <div className="flex items-center gap-2">
                     <span className="px-3 py-1 rounded-full bg-[#00F5D4]/10 border border-[#00F5D4]/30 text-[#00F5D4] text-xs font-bold uppercase tracking-wider">

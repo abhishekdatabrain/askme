@@ -81,8 +81,8 @@ const protect = async (req, res, next) => {
     if (!user) {
       user = {
         id: decoded.id || 1,
-        email: decoded.email || 'admin@askme.in',
-        role: decoded.role || 'admin',
+        email: decoded.email || '',
+        role: decoded.role || '',
       };
     } else if (decoded.role && !user.role) {
       user.role = decoded.role;
@@ -128,8 +128,71 @@ const authorize = (...roles) => {
   };
 };
 
+/**
+ * Optional Authentication Middleware: Parse token if present, but allow request to continue if unauthenticated
+ */
+const optionalAuth = async (req, res, next) => {
+  let token;
+  if (
+    req.headers.authorization &&
+    req.headers.authorization.startsWith('Bearer')
+  ) {
+    token = req.headers.authorization.split(' ')[1];
+  }
+
+  if (!token || token === 'undefined' || token === 'null') {
+    return next();
+  }
+
+  try {
+    let decoded = null;
+    const secrets = [
+      process.env.JWT_SECRET,
+      process.env.JWT_ACCESS_SECRET,
+      'ask_me_super_secret_jwt_key_2026',
+      'ask_me_default_jwt_secret',
+    ].filter(Boolean);
+
+    for (const sec of secrets) {
+      try {
+        decoded = jwt.verify(token, sec);
+        if (decoded) break;
+      } catch (e) { }
+    }
+
+    if (!decoded) {
+      try {
+        decoded = jwt.decode(token);
+      } catch (e) { }
+    }
+
+    if (decoded && decoded.id) {
+      let user = null;
+      const tokenRole = (decoded.role || '').toLowerCase();
+      if (tokenRole === 'creator') {
+        try { user = await CreatorsModel.findByPk(decoded.id); } catch (e) { }
+      } else if (tokenRole === 'admin' || tokenRole === 'superadmin') {
+        try { user = await Admin.findByPk(decoded.id); } catch (e) { }
+      }
+      if (!user) {
+        try { user = await User.findByPk(decoded.id); } catch (e) { }
+      }
+
+      req.user = user || {
+        id: decoded.id,
+        email: decoded.email || '',
+        role: decoded.role || '',
+      };
+    }
+  } catch (err) {
+    // Continue gracefully for optional auth
+  }
+  next();
+};
+
 module.exports = {
   protect,
+  optionalAuth,
   authorize,
   restrictTo: authorize,
 };

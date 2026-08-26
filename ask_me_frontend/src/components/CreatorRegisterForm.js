@@ -45,7 +45,7 @@ export default function CreatorRegisterForm({ onClose, onComplete }) {
     username: '',
     profileImage: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80',
     country: 'India (IN)',
-    category: 'Technology',
+    category: '',
     socialLinks: [
       { platform: 'youtube', link: '' },
       { platform: 'instagram', link: '' },
@@ -118,10 +118,50 @@ export default function CreatorRegisterForm({ onClose, onComplete }) {
     }
   };
 
+  const getUsernameSuggestions = () => {
+    const rawUser = String(formData.username || formData.firstname || 'creator').toLowerCase().replace(/[^a-z0-9_]/g, '');
+    const fname = String(formData.firstname || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+    const lname = String(formData.lastname || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+    const base = rawUser || 'creator';
+
+    const list = [
+      `${base}123`,
+      `${base}_official`,
+      `${base}_live`,
+      fname && lname ? `${fname}_${lname}` : `${base}_pro`,
+      `${base}99`
+    ];
+    return Array.from(new Set(list)).slice(0, 4);
+  };
+
+  const validatePasswordComplexity = (pass) => {
+    if (!pass || pass.length < 6) {
+      return 'Password must be at least 6 characters long.';
+    }
+    const hasLetter = /[a-zA-Z]/.test(pass);
+    const hasSpecial = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(pass);
+    if (!hasLetter || !hasSpecial) {
+      return 'Password must contain letters (A–Z/a–z) and at least one special character (e.g. @, #, $, !).';
+    }
+    return null;
+  };
+
   const handleNextStep = (e) => {
     e.preventDefault();
     if (!formData.firstname || !formData.lastname || !formData.email || !formData.mobileNumber || !formData.username || !formData.password) {
       toast.error('Please fill in all required personal details before proceeding.', 'Incomplete Form');
+      return;
+    }
+
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!emailRegex.test(String(formData.email || '').trim())) {
+      toast.error('Accept only a valid email address format (e.g. name@domain.com).', 'Invalid Email Format');
+      return;
+    }
+
+    const passError = validatePasswordComplexity(formData.password);
+    if (passError) {
+      toast.error(passError, 'Password Requirements');
       return;
     }
 
@@ -137,6 +177,18 @@ export default function CreatorRegisterForm({ onClose, onComplete }) {
   const handleRegisterSubmit = async (e) => {
     e.preventDefault();
     setErrorMsg('');
+
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!emailRegex.test(String(formData.email || '').trim())) {
+      toast.error('Accept only a valid email address format (e.g. name@domain.com).', 'Invalid Email Format');
+      return;
+    }
+
+    const passError = validatePasswordComplexity(formData.password);
+    if (passError) {
+      toast.error(passError, 'Password Requirements');
+      return;
+    }
 
     const cleanMobile = String(formData.mobileNumber || '').replace(/\D/g, '');
     if (cleanMobile.length !== 10) {
@@ -334,6 +386,27 @@ export default function CreatorRegisterForm({ onClose, onComplete }) {
                         className="w-full rounded-xl bg-[#0A0A0F] border border-[#1C1C26] pl-9 pr-3 py-2 text-xs text-white placeholder-[#8B8B96] focus:border-[#00F5D4] focus:outline-none font-mono"
                       />
                     </div>
+
+                    {/* Username Suggestions Recommendation Pills */}
+                    {formData.username && (
+                      <div className="mt-1.5 space-y-1">
+                        <span className="text-[10px] font-semibold text-[#8B8B96] block">
+                          Username Suggestions:
+                        </span>
+                        <div className="flex flex-wrap gap-1">
+                          {getUsernameSuggestions().map((sug) => (
+                            <button
+                              key={sug}
+                              type="button"
+                              onClick={() => handleInputChange('username', sug)}
+                              className="px-2 py-0.5 rounded-lg bg-[#00F5D4]/10 border border-[#00F5D4]/30 text-[#00F5D4] text-[10px] font-mono hover:bg-[#00F5D4]/20 transition"
+                            >
+                              @{sug}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   {/* Password */}
@@ -357,6 +430,9 @@ export default function CreatorRegisterForm({ onClose, onComplete }) {
                         {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                       </button>
                     </div>
+                    <span className="text-[10px] text-[#8B8B96] block mt-1 leading-tight">
+                      Must contain letters (A–Z/a–z) and at least 1 special character (@, #, $, !, etc.)
+                    </span>
                   </div>
 
                   {/* Country Selection */}

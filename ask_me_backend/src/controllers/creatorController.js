@@ -1,13 +1,12 @@
 const bcrypt = require("bcryptjs");
 const generateToken = require("../utils/generateToken");
-
 const CreatorsModel = require("../models/CreatorsModel");
 const CreatorProfileModel = require("../models/CreatorProfileModel");
 const CreatorSocialLinkModel = require("../models/CreatorSocialLinkModel");
 const WalletModel = require("../models/WalletModel");
 const DonationSession = require("../models/DonationSessionModels");
 const { getCreatorNetSharePercent } = require("../config/commissionConfig");
-
+const { Op } = require("sequelize");
 let KycVerificationModel;
 let KycDocumentModel;
 let CreatorBankAccountModel;
@@ -27,6 +26,7 @@ try { WithdrawalRequestModel = require('../models/WithdrawalRequestModel'); } ca
 try { WalletTransactionModel = require('../models/WalletTransactionModel'); } catch (e) { }
 try { PaymentTransactionModel = require('../models/PaymentTransactionModel'); } catch (e) { }
 try { ChatMessageModel = require('../models/ChatMessageModel'); } catch (e) { }
+const VipMembership = require("../models/VipMembershipModel");
 
 const sequelize = require("../config/database");
 
@@ -82,12 +82,22 @@ const registerCreator = async (req, res, next) => {
       });
     }
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const passHasLetter = /[a-zA-Z]/.test(password);
+    const passHasSpecial = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password);
+    if (!passHasLetter || !passHasSpecial) {
+      await transaction.rollback();
+      return res.status(400).json({
+        status: "fail",
+        message: "Password must contain letters (A–Z/a–z) and at least one special character.",
+      });
+    }
+
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
     if (!emailRegex.test(creatorEmail)) {
       await transaction.rollback();
       return res.status(400).json({
         status: "fail",
-        message: "Please provide a valid email address.",
+        message: "Please enter a valid email address format (e.g. user@domain.com).",
       });
     }
 
@@ -150,7 +160,7 @@ const registerCreator = async (req, res, next) => {
           creator_id: creator.id,
           display_name: creatorName,
           bio: bio || `${category || "Technology"} Creator`,
-          kyc_status: "pending",
+          kyc_status: "not_submited",
           is_payment_enabled: false,
         },
         { transaction }
@@ -285,7 +295,7 @@ const registerCreator = async (req, res, next) => {
           mobile: creator.mobile,
           country: creator.country,
           status: creator.status,
-          kycStatus: "pending",
+          kycStatus: "not_submited",
         },
         token,
       },
@@ -353,6 +363,19 @@ const submitKyc = async (req, res, next) => {
     const targetCreatorId = creatorId || creator_id || req.user?.id || 1;
     const applicantName = fullName || full_name || 'Creator Host';
     const panNum = panNumber || pan_number || documentNumber || document_number || 'ABCDE1234F';
+
+    // Validate IFSC Code Format
+    const rawIfsc = String(ifscCode || ifsc_code || '').trim().toUpperCase();
+    if (rawIfsc) {
+      const ifscRegex = /^[A-Z]{4}0[A-Z0-9]{6}$/;
+      if (!ifscRegex.test(rawIfsc)) {
+        await transaction.rollback();
+        return res.status(400).json({
+          status: 'fail',
+          message: 'Invalid IFSC Code format. IFSC must be 11 characters starting with 4 letters, 5th character 0, followed by 6 alphanumeric characters (e.g. SBIN0001234).'
+        });
+      }
+    }
 
     // Safe Date of Birth parsing (PostgreSQL DATE column fix)
     const rawDob = dateOfBirth || date_of_birth;
@@ -444,7 +467,7 @@ const submitKyc = async (req, res, next) => {
             upi_id: upiId || upi_id || '',
             account_type: 'bank',
             is_primary: true,
-            status: 'active',
+            status: 'not_active',
           },
           transaction,
         });
@@ -467,14 +490,21 @@ const submitKyc = async (req, res, next) => {
     if (CreatorProfileModel) {
       try {
         await CreatorProfileModel.update(
-          { kyc_status: 'pending' },
-          { where: { creator_id: targetCreatorId }, transaction }
+          {
+            kyc_status: "pending",
+          },
+          {
+            where: {
+              creator_id: targetCreatorId,
+            },
+            transaction,
+          }
         );
-      } catch (err) {
-        console.warn('Notice updating CreatorProfile kyc_status:', err.message);
+      } catch (error) {
+        console.error("Error updating creator profile KYC status:", error);
+        throw error;
       }
     }
-
     await transaction.commit();
 
     return res.status(201).json({
@@ -665,7 +695,7 @@ const loginCreator = async (req, res, next) => {
  */
 const getCreatorProfile = async (req, res, next) => {
   try {
-    const creatorId = req.query.creatorId || req.user?.id || req.body?.creatorId || 1;
+    const creatorId = req.params?.creatorId || req.params?.id || req.query?.creatorId || req.user?.id || req.body?.creatorId || 1;
     const creator = await CreatorsModel.findByPk(creatorId);
     if (!creator) {
       return res.status(404).json({ status: 'fail', message: 'Creator not found' });
@@ -755,6 +785,18 @@ const updateCreatorProfile = async (req, res, next) => {
 
     if (!creator) {
       return res.status(404).json({ status: 'fail', message: 'Creator not found' });
+    }
+
+    // Validate IFSC Code if provided in paymentInfo
+    if (paymentInfo?.ifscCode) {
+      const rawIfsc = String(paymentInfo.ifscCode).trim().toUpperCase();
+      const ifscRegex = /^[A-Z]{4}0[A-Z0-9]{6}$/;
+      if (!ifscRegex.test(rawIfsc)) {
+        return res.status(400).json({
+          status: 'fail',
+          message: 'Invalid IFSC Code format. IFSC must be 11 characters starting with 4 letters, 5th character 0, followed by 6 alphanumeric characters (e.g. SBIN0001234).'
+        });
+      }
     }
 
     // 1. Update basic creator info
@@ -1121,7 +1163,7 @@ const getPublicSessionDetails = async (req, res, next) => {
 
     // Auto-expire session if ends_at is past
     if (session.status === 'active' && session.ends_at && new Date() > new Date(session.ends_at)) {
-      await session.update({ status: 'closed', ended_at: session.ends_at }).catch(() => {});
+      await session.update({ status: 'closed', ended_at: session.ends_at }).catch(() => { });
     }
 
     const creator = await CreatorsModel.findByPk(session.creator_id);
@@ -1211,6 +1253,27 @@ const processViewerDonation = async (req, res, next) => {
     const targetCreatorId = creatorId || session?.creator_id || 1;
     const targetSessionId = session?.id || sessionId || 1;
 
+    // Check if viewer has active VIP Membership for this creator
+    let isVipMember = false;
+    try {
+      const viewerIdToCheck = req.user?.id || req.body.userId;
+      if (viewerIdToCheck && targetCreatorId) {
+        const existingVip = await VipMembership.findOne({
+          where: {
+            viewer_id: String(viewerIdToCheck),
+            creator_id: String(targetCreatorId),
+            status: "active",
+          },
+        });
+        if (existingVip) {
+          isVipMember = true;
+        }
+      }
+    } catch (vipErr) {
+      console.warn("VIP membership check notice:", vipErr.message);
+    }
+    if (req.body.isVip) isVipMember = true;
+
     // STEP 1: Main Donation Record (`donations` table)
     let donationRecord = null;
     if (DonationModel) {
@@ -1227,6 +1290,7 @@ const processViewerDonation = async (req, res, next) => {
         payment_status: 'success',
         status: 'not_read',
         paid_at: new Date(),
+        is_vip: isVipMember,
       }).catch((e) => {
         console.warn('DonationModel create notice:', e.message);
         return null;
@@ -1371,6 +1435,7 @@ const processViewerDonation = async (req, res, next) => {
           amount: parsedAmount,
           message: message ? message.trim() : `Supported the stream with ₹${parsedAmount}`,
           messageType: 'donation',
+          isVip: isVipMember,
           queuePosition,
           createdAt: new Date(),
         };
@@ -1380,6 +1445,7 @@ const processViewerDonation = async (req, res, next) => {
           sessionId: targetSessionId,
           donationId: donationRecord?.id,
           viewerName: donorDisplayName,
+          isVip: isVipMember,
           queuePosition,
           message: `Aap ${queuePosition} number pe hain queue mein.`,
         });
@@ -1411,6 +1477,7 @@ const processViewerDonation = async (req, res, next) => {
         paymentMethod: methodLabels[paymentMethod] || 'Instant UPI',
         viewerName: viewerName || 'Anonymous Supporter',
         message: message || '',
+        isVip: isVipMember,
         queuePosition: queuePosition,
         queueMessage: `Aap ${queuePosition} number pe hain queue mein.`,
         paidAt: new Date(),
@@ -1615,7 +1682,16 @@ const getOverlayAlerts = async (req, res, next) => {
         amount: parseFloat(d.amount || 0),
         message: d.message || '',
         paidAt: d.paid_at || d.createdAt,
+        isVip: !!d.is_vip,
       }));
+
+      // Sort Priority: VIP questions FIRST at the top of the Creator queue!
+      alerts.sort((a, b) => {
+        const aVip = a.isVip ? 1 : 0;
+        const bVip = b.isVip ? 1 : 0;
+        if (bVip !== aVip) return bVip - aVip;
+        return new Date(a.paidAt || 0) - new Date(b.paidAt || 0);
+      });
     }
 
     return res.status(200).json({
@@ -1919,6 +1995,17 @@ const saveCreatorBankAccount = async (req, res, next) => {
       });
     }
 
+    const rawIfsc = String(ifscCode || '').trim().toUpperCase();
+    if (rawIfsc) {
+      const ifscRegex = /^[A-Z]{4}0[A-Z0-9]{6}$/;
+      if (!ifscRegex.test(rawIfsc)) {
+        return res.status(400).json({
+          status: 'fail',
+          message: 'Invalid IFSC Code format. IFSC must be 11 characters starting with 4 letters, 5th character 0, followed by 6 alphanumeric characters (e.g. SBIN0001234).'
+        });
+      }
+    }
+
     let bankRecord = null;
     if (CreatorBankAccountModel) {
       bankRecord = await CreatorBankAccountModel.create({
@@ -1942,6 +2029,92 @@ const saveCreatorBankAccount = async (req, res, next) => {
     });
   } catch (error) {
     console.error('SAVE BANK ACCOUNT ERROR:', error);
+    next(error);
+  }
+};
+
+/**
+ * @desc    Verify UPI ID Format and Duplicate Check
+ * @route   POST /api/creators/verify-upi
+ * @access  Public / Private
+ */
+const verifyCreatorUpi = async (req, res, next) => {
+  try {
+    const { upiId, creatorId } = req.body;
+    const currentCreatorId = creatorId || req.user?.id || 1;
+
+    const rawUpi = String(upiId || '');
+    if (!rawUpi || !rawUpi.trim()) {
+      return res.status(400).json({
+        status: 'fail',
+        message: 'UPI ID is required.'
+      });
+    }
+
+    if (/\s/.test(rawUpi)) {
+      return res.status(400).json({
+        status: 'fail',
+        message: 'UPI ID should not contain spaces.'
+      });
+    }
+
+    const cleanUpi = rawUpi.trim().toLowerCase();
+    const parts = cleanUpi.split('@');
+    if (parts.length !== 2) {
+      return res.status(400).json({
+        status: 'fail',
+        message: 'The UPI ID could not be verified. Please enter a valid UPI ID.'
+      });
+    }
+
+    const [uname, handle] = parts;
+    const unameRegex = /^[a-zA-Z0-9._-]+$/;
+    if (!uname || !unameRegex.test(uname)) {
+      return res.status(400).json({
+        status: 'fail',
+        message: 'The UPI ID could not be verified. Please enter a valid UPI ID.'
+      });
+    }
+
+    const validHandles = [
+      'upi', 'okicici', 'oksbi', 'okaxis', 'ybl', 'paytm', 'icici', 'sbi',
+      'axisbank', 'kotak', 'ibl', 'airtel', 'barodampay', 'federal', 'mahb',
+      'indus', 'postbank', 'dlb', 'hsbc', 'unionbank', 'hdfcbank', 'pnb', 'rbl', 'yesbank'
+    ];
+
+    if (!validHandles.includes(handle)) {
+      return res.status(400).json({
+        status: 'fail',
+        message: 'The UPI ID could not be verified. Please enter a valid UPI ID.'
+      });
+    }
+
+    // Duplicate check across Creator Bank Accounts table
+    if (CreatorBankAccountModel) {
+      const existing = await CreatorBankAccountModel.findOne({
+        where: {
+          upi_id: cleanUpi,
+          creator_id: { [Op.ne]: currentCreatorId }
+        }
+      });
+      if (existing) {
+        return res.status(409).json({
+          status: 'fail',
+          message: 'This UPI ID is already added. Please use another UPI ID.'
+        });
+      }
+    }
+
+    return res.status(200).json({
+      status: 'success',
+      message: 'UPI ID Verified',
+      data: {
+        upiId: cleanUpi,
+        verified: true
+      }
+    });
+  } catch (error) {
+    console.error('VERIFY UPI ERROR:', error);
     next(error);
   }
 };
@@ -2245,4 +2418,5 @@ module.exports = {
   markCreatorNotificationsRead,
   markSingleCreatorNotificationRead,
   updateDonationStatus,
+  verifyCreatorUpi,
 };

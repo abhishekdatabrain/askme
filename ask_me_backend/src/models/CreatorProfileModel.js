@@ -35,11 +35,12 @@ const CreatorProfileModel = sequelize.define(
         kyc_status: {
             type: DataTypes.STRING(20),
             allowNull: false,
-            defaultValue: "pending",
+            defaultValue: "not_submitted",
 
             validate: {
                 isIn: [
                     [
+                        "not_submitted",
                         "pending",
                         "approved",
                         "rejected",

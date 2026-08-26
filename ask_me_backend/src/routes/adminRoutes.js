@@ -31,6 +31,13 @@ const {
   markSingleNotificationRead,
   getPlatformSettings,
   updatePlatformSettings,
+  getAdminMembershipsOverview,
+  getAdminMembershipPlans,
+  createAdminMembershipPlan,
+  updateAdminMembershipPlan,
+  getAdminMembershipSubscriptions,
+  getAdminMembershipCreators,
+  assignAdminMembershipPlans,
 } = require('../controllers/adminController');
 
 // All Admin Routes require Authentication & Admin Authorization
@@ -39,6 +46,15 @@ router.use(authorize('admin'));
 
 // 1. Dashboard & Analytics Overview
 router.get('/dashboard', getDashboardOverview);
+
+// 1b. Memberships Module Overview & CRUD
+router.get('/memberships/overview', getAdminMembershipsOverview);
+router.get('/memberships/plans', getAdminMembershipPlans);
+router.post('/memberships/plans', createAdminMembershipPlan);
+router.put('/memberships/plans/:id', updateAdminMembershipPlan);
+router.get('/memberships/subscriptions', getAdminMembershipSubscriptions);
+router.get('/memberships/creators', getAdminMembershipCreators);
+router.post('/memberships/assign', assignAdminMembershipPlans);
 
 // 2. Creator Management
 router.get('/creators', getCreators);

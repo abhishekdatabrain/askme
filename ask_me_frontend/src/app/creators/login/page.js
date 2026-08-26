@@ -51,7 +51,7 @@ export default function CreatorLoginPage() {
 
         if (status === 'approved') {
           targetUrl = '/creators/dashboard';
-        } else if (status === 'pending') {
+        } else if (status === 'not_submitted') {
           targetUrl = '/creators/kyc';
         } else if (status === 'rejected') {
           targetUrl = '/creators/kyc';

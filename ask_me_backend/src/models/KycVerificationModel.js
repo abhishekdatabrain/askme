@@ -76,4 +76,8 @@ const KycVerification = sequelize.define(
     }
 );
 
+KycVerification.sync({ alter: true }).catch((err) => {
+    console.warn('KycVerificationModel sync alter notice:', err.message);
+});
+
 module.exports = KycVerification;

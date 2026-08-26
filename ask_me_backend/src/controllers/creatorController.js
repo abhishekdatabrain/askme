@@ -160,7 +160,7 @@ const registerCreator = async (req, res, next) => {
           creator_id: creator.id,
           display_name: creatorName,
           bio: bio || `${category || "Technology"} Creator`,
-          kyc_status: "not_submited",
+          kyc_status: "not_submitted",
           is_payment_enabled: false,
         },
         { transaction }
@@ -359,7 +359,7 @@ const submitKyc = async (req, res, next) => {
       upiId,
       upi_id,
     } = req.body;
-
+    console.log(req.body, "kycsubmitted");
     const targetCreatorId = creatorId || creator_id || req.user?.id || 1;
     const applicantName = fullName || full_name || 'Creator Host';
     const panNum = panNumber || pan_number || documentNumber || document_number || 'ABCDE1234F';
@@ -439,71 +439,58 @@ const submitKyc = async (req, res, next) => {
 
     // 2. Create KycDocument entry
     if (KycDocumentModel && kycRecord) {
-      try {
-        await KycDocumentModel.create({
-          kyc_id: kycRecord.id,
-          document_type: safeDocType,
-          document_number: documentNumber || document_number || panNum,
-          file_url: docFileUrl,
-          verification_status: 'pending',
-        }, { transaction });
-      } catch (err) {
-        console.warn('Notice saving KycDocument:', err.message);
-      }
+      await KycDocumentModel.create({
+        kyc_id: kycRecord.id,
+        document_type: safeDocType,
+        document_number: documentNumber || document_number || panNum,
+        file_url: docFileUrl,
+        verification_status: 'pending',
+      }, { transaction });
     }
 
     // 3. Create or Update Bank Account
     let bankAccount;
     if (CreatorBankAccountModel) {
-      try {
-        const [bank] = await CreatorBankAccountModel.findOrCreate({
-          where: { creator_id: targetCreatorId },
-          defaults: {
-            creator_id: targetCreatorId,
-            account_holder_name: accountHolderName || account_holder_name || applicantName,
-            bank_name: bankName || bank_name || '',
-            account_number: accountNumber || account_number || '',
-            ifsc_code: ifscCode || ifsc_code || '',
-            upi_id: upiId || upi_id || '',
-            account_type: 'bank',
-            is_primary: true,
-            status: 'not_active',
-          },
-          transaction,
-        });
+      const [bank] = await CreatorBankAccountModel.findOrCreate({
+        where: { creator_id: targetCreatorId },
+        defaults: {
+          creator_id: targetCreatorId,
+          account_holder_name: accountHolderName || account_holder_name || applicantName,
+          bank_name: bankName || bank_name || '',
+          account_number: accountNumber || account_number || '',
+          ifsc_code: ifscCode || ifsc_code || '',
+          upi_id: upiId || upi_id || '',
+          account_type: 'bank',
+          is_primary: true,
+          status: 'active',
+        },
+        transaction,
+      });
 
-        await bank.update({
-          account_holder_name: accountHolderName || account_holder_name || bank.account_holder_name,
-          bank_name: bankName || bank_name || bank.bank_name,
-          account_number: accountNumber || account_number || bank.account_number,
-          ifsc_code: ifscCode || ifsc_code || bank.ifsc_code,
-          upi_id: upiId || upi_id || bank.upi_id,
-        }, { transaction });
+      await bank.update({
+        account_holder_name: accountHolderName || account_holder_name || bank.account_holder_name,
+        bank_name: bankName || bank_name || bank.bank_name,
+        account_number: accountNumber || account_number || bank.account_number,
+        ifsc_code: ifscCode || ifsc_code || bank.ifsc_code,
+        upi_id: upiId || upi_id || bank.upi_id,
+      }, { transaction });
 
-        bankAccount = bank;
-      } catch (err) {
-        console.warn('Notice saving CreatorBankAccount:', err.message);
-      }
+      bankAccount = bank;
     }
 
     // 4. Update CreatorProfile kyc_status to pending
     if (CreatorProfileModel) {
-      try {
-        await CreatorProfileModel.update(
-          {
-            kyc_status: "pending",
+      await CreatorProfileModel.update(
+        {
+          kyc_status: "pending",
+        },
+        {
+          where: {
+            creator_id: targetCreatorId,
           },
-          {
-            where: {
-              creator_id: targetCreatorId,
-            },
-            transaction,
-          }
-        );
-      } catch (error) {
-        console.error("Error updating creator profile KYC status:", error);
-        throw error;
-      }
+          transaction,
+        }
+      );
     }
     await transaction.commit();
 

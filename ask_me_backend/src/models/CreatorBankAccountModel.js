@@ -64,4 +64,8 @@ const CreatorBankAccount = sequelize.define(
   }
 );
 
+CreatorBankAccount.sync({ alter: true }).catch((err) => {
+    console.warn('CreatorBankAccountModel sync alter notice:', err.message);
+});
+
 module.exports = CreatorBankAccount;

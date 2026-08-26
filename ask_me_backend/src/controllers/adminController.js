@@ -559,18 +559,20 @@ const approveKyc = async (req, res, next) => {
         transaction
       }
     );
-    //verified document
-    await KycDocumentModel.update(
-      {
-        verification_status: 'approved',
-      },
-      {
-        where: {
-          creator_id: id
+    // verified document
+    if (KycDocumentModel && kycRecord) {
+      await KycDocumentModel.update(
+        {
+          verification_status: 'approved',
         },
-        transaction
-      }
-    );
+        {
+          where: {
+            kyc_id: kycRecord.id
+          },
+          transaction
+        }
+      );
+    }
     // 2. Update Creator Profile
     const [profileUpdated] = await CreatorProfileModel.update(
       {
@@ -692,6 +694,22 @@ const rejectKyc = async (req, res, next) => {
         transaction
       }
     );
+
+    // 2b. Update KycDocument status
+    if (KycDocumentModel && kycRecord) {
+      await KycDocumentModel.update(
+        {
+          verification_status: 'rejected',
+          rejection_reason: rejectionReason
+        },
+        {
+          where: {
+            kyc_id: kycRecord.id
+          },
+          transaction
+        }
+      );
+    }
 
     // 3. Commit
     await transaction.commit();

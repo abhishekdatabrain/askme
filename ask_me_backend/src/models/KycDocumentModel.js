@@ -52,4 +52,8 @@ const KycDocument = sequelize.define(
   }
 );
 
+KycDocument.sync({ alter: true }).catch((err) => {
+    console.warn('KycDocumentModel sync alter notice:', err.message);
+});
+
 module.exports = KycDocument;

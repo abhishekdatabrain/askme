@@ -308,7 +308,7 @@ export default function CreatorKycPage() {
             if (response.ok && (data.status === 'success' || data.data)) {
                 setSubmittedKycResult(data.data);
                 setSuccessMsg('KYC Verification Details Submitted Successfully!');
-                setFlowState('kyc_submitted');
+                setFlowState('pending');
                 toast.success('KYC Documents & Bank Details saved to database successfully!', 'KYC Submitted');
             } else {
                 const msg = data.message || 'KYC submission failed. Please check details.';
@@ -432,7 +432,7 @@ export default function CreatorKycPage() {
                             </Link>
                         </div>
                     </div>
-                ) : flowState === 'pending' ? (
+                ) : (flowState === 'pending' || flowState === 'kyc_submitted') ? (
                     /* --- 2. SUBMITTED & PENDING AUDIT SCREEN --- */
                     <div className={`p-6 sm:p-10 rounded-3xl border shadow-2xl space-y-8 animate-scale-up relative overflow-hidden transition-all duration-300 ${theme === 'light'
                         ? 'bg-gradient-to-br from-white via-[#FFFDF5] to-white border-[#FFD60A]/40'

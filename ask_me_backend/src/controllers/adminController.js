@@ -176,8 +176,15 @@ const getCreators = async (req, res, next) => {
       })
     );
 
-    if (status && status !== 'All') {
-      formattedList = formattedList.filter(c => c.accountStatus === status || c.kycStatus === status);
+    if (status && status.toLowerCase() !== 'all' && status.toLowerCase() !== 'creators_all') {
+      const s = status.toLowerCase();
+      formattedList = formattedList.filter(c => {
+        const accStatus = String(c.accountStatus || '').toLowerCase();
+        const kycStatus = String(c.kycStatus || '').toLowerCase();
+        if (s === 'active' || s === 'creators_active') return accStatus === 'active';
+        if (s === 'blocked' || s === 'creators_blocked') return accStatus === 'blocked';
+        return accStatus === s || kycStatus === s;
+      });
     }
     if (search) {
       const q = search.toLowerCase();
@@ -503,11 +510,23 @@ const getKycList = async (req, res, next) => {
       };
     });
 
+    const statusQuery = String(req.query.status || '').toLowerCase().trim();
+    let filteredApplications = kycApplications;
+    if (statusQuery && statusQuery !== 'all') {
+      filteredApplications = kycApplications.filter(app => {
+        const appStatus = String(app.kycStatus || '').toLowerCase();
+        if (statusQuery === 'pending') return appStatus === 'pending';
+        if (statusQuery === 'approved' || statusQuery === 'verified') return appStatus === 'approved' || appStatus === 'verified';
+        if (statusQuery === 'rejected' || statusQuery === 'action_required') return appStatus === 'rejected' || appStatus === 'action_required';
+        return true;
+      });
+    }
+
     return res.status(200).json({
       status: 'success',
-      results: kycApplications.length,
+      results: filteredApplications.length,
       data: {
-        kycApplications,
+        kycApplications: filteredApplications,
       },
     });
 
@@ -995,7 +1014,21 @@ const getWithdrawals = async (req, res, next) => {
       }));
     }
 
-    return res.status(200).json({ status: 'success', data: { withdrawals: withdrawalsList } });
+    const statusQuery = String(req.query.status || '').toLowerCase().trim();
+    let filteredList = withdrawalsList;
+    if (statusQuery && statusQuery !== 'all' && statusQuery !== 'withdrawals_all') {
+      filteredList = withdrawalsList.filter(w => {
+        const wStatus = String(w.status || '').toLowerCase();
+        if (statusQuery === 'pending' || statusQuery === 'withdrawals_pending') return wStatus === 'pending';
+        if (statusQuery === 'approved' || statusQuery === 'withdrawals_approved') return wStatus === 'approved';
+        if (statusQuery === 'processing' || statusQuery === 'withdrawals_processing') return wStatus === 'processing';
+        if (statusQuery === 'completed' || statusQuery === 'withdrawals_completed' || statusQuery === 'paid') return wStatus === 'completed' || wStatus === 'paid';
+        if (statusQuery === 'rejected' || statusQuery === 'withdrawals_rejected') return wStatus === 'rejected';
+        return wStatus === statusQuery;
+      });
+    }
+
+    return res.status(200).json({ status: 'success', data: { withdrawals: filteredList } });
   } catch (error) {
     console.error('GET ADMIN WITHDRAWALS ERROR:', error);
     next(error);

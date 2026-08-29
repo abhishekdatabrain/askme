@@ -86,9 +86,13 @@ router.put('/wallets/:id/balance', updateCreatorBalance);
 // 7. Withdrawals Management
 router.get('/withdrawals', getWithdrawals);
 router.put('/withdrawals/:id/approve', approveWithdrawal);
+router.patch('/withdrawals/:id/approve', approveWithdrawal);
 router.put('/withdrawals/:id/reject', rejectWithdrawal);
+router.patch('/withdrawals/:id/reject', rejectWithdrawal);
 router.put('/withdrawals/:id/pay', markWithdrawalPaid);
+router.patch('/withdrawals/:id/pay', markWithdrawalPaid);
 router.put('/withdrawals/:id/status', updateWithdrawalStatus);
+router.patch('/withdrawals/:id/status', updateWithdrawalStatus);
 
 // 8. Commission Settings
 router.get('/commission', getCommissionSettings);

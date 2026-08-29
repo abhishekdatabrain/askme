@@ -34,7 +34,12 @@ export default function CreatorManagement({ activeSubTab }) {
     const fetchCreators = async () => {
       try {
         const token = getAdminToken();
-        const res = await fetch(API_ENDPOINTS.ADMIN.CREATORS, {
+        let statusParam = 'All';
+        if (activeSubTab === 'creators_active') statusParam = 'Active';
+        else if (activeSubTab === 'creators_blocked') statusParam = 'Blocked';
+        else if (activeSubTab === 'creators_all') statusParam = 'All';
+
+        const res = await fetch(`${API_ENDPOINTS.ADMIN.CREATORS}?status=${statusParam}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         const data = await res.json();
@@ -49,6 +54,8 @@ export default function CreatorManagement({ activeSubTab }) {
             accountStatus: c.accountStatus ? (c.accountStatus.charAt(0).toUpperCase() + c.accountStatus.slice(1)) : 'Active',
             totalDonations: `₹${(c.totalRevenue || 0).toLocaleString()}`,
             platform: 'youtube',
+            createdAt: c.createdAt || c.created_at || 'N/A',
+            walletBalance: `₹${(c.walletBalance || 0).toLocaleString()}`,
           })));
         }
       } catch (err) {
@@ -56,20 +63,6 @@ export default function CreatorManagement({ activeSubTab }) {
       }
     };
     fetchCreators();
-  }, []);
-
-  useEffect(() => {
-    if (activeSubTab === 'creators_all') {
-      setSelectedStatus('All');
-    } else if (activeSubTab === 'creators_active') {
-      setSelectedStatus('Active');
-    } else if (activeSubTab === 'creators_blocked') {
-      setSelectedStatus('Blocked');
-    } else if (activeSubTab === 'creators_details') {
-      if (creators.length > 0) {
-        setSelectedCreatorForView(creators[0]);
-      }
-    }
   }, [activeSubTab]);
 
   const handleAction = async (id, action) => {
@@ -118,10 +111,12 @@ export default function CreatorManagement({ activeSubTab }) {
   };
 
   const filteredCreators = creators.filter(c => {
-    const matchesSearch = c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      c.email.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesStatus = selectedStatus === 'All' || c.accountStatus === selectedStatus;
-    return matchesSearch && matchesStatus;
+    if (!searchQuery.trim()) return true;
+    const q = searchQuery.toLowerCase();
+    return (
+      (c.name && c.name.toLowerCase().includes(q)) ||
+      (c.email && c.email.toLowerCase().includes(q))
+    );
   });
 
   return (

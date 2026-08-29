@@ -10,7 +10,7 @@ export default function KycApprovalQueue({ activeSubTab }) {
   const [kycRequests, setKycRequests] = useState([
   ]);
   console.log(kycRequests, "kycRequests");
-  const [selectedFilter, setSelectedFilter] = useState('all');
+  const [selectedFilter, setSelectedFilter] = useState('pending');
   const [selectedDocModal, setSelectedDocModal] = useState(null);
   const [rejectingItem, setRejectingItem] = useState(null);
   const [rejectionReasonText, setRejectionReasonText] = useState('');
@@ -19,7 +19,13 @@ export default function KycApprovalQueue({ activeSubTab }) {
     const fetchKycList = async () => {
       try {
         const token = getAdminToken();
-        const res = await fetch(API_ENDPOINTS.ADMIN.KYC, {
+        let statusParam = 'pending';
+        if (activeSubTab === 'kyc_approved') statusParam = 'approved';
+        else if (activeSubTab === 'kyc_rejected') statusParam = 'rejected';
+        else if (activeSubTab === 'kyc_pending') statusParam = 'pending';
+        else if (activeSubTab === 'kyc_all' || activeSubTab === 'kyc') statusParam = 'all';
+
+        const res = await fetch(`${API_ENDPOINTS.ADMIN.KYC}?status=${statusParam}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         const data = await res.json();
@@ -56,18 +62,6 @@ export default function KycApprovalQueue({ activeSubTab }) {
       }
     };
     fetchKycList();
-  }, []);
-
-  useEffect(() => {
-    if (activeSubTab === 'kyc_pending') {
-      setSelectedFilter('pending');
-    } else if (activeSubTab === 'kyc_approved') {
-      setSelectedFilter('verified');
-    } else if (activeSubTab === 'kyc_rejected') {
-      setSelectedFilter('action_required');
-    } else if (activeSubTab === 'user_agreement' || activeSubTab === 'kyc_details') {
-      setSelectedFilter('user_agreement');
-    }
   }, [activeSubTab]);
 
   const handleUpdateStatus = async (id, newStatus, reason = '') => {
@@ -173,11 +167,7 @@ export default function KycApprovalQueue({ activeSubTab }) {
     }
   };
 
-  const filteredRequests = kycRequests.filter(item => {
-    if (selectedFilter === 'pending') return true;
-
-    return item.status === selectedFilter;
-  });
+  const filteredRequests = kycRequests;
 
   return (
     <div className="rounded-2xl bg-[#13131A] border border-[#1C1C26] p-5 shadow-xl space-y-4 animate-fade-in">
@@ -204,7 +194,6 @@ export default function KycApprovalQueue({ activeSubTab }) {
             className="p-4 rounded-xl bg-[#0A0A0F] border border-[#1C1C26] flex flex-col md:flex-row md:items-center justify-between gap-4"
           >
             <div className="flex items-center gap-3">
-              <PlatformIcon platform={item.platform} className="h-6 w-6 shrink-0" />
               <div>
                 <div className="flex items-center gap-2">
                   <span className="font-bold text-white text-sm">{item.creatorName}</span>

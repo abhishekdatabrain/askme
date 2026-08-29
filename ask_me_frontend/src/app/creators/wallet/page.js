@@ -66,7 +66,7 @@ export default function CreatorWalletPage() {
     const fetchWallet = async () => {
       try {
         setIsLoading(true);
-        const res = await fetch(`${API_ENDPOINTS.CREATORS.WALLET_DETAILS}?creatorId=${creatorId}`, {
+        const res = await fetch(`${API_ENDPOINTS.CREATORS.WALLET_DETAILS}?creatorId=${creatorId}&status=${filterStatus}`, {
           headers: token ? { Authorization: `Bearer ${token}` } : {},
         });
         const data = await res.json();
@@ -87,24 +87,21 @@ export default function CreatorWalletPage() {
     };
 
     fetchWallet();
-  }, []);
+  }, [filterStatus]);
 
-  // Filter transactions
+  // Filter transactions search query
   const filteredTransactions = transactions.filter(t => {
-    const statusVal = String(t.status || t.payment_status || 'Successful');
-    const matchesStatus = filterStatus === 'All' || statusVal.toLowerCase() === filterStatus.toLowerCase();
-
+    if (!searchQuery.trim()) return true;
     const vName = String(t.viewerName || t.viewer_name || '');
     const msg = String(t.message || '');
     const uuidStr = String(t.donationUuid || t.donation_uuid || '');
     const q = searchQuery.toLowerCase();
 
-    const matchesQuery = searchQuery === '' ||
+    return (
       vName.toLowerCase().includes(q) ||
       msg.toLowerCase().includes(q) ||
-      uuidStr.toLowerCase().includes(q);
-
-    return matchesStatus && matchesQuery;
+      uuidStr.toLowerCase().includes(q)
+    );
   });
 
   return (
@@ -121,7 +118,7 @@ export default function CreatorWalletPage() {
               <Wallet className="h-5 w-5 text-[#00F5D4]" /> Creator Wallet Module
             </h1>
             <p className={`text-xs ${theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'
-              }`}>Real-time viewer donations ledger & earnings balance overview</p>
+              }`}>Real-time viewer ledger & earnings balance overview</p>
           </div>
 
           <div className="flex items-center gap-3">
@@ -234,7 +231,7 @@ export default function CreatorWalletPage() {
               <div>
                 <h3 className={`font-heading font-black text-lg flex items-center gap-2 ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'
                   }`}>
-                  <ArrowDownLeft className="h-5 w-5 text-[#00F5D4]" /> Viewer Payments & Donation Ledger
+                  <ArrowDownLeft className="h-5 w-5 text-[#00F5D4]" /> Viewer Payments & Ledger
                 </h3>
                 <p className={`text-xs mt-0.5 ${theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'
                   }`}>
@@ -290,7 +287,7 @@ export default function CreatorWalletPage() {
                 <h4 className={`font-bold text-sm ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'
                   }`}>No Transactions Found</h4>
                 <p className={`text-xs ${theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'
-                  }`}>Viewer payments and live question donations will appear here in real-time.</p>
+                  }`}>Viewer payments and live question will appear here in real-time.</p>
               </div>
             ) : (
               <div className="overflow-x-auto">
@@ -350,13 +347,12 @@ export default function CreatorWalletPage() {
                             const isSuccess = st === 'Successful' || st === 'success';
                             const isPending = st === 'Pending' || st === 'pending';
                             return (
-                              <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase inline-flex items-center gap-1 ${
-                                isSuccess
-                                  ? 'bg-[#00E676]/10 text-[#00E676] border border-[#00E676]/30'
-                                  : isPending
-                                    ? 'bg-[#FFD60A]/10 text-[#FFD60A] border border-[#FFD60A]/30'
-                                    : 'bg-[#FF3D71]/10 text-[#FF3D71] border border-[#FF3D71]/30'
-                              }`}>
+                              <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase inline-flex items-center gap-1 ${isSuccess
+                                ? 'bg-[#00E676]/10 text-[#00E676] border border-[#00E676]/30'
+                                : isPending
+                                  ? 'bg-[#FFD60A]/10 text-[#FFD60A] border border-[#FFD60A]/30'
+                                  : 'bg-[#FF3D71]/10 text-[#FF3D71] border border-[#FF3D71]/30'
+                                }`}>
                                 {isSuccess && <CheckCircle2 className="h-3 w-3" />}
                                 {isPending && <Clock className="h-3 w-3" />}
                                 {!isSuccess && !isPending && <XCircle className="h-3 w-3" />}

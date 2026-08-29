@@ -164,17 +164,25 @@ export default function AdminSidebar({ activeTab, setActiveTab, activeSubTab, se
     },
   ];
 
-  // Track expanded accordion sections - closed by default
-  const [expandedSections, setExpandedSections] = useState({});
+  // Track expanded accordion section - only 1 open at a time
+  const [expandedSections, setExpandedSections] = useState(() => {
+    return activeTab ? { [activeTab]: true } : {};
+  });
+
+  useEffect(() => {
+    if (activeTab) {
+      setExpandedSections({ [activeTab]: true });
+    }
+  }, [activeTab]);
 
   const toggleSection = (sectionId) => {
-    setExpandedSections(prev => ({ ...prev, [sectionId]: !prev[sectionId] }));
+    setExpandedSections(prev => (prev[sectionId] ? {} : { [sectionId]: true }));
   };
 
   const handleParentClick = (item) => {
     setActiveTab(item.id);
     if (item.children && item.children.length > 0) {
-      // Toggle expand state
+      // Toggle single open section: if it was already open, close it, else open ONLY this item
       toggleSection(item.id);
       // Select first sub-item if activeSubTab is not already under this parent
       if (!activeSubTab || !item.children.some(c => c.id === activeSubTab)) {
@@ -183,6 +191,7 @@ export default function AdminSidebar({ activeTab, setActiveTab, activeSubTab, se
         }
       }
     } else {
+      setExpandedSections({});
       if (setActiveSubTab) {
         setActiveSubTab('');
       }
@@ -192,13 +201,14 @@ export default function AdminSidebar({ activeTab, setActiveTab, activeSubTab, se
   const handleChildClick = (parentId, childId, e) => {
     e.stopPropagation();
     setActiveTab(parentId);
+    setExpandedSections({ [parentId]: true });
     if (setActiveSubTab) {
       setActiveSubTab(childId);
     }
   };
 
   return (
-    <aside className={`w-64 shrink-0 border-r p-4 flex flex-col justify-between hidden md:flex min-h-[calc(100vh-61px)] overflow-y-auto max-h-[calc(100vh-61px)] custom-scrollbar transition-colors ${
+    <aside className={`w-64 shrink-0 border-r p-4 flex flex-col justify-between hidden md:flex sticky top-[61px] h-[calc(100vh-61px)] self-start overflow-y-auto custom-scrollbar transition-colors ${
       theme === 'light'
         ? 'bg-white border-[#E9ECEF] text-[#212529]'
         : 'bg-[#0A0A0F] border-[#1C1C26] text-[#F5F5F7]'
@@ -272,7 +282,7 @@ export default function AdminSidebar({ activeTab, setActiveTab, activeSubTab, se
                         <div
                           onClick={(e) => {
                             e.stopPropagation();
-                            toggleSection(item.id);
+                            handleParentClick(item);
                           }}
                           className={`p-1 rounded transition ${theme === 'light' ? 'text-[#6C757D] hover:text-[#1A1D20]' : 'text-[#8B8B96] hover:text-white'}`}
                         >

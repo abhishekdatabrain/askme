@@ -1885,6 +1885,19 @@ const getCreatorWalletDetails = async (req, res, next) => {
       } catch (err) { }
     }
 
+    const statusQuery = String(req.query.status || '').trim();
+    let filteredTransactions = transactions;
+    if (statusQuery && statusQuery.toLowerCase() !== 'all') {
+      const sq = statusQuery.toLowerCase();
+      filteredTransactions = transactions.filter(t => {
+        const st = String(t.payment_status || t.status || '').toLowerCase();
+        if (sq === 'successful' || sq === 'success') return st === 'successful' || st === 'success';
+        if (sq === 'pending') return st === 'pending';
+        if (sq === 'failed') return st === 'failed';
+        return st === sq;
+      });
+    }
+
     return res.status(200).json({
       status: 'success',
       data: {
@@ -1896,7 +1909,7 @@ const getCreatorWalletDetails = async (req, res, next) => {
           activeSubscribersCount,
         },
         activeSubscribersCount,
-        transactions
+        transactions: filteredTransactions
       }
     });
 

@@ -150,7 +150,7 @@ export default function CreatorWithdrawalsPage() {
 
     try {
       setIsSubmittingWithdraw(true);
-      const res = await fetch(API_ENDPOINTS.CREATORS.WALLET_WITHDRAWALS, {
+      const res = await fetch(API_ENDPOINTS.CREATORS.WALLET_WITHDRAW, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -396,10 +396,13 @@ export default function CreatorWithdrawalsPage() {
                             }`}>
                             <td className={`py-3.5 px-3 font-mono whitespace-nowrap ${theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'
                               }`}>
-                              {w.createdAt ? new Date(w.createdAt).toLocaleString('en-IN', {
-                                dateStyle: 'medium',
-                                timeStyle: 'short'
-                              }) : 'Recent'}
+                              {(() => {
+                                const rawDate = w.requestedDate || w.requested_at || w.createdAt || w.created_at;
+                                const dateObj = rawDate ? new Date(rawDate) : new Date();
+                                return !isNaN(dateObj.getTime())
+                                  ? dateObj.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
+                                  : new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+                              })()}
                             </td>
 
                             <td className="py-3.5 px-3 font-heading font-black text-sm text-[#00E676] whitespace-nowrap">
@@ -408,7 +411,7 @@ export default function CreatorWithdrawalsPage() {
 
                             <td className={`py-3.5 px-3 font-medium max-w-xs truncate ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'
                               }`}>
-                              {w.bankInfo || 'Bank Account Payout'}
+                              {w.bankDetails || ''}
                             </td>
 
                             <td className="py-3.5 px-3 text-right whitespace-nowrap">

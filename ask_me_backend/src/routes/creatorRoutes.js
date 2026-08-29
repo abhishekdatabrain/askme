@@ -205,6 +205,7 @@ router.get('/wallet/details', getCreatorWalletDetails);
  * @access  Public / Private
  */
 router.post('/wallet/withdraw', requestWithdrawal);
+router.post('/wallet/withdrawals', requestWithdrawal);
 
 /**
  * @route   GET /api/creators/notifications

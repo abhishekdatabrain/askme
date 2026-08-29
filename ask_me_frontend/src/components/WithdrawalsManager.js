@@ -20,58 +20,50 @@ export default function WithdrawalsManager({ activeSubTab }) {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const fetchWithdrawals = async () => {
-    try {
-      setIsLoading(true);
-      const token = getAdminToken();
-      const res = await fetch(API_ENDPOINTS.ADMIN.WITHDRAWALS, {
-        headers: token ? { Authorization: `Bearer ${token}` } : {}
-      });
-      const data = await res.json();
-      if (data.status === 'success' && data.data?.withdrawals) {
-        setWithdrawals(data.data.withdrawals.map((w, idx) => ({
-          id: w.id ? (w.id.toString().startsWith('WTH') ? w.id : `WTH-${w.id}`) : `WTH-${idx + 500}`,
-          rawId: w.rawId || w.id,
-          creator: w.creator || w.creatorName || 'Creator Host',
-          creatorEmail: w.creatorEmail || '',
-          amount: parseFloat(w.amount || 0),
-          grossRevenue: w.grossRevenue || `₹${(w.amount || 0).toLocaleString()}`,
-          payoutAmount: w.payoutAmount || `₹${(w.amount || 0).toLocaleString()}`,
-          platformCut: w.platformCut || '₹0',
-          bankDetails: w.bankDetails || 'Bank Account Provided',
-          status: (w.status || 'pending').toLowerCase(),
-          requestedDate: w.requestedDate
-            ? (!isNaN(new Date(w.requestedDate).getTime())
-                ? new Date(w.requestedDate).toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true })
-                : w.requestedDate)
-            : 'Recent',
-          transactionReference: w.transactionReference || null,
-          rejectionReason: w.rejectionReason || null,
-        })));
+  useEffect(() => {
+    const fetchWithdrawals = async () => {
+      try {
+        setIsLoading(true);
+        const token = getAdminToken();
+        let statusParam = 'all';
+        if (activeSubTab === 'withdrawals_pending') statusParam = 'pending';
+        else if (activeSubTab === 'withdrawals_approved') statusParam = 'approved';
+        else if (activeSubTab === 'withdrawals_processing') statusParam = 'processing';
+        else if (activeSubTab === 'withdrawals_completed' || activeSubTab === 'withdrawals_paid') statusParam = 'completed';
+        else if (activeSubTab === 'withdrawals_rejected') statusParam = 'rejected';
+
+        const res = await fetch(`${API_ENDPOINTS.ADMIN.WITHDRAWALS}?status=${statusParam}`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {}
+        });
+        const data = await res.json();
+        if (data.status === 'success' && data.data?.withdrawals) {
+          setWithdrawals(data.data.withdrawals.map((w, idx) => ({
+            id: w.id ? (w.id.toString().startsWith('WTH') ? w.id : `WTH-${w.id}`) : `WTH-${idx + 500}`,
+            rawId: w.rawId || w.id,
+            creator: w.creator || w.creatorName || 'Creator Host',
+            creatorEmail: w.creatorEmail || '',
+            amount: parseFloat(w.amount || 0),
+            grossRevenue: w.grossRevenue || `₹${(w.amount || 0).toLocaleString()}`,
+            payoutAmount: w.payoutAmount || `₹${(w.amount || 0).toLocaleString()}`,
+            platformCut: w.platformCut || '₹0',
+            bankDetails: w.bankDetails || 'Bank Account Provided',
+            status: (w.status || 'pending').toLowerCase(),
+            requestedDate: w.requestedDate || w.requested_at || w.createdAt
+              ? (!isNaN(new Date(w.requestedDate || w.requested_at || w.createdAt).getTime())
+                ? new Date(w.requestedDate || w.requested_at || w.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
+                : String(w.requestedDate || w.requested_at || w.createdAt))
+              : new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }),
+            transactionReference: w.transactionReference || null,
+            rejectionReason: w.rejectionReason || null,
+          })));
+        }
+      } catch (err) {
+        console.warn('API fetch withdrawals notice:', err.message);
+      } finally {
+        setIsLoading(false);
       }
-    } catch (err) {
-      console.warn('API fetch withdrawals notice:', err.message);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
+    };
     fetchWithdrawals();
-  }, []);
-
-  useEffect(() => {
-    if (activeSubTab === 'withdrawals_pending') {
-      setFilter('pending');
-    } else if (activeSubTab === 'withdrawals_approved') {
-      setFilter('approved');
-    } else if (activeSubTab === 'withdrawals_processing') {
-      setFilter('processing');
-    } else if (activeSubTab === 'withdrawals_completed' || activeSubTab === 'withdrawals_paid') {
-      setFilter('completed');
-    } else if (activeSubTab === 'withdrawals_rejected') {
-      setFilter('rejected');
-    }
   }, [activeSubTab]);
 
   // Update Withdrawal Status API call
@@ -145,43 +137,23 @@ export default function WithdrawalsManager({ activeSubTab }) {
     setRejectionReasonInput('');
   };
 
-  const filteredWithdrawals = withdrawals.filter(w => {
-    if (filter === 'all') return true;
-    if (filter === 'paid' || filter === 'completed') return w.status === 'completed' || w.status === 'paid';
-    return w.status === filter;
-  });
+  const filteredWithdrawals = withdrawals;
 
   return (
     <div className="rounded-2xl bg-[#13131A] border border-[#1C1C26] p-5 shadow-xl space-y-4 animate-fade-in font-sans">
-      
+
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#1C1C26] pb-4">
+      <div className="border-b border-[#1C1C26] pb-4">
         <div className="flex items-center gap-3">
           <div className="p-2.5 rounded-xl bg-[#FFD60A] text-[#0A0A0F] font-bold shadow-md glow-pay">
             <Wallet className="h-5 w-5" />
           </div>
           <div>
-            <h3 className="font-heading font-bold text-base text-white">Withdrawal & Payout Management (Requirement 12)</h3>
+            <h3 className="font-heading font-bold text-base text-white">Withdrawal & Payout Management </h3>
             <p className="text-xs text-[#8B8B96] mt-0.5">
               Review requests, verify creator bank details, approve, set processing, mark completed, or reject with balance refund.
             </p>
           </div>
-        </div>
-
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
-          {['all', 'pending', 'approved', 'processing', 'completed', 'rejected'].map((st) => (
-            <button
-              key={st}
-              onClick={() => setFilter(st)}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold capitalize transition-all ${
-                filter === st
-                  ? 'bg-brand-gradient text-[#0A0A0F]'
-                  : 'bg-[#1C1C26] text-[#8B8B96] hover:text-white'
-              }`}
-            >
-              {st}
-            </button>
-          ))}
         </div>
       </div>
 
@@ -211,7 +183,7 @@ export default function WithdrawalsManager({ activeSubTab }) {
             <tbody className="divide-y divide-[#1C1C26]">
               {filteredWithdrawals.map((w) => (
                 <tr key={w.id} className="hover:bg-[#0A0A0F]/60 transition">
-                  
+
                   {/* Request ID */}
                   <td className="py-3.5 px-2 font-mono text-[#00F5D4] font-bold">
                     {w.id}
@@ -235,13 +207,12 @@ export default function WithdrawalsManager({ activeSubTab }) {
 
                   {/* Status Badge */}
                   <td className="py-3.5 px-2">
-                    <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold capitalize ${
-                      w.status === 'completed' || w.status === 'paid' ? 'bg-[#00E676]/10 text-[#00E676] border border-[#00E676]/30' :
-                      w.status === 'approved' ? 'bg-[#00F5D4]/10 text-[#00F5D4] border border-[#00F5D4]/30' :
-                      w.status === 'processing' ? 'bg-[#FFD60A]/10 text-[#FFD60A] border border-[#FFD60A]/30' :
-                      w.status === 'pending' ? 'bg-[#FFD60A]/20 text-[#FFD60A] border border-[#FFD60A]/40' :
-                      'bg-[#FF3D71]/10 text-[#FF3D71] border border-[#FF3D71]/30'
-                    }`}>
+                    <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold capitalize ${w.status === 'completed' || w.status === 'paid' ? 'bg-[#00E676]/10 text-[#00E676] border border-[#00E676]/30' :
+                        w.status === 'approved' ? 'bg-[#00F5D4]/10 text-[#00F5D4] border border-[#00F5D4]/30' :
+                          w.status === 'processing' ? 'bg-[#FFD60A]/10 text-[#FFD60A] border border-[#FFD60A]/30' :
+                            w.status === 'pending' ? 'bg-[#FFD60A]/20 text-[#FFD60A] border border-[#FFD60A]/40' :
+                              'bg-[#FF3D71]/10 text-[#FF3D71] border border-[#FF3D71]/30'
+                      }`}>
                       {w.status === 'completed' || w.status === 'paid' ? 'Completed' : w.status}
                     </span>
                   </td>
@@ -249,7 +220,7 @@ export default function WithdrawalsManager({ activeSubTab }) {
                   {/* Action Buttons Workflow */}
                   <td className="py-3.5 px-2 text-right">
                     <div className="flex items-center justify-end gap-1.5">
-                      
+
                       {/* PENDING: Approve or Reject */}
                       {w.status === 'pending' && (
                         <>

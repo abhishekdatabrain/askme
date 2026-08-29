@@ -299,7 +299,7 @@ export default function StartLivePage() {
             {/* Stream URL (Optional) & Duration Limit */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-bold mb-1.5 text-[#8B8B96]">● Stream URL <span className="text-[#00F5D4] font-semibold">(Optional)</span></label>
+                <label className="block text-xs font-bold mb-1.5 text-[#8B8B96]">● Stream URL </label>
                 <input
                   type="url"
                   value={form.streamUrl}

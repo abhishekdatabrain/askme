@@ -16,8 +16,12 @@ import {
   RefreshCw,
   Sun,
   Moon,
-  RotateCcw,
-  PlayCircle
+  PlayCircle,
+  MessageSquare,
+  ArrowRight,
+  X,
+  Heart,
+  Sparkles
 } from 'lucide-react';
 import { API_ENDPOINTS } from '@/config/api';
 
@@ -29,6 +33,11 @@ export default function CreatorSessionHistoryPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [relaunchingId, setRelaunchingId] = useState(null);
   const [theme, setTheme] = useState('dark');
+
+  // Session Questions Modal State
+  const [selectedSessionModal, setSelectedSessionModal] = useState(null);
+  const [sessionQuestions, setSessionQuestions] = useState([]);
+  const [loadingQuestions, setLoadingQuestions] = useState(false);
 
   // Theme Sync
   useEffect(() => {
@@ -72,30 +81,24 @@ export default function CreatorSessionHistoryPage() {
     fetchSessionHistory(u.id, token);
   }, []);
 
-  const handleRelaunchSession = async (sess) => {
+  const handleOpenQuestionsModal = async (session) => {
+    setSelectedSessionModal(session);
+    setSessionQuestions([]);
+    setLoadingQuestions(true);
+
     try {
-      setRelaunchingId(sess.id);
       const token = getCreatorToken();
-
-      const res = await fetch(`${API_ENDPOINTS.CREATORS.LIVE_SESSIONS}/${sess.id}/start`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {})
-        },
+      const res = await fetch(`${API_ENDPOINTS.CREATORS.LIVE_SESSIONS}/${session.id}/questions`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {}
       });
-
       const data = await res.json();
-      if (res.ok && data.status === 'success') {
-        toast.success(`Session "${sess.title}" restarted! Redirecting to Active Session...`, 'Session Restarted');
-        router.push('/creators/active-session');
-      } else {
-        toast.error(data?.message || 'Failed to restart live session', 'Error');
+      if (res.ok && data.status === 'success' && data.data?.questions) {
+        setSessionQuestions(data.data.questions);
       }
     } catch (err) {
-      toast.error('Network error restarting live session.', 'Error');
+      console.warn('Fetch session questions notice:', err.message);
     } finally {
-      setRelaunchingId(null);
+      setLoadingQuestions(false);
     }
   };
 
@@ -114,7 +117,7 @@ export default function CreatorSessionHistoryPage() {
               <History className="h-5 w-5 text-[#00F5D4]" /> Session History
             </h1>
             <p className={`text-xs ${theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'}`}>
-              View past live broadcast sessions and relaunch them with 1-click.
+              View past live broadcast sessions and duration records.
             </p>
           </div>
           <div className="flex items-center gap-3">
@@ -183,7 +186,24 @@ export default function CreatorSessionHistoryPage() {
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-3 shrink-0">
+                    <div className="flex items-center gap-3 shrink-0 flex-wrap">
+                      {/* VIEW QUESTIONS DEDICATED PAGE LINK */}
+                      <Link
+                        href={`/creators/session-history/${s.id}`}
+                        className={`px-3 py-1.5 rounded-xl border text-xs font-bold transition-all flex items-center gap-1.5 glow-purple ${
+                          theme === 'light'
+                            ? 'bg-[#7B2FFF]/10 border-[#7B2FFF]/30 text-[#7B2FFF] hover:bg-[#7B2FFF]/20'
+                            : 'bg-[#1C1A2E] border-[#7B2FFF]/40 text-[#00F5D4] hover:bg-[#2A244D]'
+                        }`}
+                      >
+                        <span className="font-extrabold flex items-center gap-1">
+                          View <ArrowRight className="h-3.5 w-3.5" />
+                        </span>
+                        <span className="text-[11px] text-[#8B8B96] font-mono">
+                          ({s.questionCount || s.totalDonations || 0} Questions)
+                        </span>
+                      </Link>
+
                       <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
                         s.status === 'active'
                           ? 'bg-[#00E676]/10 text-[#00E676] border border-[#00E676]/30'
@@ -191,19 +211,6 @@ export default function CreatorSessionHistoryPage() {
                       }`}>
                         {s.status || 'closed'}
                       </span>
-
-                      <button
-                        onClick={() => handleRelaunchSession(s)}
-                        disabled={relaunchingId === s.id}
-                        className="px-3.5 py-1.5 rounded-xl bg-brand-gradient text-[#0A0A0F] font-bold text-xs shadow-md glow-teal hover:scale-105 transition flex items-center gap-1.5 disabled:opacity-50"
-                      >
-                        {relaunchingId === s.id ? (
-                          <RefreshCw className="h-3.5 w-3.5 animate-spin" />
-                        ) : (
-                          <RotateCcw className="h-3.5 w-3.5" />
-                        )}
-                        Relaunch Session
-                      </button>
                     </div>
                   </div>
                 ))}

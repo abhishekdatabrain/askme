@@ -28,6 +28,7 @@ const {
   markSingleCreatorNotificationRead,
   updateDonationStatus,
   verifyCreatorUpi,
+  getSessionQuestions,
 } = require('../controllers/creatorController');
 
 /**
@@ -148,6 +149,13 @@ router.delete('/live-sessions/:id', closeLiveSession);
  * @access  Public / Private
  */
 router.put('/live-sessions/:id/start', startLiveSessionById);
+
+/**
+ * @route   GET /api/creators/live-sessions/:sessionId/questions
+ * @desc    Get All Viewer Questions / Donations for a Live Session
+ * @access  Public / Private
+ */
+router.get('/live-sessions/:sessionId/questions', getSessionQuestions);
 
 /**
  * @route   GET /api/creators/pay/session/:sessionCode

@@ -62,6 +62,8 @@ export const API_ENDPOINTS = {
     VIP_MY_MEMBERSHIPS: `${API_BASE_URL}/viewers/vip/my-memberships`,
     VIP_CANCEL: `${API_BASE_URL}/viewers/vip/cancel`,
     VIP_PLANS: `${API_BASE_URL}/viewers/vip/plans`,
+    MY_QUESTIONS: `${API_BASE_URL}/viewers/my-questions`,
+    PUBLIC_PAST_STREAMS: `${API_BASE_URL}/viewers/public/past-streams`,
   },
   KYC: `${API_BASE_URL}/admin/kyc`,
   PAYOUTS: `${API_BASE_URL}/admin/withdrawals`,

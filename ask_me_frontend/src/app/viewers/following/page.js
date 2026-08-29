@@ -6,6 +6,7 @@ import ViewerSidebar from '@/components/ViewerSidebar';
 import SplashLoader from '@/components/SplashLoader';
 import VipMembershipModal from '@/components/VipMembershipModal';
 import { API_ENDPOINTS } from '@/config/api';
+import { getViewerToken, getCookie } from '@/utils/cookies';
 import {
   Heart,
   Radio,
@@ -32,7 +33,7 @@ export default function ViewerFollowingPage() {
 
   const fetchMyVipMemberships = async () => {
     try {
-      const token = typeof window !== 'undefined' ? localStorage.getItem('askme_token') : null;
+      const token = getViewerToken() || getCookie('askme_viewer_token') || getCookie('askme_token');
       const res = await fetch(API_ENDPOINTS.VIEWERS.VIP_MY_MEMBERSHIPS, {
         headers: {
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -57,7 +58,7 @@ export default function ViewerFollowingPage() {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const token = typeof window !== 'undefined' ? localStorage.getItem('askme_token') : null;
+      const token = getViewerToken() || getCookie('askme_viewer_token') || getCookie('askme_token');
 
       const resFeed = await fetch(API_ENDPOINTS.VIEWERS.PUBLIC_LIVE_FEED);
       const dataFeed = await resFeed.json();
@@ -99,7 +100,7 @@ export default function ViewerFollowingPage() {
     setCreators(prev => prev.filter(c => newFollowed.has(String(c.creatorId))));
 
     try {
-      const token = typeof window !== 'undefined' ? localStorage.getItem('askme_token') : null;
+      const token = getViewerToken() || getCookie('askme_viewer_token') || getCookie('askme_token');
       await fetch(API_ENDPOINTS.VIEWERS.FOLLOW, {
         method: 'POST',
         headers: {

@@ -7,6 +7,7 @@ import ViewerSidebar from '@/components/ViewerSidebar';
 import SplashLoader from '@/components/SplashLoader';
 import VipMembershipModal from '@/components/VipMembershipModal';
 import { API_ENDPOINTS } from '@/config/api';
+import { getViewerToken, getCookie, clearViewerSession, removeCookie } from '@/utils/cookies';
 import {
     Home,
     Grid,
@@ -14,6 +15,7 @@ import {
     Users,
     Heart,
     Bell,
+    LogOut,
     Radio,
     Sparkles,
     MessageSquare,
@@ -51,6 +53,20 @@ function ViewerDashboardContent() {
     const [theme, setTheme] = useState('dark');
     const [showSplash, setShowSplash] = useState(true);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+    // Handle Logout
+    const handleLogout = () => {
+        clearViewerSession();
+        removeCookie('askme_token');
+        removeCookie('askme_user');
+        if (typeof window !== 'undefined') {
+            localStorage.removeItem('askme_token');
+            localStorage.removeItem('askme_user');
+            localStorage.removeItem('askme_viewer_token');
+            localStorage.removeItem('askme_viewer_user');
+        }
+        window.location.href = '/viewers/login';
+    };
 
     // Feed Data
     const [creators, setCreators] = useState([]);
@@ -98,7 +114,7 @@ function ViewerDashboardContent() {
 
     const fetchMyVipMemberships = async () => {
         try {
-            const token = typeof window !== 'undefined' ? localStorage.getItem('askme_token') : null;
+            const token = getViewerToken() || getCookie('askme_viewer_token') || getCookie('askme_token');
             const res = await fetch(API_ENDPOINTS.VIEWERS.VIP_MY_MEMBERSHIPS, {
                 headers: {
                     ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -159,7 +175,7 @@ function ViewerDashboardContent() {
 
     const fetchFollowing = async () => {
         try {
-            const token = typeof window !== 'undefined' ? localStorage.getItem('askme_token') : null;
+            const token = getViewerToken() || getCookie('askme_viewer_token') || getCookie('askme_token');
             const res = await fetch(API_ENDPOINTS.VIEWERS.FOLLOWING, {
                 headers: {
                     ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -177,42 +193,51 @@ function ViewerDashboardContent() {
     const handleToggleFollow = async (creatorId) => {
         const cidStr = String(creatorId);
 
-        const wasFollowing = followedIds.has(cidStr);
+        const token = getViewerToken() || getCookie('askme_viewer_token') || getCookie('askme_token');
 
-        // Optimistic UI update
-        const newFollowed = new Set(followedIds);
+        console.log("Follow Token (from cookies):", token);
 
-        if (wasFollowing) {
-            newFollowed.delete(cidStr);
-        } else {
-            newFollowed.add(cidStr);
+        if (!token || token === "undefined" || token === "null") {
+            console.warn("Viewer token not found in cookies");
+            return;
         }
 
-        setFollowedIds(newFollowed);
+        const wasFollowing = followedIds.has(cidStr);
+
+        // Optimistic UI
+        setFollowedIds((prev) => {
+            const updated = new Set(prev);
+
+            if (wasFollowing) {
+                updated.delete(cidStr);
+            } else {
+                updated.add(cidStr);
+            }
+
+            return updated;
+        });
 
         try {
-            const token = localStorage.getItem("askme_token");
-
             const res = await fetch(API_ENDPOINTS.VIEWERS.FOLLOW, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
-                    ...(token
-                        ? { Authorization: `Bearer ${token}` }
-                        : {}),
+                    Authorization: `Bearer ${token}`,
                 },
                 body: JSON.stringify({
-                    creatorId: cidStr,
+                    creatorId: creatorId,
                 }),
             });
 
             const data = await res.json();
 
+            console.log("Follow Response:", data);
+
             if (!res.ok) {
                 throw new Error(data.message || "Failed to toggle follow");
             }
 
-            // Sync with backend response
+            // Backend response ke according sync
             setFollowedIds((prev) => {
                 const updated = new Set(prev);
 
@@ -225,10 +250,10 @@ function ViewerDashboardContent() {
                 return updated;
             });
 
-        } catch (err) {
-            console.warn("Follow toggle error:", err.message);
+        } catch (error) {
+            console.error("Follow Error:", error);
 
-            // Rollback optimistic update
+            // Rollback
             setFollowedIds((prev) => {
                 const rollback = new Set(prev);
 
@@ -281,12 +306,15 @@ function ViewerDashboardContent() {
                         </span>
                     </div>
 
-                    <Link
-                        href="/creators/login"
-                        className="px-3 py-1.5 rounded-xl border border-[#00F5D4]/40 text-[#00F5D4] text-xs font-bold"
-                    >
-                        Creator Login
-                    </Link>
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={handleLogout}
+                            className="px-2.5 py-1.5 rounded-xl bg-[#FF3D71]/10 border border-[#FF3D71]/30 text-[#FF3D71] text-xs font-bold flex items-center gap-1"
+                        >
+                            <LogOut className="h-3.5 w-3.5" />
+                            <span>Sign Out</span>
+                        </button>
+                    </div>
                 </header>
 
                 {/* MOBILE DRAWER */}
@@ -307,7 +335,7 @@ function ViewerDashboardContent() {
                     </div>
                 )}
 
-                {/* TOP HEADER TITLE & SEARCH BAR */}
+                {/* TOP HEADER TITLE & SEARCH BAR & SIGN OUT */}
                 <div className={`border-b px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 sticky top-0 z-20 backdrop-blur-md ${theme === 'light' ? 'bg-white/95 border-[#E9ECEF]' : 'bg-[#13131A]/95 border-[#1C1C26]'
                     }`}>
                     <div>
@@ -318,21 +346,35 @@ function ViewerDashboardContent() {
                             {activeTab === 'search' && 'Search & Discover Creators'}
                             {activeTab === 'creators' && 'Public Creator Directory'}
                             {activeTab === 'following' && 'Followed Creators'}
-                            {activeTab === 'notifications' && 'Live Broadcast Notifications'}
                         </h1>
                     </div>
 
-                    {/* Top Search Input */}
-                    <div className="relative max-w-sm w-full">
-                        <Search className="absolute left-3.5 top-2.5 h-4 w-4 text-[#8B8B96]" />
-                        <input
-                            type="text"
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            placeholder="Search creator name, @handle, title..."
-                            className={`w-full pl-10 pr-4 py-2 rounded-2xl border text-xs focus:outline-none focus:border-[#00F5D4] ${theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6] text-[#1A1D20]' : 'bg-[#0A0A0F] border-[#1C1C26] text-white'
+                    <div className="flex items-center gap-3">
+                        {/* Top Search Input */}
+                        <div className="relative max-w-sm w-full">
+                            <Search className="absolute left-3.5 top-2.5 h-4 w-4 text-[#8B8B96]" />
+                            <input
+                                type="text"
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                placeholder="Search creator name, @handle, title..."
+                                className={`w-full pl-10 pr-4 py-2 rounded-2xl border text-xs focus:outline-none focus:border-[#00F5D4] ${theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6] text-[#1A1D20]' : 'bg-[#0A0A0F] border-[#1C1C26] text-white'
+                                    }`}
+                            />
+                        </div>
+
+                        {/* Sign Out Button */}
+                        <button
+                            onClick={handleLogout}
+                            className={`hidden sm:flex items-center gap-1.5 px-3.5 py-2 rounded-2xl border text-xs font-bold shrink-0 transition ${theme === 'light'
+                                    ? 'bg-[#FFF5F5] border-[#FFE3E3] text-[#E03131] hover:bg-[#FFE3E3]'
+                                    : 'bg-[#FF3D71]/10 border-[#FF3D71]/20 text-[#FF3D71] hover:bg-[#FF3D71]/20 hover:border-[#FF3D71]/40'
                                 }`}
-                        />
+                            title="Sign Out of Viewer Account"
+                        >
+                            <LogOut className="h-4 w-4" />
+                            <span>Sign Out</span>
+                        </button>
                     </div>
                 </div>
 
@@ -643,42 +685,6 @@ function ViewerDashboardContent() {
                                     ))}
                                 </div>
                             )}
-                        </div>
-                    )}
-
-                    {/* TAB 6: NOTIFICATIONS */}
-                    {activeTab === 'notifications' && (
-                        <div className="space-y-4">
-                            <h2 className={`font-heading font-extrabold text-lg ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'}`}>
-                                Live Broadcast Notifications
-                            </h2>
-
-                            <div className="space-y-3">
-                                {notifications.map(n => (
-                                    <div
-                                        key={n.id}
-                                        className={`p-4 rounded-2xl border flex items-center justify-between gap-4 ${theme === 'light' ? 'bg-white border-[#E9ECEF]' : 'bg-[#13131A] border-[#1C1C26]'
-                                            }`}
-                                    >
-                                        <div className="flex items-center gap-3">
-                                            <img src={n.avatar} alt="Creator" className="h-10 w-10 rounded-2xl object-cover border border-[#00F5D4]" />
-                                            <div>
-                                                <h4 className="font-heading font-bold text-sm text-white">{n.title}</h4>
-                                                <p className="text-xs text-[#8B8B96]">{n.message}</p>
-                                            </div>
-                                        </div>
-
-                                        {n.sessionCode && (
-                                            <Link
-                                                href={`/pay/${n.sessionCode}`}
-                                                className="px-4 py-2 rounded-xl bg-brand-gradient text-[#0A0A0F] text-xs font-bold shadow-md"
-                                            >
-                                                Join Stream
-                                            </Link>
-                                        )}
-                                    </div>
-                                ))}
-                            </div>
                         </div>
                     )}
 

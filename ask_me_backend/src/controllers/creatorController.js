@@ -997,7 +997,7 @@ const getLiveSessions = async (req, res, next) => {
 
     const origin = process.env.FRONTEND_URL || 'http://localhost:3000';
 
-    const formatted = sessions.map(s => {
+    const formatted = await Promise.all(sessions.map(async (s) => {
       const paymentLink = `${origin}/pay/${s.session_code}?creatorId=${s.creator_id}&sessionId=${s.id}`;
       const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=350x350&data=${encodeURIComponent(paymentLink)}`;
 
@@ -1006,6 +1006,13 @@ const getLiveSessions = async (req, res, next) => {
       if (curStatus === 'active' && s.ends_at && new Date() > new Date(s.ends_at)) {
         curStatus = 'closed';
         s.update({ status: 'closed', ended_at: s.ends_at }).catch(() => { });
+      }
+
+      let questionCount = 0;
+      if (DonationModel) {
+        questionCount = await DonationModel.count({
+          where: { session_id: s.id, payment_status: 'success' }
+        }).catch(() => 0);
       }
 
       return {
@@ -1022,12 +1029,13 @@ const getLiveSessions = async (req, res, next) => {
         startedAt: s.started_at,
         createdAt: s.createdAt || s.started_at,
         endedAt: s.ended_at,
-        totalDonations: s.total_donations || 0,
+        totalDonations: s.total_donations || questionCount || 0,
         totalAmount: s.total_amount || 0,
+        questionCount: questionCount || s.total_donations || 0,
         paymentLink,
         qrCodeUrl,
       };
-    });
+    }));
 
     return res.status(200).json({
       status: 'success',
@@ -1239,11 +1247,13 @@ const processViewerDonation = async (req, res, next) => {
 
     const targetCreatorId = creatorId || session?.creator_id || 1;
     const targetSessionId = session?.id || sessionId || 1;
+    const viewerIdToSave = req.user?.id || req.body.viewerId || req.body.viewer_id || req.body.userId || null;
+    const viewerEmailToSave = req.user?.email || viewerEmail || req.body.viewerEmail || req.body.viewer_email || null;
 
     // Check if viewer has active VIP Membership for this creator
     let isVipMember = false;
     try {
-      const viewerIdToCheck = req.user?.id || req.body.userId;
+      const viewerIdToCheck = viewerIdToSave;
       if (viewerIdToCheck && targetCreatorId) {
         const existingVip = await VipMembership.findOne({
           where: {
@@ -1267,8 +1277,9 @@ const processViewerDonation = async (req, res, next) => {
       donationRecord = await DonationModel.create({
         session_id: targetSessionId,
         creator_id: targetCreatorId,
+        viewer_id: viewerIdToSave ? String(viewerIdToSave) : null,
         viewer_name: viewerName ? viewerName.trim() : 'Anonymous Supporter',
-        viewer_email: viewerEmail || null,
+        viewer_email: viewerEmailToSave,
         viewer_mobile: viewerMobile || null,
         amount: parsedAmount,
         currency: 'INR',
@@ -1653,13 +1664,36 @@ const getOverlayData = async (req, res, next) => {
 const getOverlayAlerts = async (req, res, next) => {
   try {
     const { creatorId } = req.params;
+    const { sessionId } = req.query;
     let alerts = [];
+    let activeSession = null;
+    let latestReadAlert = null;
 
-    if (DonationModel) {
+    // 1. Find current active live session for creator
+    if (DonationSession) {
+      if (sessionId) {
+        activeSession = await DonationSession.findOne({
+          where: { id: sessionId, creator_id: creatorId }
+        });
+      }
+      if (!activeSession) {
+        activeSession = await DonationSession.findOne({
+          where: { creator_id: creatorId, status: 'active' },
+          order: [['createdAt', 'DESC']]
+        });
+      }
+    }
+
+    // 2. Fetch donations strictly for current active session
+    if (activeSession && DonationModel) {
       const donations = await DonationModel.findAll({
-        where: { creator_id: creatorId, payment_status: 'success', status: 'not_read' },
+        where: {
+          creator_id: creatorId,
+          session_id: activeSession.id,
+          payment_status: 'success',
+          status: 'not_read'
+        },
         order: [['created_at', 'DESC']],
-
       });
 
       alerts = donations.map(d => ({
@@ -1670,6 +1704,7 @@ const getOverlayAlerts = async (req, res, next) => {
         message: d.message || '',
         paidAt: d.paid_at || d.createdAt,
         isVip: !!d.is_vip,
+        sessionId: d.session_id,
       }));
 
       // Sort Priority: VIP questions FIRST at the top of the Creator queue!
@@ -1679,11 +1714,43 @@ const getOverlayAlerts = async (req, res, next) => {
         if (bVip !== aVip) return bVip - aVip;
         return new Date(a.paidAt || 0) - new Date(b.paidAt || 0);
       });
+      // 3. Find latest question approved by Right Tick (status: 'read')
+      const latestRead = await DonationModel.findOne({
+        where: {
+          creator_id: creatorId,
+          session_id: activeSession.id,
+          payment_status: 'success',
+          status: 'read'
+        },
+        order: [['updatedAt', 'DESC']],
+      });
+
+      if (latestRead) {
+        latestReadAlert = {
+          id: latestRead.id,
+          donationUuid: latestRead.donation_uuid,
+          viewerName: latestRead.anonymous ? 'Anonymous Supporter' : (latestRead.viewer_name || 'Supporter'),
+          amount: parseFloat(latestRead.amount || 0),
+          message: latestRead.message || '',
+          paidAt: latestRead.paid_at || latestRead.createdAt,
+          isVip: !!latestRead.is_vip,
+          sessionId: latestRead.session_id,
+        };
+      }
     }
 
     return res.status(200).json({
       status: 'success',
-      data: { alerts }
+      data: {
+        alerts,
+        latestReadAlert,
+        activeSession: activeSession ? {
+          id: activeSession.id,
+          title: activeSession.title,
+          sessionCode: activeSession.sessionCode,
+          status: activeSession.status,
+        } : null,
+      }
     });
 
   } catch (error) {
@@ -1787,6 +1854,37 @@ const getCreatorWalletDetails = async (req, res, next) => {
       ? parseFloat(wallet.withdrawn_amount)
       : 0;
 
+    let activeSubscribersCount = 0;
+    if (VipMembership) {
+      try {
+        const countDb = await VipMembership.count({
+          where: {
+            creator_id: { [Op.in]: [creatorId, String(creatorId), Number(creatorId)] },
+            status: 'active'
+          }
+        });
+        activeSubscribersCount = countDb;
+      } catch (e) {
+        console.warn("DB VipMembership count notice:", e.message);
+      }
+    }
+
+    if (activeSubscribersCount === 0 && DonationModel) {
+      try {
+        const vipDonations = await DonationModel.findAll({
+          where: {
+            creator_id: creatorId,
+            is_vip: true,
+            payment_status: 'success'
+          }
+        });
+        const set = new Set(vipDonations.map(d => d.viewer_email || d.viewer_name || d.viewer_id).filter(Boolean));
+        if (set.size > 0) {
+          activeSubscribersCount = set.size;
+        }
+      } catch (err) { }
+    }
+
     return res.status(200).json({
       status: 'success',
       data: {
@@ -1795,7 +1893,9 @@ const getCreatorWalletDetails = async (req, res, next) => {
           availableBalance,
           pendingAmount,
           withdrawnAmount,
+          activeSubscribersCount,
         },
+        activeSubscribersCount,
         transactions
       }
     });
@@ -2350,16 +2450,37 @@ const updateDonationStatus = async (req, res, next) => {
         donation.status = status;
         await donation.save();
 
-        // Broadcast Socket.IO event so remaining viewers queue updates live
+        const alertPayload = {
+          id: donation.id,
+          donationUuid: donation.donation_uuid,
+          viewerName: donation.anonymous ? 'Anonymous Supporter' : (donation.viewer_name || 'Supporter'),
+          amount: parseFloat(donation.amount || 0),
+          message: donation.message || '',
+          paidAt: donation.paid_at || donation.createdAt,
+          isVip: !!donation.is_vip,
+          sessionId: donation.session_id,
+          creatorId: donation.creator_id,
+        };
+
+        // Broadcast Socket.IO event so remaining viewers queue updates live & Overlay displays question
         try {
           const { getIO } = require('../config/socket');
           const io = getIO();
-          if (io && donation.session_id) {
-            io.to(`live_session_${donation.session_id}`).emit('queue_item_completed', {
-              donationId: donation.id,
-              donationUuid: donation.donation_uuid,
-              status
-            });
+          if (io) {
+            if (donation.session_id) {
+              io.to(`live_session_${donation.session_id}`).emit('queue_item_completed', {
+                donationId: donation.id,
+                donationUuid: donation.donation_uuid,
+                status
+              });
+              if (status === 'read') {
+                io.to(`live_session_${donation.session_id}`).emit('show_overlay_alert', alertPayload);
+              }
+            }
+            if (donation.creator_id && status === 'read') {
+              io.to(`creator_${donation.creator_id}`).emit('show_overlay_alert', alertPayload);
+              io.emit(`overlay_alert_${donation.creator_id}`, alertPayload);
+            }
           }
         } catch (sErr) { }
 
@@ -2372,6 +2493,51 @@ const updateDonationStatus = async (req, res, next) => {
     }
 
     return res.status(404).json({ status: 'fail', message: 'Donation record not found' });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @desc    Get All Questions / Donations for a specific Live Session
+ * @route   GET /api/creators/live-sessions/:sessionId/questions
+ * @access  Public / Private
+ */
+const getSessionQuestions = async (req, res, next) => {
+  try {
+    const { sessionId } = req.params;
+    let questions = [];
+
+    if (DonationModel) {
+      const records = await DonationModel.findAll({
+        where: { session_id: sessionId, payment_status: 'success' },
+        order: [['created_at', 'DESC']],
+      });
+
+      questions = records.map(d => ({
+        id: d.id,
+        donationUuid: d.donation_uuid,
+        viewerName: d.anonymous ? 'Anonymous Supporter' : (d.viewer_name || 'Supporter'),
+        amount: parseFloat(d.amount || 0),
+        message: d.message || '',
+        paidAt: d.paid_at || d.createdAt,
+        isVip: !!d.is_vip,
+        status: d.status || 'not_read',
+      }));
+
+      // Sort Priority: VIP questions first
+      questions.sort((a, b) => {
+        const aVip = a.isVip ? 1 : 0;
+        const bVip = b.isVip ? 1 : 0;
+        if (bVip !== aVip) return bVip - aVip;
+        return new Date(a.paidAt || 0) - new Date(b.paidAt || 0);
+      });
+    }
+
+    return res.status(200).json({
+      status: 'success',
+      data: { questions }
+    });
   } catch (error) {
     next(error);
   }
@@ -2406,4 +2572,5 @@ module.exports = {
   markSingleCreatorNotificationRead,
   updateDonationStatus,
   verifyCreatorUpi,
+  getSessionQuestions,
 };

@@ -123,7 +123,7 @@ function CreatorSidebarContent({ theme: propTheme, onToggleTheme }) {
       icon: LayoutDashboard,
     },
     {
-      name: 'Start Live',
+      name: 'Start Broadcast',
       href: '/creators/start-live',
       icon: Radio,
     },
@@ -140,10 +140,10 @@ function CreatorSidebarContent({ theme: propTheme, onToggleTheme }) {
     {
       name: 'Profile Settings',
       href: '/creators/profile',
-      icon: Settings,
+      icon: User,
     },
     {
-      name: 'Wallet',
+      name: 'Wallet & Payouts',
       href: '/creators/wallet',
       icon: Wallet,
     },
@@ -154,7 +154,7 @@ function CreatorSidebarContent({ theme: propTheme, onToggleTheme }) {
     },
     {
       name: 'Live Question Queue',
-      href: '/creators/notifications',
+      href: '/creators/live-question-queue',
       icon: MessageSquare,
     },
   ];
@@ -214,8 +214,8 @@ function CreatorSidebarContent({ theme: propTheme, onToggleTheme }) {
             isActive = (pathname === '/creators/dashboard' && (!tabParam || tabParam === 'overview'));
           } else {
             isActive = (pathname === item.href) ||
-                       (pathname === '/creators/dashboard' && tabParam === itemKey) ||
-                       (pathname === '/creators/dashboard' && itemKey === 'profile' && tabParam === 'profile-settings');
+              (pathname === '/creators/dashboard' && tabParam === itemKey) ||
+              (pathname === '/creators/dashboard' && itemKey === 'profile' && tabParam === 'profile-settings');
           }
           const Icon = item.icon;
 

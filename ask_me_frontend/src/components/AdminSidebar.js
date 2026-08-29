@@ -44,13 +44,10 @@ export default function AdminSidebar({ activeTab, setActiveTab, activeSubTab, se
       label: 'Creators',
       subtitle: 'Management & Details',
       icon: Users,
-      badge: '1.4k',
-      badgeColor: 'bg-brand-gradient text-[#0A0A0F]',
       children: [
         { id: 'creators_all', label: 'All Creators' },
         { id: 'creators_active', label: 'Active Creators' },
         { id: 'creators_blocked', label: 'Blocked Creators' },
-        { id: 'creators_details', label: 'Creator Details' },
       ],
     },
     {

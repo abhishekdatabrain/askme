@@ -23,7 +23,7 @@ import {
   Wallet
 } from 'lucide-react';
 import { API_ENDPOINTS } from '@/config/api';
-import { getViewerUser } from '@/utils/cookies';
+import { getViewerUser, getViewerToken } from '@/utils/cookies';
 
 function ViewerPaymentContent() {
   const params = useParams();
@@ -130,13 +130,14 @@ function ViewerPaymentContent() {
     e.preventDefault();
     const numericAmount = parseFloat(amount);
     if (!numericAmount || numericAmount <= 0) {
-      alert('Please enter a valid donation amount.');
+      alert('Please enter a valid amount.');
       return;
     }
 
     setIsProcessing(true);
 
     try {
+      const token = getViewerToken();
       const payload = {
         sessionCode: sessionCodeParam,
         sessionId: sessionData?.id || querySessionId || 1,
@@ -147,11 +148,16 @@ function ViewerPaymentContent() {
         message: message || '',
         anonymous: isAnonymous,
         isVip: isVipMember,
+        viewerId: viewerUser?.id || null,
+        viewerEmail: viewerUser?.email || null,
       };
 
       const res = await fetch(API_ENDPOINTS.CREATORS.PAY_PROCESS, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        },
         body: JSON.stringify(payload),
       });
 
@@ -348,20 +354,10 @@ function ViewerPaymentContent() {
             {/* Inactive Session Warning if Closed */}
             {sessionData?.status && sessionData.status !== 'active' && (
               <div className="p-4 rounded-2xl bg-[#FF3D71]/10 border-2 border-[#FF3D71]/40 text-[#FF3D71] text-xs font-bold text-center space-y-1 animate-pulse">
-                <p className="font-heading font-black text-sm uppercase">LIVE DONATION SESSION CLOSED</p>
-                <p className="text-[11px] text-[#8B8B96]">The creator has ended this donation session. QR Code & Payment link are disabled.</p>
+                <p className="font-heading font-black text-sm uppercase">LIVE SESSION CLOSED</p>
+                <p className="text-[11px] text-[#8B8B96]">The creator has ended this live session. QR Code & Payment link are disabled.</p>
               </div>
             )}
-
-            {/* QR Metadata Badge */}
-            <div className="p-3 rounded-2xl bg-[#0A0A0F] border border-[#1C1C26] flex items-center justify-between text-[11px] text-[#8B8B96]">
-              <span className="flex items-center gap-1 font-mono text-[#00F5D4]">
-                <QrCode className="h-3.5 w-3.5" /> Creator ID: <strong className="text-white">#{creatorData?.id || queryCreatorId || 1}</strong>
-              </span>
-              <span className="font-mono text-[#00F5D4]">
-                Session ID: <strong className="text-white">#{sessionData?.id || querySessionId || 101}</strong>
-              </span>
-            </div>
 
             {/* Interactive Payment Form */}
             <form onSubmit={handlePaymentSubmit} className="space-y-5">
@@ -369,7 +365,7 @@ function ViewerPaymentContent() {
               {/* 1. Enter Amount */}
               <div>
                 <label className="block text-xs font-bold text-white mb-2 flex items-center justify-between">
-                  <span>Enter Donation Amount (₹) <span className="text-[#FF3D71]">*</span></span>
+                  <span>Enter Amount (₹) <span className="text-[#FF3D71]">*</span></span>
                   <span className="text-[11px] text-[#00F5D4]">100% Instant UPI</span>
                 </label>
 
@@ -381,8 +377,8 @@ function ViewerPaymentContent() {
                       type="button"
                       onClick={() => setAmount(val)}
                       className={`py-2 rounded-xl text-xs font-black transition-all ${amount === val
-                          ? 'bg-brand-gradient text-[#0A0A0F] shadow-md scale-105'
-                          : 'bg-[#0A0A0F] text-white border border-[#1C1C26] hover:border-[#00F5D4]/40'
+                        ? 'bg-brand-gradient text-[#0A0A0F] shadow-md scale-105'
+                        : 'bg-[#0A0A0F] text-white border border-[#1C1C26] hover:border-[#00F5D4]/40'
                         }`}
                     >
                       ₹{val}
@@ -514,8 +510,8 @@ function ViewerPaymentContent() {
                 type="submit"
                 disabled={isProcessing || (sessionData?.status && sessionData.status !== 'active')}
                 className={`w-full py-3.5 rounded-2xl font-black text-sm shadow-xl transition-all flex items-center justify-center gap-2 mt-4 ${sessionData?.status && sessionData.status !== 'active'
-                    ? 'bg-[#1C1C26] text-[#8B8B96] cursor-not-allowed border border-[#1C1C26]'
-                    : 'bg-brand-gradient text-[#0A0A0F] glow-teal hover:opacity-95'
+                  ? 'bg-[#1C1C26] text-[#8B8B96] cursor-not-allowed border border-[#1C1C26]'
+                  : 'bg-brand-gradient text-[#0A0A0F] glow-teal hover:opacity-95'
                   }`}
               >
                 {sessionData?.status && sessionData.status !== 'active' ? (

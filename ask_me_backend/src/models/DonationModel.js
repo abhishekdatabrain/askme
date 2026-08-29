@@ -25,7 +25,10 @@ const Donation = sequelize.define(
             type: DataTypes.BIGINT,
             allowNull: false,
         },
-
+        viewer_id: {
+            type: DataTypes.INTEGER,
+            allowNull: true,
+        },
         viewer_name: {
             type: DataTypes.STRING(150),
         },

@@ -18,7 +18,8 @@ import {
   Clock,
   Sparkles,
   Check,
-  X
+  X,
+  Tv
 } from 'lucide-react';
 import { API_ENDPOINTS } from '@/config/api';
 import { getCreatorToken, getCreatorUser } from '@/utils/cookies';
@@ -28,6 +29,8 @@ import { useToast } from '@/context/ToastContext';
 export default function CreatorNotificationsPage() {
   const { toast } = useToast();
   const [notifications, setNotifications] = useState([]);
+  const [activeSession, setActiveSession] = useState(null);
+  const [broadcastingId, setBroadcastingId] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [creator, setCreator] = useState(null);
 
@@ -79,8 +82,9 @@ export default function CreatorNotificationsPage() {
         const creatorId = u?.id || 1;
         const res = await fetch(`${API_ENDPOINTS.CREATORS.OVERLAY_ALERTS}/${creatorId}`);
         const data = await res.json();
-        if (res.ok && data.status === 'success' && data.data?.alerts) {
-          setNotifications(data.data.alerts);
+        if (res.ok && data.status === 'success' && data.data) {
+          setNotifications(data.data.alerts || []);
+          setActiveSession(data.data.activeSession || null);
         }
       } catch (err) {
         console.warn('Notifications fetch notice:', err.message);
@@ -160,6 +164,54 @@ export default function CreatorNotificationsPage() {
     } catch (e) { }
   };
 
+  // Action Handler 3: Broadcast / Remove from Stream Overlay
+  const handleToggleBroadcast = async (item, enable) => {
+    const itemKey = String(item.id || item.donationUuid);
+
+    if (enable) {
+      setBroadcastingId(itemKey);
+      toast.success('Question broadcasted to stream overlay!', 'Broadcast Active');
+
+      try {
+        const token = getCreatorToken();
+        await fetch(`${API_ENDPOINTS.CREATORS.DONATION_STATUS}/${itemKey}/status`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+          body: JSON.stringify({ status: 'read' }),
+        });
+      } catch (e) { }
+
+      try {
+        const socket = getSocket();
+        if (socket && creator?.id) {
+          socket.emit('show_overlay_alert', {
+            id: item.id || item.donationUuid,
+            donationUuid: item.donationUuid,
+            viewerName: item.viewerName,
+            amount: item.amount,
+            message: item.message,
+            paidAt: item.paidAt,
+            isVip: !!item.isVip,
+            creatorId: creator.id,
+          });
+        }
+      } catch (e) { }
+    } else {
+      setBroadcastingId(null);
+      toast.info('Question removed from stream overlay', 'Overlay Cleared');
+
+      try {
+        const socket = getSocket();
+        if (socket && creator?.id) {
+          socket.emit('clear_overlay_alert', { creatorId: creator.id });
+        }
+      } catch (e) { }
+    }
+  };
+
   return (
     <div className={`min-h-screen font-sans flex transition-colors duration-200 ${theme === 'light' ? 'bg-[#F4F5F7] text-[#1A1D20] selection:bg-[#00F5D4] selection:text-[#0A0A0F]' : 'bg-[#0A0A0F] text-[#F5F5F7] selection:bg-[#00F5D4] selection:text-[#0A0A0F]'
       }`}>
@@ -209,22 +261,37 @@ export default function CreatorNotificationsPage() {
         <main className="p-6 max-w-6xl w-full mx-auto space-y-6">
           <div className="w-full space-y-4">
 
-            {/* Queue Counter Summary Bar */}
+            {/* Active Live Session Info Banner */}
             <div className={`p-4 rounded-2xl border flex items-center justify-between gap-4 ${theme === 'light' ? 'bg-white border-[#E9ECEF]' : 'bg-[#13131A] border-[#1C1C26]'
               }`}>
+              <div className="flex items-center gap-3">
+                <div className={`p-2 rounded-xl border ${activeSession ? 'bg-[#00E676]/10 border-[#00E676]/40 text-[#00E676]' : 'bg-[#FF3D71]/10 border-[#FF3D71]/40 text-[#FF3D71]'}`}>
+                  <Radio className="h-5 w-5 animate-pulse" />
+                </div>
+                <div>
+                  <span className="text-[10px] font-black uppercase tracking-wider block text-[#8B8B96]">
+                    CURRENT BROADCAST SESSION
+                  </span>
+                  <h3 className={`text-sm font-extrabold flex items-center gap-2 ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'}`}>
+                    {activeSession ? (
+                      <>
+                        <span>{activeSession.title}</span>
+                        <span className="px-2 py-0.5 rounded-full bg-[#00E676]/20 text-[#00E676] text-[10px] font-black font-mono">
+                          CODE: {activeSession.sessionCode}
+                        </span>
+                      </>
+                    ) : (
+                      <span className="text-[#FF3D71]">No Active Broadcast Session Currently Running</span>
+                    )}
+                  </h3>
+                </div>
+              </div>
+
               <div className="flex items-center gap-2">
-                <span className="px-3 py-1 rounded-full bg-[#00F5D4]/10 border border-[#00F5D4]/30 text-[#00F5D4] text-xs font-extrabold uppercase">
-                  ACTIVE QUEUE
-                </span>
-                <span className={`text-xs font-bold ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'
-                  }`}>
-                  {notifications.length} Pending Question(s)
+                <span className="px-3 py-1.5 rounded-xl bg-[#00F5D4]/10 border border-[#00F5D4]/30 text-[#00F5D4] text-xs font-black">
+                  {notifications.length} Active Queue Item(s)
                 </span>
               </div>
-              <p className={`text-xs text-right ${theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'
-                }`}>
-                Only current turn (#1) has active Tick/Cross buttons
-              </p>
             </div>
 
             <h3 className={`font-heading font-bold text-base flex items-center gap-2 ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'
@@ -361,6 +428,37 @@ export default function CreatorNotificationsPage() {
                           </p>
                         </div>
                       )}
+
+                      {/* ACTION BUTTONS ROW: Broadcast to Stream & Accepted / Answered badge */}
+                      <div className="flex flex-wrap items-center justify-between gap-3 pt-2.5 border-t border-[#1C1C26]/60">
+                        <div>
+                          {broadcastingId === itemKey ? (
+                            <button
+                              type="button"
+                              onClick={() => handleToggleBroadcast(n, false)}
+                              className="px-4 py-2 rounded-full bg-[#FF2D55] text-white font-extrabold text-xs flex items-center gap-2 shadow-lg animate-pulse border border-[#FF2D55] hover:bg-[#E02447] transition"
+                              title="Remove question from live stream overlay"
+                            >
+                              <Tv className="h-4 w-4" /> Remove from Overlay
+                            </button>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => handleToggleBroadcast(n, true)}
+                              className="px-4 py-2 rounded-full bg-[#1C1C26] hover:bg-[#252533] text-[#FF5722] hover:text-white border border-[#FF5722]/50 font-extrabold text-xs flex items-center gap-2 shadow-md transition"
+                              title="Broadcast question to live stream overlay"
+                            >
+                              <Tv className="h-4 w-4 text-[#FF5722]" /> Broadcast to Stream
+                            </button>
+                          )}
+                        </div>
+
+                        {n.status === 'read' && (
+                          <span className="px-3 py-1.5 rounded-full bg-[#00E676]/15 text-[#00E676] border border-[#00E676]/30 text-xs font-bold flex items-center gap-1.5">
+                            <CheckCircle2 className="h-4 w-4" /> Accepted & Answered
+                          </span>
+                        )}
+                      </div>
                     </div>
                   );
                 })

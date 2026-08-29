@@ -5,6 +5,7 @@ import Link from 'next/link';
 import ViewerSidebar from '@/components/ViewerSidebar';
 import SplashLoader from '@/components/SplashLoader';
 import { API_ENDPOINTS } from '@/config/api';
+import { getViewerToken, getCookie } from '@/utils/cookies';
 import {
   ArrowLeft,
   Sparkles,
@@ -14,7 +15,9 @@ import {
   XCircle,
   ChevronRight,
   Shield,
-  Clock
+  Clock,
+  Crown,
+  ShieldCheck
 } from 'lucide-react';
 
 export default function MyMembershipsPage() {
@@ -23,7 +26,7 @@ export default function MyMembershipsPage() {
   const [showManageModal, setShowManageModal] = useState(null);
   const [cancelling, setCancelling] = useState(false);
   const [cancelMessage, setCancelMessage] = useState('');
-
+  console.log("membership", memberships);
   useEffect(() => {
     fetchMemberships();
   }, []);
@@ -31,7 +34,7 @@ export default function MyMembershipsPage() {
   const fetchMemberships = async () => {
     try {
       setLoading(true);
-      const token = typeof window !== 'undefined' ? localStorage.getItem('askme_token') : null;
+      const token = getViewerToken() || getCookie('askme_viewer_token') || getCookie('askme_token');
       const res = await fetch(API_ENDPOINTS.VIEWERS.VIP_MY_MEMBERSHIPS, {
         headers: {
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -39,6 +42,7 @@ export default function MyMembershipsPage() {
       });
 
       const data = await res.json();
+      console.log("data", data);
       if (res.ok && data.status === 'success' && data.data?.memberships) {
         setMemberships(data.data.memberships);
       }
@@ -49,31 +53,31 @@ export default function MyMembershipsPage() {
     }
   };
 
-  const handleCancelMembership = async (membership) => {
-    setCancelling(true);
-    try {
-      const token = typeof window !== 'undefined' ? localStorage.getItem('askme_token') : null;
-      await fetch(API_ENDPOINTS.VIEWERS.VIP_CANCEL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-        body: JSON.stringify({
-          membershipId: membership.id,
-          creatorId: membership.creator_id,
-        }),
-      });
+  // const handleCancelMembership = async (membership) => {
+  //   setCancelling(true);
+  //   try {
+  //     const token = typeof window !== 'undefined' ? localStorage.getItem('askme_token') : null;
+  //     await fetch(API_ENDPOINTS.VIEWERS.VIP_CANCEL, {
+  //       method: 'POST',
+  //       headers: {
+  //         'Content-Type': 'application/json',
+  //         ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  //       },
+  //       body: JSON.stringify({
+  //         membershipId: membership.id,
+  //         creatorId: membership.creator_id,
+  //       }),
+  //     });
 
-      setCancelMessage(`Membership cancelled. You will retain access until ${membership.next_billing_date || '24 Sep 2026'}.`);
-      setMemberships(prev => prev.map(m => m.id === membership.id ? { ...m, status: 'cancelled' } : m));
-    } catch (err) {
-      setCancelMessage(`Membership cancelled. Access remains valid until next billing date.`);
-      setMemberships(prev => prev.map(m => m.id === membership.id ? { ...m, status: 'cancelled' } : m));
-    } finally {
-      setCancelling(false);
-    }
-  };
+  //     setCancelMessage(`Membership cancelled. You will retain access until ${membership.next_billing_date || '24 Sep 2026'}.`);
+  //     setMemberships(prev => prev.map(m => m.id === membership.id ? { ...m, status: 'cancelled' } : m));
+  //   } catch (err) {
+  //     setCancelMessage(`Membership cancelled. Access remains valid until next billing date.`);
+  //     setMemberships(prev => prev.map(m => m.id === membership.id ? { ...m, status: 'cancelled' } : m));
+  //   } finally {
+  //     setCancelling(false);
+  //   }
+  // };
 
   if (loading) {
     return <SplashLoader message="Loading My VIP Memberships..." />;
@@ -90,7 +94,7 @@ export default function MyMembershipsPage() {
       <div className="flex-1 flex flex-col min-w-0 min-h-screen">
         {/* HEADER */}
         <header className="sticky top-0 z-40 bg-[#13131A]/95 backdrop-blur-md border-b border-[#1C1C26] px-4 sm:px-6 py-3.5 flex items-center justify-between">
-          <Link href="/" className="inline-flex items-center gap-2 text-xs font-bold text-[#8B8B96] hover:text-[#00F5D4] transition">
+          <Link href="/viewers/dashboard" className="inline-flex items-center gap-2 text-xs font-bold text-[#8B8B96] hover:text-[#00F5D4] transition">
             <ArrowLeft className="h-4 w-4" /> Back to Public Live Feed
           </Link>
 
@@ -212,21 +216,6 @@ export default function MyMembershipsPage() {
                       </button>
                     </div>
 
-                    {/* CANCEL ACTION */}
-                    {isActive && (
-                      <div className="pt-2 border-t border-[#332700] text-center">
-                        <button
-                          onClick={() => handleCancelMembership(membership)}
-                          disabled={cancelling}
-                          className="text-xs text-[#FF3D71] font-bold hover:underline inline-flex items-center gap-1"
-                        >
-                          <XCircle className="h-3.5 w-3.5" /> Cancel Membership
-                        </button>
-                        <p className="text-[10px] text-[#8B8B96] mt-1">
-                          Cancel anytime. Access will continue until {membership.next_billing_date || '24 Sep 2026'}
-                        </p>
-                      </div>
-                    )}
                   </div>
                 );
               })}

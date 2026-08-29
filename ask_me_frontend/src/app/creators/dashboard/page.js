@@ -47,7 +47,9 @@ import {
   User,
   Building2,
   Globe,
-  Save
+  Save,
+  Download,
+  Users
 } from 'lucide-react';
 import { API_ENDPOINTS } from '@/config/api';
 
@@ -55,6 +57,43 @@ function CreatorDashboardContent() {
   const { toast } = useToast();
   const searchParams = useSearchParams();
   const router = useRouter();
+
+  const downloadQrCode = async (qrUrl, filename = 'askme_payment_qr.png') => {
+    if (!qrUrl) return;
+    try {
+      if (qrUrl.startsWith('data:')) {
+        const link = document.createElement('a');
+        link.href = qrUrl;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        toast.success('QR Code downloaded successfully!', 'Downloaded');
+        return;
+      }
+
+      const response = await fetch(qrUrl);
+      const blob = await response.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(blobUrl);
+      toast.success('QR Code downloaded successfully!', 'Downloaded');
+    } catch (err) {
+      const link = document.createElement('a');
+      link.href = qrUrl;
+      link.target = '_blank';
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      toast.success('QR Code download initiated!', 'Downloaded');
+    }
+  };
 
   const [creator, setCreator] = useState(null);
   const [copiedOverlay, setCopiedOverlay] = useState(false);
@@ -118,7 +157,7 @@ function CreatorDashboardContent() {
   const [isSubmittingSession, setIsSubmittingSession] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState('');
 
-  // Wallet Metrics
+  // Wallet & Subscriber Metrics
   const [walletMetrics, setWalletMetrics] = useState({
     totalEarnings: 0,
     availableBalance: 0,
@@ -126,6 +165,7 @@ function CreatorDashboardContent() {
     pendingAmount: 0,
     withdrawnAmount: 0,
   });
+  const [activeSubscribersCount, setActiveSubscribersCount] = useState(0);
 
   // Profile Form State
   const [isSavingProfile, setIsSavingProfile] = useState(false);
@@ -242,6 +282,10 @@ function CreatorDashboardContent() {
               pendingAmount: parseFloat(w.pendingAmount || 0),
               withdrawnAmount: parseFloat(w.withdrawnAmount || 0),
             });
+            const subCount = typeof w.activeSubscribersCount === 'number'
+              ? w.activeSubscribersCount
+              : (typeof dataWallet.data?.activeSubscribersCount === 'number' ? dataWallet.data.activeSubscribersCount : 0);
+            setActiveSubscribersCount(subCount);
           }
         } catch (wErr) { }
 
@@ -632,12 +676,15 @@ function CreatorDashboardContent() {
                       <div className="space-y-1 min-w-0 flex-1">
                         <span className="text-[10px] font-bold text-[#00F5D4] uppercase">Instant UPI Payment Link & QR</span>
                         <p className="text-xs font-mono truncate">{activeSession.paymentLink}</p>
-                        <div className="flex gap-2 pt-1">
-                          <button onClick={() => copyPaymentLink(activeSession.paymentLink)} className="px-3 py-1.5 rounded-lg bg-[#00F5D4] text-[#0A0A0F] font-bold text-[11px] shadow-sm hover:scale-105 transition">
-                            <Copy className="h-3.5 w-3.5 inline mr-1" /> Copy Link
+                        <div className="flex flex-wrap gap-2 pt-1">
+                          <button onClick={() => copyPaymentLink(activeSession.paymentLink)} className="px-3.5 py-1.5 rounded-lg bg-[#00F5D4] text-[#0A0A0F] font-bold text-[11px] shadow-sm hover:scale-105 transition flex items-center gap-1">
+                            <Copy className="h-3.5 w-3.5" /> Copy Link
                           </button>
-                          <a href={activeSession.paymentLink} target="_blank" rel="noopener noreferrer" className="px-3 py-1.5 rounded-lg bg-[#1C1C26] text-white text-[11px] border border-[#252533]">
-                            Test Link <ExternalLink className="h-3.5 w-3.5 inline text-[#00F5D4]" />
+                          <button onClick={() => downloadQrCode(activeSession.qrCodeUrl, `askme_qr_${activeSession.sessionCode || 'code'}.png`)} className="px-3.5 py-1.5 rounded-lg bg-[#1C1C26] text-[#00F5D4] text-[11px] font-bold border border-[#00F5D4]/40 hover:bg-[#00F5D4]/10 transition flex items-center gap-1">
+                            <Download className="h-3.5 w-3.5" /> Download QR
+                          </button>
+                          <a href={activeSession.paymentLink} target="_blank" rel="noopener noreferrer" className="px-3.5 py-1.5 rounded-lg bg-[#1C1C26] text-white text-[11px] border border-[#252533] hover:border-[#00F5D4] transition flex items-center gap-1">
+                            Test Link <ExternalLink className="h-3.5 w-3.5 text-[#00F5D4]" />
                           </a>
                         </div>
                       </div>
@@ -691,7 +738,7 @@ function CreatorDashboardContent() {
                 </Link>
               </div>
 
-              {/* Metrics Grid */}
+              {/* Metrics Grid (4 cards per row) */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div className={`p-5 rounded-2xl border space-y-2 ${theme === 'light' ? 'bg-white border-[#E9ECEF]' : 'bg-[#13131A] border-[#1C1C26]'}`}>
                   <span className="text-xs font-bold text-[#8B8B96] flex items-center gap-1.5">
@@ -721,6 +768,17 @@ function CreatorDashboardContent() {
                   <span className="text-[11px] text-[#8B8B96]">Min Withdrawal: ₹500</span>
                 </div>
 
+                {/* ACTIVE SUBSCRIBERS */}
+                <div className={`p-5 rounded-2xl border space-y-2 ${theme === 'light' ? 'bg-white border-[#E9ECEF]' : 'bg-[#13131A] border-[#1C1C26]'}`}>
+                  <span className="text-xs font-black text-[#FF9500] uppercase tracking-wider flex items-center gap-1.5">
+                    <Users className="h-4 w-4 text-[#FF9500]" /> ACTIVE SUBSCRIBERS
+                  </span>
+                  <div className={`font-heading font-extrabold text-2xl ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'}`}>
+                    {(activeSubscribersCount ?? 0)} Members
+                  </div>
+                  <span className="text-[11px] text-[#8B8B96]">Recurring fans with VIP chat badges & perks.</span>
+                </div>
+
                 <div className={`p-5 rounded-2xl border space-y-2 ${theme === 'light' ? 'bg-white border-[#E9ECEF]' : 'bg-[#13131A] border-[#1C1C26]'}`}>
                   <span className="text-xs font-bold text-[#8B8B96] flex items-center gap-1.5">
                     <ShieldCheck className="h-4 w-4 text-[#00F5D4]" /> KYC Verification
@@ -736,32 +794,6 @@ function CreatorDashboardContent() {
                 </div>
               </div>
 
-              {/* OBS Overlay Card */}
-              <div className={`p-6 rounded-3xl border space-y-5 shadow-xl ${theme === 'light' ? 'bg-white border-[#E9ECEF]' : 'bg-[#13131A] border-[#1C1C26]'}`}>
-                <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border-b pb-4 border-[#1C1C26]">
-                  <div>
-                    <h3 className={`font-heading font-black text-lg flex items-center gap-2 ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'}`}>
-                      <Video className="h-5 w-5 text-[#00F5D4]" /> Live Stream OBS Overlay Widget
-                    </h3>
-                    <p className={`text-xs ${theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'}`}>
-                      Continuously displays QR code and real-time donation alerts on OBS Studio, Streamlabs, & vMix.
-                    </p>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <button onClick={copyOverlayUrl} className="px-4 py-2 rounded-xl bg-[#00F5D4] text-[#0A0A0F] text-xs font-bold shadow-md">
-                      {copiedOverlay ? 'Copied Overlay URL!' : 'Copy OBS Browser Source URL'}
-                    </button>
-                    <a href={overlayUrl} target="_blank" rel="noopener noreferrer" className={`px-4 py-2 rounded-xl text-xs font-bold ${theme === 'light' ? 'bg-[#E9ECEF] text-[#1A1D20]' : 'bg-[#1C1C26] text-white'}`}>
-                      Test Overlay <ExternalLink className="h-3.5 w-3.5 text-[#00F5D4] inline ml-1" />
-                    </a>
-                  </div>
-                </div>
-
-                <div className={`p-4 rounded-2xl border flex items-center justify-between gap-4 font-mono text-xs ${theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6]' : 'bg-[#0A0A0F] border-[#1C1C26]'}`}>
-                  <span className="text-[#00F5D4] truncate font-bold">{overlayUrl}</span>
-                </div>
-              </div>
             </div>
           )}
 
@@ -933,12 +965,15 @@ function CreatorDashboardContent() {
                       <p className="text-xs font-black mt-2 font-mono">{createdSessionOutput.paymentLink}</p>
                     </div>
 
-                    <div className="flex items-center justify-center gap-3">
-                      <button onClick={() => copyText(createdSessionOutput.paymentLink, 'Payment Link')} className="px-4 py-2.5 rounded-xl bg-[#00F5D4] text-[#0A0A0F] font-bold text-xs">
-                        <Copy className="h-4 w-4 inline mr-1" /> Copy Payment Link
+                    <div className="flex flex-wrap items-center justify-center gap-3">
+                      <button onClick={() => copyText(createdSessionOutput.paymentLink, 'Payment Link')} className="px-4 py-2.5 rounded-xl bg-[#00F5D4] text-[#0A0A0F] font-bold text-xs flex items-center gap-1">
+                        <Copy className="h-4 w-4" /> Copy Payment Link
                       </button>
-                      <button onClick={() => setWizardStep(4)} className="px-6 py-2.5 rounded-xl bg-[#7B2FFF] text-white font-bold text-xs">
-                        Next: Generate OBS Overlay <ArrowRight className="h-4 w-4 inline ml-1" />
+                      <button onClick={() => downloadQrCode(createdSessionOutput.qrCodeUrl, `askme_qr_${createdSessionOutput.sessionCode || 'code'}.png`)} className="px-4 py-2.5 rounded-xl bg-[#1C1C26] text-[#00F5D4] font-bold text-xs border border-[#00F5D4]/40 hover:bg-[#00F5D4]/10 transition flex items-center gap-1">
+                        <Download className="h-4 w-4" /> Download QR
+                      </button>
+                      <button onClick={() => setWizardStep(4)} className="px-6 py-2.5 rounded-xl bg-[#7B2FFF] text-white font-bold text-xs flex items-center gap-1">
+                        Next: Generate OBS Overlay <ArrowRight className="h-4 w-4" />
                       </button>
                     </div>
                   </div>
@@ -1019,12 +1054,15 @@ function CreatorDashboardContent() {
                       <div className="space-y-1 min-w-0 flex-1">
                         <span className="text-[10px] font-bold text-[#00F5D4] uppercase">Viewer Payment Link & QR</span>
                         <p className="text-xs font-mono truncate">{activeSession.paymentLink}</p>
-                        <div className="flex gap-2 pt-1">
-                          <button onClick={() => copyText(activeSession.paymentLink, 'Payment Link')} className="px-2.5 py-1 rounded-lg bg-[#00F5D4] text-[#0A0A0F] font-bold text-[11px]">
-                            <Copy className="h-3 w-3 inline mr-1" /> Copy Link
+                        <div className="flex flex-wrap gap-2 pt-1">
+                          <button onClick={() => copyText(activeSession.paymentLink, 'Payment Link')} className="px-2.5 py-1 rounded-lg bg-[#00F5D4] text-[#0A0A0F] font-bold text-[11px] flex items-center gap-1">
+                            <Copy className="h-3 w-3" /> Copy Link
                           </button>
-                          <a href={activeSession.paymentLink} target="_blank" rel="noopener noreferrer" className="px-2.5 py-1 rounded-lg bg-[#1C1C26] text-white text-[11px]">
-                            Test Link <ExternalLink className="h-3 w-3 inline text-[#00F5D4]" />
+                          <button onClick={() => downloadQrCode(activeSession.qrCodeUrl, `askme_qr_${activeSession.sessionCode || 'code'}.png`)} className="px-2.5 py-1 rounded-lg bg-[#1C1C26] text-[#00F5D4] text-[11px] font-bold border border-[#00F5D4]/40 hover:bg-[#00F5D4]/10 transition flex items-center gap-1">
+                            <Download className="h-3 w-3" /> Download QR
+                          </button>
+                          <a href={activeSession.paymentLink} target="_blank" rel="noopener noreferrer" className="px-2.5 py-1 rounded-lg bg-[#1C1C26] text-white text-[11px] flex items-center gap-1">
+                            Test Link <ExternalLink className="h-3 w-3 text-[#00F5D4]" />
                           </a>
                         </div>
                       </div>

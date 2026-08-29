@@ -384,8 +384,19 @@ const getCreatorPublicProfile = async (req, res, next) => {
  */
 const toggleFollowCreator = async (req, res, next) => {
   try {
-    const userId = req.user?.id || req.body.userId || 1;
-    const creatorId = req.body.creatorId;
+    const userId = req.user?.id || req.body.userId || req.query.userId;
+    const { creatorId } = req.body;
+
+    console.log("Authenticated User:", req.user);
+    console.log("Viewer ID:", userId);
+    console.log("Creator ID:", creatorId);
+
+    if (!userId) {
+      return res.status(401).json({
+        status: "fail",
+        message: "Viewer authentication required.",
+      });
+    }
 
     if (!creatorId) {
       return res.status(400).json({
@@ -394,7 +405,25 @@ const toggleFollowCreator = async (req, res, next) => {
       });
     }
 
-    // Check if already following
+    // Prevent creator following himself
+    if (String(userId) === String(creatorId)) {
+      return res.status(400).json({
+        status: "fail",
+        message: "You cannot follow yourself.",
+      });
+    }
+
+    // Check creator exists
+    const creator = await CreatorsModel.findByPk(creatorId);
+
+    if (!creator) {
+      return res.status(404).json({
+        status: "fail",
+        message: "Creator not found.",
+      });
+    }
+
+    // Check existing follow
     const existingFollow = await Follow.findOne({
       where: {
         viewer_id: userId,
@@ -405,11 +434,9 @@ const toggleFollowCreator = async (req, res, next) => {
     let isFollowing;
 
     if (existingFollow) {
-      // Unfollow
       await existingFollow.destroy();
       isFollowing = false;
     } else {
-      // Follow
       await Follow.create({
         viewer_id: userId,
         creator_id: creatorId,
@@ -418,7 +445,6 @@ const toggleFollowCreator = async (req, res, next) => {
       isFollowing = true;
     }
 
-    // Get total following count
     const followingCount = await Follow.count({
       where: {
         viewer_id: userId,
@@ -428,11 +454,12 @@ const toggleFollowCreator = async (req, res, next) => {
     return res.status(200).json({
       status: "success",
       isFollowing,
+      followingCount,
       message: isFollowing
         ? "Creator followed!"
         : "Creator unfollowed.",
-      followingCount,
     });
+
   } catch (error) {
     console.error("TOGGLE FOLLOW ERROR:", error);
     next(error);
@@ -479,6 +506,229 @@ const getFollowingCreators = async (req, res, next) => {
   }
 };
 
+/**
+ * @desc    Get All Live Questions / Donations Asked by Viewer
+ * @route   GET /api/viewers/my-questions
+ * @access  Public / Private
+ */
+const getViewerQuestions = async (req, res, next) => {
+  try {
+    const userId = req.user?.id || req.query.userId || req.query.viewerId;
+    const viewerEmail = req.user?.email || req.query.email;
+    const sessionId = req.query.sessionId || req.params.sessionId;
+    const { Op } = require('sequelize');
+
+    let DonationModel = null;
+    try { DonationModel = require('../models/DonationModel'); } catch (e) { }
+
+    let questions = [];
+
+    if (DonationModel) {
+      let whereClause = { payment_status: 'success' };
+      if (sessionId) {
+        whereClause.session_id = sessionId;
+      }
+      if (userId && viewerEmail) {
+        whereClause[Op.or] = [
+          { viewer_id: String(userId) },
+          { viewer_email: viewerEmail }
+        ];
+      } else if (userId) {
+        whereClause.viewer_id = String(userId);
+      } else if (viewerEmail) {
+        whereClause.viewer_email = viewerEmail;
+      }
+
+      const records = await DonationModel.findAll({
+        where: whereClause,
+        order: [['created_at', 'DESC']],
+        limit: 100
+      });
+
+      const creators = await CreatorsModel.findAll({ raw: true }).catch(() => []);
+      const sessions = await DonationSession.findAll({ raw: true }).catch(() => []);
+      const creatorMap = new Map();
+      const sessionMap = new Map();
+
+      creators.forEach(c => creatorMap.set(String(c.id), c));
+      sessions.forEach(s => sessionMap.set(String(s.id), s));
+
+      questions = records.map(d => {
+        const creatorObj = creatorMap.get(String(d.creator_id)) || {};
+        const sessionObj = sessionMap.get(String(d.session_id)) || {};
+        return {
+          id: d.id,
+          donationUuid: d.donation_uuid,
+          creatorId: d.creator_id,
+          creatorName: creatorObj.full_name || 'Live Creator Host',
+          creatorAvatar: creatorObj.profile_image || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80',
+          sessionTitle: sessionObj.title || 'Live Broadcast Session',
+          sessionCode: sessionObj.session_code || '',
+          sessionStatus: sessionObj.status || 'closed',
+          amount: parseFloat(d.amount || 0),
+          message: d.message || '',
+          paidAt: d.paid_at || d.createdAt,
+          isVip: !!d.is_vip,
+          status: d.status || 'not_read',
+        };
+      });
+
+      if (!sessionId) {
+        questions = questions.filter(q => q.sessionStatus === 'active');
+      }
+    }
+
+    return res.status(200).json({
+      status: 'success',
+      data: {
+        questions,
+        totalQuestions: questions.length
+      }
+    });
+  } catch (error) {
+    console.error('GET VIEWER QUESTIONS ERROR:', error);
+    next(error);
+  }
+};
+
+/**
+ * @desc    Get All Past Broadcast Streams / Sessions for Viewers
+ * @route   GET /api/viewers/public/past-streams
+ * @access  Public
+ */
+const getPublicPastStreams = async (req, res, next) => {
+  try {
+    const { category, search } = req.query;
+    const userId = req.user?.id || req.query.userId || req.query.viewerId;
+    const viewerEmail = req.user?.email || req.query.email;
+    const { Op } = require('sequelize');
+
+    let DonationModel = null;
+    try { DonationModel = require('../models/DonationModel'); } catch (e) { }
+
+    let targetSessionIds = new Set();
+    let viewerQuestionsBySession = new Map();
+
+    if (DonationModel && (userId || viewerEmail)) {
+      let whereClause = { payment_status: 'success' };
+      if (userId && viewerEmail) {
+        whereClause[Op.or] = [
+          { viewer_id: String(userId) },
+          { viewer_email: viewerEmail }
+        ];
+      } else if (userId) {
+        whereClause.viewer_id = String(userId);
+      } else if (viewerEmail) {
+        whereClause.viewer_email = viewerEmail;
+      }
+
+      const viewerDonations = await DonationModel.findAll({
+        where: whereClause,
+        order: [['created_at', 'DESC']]
+      }).catch(() => []);
+
+      viewerDonations.forEach(d => {
+        if (d.session_id) {
+          const sId = String(d.session_id);
+          targetSessionIds.add(sId);
+          viewerQuestionsBySession.set(sId, (viewerQuestionsBySession.get(sId) || 0) + 1);
+        }
+      });
+    }
+
+    let pastSessions = [];
+
+    if (DonationSession) {
+      if (targetSessionIds.size > 0) {
+        pastSessions = await DonationSession.findAll({
+          where: {
+            id: { [Op.in]: Array.from(targetSessionIds) }
+          },
+          order: [['started_at', 'DESC'], ['created_at', 'DESC']],
+          limit: 50,
+        });
+      } else if (!userId && !viewerEmail) {
+        pastSessions = await DonationSession.findAll({
+          order: [['started_at', 'DESC'], ['created_at', 'DESC']],
+          limit: 50,
+        });
+      }
+    }
+
+    const creators = await CreatorsModel.findAll({ raw: true }).catch(() => []);
+    const profiles = await CreatorProfileModel.findAll({ raw: true }).catch(() => []);
+    const creatorMap = new Map();
+    const profileMap = new Map();
+
+    creators.forEach(c => creatorMap.set(String(c.id), c));
+    profiles.forEach(p => profileMap.set(String(p.creator_id), p));
+
+    let formatted = await Promise.all(pastSessions.map(async (s) => {
+      const creatorObj = creatorMap.get(String(s.creator_id)) || {};
+      const profileObj = profileMap.get(String(s.creator_id)) || {};
+      const cleanUsername = String(creatorObj.username || 'creator').replace(/^@+/, '');
+
+      const askedByViewerCount = viewerQuestionsBySession.get(String(s.id)) || 0;
+
+      let questionCount = s.total_donations || 0;
+      if (DonationModel) {
+        questionCount = await DonationModel.count({
+          where: { session_id: s.id, payment_status: 'success' }
+        }).catch(() => s.total_donations || 0);
+      }
+
+      return {
+        id: s.id,
+        sessionCode: s.session_code,
+        title: s.title || `${creatorObj.full_name || 'Creator'}'s Live Session`,
+        category: s.category || profileObj.category || 'General',
+        description: s.description || '',
+        thumbnailUrl: s.thumbnail_url || profileObj.profile_image || 'https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=600&q=80',
+        streamUrl: s.stream_url || '',
+        streamingPlatform: s.streaming_platform || s.platform || 'YouTube Live',
+        status: s.status || 'closed',
+        startedAt: s.started_at || s.createdAt,
+        endedAt: s.ended_at || s.ends_at || s.updatedAt,
+        totalDonations: questionCount || s.total_donations || 0,
+        viewerQuestionsCount: askedByViewerCount,
+        totalAmount: s.total_amount || 0,
+        creator: {
+          id: s.creator_id,
+          fullName: creatorObj.full_name || 'Live Creator',
+          username: `@${cleanUsername}`,
+          avatar: profileObj.profile_image || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80',
+        }
+      };
+    }));
+
+    if (category && category.toLowerCase() !== 'all') {
+      const catLower = category.toLowerCase();
+      formatted = formatted.filter(item => item.category.toLowerCase().includes(catLower));
+    }
+
+    if (search && search.trim()) {
+      const q = search.toLowerCase().trim();
+      formatted = formatted.filter(item =>
+        item.title.toLowerCase().includes(q) ||
+        item.creator.fullName.toLowerCase().includes(q) ||
+        item.creator.username.toLowerCase().includes(q) ||
+        item.category.toLowerCase().includes(q)
+      );
+    }
+
+    return res.status(200).json({
+      status: 'success',
+      data: {
+        sessions: formatted,
+        totalSessions: formatted.length
+      }
+    });
+  } catch (error) {
+    console.error('GET PUBLIC PAST STREAMS ERROR:', error);
+    next(error);
+  }
+};
+
 module.exports = {
   registerViewer,
   loginViewer,
@@ -487,4 +737,6 @@ module.exports = {
   getCreatorPublicProfile,
   toggleFollowCreator,
   getFollowingCreators,
+  getViewerQuestions,
+  getPublicPastStreams,
 };

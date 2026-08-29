@@ -11,7 +11,9 @@ const vipMemoryStore = new Map();
  */
 const createVipSubscription = async (req, res, next) => {
   try {
-    const userId = String(req.user?.id || req.body.userId || 1);
+    console.log("requser", req.use);
+    const userId = String(req.user?.id || req.body.userId);
+    console.log("userId", userId);
     const { creatorId, planName, amount, transactionId } = req.body;
 
     if (!creatorId) {
@@ -21,7 +23,7 @@ const createVipSubscription = async (req, res, next) => {
       });
     }
 
-    const subAmount = parseFloat(amount || 999.00);
+    const subAmount = parseFloat(amount || "");
     const subPlanName = planName || "";
     const subTxnId = transactionId || `pay_${Math.random().toString(36).substring(2, 11).toUpperCase()}`;
 
@@ -86,7 +88,7 @@ const createVipSubscription = async (req, res, next) => {
  */
 const getViewerMemberships = async (req, res, next) => {
   try {
-    const userId = String(req.user?.id || req.query.userId || 1);
+    const userId = String(req.user?.id || req.query.userId);
 
     let memberships = [];
 
@@ -142,41 +144,41 @@ const getViewerMemberships = async (req, res, next) => {
  * @route   POST /api/viewers/vip/cancel
  * @access  Public / Private
  */
-const cancelVipMembership = async (req, res, next) => {
-  try {
-    const userId = String(req.user?.id || req.body.userId || 1);
-    const { membershipId, creatorId } = req.body;
+// const cancelVipMembership = async (req, res, next) => {
+//   try {
+//     const userId = String(req.user?.id || req.body.userId || 1);
+//     const { membershipId, creatorId } = req.body;
 
-    try {
-      if (membershipId) {
-        await VipMembership.update(
-          { status: "cancelled" },
-          { where: { id: membershipId, viewer_id: userId } }
-        );
-      } else if (creatorId) {
-        await VipMembership.update(
-          { status: "cancelled" },
-          { where: { creator_id: creatorId, viewer_id: userId } }
-        );
-      }
-    } catch (dbErr) {
-      console.warn("DB VipMembership cancel fallback:", dbErr.message);
-      const key = `${userId}_${creatorId}`;
-      if (vipMemoryStore.has(key)) {
-        const val = vipMemoryStore.get(key);
-        val.status = "cancelled";
-      }
-    }
+//     try {
+//       if (membershipId) {
+//         await VipMembership.update(
+//           { status: "cancelled" },
+//           { where: { id: membershipId, viewer_id: userId } }
+//         );
+//       } else if (creatorId) {
+//         await VipMembership.update(
+//           { status: "cancelled" },
+//           { where: { creator_id: creatorId, viewer_id: userId } }
+//         );
+//       }
+//     } catch (dbErr) {
+//       console.warn("DB VipMembership cancel fallback:", dbErr.message);
+//       const key = `${userId}_${creatorId}`;
+//       if (vipMemoryStore.has(key)) {
+//         const val = vipMemoryStore.get(key);
+//         val.status = "cancelled";
+//       }
+//     }
 
-    return res.status(200).json({
-      status: "success",
-      message: "VIP Membership cancelled. You will retain access until the end of your billing cycle.",
-    });
-  } catch (error) {
-    console.error("CANCEL VIP MEMBERSHIP ERROR:", error);
-    next(error);
-  }
-};
+//     return res.status(200).json({
+//       status: "success",
+//       message: "VIP Membership cancelled. You will retain access until the end of your billing cycle.",
+//     });
+//   } catch (error) {
+//     console.error("CANCEL VIP MEMBERSHIP ERROR:", error);
+//     next(error);
+//   }
+// };
 
 /**
  * @desc    Get Public Active VIP Plans
@@ -261,6 +263,6 @@ const getPublicVipPlans = async (req, res, next) => {
 module.exports = {
   createVipSubscription,
   getViewerMemberships,
-  cancelVipMembership,
+  // cancelVipMembership,
   getPublicVipPlans,
 };

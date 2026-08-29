@@ -18,7 +18,8 @@ import {
   Clock,
   StopCircle,
   Upload,
-  Image as ImageIcon
+  Image as ImageIcon,
+  Download
 } from 'lucide-react';
 import { API_ENDPOINTS } from '@/config/api';
 
@@ -29,6 +30,43 @@ export default function CreatorLiveSessionsPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState('');
   const [theme, setTheme] = useState('dark');
+
+  const downloadQrCode = async (qrUrl, filename = 'askme_payment_qr.png') => {
+    if (!qrUrl) return;
+    try {
+      if (qrUrl.startsWith('data:')) {
+        const link = document.createElement('a');
+        link.href = qrUrl;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        toast.success('QR Code downloaded successfully!', 'Downloaded');
+        return;
+      }
+
+      const response = await fetch(qrUrl);
+      const blob = await response.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(blobUrl);
+      toast.success('QR Code downloaded successfully!', 'Downloaded');
+    } catch (err) {
+      const link = document.createElement('a');
+      link.href = qrUrl;
+      link.target = '_blank';
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      toast.success('QR Code download initiated!', 'Downloaded');
+    }
+  };
 
   // Theme Sync
   useEffect(() => {
@@ -278,12 +316,15 @@ export default function CreatorLiveSessionsPage() {
                   <div className="space-y-1 min-w-0 flex-1">
                     <span className="text-[10px] font-bold text-[#00F5D4] uppercase">Instant UPI Payment Link & QR</span>
                     <p className="text-xs font-mono truncate">{activeSession.paymentLink}</p>
-                    <div className="flex gap-2 pt-1">
-                      <button onClick={() => copyText(activeSession.paymentLink, 'Payment Link')} className="px-3 py-1.5 rounded-lg bg-[#00F5D4] text-[#0A0A0F] font-bold text-[11px] shadow-sm">
-                        <Copy className="h-3.5 w-3.5 inline mr-1" /> Copy Link
+                    <div className="flex flex-wrap gap-2 pt-1">
+                      <button onClick={() => copyText(activeSession.paymentLink, 'Payment Link')} className="px-3.5 py-1.5 rounded-lg bg-[#00F5D4] text-[#0A0A0F] font-bold text-[11px] shadow-sm hover:scale-105 transition flex items-center gap-1">
+                        <Copy className="h-3.5 w-3.5" /> Copy Link
                       </button>
-                      <a href={activeSession.paymentLink} target="_blank" rel="noopener noreferrer" className="px-3 py-1.5 rounded-lg bg-[#1C1C26] text-white text-[11px]">
-                        Test Link <ExternalLink className="h-3.5 w-3.5 inline text-[#00F5D4]" />
+                      <button onClick={() => downloadQrCode(activeSession.qrCodeUrl, `askme_qr_${activeSession.sessionCode || 'code'}.png`)} className="px-3.5 py-1.5 rounded-lg bg-[#1C1C26] text-[#00F5D4] text-[11px] font-bold border border-[#00F5D4]/40 hover:bg-[#00F5D4]/10 transition flex items-center gap-1">
+                        <Download className="h-3.5 w-3.5" /> Download QR
+                      </button>
+                      <a href={activeSession.paymentLink} target="_blank" rel="noopener noreferrer" className="px-3.5 py-1.5 rounded-lg bg-[#1C1C26] text-white text-[11px] border border-[#252533] hover:border-[#00F5D4] transition flex items-center gap-1">
+                        Test Link <ExternalLink className="h-3.5 w-3.5 text-[#00F5D4]" />
                       </a>
                     </div>
                   </div>

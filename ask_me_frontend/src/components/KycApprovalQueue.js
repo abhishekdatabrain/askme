@@ -182,7 +182,7 @@ export default function KycApprovalQueue({ activeSubTab }) {
   return (
     <div className="rounded-2xl bg-[#13131A] border border-[#1C1C26] p-5 shadow-xl space-y-4 animate-fade-in">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#1C1C26] pb-4">
+      <div className="border-b border-[#1C1C26] pb-4">
         <div className="flex items-center gap-3">
           <div className="p-2.5 rounded-xl bg-[#00F5D4]/10 text-[#00F5D4] border border-[#00F5D4]/30">
             <ShieldCheck className="h-5 w-5" />
@@ -193,26 +193,6 @@ export default function KycApprovalQueue({ activeSubTab }) {
               Review tax compliance documents, government IDs, and bank account verifications.
             </p>
           </div>
-        </div>
-
-        <div className="flex items-center gap-2">
-          {[
-            { id: 'all', label: 'All' },
-            { id: 'pending', label: 'Pending' },
-            { id: 'verified', label: 'Approved' },
-            { id: 'action_required', label: 'Rejected' },
-          ].map((f) => (
-            <button
-              key={f.id}
-              onClick={() => setSelectedFilter(f.id)}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${selectedFilter === f.id
-                ? 'bg-brand-gradient text-[#0A0A0F]'
-                : 'bg-[#1C1C26] text-[#8B8B96] hover:text-white'
-                }`}
-            >
-              {f.label}
-            </button>
-          ))}
         </div>
       </div>
 

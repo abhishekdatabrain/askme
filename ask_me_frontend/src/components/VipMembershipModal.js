@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Check, ArrowLeft, Shield, Sparkles, CreditCard, Smartphone, Building, Wallet, CheckCircle2, Loader2 } from 'lucide-react';
 import { API_ENDPOINTS } from '@/config/api';
+import { getViewerToken, getCookie } from '@/utils/cookies';
 
 export default function VipMembershipModal({ isOpen, onClose, creator, onSuccess }) {
   const [step, setStep] = useState(1); // 1: Choose Plan, 2: Checkout, 3: Gateway Processing, 4: Payment Success, 5: Subscription Created
@@ -98,7 +99,7 @@ export default function VipMembershipModal({ isOpen, onClose, creator, onSuccess
       const generatedTxnId = `pay_${Math.random().toString(36).substring(2, 11).toUpperCase()}`;
 
       try {
-        const token = typeof window !== 'undefined' ? localStorage.getItem('askme_token') : null;
+        const token = getViewerToken() || getCookie('askme_viewer_token') || getCookie('askme_token') || (typeof window !== 'undefined' ? (localStorage.getItem('askme_viewer_token') || localStorage.getItem('askme_token')) : null);
         const res = await fetch(API_ENDPOINTS.VIEWERS.VIP_SUBSCRIBE, {
           method: 'POST',
           headers: {
@@ -203,11 +204,10 @@ export default function VipMembershipModal({ isOpen, onClose, creator, onSuccess
                       <button
                         key={p.id}
                         onClick={() => setSelectedPlan(p)}
-                        className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 whitespace-nowrap ${
-                          isSel
+                        className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 whitespace-nowrap ${isSel
                             ? 'bg-[#FFD60A] text-black shadow-md'
                             : 'bg-[#181820] text-[#8B8B96] border border-[#262007] hover:text-white'
-                        }`}
+                          }`}
                       >
                         <span>💎</span>
                         <span>{p.name} (₹{p.price})</span>
@@ -239,11 +239,11 @@ export default function VipMembershipModal({ isOpen, onClose, creator, onSuccess
                       {(Array.isArray(selectedPlan.perks) && selectedPlan.perks.length > 0
                         ? selectedPlan.perks
                         : [
-                            'VIP Badge in Live Chat & Profile',
-                            'Priority in Live Q&A Stream Queue',
-                            'Exclusive VIP Member Content',
-                            'Early Access to Videos & Announcements',
-                          ]
+                          'VIP Badge in Live Chat & Profile',
+                          'Priority in Live Q&A Stream Queue',
+                          'Exclusive VIP Member Content',
+                          'Early Access to Videos & Announcements',
+                        ]
                       ).map((benefit, idx) => (
                         <div key={idx} className="flex items-center gap-2 text-xs font-semibold text-[#D4D4DE]">
                           <Check className="h-4 w-4 text-[#00E676] shrink-0" />
@@ -316,11 +316,10 @@ export default function VipMembershipModal({ isOpen, onClose, creator, onSuccess
                     <button
                       key={item.id}
                       onClick={() => setSelectedPayMethod(item.id)}
-                      className={`w-full p-3.5 rounded-2xl border text-left flex items-center justify-between transition ${
-                        isSel
+                      className={`w-full p-3.5 rounded-2xl border text-left flex items-center justify-between transition ${isSel
                           ? 'bg-[#1F1905] border-[#FFD60A] text-white'
                           : 'bg-[#181820] border-[#22222E] text-[#8B8B96] hover:border-[#333344]'
-                      }`}
+                        }`}
                     >
                       <div className="flex items-center gap-3">
                         <IconComp className={`h-5 w-5 ${isSel ? 'text-[#FFD60A]' : 'text-[#8B8B96]'}`} />
@@ -329,9 +328,8 @@ export default function VipMembershipModal({ isOpen, onClose, creator, onSuccess
                           <p className="text-[10px] text-[#8B8B96]">{item.desc}</p>
                         </div>
                       </div>
-                      <div className={`h-4 w-4 rounded-full border flex items-center justify-center ${
-                        isSel ? 'border-[#FFD60A] bg-[#FFD60A]' : 'border-[#444455]'
-                      }`}>
+                      <div className={`h-4 w-4 rounded-full border flex items-center justify-center ${isSel ? 'border-[#FFD60A] bg-[#FFD60A]' : 'border-[#444455]'
+                        }`}>
                         {isSel && <div className="h-1.5 w-1.5 rounded-full bg-black" />}
                       </div>
                     </button>

@@ -62,6 +62,8 @@ router.get('/creators/:id', getCreatorById);
 router.put('/creators/:id/approve-kyc', approveCreatorKyc);
 router.put('/creators/:id/reject-kyc', rejectCreatorKyc);
 router.put('/creators/:id/toggle-block', toggleBlockCreator);
+router.put('/creators/:id/block', toggleBlockCreator);
+router.post('/creators/:id/block', toggleBlockCreator);
 router.delete('/creators/:id', deleteCreator);
 
 // 3. KYC Approval Management

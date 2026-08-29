@@ -41,7 +41,7 @@ export default function ViewerLoginPage() {
 
         setTimeout(() => {
           const searchParams = new URLSearchParams(window.location.search);
-          const redirectUrl = searchParams.get('redirect') || '/';
+          const redirectUrl = '/viewers/dashboard';
           window.location.href = redirectUrl;
         }, 1000);
       } else {
@@ -57,7 +57,7 @@ export default function ViewerLoginPage() {
 
   return (
     <div className="min-h-screen bg-[#0A0A0F] text-[#F5F5F7] font-sans flex flex-col justify-center py-12 sm:px-6 lg:px-8 selection:bg-[#00F5D4] selection:text-[#0A0A0F]">
-      
+
       {/* Top Header Logo */}
       <div className="sm:mx-auto sm:w-full sm:max-w-md text-center space-y-3">
         <Link href="/" className="inline-flex items-center gap-2.5">
@@ -96,7 +96,7 @@ export default function ViewerLoginPage() {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            
+
             {/* Email Address */}
             <div>
               <label className="block text-xs font-bold text-white mb-1">

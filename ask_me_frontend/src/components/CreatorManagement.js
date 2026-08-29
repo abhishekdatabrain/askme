@@ -24,41 +24,7 @@ import { getAdminToken } from '@/utils/cookies';
 
 export default function CreatorManagement({ activeSubTab }) {
   const { toast } = useToast();
-  const [creators, setCreators] = useState([
-    {
-      id: 1,
-      name: 'TechBurner Live',
-      email: 'contact@techburner.in',
-      mobile: '+91 98765 43210',
-      category: 'Tech & Gadgets',
-      kycStatus: 'Approved',
-      accountStatus: 'Active',
-      totalDonations: '₹14,50,000',
-      platform: 'youtube',
-    },
-    {
-      id: 2,
-      name: 'FinCal Strategy',
-      email: 'hello@fincal.com',
-      mobile: '+91 98111 22334',
-      category: 'Finance & Stocks',
-      kycStatus: 'Pending',
-      accountStatus: 'Active',
-      totalDonations: '₹8,20,000',
-      platform: 'youtube',
-    },
-    {
-      id: 3,
-      name: 'GamerX Xtreme',
-      email: 'gamerx@twitch.tv',
-      mobile: '+91 97777 88899',
-      category: 'Gaming',
-      kycStatus: 'Rejected',
-      accountStatus: 'Blocked',
-      totalDonations: '₹2,19,500',
-      platform: 'twitch',
-    },
-  ]);
+  const [creators, setCreators] = useState([]);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('All');
@@ -80,7 +46,7 @@ export default function CreatorManagement({ activeSubTab }) {
             mobile: c.mobile || 'N/A',
             category: c.category || 'Creator',
             kycStatus: c.kycStatus || 'Approved',
-            accountStatus: c.status ? (c.status.charAt(0).toUpperCase() + c.status.slice(1)) : 'Active',
+            accountStatus: c.accountStatus ? (c.accountStatus.charAt(0).toUpperCase() + c.accountStatus.slice(1)) : 'Active',
             totalDonations: `₹${(c.totalRevenue || 0).toLocaleString()}`,
             platform: 'youtube',
           })));
@@ -161,7 +127,7 @@ export default function CreatorManagement({ activeSubTab }) {
   return (
     <div className="rounded-2xl bg-[#13131A] border border-[#1C1C26] p-5 shadow-xl space-y-5 animate-fade-in">
       {/* Header & Stats */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#1C1C26] pb-4">
+      <div className="border-b border-[#1C1C26] pb-4">
         <div>
           <h2 className="text-lg font-bold text-white flex items-center gap-2">
             <Users className="h-5 w-5 text-[#00F5D4]" />
@@ -170,21 +136,6 @@ export default function CreatorManagement({ activeSubTab }) {
           <p className="text-xs text-[#8B8B96] mt-0.5">
             Manage registered creators: View Profile, Approve, Reject, Block, and Delete creator accounts.
           </p>
-        </div>
-
-        <div className="flex items-center gap-2">
-          {['All', 'Active', 'Blocked'].map((status) => (
-            <button
-              key={status}
-              onClick={() => setSelectedStatus(status)}
-              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${selectedStatus === status
-                ? 'bg-brand-gradient text-[#0A0A0F] shadow-sm'
-                : 'bg-[#1C1C26] text-[#8B8B96] hover:text-white'
-                }`}
-            >
-              {status}
-            </button>
-          ))}
         </div>
       </div>
 
@@ -205,8 +156,10 @@ export default function CreatorManagement({ activeSubTab }) {
         <table className="w-full text-left text-xs">
           <thead>
             <tr className="border-b border-[#1C1C26] text-[#8B8B96] font-bold">
-              <th className="pb-3 px-2">CREATOR</th>
-              <th className="pb-3 px-2">CONTACT</th>
+              <th className="pb-3 px-2">CREATOR NAME</th>
+              <th className="pb-3 px-2">EMAIL</th>
+              <th className="pb-3 px-2">MOBILE</th>
+              <th className="pb-3 px-2">REGISTRATION DATE</th>
               <th className="pb-3 px-2">KYC STATUS</th>
               <th className="pb-3 px-2">WALLET BALANCE</th>
               <th className="pb-3 px-2">ACCOUNT</th>
@@ -218,7 +171,7 @@ export default function CreatorManagement({ activeSubTab }) {
               <tr key={c.id} className="hover:bg-[#0A0A0F]/60 transition">
                 <td className="py-3.5 px-2">
                   <div className="flex items-center gap-2.5">
-                    <PlatformIcon platform={c.platform} className="h-5 w-5 shrink-0" />
+                    {/* <PlatformIcon platform={c.platform} className="h-5 w-5 shrink-0" /> */}
                     <div>
                       <span className="font-bold text-white block">{c.name}</span>
                       <span className="text-[10px] text-[#8B8B96]">{c.followers} Followers • {c.country}</span>
@@ -227,7 +180,13 @@ export default function CreatorManagement({ activeSubTab }) {
                 </td>
                 <td className="py-3.5 px-2 text-[#8B8B96]">
                   <div>{c.email}</div>
+                </td>
+                <td className="py-3.5 px-2 text-[#8B8B96]">
                   <div className="text-[10px]">{c.mobile}</div>
+
+                </td>
+                <td className="py-3.5 px-2 text-[#8B8B96]">
+                  {c.createdAt}
                 </td>
                 <td className="py-3.5 px-2">
                   <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${c.kycStatus === 'Approved' ? 'bg-[#00E676]/10 text-[#00E676] border border-[#00E676]/30' :
@@ -238,12 +197,7 @@ export default function CreatorManagement({ activeSubTab }) {
                   </span>
                 </td>
                 <td className="py-3.5 px-2 font-bold text-white">{c.walletBalance}</td>
-                <td className="py-3.5 px-2">
-                  <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${c.accountStatus === 'Active' ? 'bg-[#00F5D4]/10 text-[#00F5D4]' : 'bg-[#FF3D71]/20 text-[#FF3D71]'
-                    }`}>
-                    {c.accountStatus}
-                  </span>
-                </td>
+                <td className="py-3.5 px-2 font-bold ">{c.accountStatus}</td>
                 <td className="py-3.5 px-2 text-right">
                   <div className="flex items-center justify-end gap-1">
                     {/* 1. View Profile Icon */}
@@ -253,30 +207,6 @@ export default function CreatorManagement({ activeSubTab }) {
                       className="p-1.5 rounded-lg bg-[#1C1C26] text-[#8B8B96] hover:text-[#00F5D4] hover:bg-[#00F5D4]/10 transition"
                     >
                       <Eye className="h-3.5 w-3.5" />
-                    </button>
-
-                    {/* 2. Approve Icon */}
-                    <button
-                      onClick={() => handleAction(c.id, 'approve')}
-                      title="Approve"
-                      className={`p-1.5 rounded-lg transition ${c.kycStatus === 'Approved'
-                        ? 'bg-[#00E676]/10 text-[#00E676] opacity-60 cursor-default'
-                        : 'bg-[#1C1C26] text-[#8B8B96] hover:text-[#00E676] hover:bg-[#00E676]/10'
-                        }`}
-                    >
-                      <CheckCircle2 className="h-3.5 w-3.5" />
-                    </button>
-
-                    {/* 3. Reject Icon */}
-                    <button
-                      onClick={() => handleAction(c.id, 'reject')}
-                      title="Reject"
-                      className={`p-1.5 rounded-lg transition ${c.kycStatus === 'Rejected'
-                        ? 'bg-[#FF3D71]/10 text-[#FF3D71] opacity-60 cursor-default'
-                        : 'bg-[#1C1C26] text-[#8B8B96] hover:text-[#FF3D71] hover:bg-[#FF3D71]/10'
-                        }`}
-                    >
-                      <XCircle className="h-3.5 w-3.5" />
                     </button>
 
                     {/* 4. Block / Unblock Icon */}

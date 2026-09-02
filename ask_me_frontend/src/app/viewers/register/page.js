@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { User, Mail, Lock, Phone, ArrowRight, ShieldCheck, Heart, Sparkles, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { User, Mail, Lock, Phone, ArrowRight, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { API_ENDPOINTS } from '@/config/api';
 import { setViewerSession } from '@/utils/cookies';
 
@@ -59,7 +59,7 @@ export default function ViewerRegisterPage() {
 
         setTimeout(() => {
           const searchParams = new URLSearchParams(window.location.search);
-          const redirectUrl = searchParams.get('redirect') || '/';
+          const redirectUrl = searchParams.get('redirect') || '/viewers/dashboard';
           window.location.href = redirectUrl;
         }, 800);
       } else {
@@ -86,12 +86,6 @@ export default function ViewerRegisterPage() {
             AskMe <span className="text-brand-gradient">Viewer</span>
           </span>
         </Link>
-        {/* <h2 className="font-heading font-black text-2xl text-white tracking-tight">
-          Create Supporter Account
-        </h2> */}
-        <p className="text-xs text-[#8B8B96] max-w-xs mx-auto">
-          Register to send instant UPI donations, track live paid questions, and support your favorite creators.
-        </p>
       </div>
 
       {/* Main Registration Card */}
@@ -190,12 +184,6 @@ export default function ViewerRegisterPage() {
                 />
               </div>
             </div>
-
-            {/* Security Badge */}
-            {/* <div className="p-3 rounded-xl bg-[#0A0A0F] border border-[#1C1C26] flex items-center gap-2 text-[11px] text-[#8B8B96]">
-              <ShieldCheck className="h-4 w-4 text-[#00F5D4] shrink-0" />
-              <span>Your account details are 256-bit encrypted for instant stream donations.</span>
-            </div> */}
 
             {/* Submit Button */}
             <button

@@ -25,47 +25,64 @@ export default function LiveSessionManagement({ activeSubTab }) {
   const [filter, setFilter] = useState('Active');
   const [selectedQrModal, setSelectedQrModal] = useState(null);
 
-  useEffect(() => {
-    const fetchLiveSessions = async () => {
-      try {
-        const token = getAdminToken();
-        const res = await fetch(API_ENDPOINTS.ADMIN.LIVE_SESSIONS, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        const data = await res.json();
-        if (data.status === 'success' && data.data?.sessions) {
-          setSessions(data.data.sessions.map((s, idx) => ({
-            id: s.id ? (s.id.toString().startsWith('SES') ? s.id : `SES-${s.id}`) : `SES-${idx + 900}`,
-            creatorName: s.creator || '',
-            handle: `@${(s.creator || '').toLowerCase().replace(/\s+/g, '')}`,
-            platform: 'youtube',
-            viewersCount: typeof s.viewers === 'number' ? s.viewers.toLocaleString() : (s.viewers || '14,200'),
-            activeDuration: s.duration || '',
-            qrStatus: s.qrStatus || '',
-            donationsTotal: `₹${(s.totalDonations || 0).toLocaleString()}`,
-            questionsCount: 120,
-            overlaySocket: `wss://obs.askme.pro/live/${(s.id || 'sess').toString().toLowerCase()}`,
-            qrImageUrl: `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(s.streamUrl || 'https://askme.pro')}`,
-            isSuspicious: s.qrStatus === 'Suspended',
-            sessionStatus: s.qrStatus || 'Active'
-          })));
-        }
-      } catch (err) {
-        console.warn('API fetch live sessions warning:', err.message);
-      }
-    };
-    fetchLiveSessions();
-  }, []);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
 
   useEffect(() => {
-    if (activeSubTab === 'livesessions_active') {
-      setFilter('Active');
-    } else if (activeSubTab === 'livesessions_closed') {
-      setFilter('Closed');
-    } else if (activeSubTab === 'livesessions_suspended') {
-      setFilter('Suspended');
-    }
+    setCurrentPage(1);
   }, [activeSubTab]);
+
+  const fetchLiveSessions = async (statusParam = 'Active', pageParam = currentPage) => {
+    try {
+      const token = getAdminToken();
+      const res = await fetch(`${API_ENDPOINTS.ADMIN.LIVE_SESSIONS}?status=${statusParam}&page=${pageParam}&limit=10`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (data.status === 'success' && data.data?.sessions) {
+        setSessions(data.data.sessions.map((s, idx) => ({
+          id: s.id ? (s.id.toString().startsWith('SES') ? s.id : `SES-${s.id}`) : `SES-${idx + 900}`,
+          creatorName: s.creator || '',
+          handle: s.handle || `@${(s.creator || '').toLowerCase().replace(/\s+/g, '')}`,
+          platform: s.platform || '',
+          viewersCount: typeof s.viewers === 'number' ? s.viewers.toLocaleString() : (s.viewers || '0'),
+          activeDuration: s.duration || '',
+          qrStatus: s.qrStatus || '',
+          donationsTotal: `₹${(s.totalDonations || 0).toLocaleString()}`,
+          questionsCount: s.questionsCount !== undefined ? s.questionsCount : 0,
+          overlaySocket: s.overlayUrl || ``,
+          qrImageUrl: s.qrImageUrl || ``,
+          isSuspicious: s.qrStatus === 'Suspended',
+          sessionStatus: s.qrStatus || 'Active',
+          category: s.category || '',
+        })));
+
+        const pag = data.pagination || data.data?.pagination;
+        if (pag) {
+          setTotalPages(pag.totalPages || 1);
+          setTotalCount(pag.totalCount || 0);
+        } else {
+          setTotalCount(data.totalCount || data.total || 0);
+        }
+      }
+    } catch (err) {
+      console.warn('API fetch live sessions warning:', err.message);
+    }
+  };
+
+  useEffect(() => {
+    let s = 'Active';
+    if (activeSubTab === 'livesessions_closed') {
+      s = 'Closed';
+    } else if (activeSubTab === 'livesessions_suspended') {
+      s = 'Suspended';
+    } else if (activeSubTab === 'livesessions_active') {
+      s = 'Active';
+    }
+    setFilter(s);
+    fetchLiveSessions(s, currentPage);
+  }, [activeSubTab, currentPage]);
 
   const toggleSuspendSession = async (id) => {
     const token = getAdminToken();
@@ -89,11 +106,7 @@ export default function LiveSessionManagement({ activeSubTab }) {
     }));
   };
 
-  const filteredSessions = sessions.filter(s => {
-    if (filter === 'All') return true;
-    return s.sessionStatus === filter;
-  });
-
+  const filteredSessions = sessions;
   return (
     <div className="rounded-2xl bg-[#13131A] border border-[#1C1C26] p-5 shadow-xl space-y-5 animate-fade-in">
       {/* Header */}
@@ -106,21 +119,6 @@ export default function LiveSessionManagement({ activeSubTab }) {
           <p className="text-xs text-[#8B8B96] mt-0.5">
             View active sessions, creator details, generated QR codes, donation activity, and disable suspicious sessions.
           </p>
-        </div>
-
-        <div className="flex items-center gap-2">
-          {['Active', 'Closed', 'Suspended'].map((status) => (
-            <button
-              key={status}
-              onClick={() => setFilter(status)}
-              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${filter === status
-                ? 'bg-brand-gradient text-[#0A0A0F]'
-                : 'bg-[#1C1C26] text-[#8B8B96] hover:text-white'
-                }`}
-            >
-              {status} Sessions
-            </button>
-          ))}
         </div>
       </div>
 
@@ -140,6 +138,7 @@ export default function LiveSessionManagement({ activeSubTab }) {
                 <div>
                   <h4 className="font-bold text-white text-sm">{session.creatorName}</h4>
                   <span className="text-[10px] text-[#8B8B96]">{session.handle}</span>
+                  <p className="text-[10px] text-[#8B8B96]">{session.category}</p>
                 </div>
               </div>
               <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${session.sessionStatus === 'Active' ? 'bg-[#00E676]/10 text-[#00E676] border border-[#00E676]/30' :
@@ -157,11 +156,7 @@ export default function LiveSessionManagement({ activeSubTab }) {
               </div>
 
               <div className="flex-1 space-y-2 text-xs">
-                <div className="p-2 rounded-lg bg-[#13131A] border border-[#1C1C26]">
-                  <span className="text-[10px] text-[#8B8B96] block">Viewers / Duration</span>
-                  <span className="font-bold text-white">{session.viewersCount} ({session.activeDuration})</span>
-                </div>
-                <div className="p-2 rounded-lg bg-[#13131A] border border-[#1C1C26]">
+                <div className="p-2.5 rounded-lg bg-[#13131A] border border-[#1C1C26]">
                   <span className="text-[10px] text-[#8B8B96] block">Donation Activity</span>
                   <span className="font-bold text-[#00F5D4]">{session.questionsCount} Qs ({session.donationsTotal})</span>
                 </div>
@@ -185,6 +180,34 @@ export default function LiveSessionManagement({ activeSubTab }) {
             </div>
           </div>
         ))}
+      </div>
+
+      {/* PAGINATION CONTROLS BAR */}
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-[#1C1C26] text-xs">
+        <span className="text-[#8B8B96]">
+          Showing <strong className="text-white">{sessions.length}</strong> of <strong className="text-[#00F5D4]">{totalCount}</strong> Live Sessions (Page {currentPage} of {totalPages})
+        </span>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            disabled={currentPage <= 1}
+            onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+            className="px-3.5 py-1.5 rounded-xl bg-[#1C1C26] text-white border border-[#2A2A3A] disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[#252533] transition"
+          >
+            ← Previous
+          </button>
+          <span className="px-3 py-1.5 rounded-xl bg-[#0A0A0F] border border-[#1C1C26] font-bold text-[#00F5D4]">
+            {currentPage} / {totalPages}
+          </span>
+          <button
+            type="button"
+            disabled={currentPage >= totalPages}
+            onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+            className="px-3.5 py-1.5 rounded-xl bg-[#1C1C26] text-white border border-[#2A2A3A] disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[#252533] transition"
+          >
+            Next →
+          </button>
+        </div>
       </div>
 
       {/* Enlarged Stream QR Code Modal */}

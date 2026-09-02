@@ -107,16 +107,16 @@ export default function ViewerNotificationsPage() {
   const unreadCount = notifications.filter(n => !n.isRead).length;
 
   if (loading) {
-    return <SplashLoader message="Loading Live Broadcast Notifications..." />;
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center p-12 space-y-3 min-h-[60vh]">
+        <div className="h-8 w-8 border-2 border-[#00F5D4] border-t-transparent rounded-full animate-spin" />
+        <p className="text-xs font-semibold text-[#8B8B96]">Loading Live Broadcast Notifications...</p>
+      </div>
+    );
   }
 
   return (
-    <div className="min-h-screen bg-[#0A0A0F] text-[#F5F5F7] font-sans selection:bg-[#00F5D4] selection:text-[#0A0A0F] flex">
-      {/* 1. DESKTOP SIDEBAR */}
-      <div className="hidden md:block sticky top-0 h-screen overflow-y-auto shrink-0 z-30">
-        <ViewerSidebar activeTab="notifications" />
-      </div>
-
+    <>
       {/* 2. MAIN CONTAINER */}
       <div className="flex-1 flex flex-col min-w-0 min-h-screen">
         {/* TOP HEADER */}
@@ -292,6 +292,6 @@ export default function ViewerNotificationsPage() {
           )}
         </main>
       </div>
-    </div>
+    </>
   );
 }

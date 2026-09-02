@@ -33,45 +33,41 @@ export default function WalletManagement({ activeSubTab }) {
   const [bonusCreditInput, setBonusCreditInput] = useState('');
   const [isUpdating, setIsUpdating] = useState(false);
 
-  const fetchWallets = async () => {
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+
+  const fetchWallets = async (pageParam = currentPage) => {
     try {
       setIsLoading(true);
       const token = getAdminToken();
-      const res = await fetch(API_ENDPOINTS.ADMIN.CREATORS, {
+      const res = await fetch(`${API_ENDPOINTS.ADMIN.WALLETS}?page=${pageParam}&limit=10`, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
       const data = await res.json();
-      if (data.status === 'success' && data.data?.creators) {
-        setCreatorWallets(data.data.creators.map(c => ({
-          creatorId: c.id,
-          creatorName: c.fullName || c.full_name || 'Creator Host',
-          handle: c.username ? `@${c.username.replace('@', '')}` : `@creator_${c.id}`,
-          grossEarnings: c.totalEarnings || Math.floor(Math.random() * 50000 + 10000),
-          platformCommission: Math.round((c.totalEarnings || 25000) * 0.15), // 15% Platform Cut
-          netCreatorShare: Math.round((c.totalEarnings || 25000) * 0.85),     // 85% Creator Share
-          withdrawnTotal: Math.round((c.totalEarnings || 25000) * 0.60),
-          availableBalance: Math.round((c.totalEarnings || 25000) * 0.25),
-          settlementStatus: c.kycStatus === 'approved' ? 'Settled' : 'Pending Settlement'
-        })));
+      if (res.ok && data.status === 'success' && data.data?.wallets) {
+        setCreatorWallets(data.data.wallets);
+        const pag = data.pagination || data.data?.pagination;
+        if (pag) {
+          setTotalPages(pag.totalPages || 1);
+          setTotalCount(pag.totalCount || 0);
+        } else {
+          setTotalCount(data.totalCount || data.total || 0);
+        }
       } else {
-        // Fallback mock wallets
-        setCreatorWallets([
-          { creatorId: 1, creatorName: 'TechBurner Live', handle: '@techburner', grossEarnings: 1450000, platformCommission: 217500, netCreatorShare: 1232500, withdrawnTotal: 1048000, availableBalance: 184500, settlementStatus: 'Settled' },
-          { creatorId: 2, creatorName: 'CA Rachana Ranade', handle: '@ca_rachana', grossEarnings: 2280000, platformCommission: 342000, netCreatorShare: 1938000, withdrawnTotal: 1596000, availableBalance: 342000, settlementStatus: 'Settled' },
-          { creatorId: 3, creatorName: 'CodeWithAnish', handle: '@codewithanish', grossEarnings: 320000, platformCommission: 48000, netCreatorShare: 272000, withdrawnTotal: 226800, availableBalance: 45200, settlementStatus: 'Pending Settlement' },
-          { creatorId: 4, creatorName: 'Sarah AI & Tech', handle: '@sarah_ai', grossEarnings: 180000, platformCommission: 27000, netCreatorShare: 153000, withdrawnTotal: 140200, availableBalance: 12800, settlementStatus: 'Settled' }
-        ]);
+        setCreatorWallets([]);
       }
     } catch (err) {
       console.warn('Admin wallets fetch notice:', err.message);
+      setCreatorWallets([]);
     } finally {
       setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchWallets();
-  }, []);
+    fetchWallets(currentPage);
+  }, [currentPage]);
 
   useEffect(() => {
     if (activeSubTab === 'wallets_ledger') {
@@ -138,57 +134,19 @@ export default function WalletManagement({ activeSubTab }) {
       
       {/* 1. System Earnings Overview Header (Requirement 19: Earnings Report) */}
       <div className="p-6 rounded-3xl bg-gradient-to-r from-[#13131A] via-[#1A1A26] to-[#13131A] border border-[#1C1C26] shadow-xl space-y-4">
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 border-b border-[#1C1C26] pb-4">
+        <div className="border-b border-[#1C1C26] pb-4">
           <div>
-            <div className="flex items-center gap-2">
-              <span className="px-2.5 py-0.5 rounded-full bg-[#00F5D4]/10 text-[#00F5D4] border border-[#00F5D4]/30 text-[10px] font-black uppercase tracking-wider">
-                ADMIN WALLET CONTROL (REQ 19)
-              </span>
-            </div>
-            <h2 className="text-xl font-heading font-black text-white mt-1 flex items-center gap-2">
+            <h2 className="text-xl font-heading font-black text-white flex items-center gap-2">
               <Wallet className="h-6 w-6 text-[#00F5D4]" /> System Earnings & Revenue Settlement Report
             </h2>
             <p className="text-xs text-[#8B8B96] mt-0.5">
               Live tracking of viewer donations, 15% platform cut, 85% creator payouts, & wallet balance settlements.
             </p>
           </div>
-
-          <div className="flex items-center gap-2 shrink-0">
-            <button
-              onClick={() => setActiveView('wallets')}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
-                activeView === 'wallets'
-                  ? 'bg-brand-gradient text-[#0A0A0F] shadow-md glow-teal'
-                  : 'bg-[#0A0A0F] text-[#8B8B96] hover:text-white border border-[#1C1C26]'
-              }`}
-            >
-              Creator Wise Revenue
-            </button>
-            <button
-              onClick={() => setActiveView('ledger')}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
-                activeView === 'ledger'
-                  ? 'bg-brand-gradient text-[#0A0A0F] shadow-md glow-teal'
-                  : 'bg-[#0A0A0F] text-[#8B8B96] hover:text-white border border-[#1C1C26]'
-              }`}
-            >
-              Commission Ledger
-            </button>
-          </div>
         </div>
 
         {/* System Totals Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          
-          <div className="p-4 rounded-2xl bg-[#0A0A0F] border border-[#1C1C26] space-y-1">
-            <span className="text-[11px] font-bold text-[#8B8B96] flex items-center gap-1">
-              <DollarSign className="h-3.5 w-3.5 text-[#00F5D4]" /> Total Gross Raised
-            </span>
-            <div className="font-heading font-black text-xl text-white">
-              ₹{totalGrossRevenue.toLocaleString('en-IN')}
-            </div>
-            <span className="text-[10px] text-[#8B8B96]">Viewer Donation Sum</span>
-          </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
 
           <div className="p-4 rounded-2xl bg-[#0A0A0F] border border-[#1C1C26] space-y-1">
             <span className="text-[11px] font-bold text-[#8B8B96] flex items-center gap-1">
@@ -222,129 +180,102 @@ export default function WalletManagement({ activeSubTab }) {
         </div>
       </div>
 
-      {/* 2. CREATOR WISE REVENUE TABLE & BALANCE MANAGEMENT (REQUIREMENT 19) */}
-      {activeView === 'wallets' ? (
-        <div className="p-6 rounded-3xl bg-[#13131A] border border-[#1C1C26] space-y-4 shadow-xl">
-          <div className="flex items-center justify-between border-b border-[#1C1C26] pb-3">
-            <div>
-              <h3 className="font-heading font-bold text-base text-white flex items-center gap-2">
-                <TrendingUp className="h-5 w-5 text-[#00F5D4]" /> Creator Wise Revenue & Wallet Balances
-              </h3>
-              <p className="text-xs text-[#8B8B96] mt-0.5">
-                Admin can edit creator balances, adjust platform commission cuts, & trigger settlements.
-              </p>
-            </div>
-            <span className="text-xs font-bold text-[#00F5D4] bg-[#00F5D4]/10 px-3 py-1 rounded-full border border-[#00F5D4]/30">
-              {creatorWallets.length} Creators Listed
-            </span>
+      {/* 2. CREATOR WISE REVENUE TABLE & BALANCE MANAGEMENT */}
+      <div className="p-6 rounded-3xl bg-[#13131A] border border-[#1C1C26] space-y-4 shadow-xl">
+        <div className="flex items-center justify-between border-b border-[#1C1C26] pb-3">
+          <div>
+            <h3 className="font-heading font-bold text-base text-white flex items-center gap-2">
+              <TrendingUp className="h-5 w-5 text-[#00F5D4]" /> Creator Wise Revenue & Wallet Balances
+            </h3>
+            <p className="text-xs text-[#8B8B96] mt-0.5">
+              Admin can edit creator balances, adjust platform commission cuts, & trigger settlements.
+            </p>
           </div>
+          <span className="text-xs font-bold text-[#00F5D4] bg-[#00F5D4]/10 px-3 py-1 rounded-full border border-[#00F5D4]/30">
+            {creatorWallets.length} Creators Listed
+          </span>
+        </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {creatorWallets.map((w) => (
-              <div key={w.creatorId} className="p-5 rounded-2xl bg-[#0A0A0F] border border-[#1C1C26] space-y-4 hover:border-[#00F5D4]/40 transition">
-                <div className="flex items-center justify-between border-b border-[#1C1C26] pb-3">
-                  <div>
-                    <h4 className="font-heading font-black text-base text-white">{w.creatorName}</h4>
-                    <span className="text-xs text-[#00F5D4] font-semibold">{w.handle}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {creatorWallets.map((w) => (
+            <div key={w.creatorId} className="p-5 rounded-2xl bg-[#0A0A0F] border border-[#1C1C26] space-y-4 hover:border-[#00F5D4]/40 transition">
+              <div className="flex items-center justify-between border-b border-[#1C1C26] pb-3">
+                <div>
+                  <h4 className="font-heading font-black text-base text-white">{w.creatorName}</h4>
+                  <span className="text-xs text-[#00F5D4] font-semibold">{w.handle}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  {w.settlementStatus ? (
                     <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase ${
                       w.settlementStatus === 'Settled' ? 'bg-[#00E676]/10 text-[#00E676] border border-[#00E676]/30' : 'bg-[#FFD60A]/10 text-[#FFD60A] border border-[#FFD60A]/30'
                     }`}>
                       {w.settlementStatus}
                     </span>
+                  ) : null}
 
-                    <button
-                      onClick={() => {
-                        setSelectedWalletModal(w);
-                        setEditBalanceInput(w.availableBalance.toString());
-                        setBonusCreditInput('0');
-                      }}
-                      className="px-2.5 py-1 rounded-xl bg-[#1C1C26] text-white text-xs font-bold hover:bg-[#00F5D4] hover:text-[#0A0A0F] transition flex items-center gap-1"
-                    >
-                      <Edit3 className="h-3.5 w-3.5" /> Edit Balance
-                    </button>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3 text-xs">
-                  <div className="p-3 rounded-xl bg-[#13131A] border border-[#1C1C26]">
-                    <span className="text-[10px] text-[#8B8B96] block font-semibold">Gross Raised</span>
-                    <span className="font-heading font-black text-white text-sm">₹{w.grossEarnings.toLocaleString()}</span>
-                  </div>
-                  <div className="p-3 rounded-xl bg-[#13131A] border border-[#1C1C26]">
-                    <span className="text-[10px] text-[#8B8B96] block font-semibold">Platform Fee (15%)</span>
-                    <span className="font-heading font-black text-[#FFD60A] text-sm">₹{w.platformCommission.toLocaleString()}</span>
-                  </div>
-                  <div className="p-3 rounded-xl bg-[#13131A] border border-[#1C1C26]">
-                    <span className="text-[10px] text-[#8B8B96] block font-semibold">Creator Net Share (85%)</span>
-                    <span className="font-heading font-black text-[#00E676] text-sm">₹{w.netCreatorShare.toLocaleString()}</span>
-                  </div>
-                  <div className="p-3 rounded-xl bg-[#13131A] border border-[#1C1C26]">
-                    <span className="text-[10px] text-[#8B8B96] block font-semibold">Available Balance</span>
-                    <span className="font-heading font-black text-[#00F5D4] text-sm">₹{w.availableBalance.toLocaleString()}</span>
-                  </div>
+                  <button
+                    onClick={() => {
+                      setSelectedWalletModal(w);
+                      setEditBalanceInput((w.availableBalance || 0).toString());
+                      setBonusCreditInput('0');
+                    }}
+                    className="px-2.5 py-1 rounded-xl bg-[#1C1C26] text-white text-xs font-bold hover:bg-[#00F5D4] hover:text-[#0A0A0F] transition flex items-center gap-1"
+                  >
+                    <Edit3 className="h-3.5 w-3.5" /> Edit Balance
+                  </button>
                 </div>
               </div>
-            ))}
+
+              <div className="grid grid-cols-2 gap-3 text-xs">
+                <div className="p-3 rounded-xl bg-[#13131A] border border-[#1C1C26]">
+                  <span className="text-[10px] text-[#8B8B96] block font-semibold">Gross Raised</span>
+                  <span className="font-heading font-black text-white text-sm">₹{(w.grossEarnings || 0).toLocaleString('en-IN')}</span>
+                </div>
+                <div className="p-3 rounded-xl bg-[#13131A] border border-[#1C1C26]">
+                  <span className="text-[10px] text-[#8B8B96] block font-semibold">Platform Fee (15%)</span>
+                  <span className="font-heading font-black text-[#FFD60A] text-sm">₹{(w.platformCommission || 0).toLocaleString('en-IN')}</span>
+                </div>
+                <div className="p-3 rounded-xl bg-[#13131A] border border-[#1C1C26]">
+                  <span className="text-[10px] text-[#8B8B96] block font-semibold">Creator Net Share (85%)</span>
+                  <span className="font-heading font-black text-[#00E676] text-sm">₹{(w.netCreatorShare || 0).toLocaleString('en-IN')}</span>
+                </div>
+                <div className="p-3 rounded-xl bg-[#13131A] border border-[#1C1C26]">
+                  <span className="text-[10px] text-[#8B8B96] block font-semibold">Available Balance</span>
+                  <span className="font-heading font-black text-[#00F5D4] text-sm">₹{(w.availableBalance || 0).toLocaleString('en-IN')}</span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* PAGINATION CONTROLS BAR */}
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-[#1C1C26] text-xs">
+          <span className="text-[#8B8B96]">
+            Showing <strong className="text-white">{creatorWallets.length}</strong> of <strong className="text-[#00F5D4]">{totalCount}</strong> Wallets (Page {currentPage} of {totalPages})
+          </span>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              disabled={currentPage <= 1}
+              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+              className="px-3.5 py-1.5 rounded-xl bg-[#1C1C26] text-white border border-[#2A2A3A] disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[#252533] transition"
+            >
+              ← Previous
+            </button>
+            <span className="px-3 py-1.5 rounded-xl bg-[#0A0A0F] border border-[#1C1C26] font-bold text-[#00F5D4]">
+              {currentPage} / {totalPages}
+            </span>
+            <button
+              type="button"
+              disabled={currentPage >= totalPages}
+              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+              className="px-3.5 py-1.5 rounded-xl bg-[#1C1C26] text-white border border-[#2A2A3A] disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[#252533] transition"
+            >
+              Next →
+            </button>
           </div>
         </div>
-      ) : (
-        /* Commission Ledger View */
-        <div className="rounded-3xl bg-[#13131A] border border-[#1C1C26] p-6 shadow-xl space-y-4">
-          <div className="flex items-center justify-between border-b border-[#1C1C26] pb-3">
-            <h3 className="font-heading font-bold text-white text-base flex items-center gap-2">
-              <FileText className="h-5 w-5 text-[#00F5D4]" /> Platform Fee & Wallet Accounting Ledger
-            </h3>
-            <span className="text-xs text-[#8B8B96]">256-Bit Cryptographic Audit Log</span>
-          </div>
-
-          <p className="text-xs text-[#8B8B96]">
-            <strong>Viewer Donation Flow:</strong> Viewer sends payment on <code>/pay/[sessionCode]</code> &gt; Backend instantly splits 85% to Creator Wallet & 15% to Platform Revenue Ledger &gt; Real-time notification chime fires on OBS stream overlay!
-          </p>
-
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs border-collapse">
-              <thead>
-                <tr className="border-b border-[#1C1C26] text-[#8B8B96] uppercase text-[10px] font-extrabold">
-                  <th className="py-3 px-3">Transaction ID</th>
-                  <th className="py-3 px-3">Timestamp</th>
-                  <th className="py-3 px-3">Flow & Description</th>
-                  <th className="py-3 px-3">Type</th>
-                  <th className="py-3 px-3">Gross / Net Split</th>
-                  <th className="py-3 px-3 text-right">System Balance</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[#1C1C26]">
-                <tr className="hover:bg-[#0A0A0F]/60 transition">
-                  <td className="py-3 px-3 font-mono text-[#00F5D4] font-bold">TXN-882190</td>
-                  <td className="py-3 px-3 text-white">18 Aug 2026, 12:15 PM</td>
-                  <td className="py-3 px-3 text-white">Viewer Donation (Rahul) -&gt; TechBurner Live</td>
-                  <td className="py-3 px-3">
-                    <span className="px-2 py-0.5 rounded bg-[#00E676]/10 text-[#00E676] font-bold text-[10px]">
-                      Donation Credit
-                    </span>
-                  </td>
-                  <td className="py-3 px-3 font-bold text-white">₹500 (₹425 Creator / ₹75 Platform)</td>
-                  <td className="py-3 px-3 text-right font-bold text-white">₹18,45,000</td>
-                </tr>
-                <tr className="hover:bg-[#0A0A0F]/60 transition">
-                  <td className="py-3 px-3 font-mono text-[#00F5D4] font-bold">TXN-882191</td>
-                  <td className="py-3 px-3 text-white">18 Aug 2026, 11:42 AM</td>
-                  <td className="py-3 px-3 text-white">Viewer Donation (Aman) -&gt; Mortal Gaming</td>
-                  <td className="py-3 px-3">
-                    <span className="px-2 py-0.5 rounded bg-[#00E676]/10 text-[#00E676] font-bold text-[10px]">
-                      Donation Credit
-                    </span>
-                  </td>
-                  <td className="py-3 px-3 font-bold text-white">₹1,000 (₹850 Creator / ₹150 Platform)</td>
-                  <td className="py-3 px-3 text-right font-bold text-white">₹18,44,500</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
+      </div>
 
       {/* 3. ADMIN EDIT CREATOR BALANCE MODAL */}
       {selectedWalletModal && (

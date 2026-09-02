@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import ViewerSidebar from '@/components/ViewerSidebar';
 import { useToast } from '@/context/ToastContext';
 import { getViewerToken, getViewerUser } from '@/utils/cookies';
@@ -23,11 +24,21 @@ import {
 } from 'lucide-react';
 
 export default function ViewerMyQuestionsPage() {
+  const router = useRouter();
   const { toast } = useToast();
   const [viewer, setViewer] = useState(null);
   const [questions, setQuestions] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [theme, setTheme] = useState('dark');
+
+  // Auth Guard Check
+  useEffect(() => {
+    const token = getViewerToken();
+    const u = getViewerUser();
+    if (!token && !u) {
+      router.replace('/viewers/login');
+    }
+  }, [router]);
 
   // Theme Sync
   useEffect(() => {
@@ -74,10 +85,7 @@ export default function ViewerMyQuestionsPage() {
   const answeredCount = questions.filter(q => q.status === 'read').length;
 
   return (
-    <div className={`min-h-screen font-sans flex transition-colors duration-200 ${theme === 'light' ? 'bg-[#F4F5F7] text-[#1A1D20]' : 'bg-[#0A0A0F] text-[#F5F5F7]'
-      }`}>
-      <ViewerSidebar theme={theme} onToggleTheme={toggleTheme} currentTab="my-questions" />
-
+    <>
       <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
         {/* HEADER */}
         <header className={`border-b sticky top-0 z-20 px-6 py-4 flex items-center justify-between transition-colors ${theme === 'light' ? 'border-[#E9ECEF] bg-white/90 backdrop-blur-md' : 'border-[#1C1C26] bg-[#0A0A0F]/80 backdrop-blur-md'
@@ -137,10 +145,10 @@ export default function ViewerMyQuestionsPage() {
                   <div
                     key={q.id || idx}
                     className={`p-5 rounded-2xl border space-y-3 shadow-md transition ${q.isVip
-                        ? 'bg-[#1C1805] border-2 border-[#FFD60A]/80 shadow-xl glow-gold'
-                        : theme === 'light'
-                          ? 'bg-[#F8F9FA] border-[#E9ECEF]'
-                          : 'bg-[#0A0A0F] border-[#1C1C26]'
+                      ? 'bg-[#1C1805] border-2 border-[#FFD60A]/80 shadow-xl glow-gold'
+                      : theme === 'light'
+                        ? 'bg-[#F8F9FA] border-[#E9ECEF]'
+                        : 'bg-[#0A0A0F] border-[#1C1C26]'
                       }`}
                   >
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b pb-3 border-[#1C1C26]">
@@ -179,10 +187,10 @@ export default function ViewerMyQuestionsPage() {
                           My Submitted Question:
                         </span>
                         <p className={`p-3 rounded-2xl text-xs italic border font-medium ${q.isVip
-                            ? 'bg-[#0A0A0F] text-[#FFD60A] border-[#FFD60A]/40'
-                            : theme === 'light'
-                              ? 'bg-white border-[#E9ECEF] text-[#00B49F]'
-                              : 'bg-[#13131A] text-[#00F5D4] border-[#1C1C26]'
+                          ? 'bg-[#0A0A0F] text-[#FFD60A] border-[#FFD60A]/40'
+                          : theme === 'light'
+                            ? 'bg-white border-[#E9ECEF] text-[#00B49F]'
+                            : 'bg-[#13131A] text-[#00F5D4] border-[#1C1C26]'
                           }`}>
                           "{q.isVip ? '⚡ VIP FAST-TRACK: ' : ''}{q.message}"
                         </p>
@@ -197,10 +205,10 @@ export default function ViewerMyQuestionsPage() {
                           : ''}
                       </span>
                       <span className={`px-3 py-1 rounded-full font-bold text-[10px] uppercase ${q.status === 'read'
-                          ? 'bg-[#00E676]/15 text-[#00E676] border border-[#00E676]/30'
-                          : q.status === 'cancelled'
-                            ? 'bg-[#FF3D71]/15 text-[#FF3D71] border border-[#FF3D71]/30'
-                            : 'bg-[#FFD60A]/15 text-[#FFD60A] border border-[#FFD60A]/30'
+                        ? 'bg-[#00E676]/15 text-[#00E676] border border-[#00E676]/30'
+                        : q.status === 'cancelled'
+                          ? 'bg-[#FF3D71]/15 text-[#FF3D71] border border-[#FF3D71]/30'
+                          : 'bg-[#FFD60A]/15 text-[#FFD60A] border border-[#FFD60A]/30'
                         }`}>
                         {q.status === 'read' ? '✓ Answered on Broadcast' : (q.status === 'cancelled' ? '✕ Cancelled' : '● In Creator Queue')}
                       </span>
@@ -212,6 +220,6 @@ export default function ViewerMyQuestionsPage() {
           </div>
         </main>
       </div>
-    </div>
+    </>
   );
 }

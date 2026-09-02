@@ -25,6 +25,11 @@ const VipPlan = sequelize.define(
       primaryKey: true,
     },
 
+    creator_id: {
+      type: DataTypes.BIGINT,
+      allowNull: true,
+    },
+
     name: {
       type: DataTypes.STRING(100),
       allowNull: false,

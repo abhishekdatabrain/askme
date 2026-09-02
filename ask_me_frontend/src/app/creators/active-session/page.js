@@ -175,11 +175,7 @@ export default function CreatorActiveSessionPage() {
   };
 
   return (
-    <div className={`min-h-screen font-sans flex transition-colors duration-200 ${
-      theme === 'light' ? 'bg-[#F4F5F7] text-[#1A1D20]' : 'bg-[#0A0A0F] text-[#F5F5F7]'
-    }`}>
-      <CreatorSidebar theme={theme} onToggleTheme={toggleTheme} />
-
+    <>
       <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
         <header className={`border-b sticky top-0 z-20 px-6 py-4 flex items-center justify-between transition-colors ${
           theme === 'light' ? 'border-[#E9ECEF] bg-white/90 backdrop-blur-md' : 'border-[#1C1C26] bg-[#0A0A0F]/80 backdrop-blur-md'
@@ -306,6 +302,6 @@ export default function CreatorActiveSessionPage() {
           )}
         </main>
       </div>
-    </div>
+    </>
   );
 }

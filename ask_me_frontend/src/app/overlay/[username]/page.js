@@ -108,10 +108,14 @@ function StreamOverlayContent() {
         const res = await fetch(`${API_ENDPOINTS.CREATORS.OVERLAY_ALERTS}/${overlayData.creator.id}`);
         const data = await res.json();
         if (res.ok && data.status === 'success' && data.data) {
-          const activeItem = data.data.latestReadAlert || data.data.alerts?.[0];
-          if (activeItem && activeItem.id !== lastAlertId) {
-            setLastAlertId(activeItem.id);
-            setActiveAlert(activeItem);
+          const activeItem = data.data.latestReadAlert;
+          if (activeItem) {
+            if (activeItem.id !== lastAlertId) {
+              setLastAlertId(activeItem.id);
+              setActiveAlert(activeItem);
+            }
+          } else {
+            setActiveAlert(null);
           }
         }
       } catch (e) { }
@@ -188,13 +192,13 @@ function StreamOverlayContent() {
               )}
             </div>
 
-            <button
+            {/* <button
               onClick={() => setActiveAlert(null)}
               className="text-[#8B8B96] hover:text-white text-xs font-bold px-1"
               title="Hide Question Overlay"
             >
               ✕
-            </button>
+            </button> */}
           </div>
 
           <div className="flex items-center justify-between gap-3">

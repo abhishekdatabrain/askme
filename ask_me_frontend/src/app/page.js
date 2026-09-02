@@ -7,20 +7,9 @@ import { getCreatorToken, getCreatorUser, getAdminToken, getAdminUser } from '@/
 export default function Home() {
   const router = useRouter();
 
-  // useEffect(() => {
-  //   const creatorToken = getCreatorToken();
-  //   const creatorUser = getCreatorUser();
-  //   const adminToken = getAdminToken();
-  //   const adminUser = getAdminUser();
-
-  //   if (adminToken && adminUser?.role?.toLowerCase() === 'admin') {
-  //     router.replace('/admin/dashboard');
-  //   } else if (creatorToken && creatorUser) {
-  //     router.replace('/creators/dashboard');
-  //   } else {
-  //     router.replace('/creators/login');
-  //   }
-  // }, [router]);
+  useEffect(() => {
+    router.replace('/viewers/login');
+  }, [router]);
 
   return (
     <div className="min-h-screen bg-[#0A0A0F] text-[#F5F5F7] flex flex-col items-center justify-center space-y-4 font-sans">

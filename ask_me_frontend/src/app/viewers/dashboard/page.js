@@ -2,12 +2,12 @@
 
 import React, { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import ViewerSidebar from '@/components/ViewerSidebar';
 import SplashLoader from '@/components/SplashLoader';
 import VipMembershipModal from '@/components/VipMembershipModal';
 import { API_ENDPOINTS } from '@/config/api';
-import { getViewerToken, getCookie, clearViewerSession, removeCookie } from '@/utils/cookies';
+import { getViewerToken, getViewerUser, getCookie, clearViewerSession, removeCookie } from '@/utils/cookies';
 import {
     Home,
     Grid,
@@ -47,29 +47,52 @@ const CATEGORIES = [
 
 function ViewerDashboardContent() {
     const searchParams = useSearchParams();
+    const router = useRouter();
     const initialTab = searchParams.get('tab') || 'home';
 
     const [activeTab, setActiveTab] = useState(initialTab);
     const [theme, setTheme] = useState('dark');
-    const [showSplash, setShowSplash] = useState(true);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const [checkingAuth, setCheckingAuth] = useState(true);
+
+    // Auth Protection Check
+    useEffect(() => {
+        const token = getViewerToken() || getCookie('askme_viewer_token') || getCookie('askme_token') || (typeof window !== 'undefined' ? (localStorage.getItem('askme_viewer_token') || localStorage.getItem('askme_token')) : null);
+        const user = getViewerUser() || (typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('askme_viewer_user') || 'null') : null);
+
+        if (!token && !user) {
+            router.replace('/viewers/login');
+        } else {
+            setIsAuthenticated(true);
+            setCheckingAuth(false);
+        }
+    }, [router]);
 
     // Handle Logout
     const handleLogout = () => {
+        // Clear viewer session only
         clearViewerSession();
-        removeCookie('askme_token');
-        removeCookie('askme_user');
-        if (typeof window !== 'undefined') {
-            localStorage.removeItem('askme_token');
-            localStorage.removeItem('askme_user');
-            localStorage.removeItem('askme_viewer_token');
-            localStorage.removeItem('askme_viewer_user');
+
+        // Remove viewer cookies only
+        removeCookie("askme_viewer_token");
+        removeCookie("askme_viewer_user");
+
+        if (typeof window !== "undefined") {
+            // Remove viewer localStorage only
+            localStorage.removeItem("askme_viewer_token");
+            localStorage.removeItem("askme_viewer_user");
         }
-        window.location.href = '/viewers/login';
+
+        window.location.href = "/viewers/login";
     };
+
 
     // Feed Data
     const [creators, setCreators] = useState([]);
+    const [categories, setCategories] = useState([
+
+    ]);
     const [loading, setLoading] = useState(true);
     const [selectedCategory, setSelectedCategory] = useState('All');
     const [searchQuery, setSearchQuery] = useState('');
@@ -77,7 +100,6 @@ function ViewerDashboardContent() {
     const [followedIds, setFollowedIds] = useState(new Set());
     const [vipCreatorIds, setVipCreatorIds] = useState(new Set());
     const [notifications, setNotifications] = useState([]);
-
     // Sync tab from query param
     useEffect(() => {
         const tabParam = searchParams.get('tab');
@@ -104,6 +126,23 @@ function ViewerDashboardContent() {
             }
         };
     }, []);
+
+    // Fetch Dynamic Categories on Mount
+    useEffect(() => {
+        fetchCategories();
+    }, []);
+
+    const fetchCategories = async () => {
+        try {
+            const res = await fetch(API_ENDPOINTS.VIEWERS.PUBLIC_CATEGORIES);
+            const data = await res.json();
+            if (res.ok && data.categories && Array.isArray(data.categories)) {
+                setCategories(data.categories);
+            }
+        } catch (err) {
+            console.warn('Categories API fetch error:', err.message);
+        }
+    };
 
     // Fetch Public Feed, Following & VIP Memberships
     useEffect(() => {
@@ -153,6 +192,9 @@ function ViewerDashboardContent() {
             if (res.ok && data.status === 'success' && data.data?.creators) {
                 const fetched = data.data.creators;
                 setCreators(fetched);
+                if (data.data?.categories && Array.isArray(data.data.categories) && data.data.categories.length > 0) {
+                    setCategories(data.data.categories);
+                }
 
                 // Generate sample notification queue
                 const liveItems = fetched.filter(c => c.isLive);
@@ -273,20 +315,18 @@ function ViewerDashboardContent() {
     // Filter creators for 'following' tab
     const followingCreators = creators.filter(c => followedIds.has(String(c.creatorId)));
 
-    return (
-        <div className={`min-h-screen font-sans flex transition-colors duration-200 ${theme === 'light' ? 'bg-[#F4F5F7] text-[#1A1D20] selection:bg-[#00F5D4] selection:text-[#0A0A0F]' : 'bg-[#0A0A0F] text-[#F5F5F7] selection:bg-[#00F5D4] selection:text-[#0A0A0F]'
-            }`}>
-            {/* 1. DESKTOP SIDEBAR */}
-            <div className="hidden md:block sticky top-0 h-screen overflow-y-auto shrink-0 z-30">
-                <ViewerSidebar
-                    theme={theme}
-                    onToggleTheme={(t) => setTheme(t)}
-                    activeTab={activeTab}
-                    onSelectTab={(tab) => setActiveTab(tab)}
-                />
+    if (checkingAuth || !isAuthenticated) {
+        return (
+            <div className="flex-1 flex flex-col items-center justify-center p-12 space-y-3 min-h-[60vh]">
+                <div className="h-8 w-8 border-2 border-[#00F5D4] border-t-transparent rounded-full animate-spin" />
+                <p className="text-xs font-semibold text-[#8B8B96]">Verifying Viewer Authentication...</p>
             </div>
+        );
+    }
 
-            {/* 2. MAIN VIEWER CONTENT CONTAINER */}
+    return (
+        <>
+            {/* MAIN VIEWER CONTENT CONTAINER */}
             <div className="flex-1 flex flex-col min-w-0 min-h-screen">
                 {/* MOBILE HEADER BAR WITH SIDEBAR TOGGLE */}
                 <header className={`md:hidden sticky top-0 z-40 border-b px-4 py-3 flex items-center justify-between shadow-lg ${theme === 'light' ? 'bg-white border-[#E9ECEF]' : 'bg-[#13131A] border-[#1C1C26]'
@@ -367,8 +407,8 @@ function ViewerDashboardContent() {
                         <button
                             onClick={handleLogout}
                             className={`hidden sm:flex items-center gap-1.5 px-3.5 py-2 rounded-2xl border text-xs font-bold shrink-0 transition ${theme === 'light'
-                                    ? 'bg-[#FFF5F5] border-[#FFE3E3] text-[#E03131] hover:bg-[#FFE3E3]'
-                                    : 'bg-[#FF3D71]/10 border-[#FF3D71]/20 text-[#FF3D71] hover:bg-[#FF3D71]/20 hover:border-[#FF3D71]/40'
+                                ? 'bg-[#FFF5F5] border-[#FFE3E3] text-[#E03131] hover:bg-[#FFE3E3]'
+                                : 'bg-[#FF3D71]/10 border-[#FF3D71]/20 text-[#FF3D71] hover:bg-[#FF3D71]/20 hover:border-[#FF3D71]/40'
                                 }`}
                             title="Sign Out of Viewer Account"
                         >
@@ -389,7 +429,7 @@ function ViewerDashboardContent() {
                                 <span className="text-xs font-bold text-[#8B8B96] shrink-0 flex items-center gap-1">
                                     <Filter className="h-3.5 w-3.5 text-[#00F5D4]" /> Category Filter:
                                 </span>
-                                {CATEGORIES.map(cat => (
+                                {categories.map(cat => (
                                     <button
                                         key={cat}
                                         onClick={() => setSelectedCategory(cat)}
@@ -472,7 +512,7 @@ function ViewerDashboardContent() {
                                                             <div className="flex items-center gap-3 min-w-0">
                                                                 <div className="relative shrink-0">
                                                                     <img
-                                                                        src={creator.avatar}
+                                                                        src={creator.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80'}
                                                                         alt={creator.fullName}
                                                                         className="h-12 w-12 rounded-full object-cover border border-[#2A2A3A]"
                                                                     />
@@ -532,17 +572,19 @@ function ViewerDashboardContent() {
                                                         {/* Divider */}
                                                         <div className="border-b border-[#22222E] pt-1"></div>
 
-                                                        {/* STATS ROW (3 Columns: Subs | Star Rating | Answered) */}
+                                                        {/* STATS ROW (Dynamic Followers & Answered Count) */}
                                                         <div className="flex items-center justify-between text-xs text-[#8B8B96] pt-1">
                                                             <span className="flex items-center gap-1 font-bold text-white">
                                                                 <Users className="h-3.5 w-3.5 text-[#FF5722]" />
-                                                                {creator.followersCount >= 1000000
-                                                                    ? `${(creator.followersCount / 1000000).toFixed(1)}M`
-                                                                    : `${(creator.followersCount / 1000).toFixed(0)}K`} Subs
+                                                                {(creator.followersCount || 0) >= 1000000
+                                                                    ? `${((creator.followersCount || 0) / 1000000).toFixed(1)}M`
+                                                                    : (creator.followersCount || 0) >= 1000
+                                                                        ? `${((creator.followersCount || 0) / 1000).toFixed(1)}K`
+                                                                        : (creator.followersCount || 0)} Followers
                                                             </span>
 
                                                             <span className="font-bold text-white">
-                                                                440 Answered
+                                                                {creator.answeredCount !== undefined ? creator.answeredCount : 0} Answered
                                                             </span>
                                                         </div>
                                                     </div>
@@ -622,7 +664,7 @@ function ViewerDashboardContent() {
                                             }`}
                                     >
                                         <div className="flex items-center gap-3 overflow-hidden">
-                                            <img src={creator.avatar} alt={creator.fullName} className="h-12 w-12 rounded-2xl object-cover border border-[#00F5D4]/30 shrink-0" />
+                                            <img src={creator.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80'} alt={creator.fullName} className="h-12 w-12 rounded-2xl object-cover border border-[#00F5D4]/30 shrink-0" />
                                             <div className="overflow-hidden">
                                                 <h4 className={`font-heading font-extrabold text-sm truncate ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'}`}>
                                                     {creator.fullName}
@@ -667,7 +709,7 @@ function ViewerDashboardContent() {
                                         >
                                             <div className="flex items-center justify-between gap-3">
                                                 <div className="flex items-center gap-3">
-                                                    <img src={creator.avatar} alt={creator.fullName} className="h-10 w-10 rounded-2xl object-cover" />
+                                                    <img src={creator.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80'} alt={creator.fullName} className="h-10 w-10 rounded-2xl object-cover" />
                                                     <div>
                                                         <h4 className="font-heading font-bold text-sm text-white">{creator.fullName}</h4>
                                                         <p className="text-xs text-[#00F5D4]">{creator.username}</p>
@@ -697,7 +739,7 @@ function ViewerDashboardContent() {
                 creator={vipModalCreator}
                 onSuccess={() => fetchMyVipMemberships()}
             />
-        </div>
+        </>
     );
 }
 

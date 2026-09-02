@@ -6,6 +6,12 @@ const CreatorsModel = require('../models/CreatorsModel');
 const CreatorProfileModel = require('../models/CreatorProfileModel');
 const CreatorSocialLinkModel = require('../models/CreatorSocialLinkModel');
 const DonationSession = require('../models/DonationSessionModels');
+const FollowModel = require('../models/FollowModel');
+const Donation = require('../models/DonationModel');
+
+const { OAuth2Client } = require('google-auth-library');
+
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 /**
  * @desc    Register a new Viewer (User role)
  * @route   POST /api/viewers/register
@@ -46,7 +52,7 @@ const registerViewer = async (req, res, next) => {
       name: viewerName,
       email: viewerEmail,
       password,
-      mobile,
+      phone: mobile,
       role: 'viewer',
     });
 
@@ -128,6 +134,109 @@ const loginViewer = async (req, res, next) => {
 };
 
 /**
+ * @desc    Google OAuth Viewer Login / Register
+ * @route   POST /api/viewers/google-auth
+ * @access  Public
+ */
+const googleAuthViewer = async (req, res, next) => {
+  try {
+    const { idToken, credential, token, email, name, googleId } = req.body;
+    let verifiedEmail = (email || '').trim().toLowerCase();
+    let verifiedName = (name || '').trim();
+
+    const incomingToken = idToken || credential || token;
+
+    if (incomingToken) {
+      if (process.env.GOOGLE_CLIENT_ID) {
+        try {
+          const ticket = await googleClient.verifyIdToken({
+            idToken: incomingToken,
+            audience: process.env.GOOGLE_CLIENT_ID,
+          });
+          const payload = ticket.getPayload();
+          if (payload) {
+            verifiedEmail = (payload.email || verifiedEmail).toLowerCase();
+            verifiedName = payload.name || verifiedName;
+          }
+        } catch (tokenErr) {
+          console.warn('Google ID Token verification note:', tokenErr.message);
+        }
+      }
+
+      // If ID Token verification didn't yield an email (e.g. incomingToken is an OAuth access token starting with 'ya29.'),
+      // query Google's UserInfo API endpoint directly using the incoming access token
+      if (!verifiedEmail) {
+        try {
+          const userinfoRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+            headers: { Authorization: `Bearer ${incomingToken}` },
+          });
+          if (userinfoRes.ok) {
+            const googleProfile = await userinfoRes.json();
+            if (googleProfile.email) {
+              verifiedEmail = googleProfile.email.toLowerCase();
+            }
+            if (googleProfile.name) {
+              verifiedName = googleProfile.name;
+            }
+          }
+        } catch (userinfoErr) {
+          console.warn('Google UserInfo API fetch note:', userinfoErr.message);
+        }
+      }
+    }
+
+    if (!verifiedEmail) {
+      return res.status(400).json({
+        status: 'fail',
+        message: 'Google authentication email address is required.',
+      });
+    }
+
+    if (!verifiedName) {
+      verifiedName = verifiedEmail.split('@')[0] || 'Google Supporter';
+    }
+
+    let user = await User.findOne({ where: { email: verifiedEmail } }).catch(() => null);
+
+    if (!user) {
+      const randomPassword = 'G_' + Math.random().toString(36).slice(-8) + '!' + Date.now();
+      user = await User.create({
+        name: verifiedName,
+        email: verifiedEmail,
+        password: randomPassword,
+        role: 'viewer',
+      });
+    }
+
+    const jwtToken = generateToken(user.id, 'viewer');
+
+    res.cookie('viewer_token', jwtToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
+    return res.status(200).json({
+      status: 'success',
+      message: 'Authenticated with Google successfully!',
+      data: {
+        token: jwtToken,
+        user: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+        },
+      },
+    });
+  } catch (error) {
+    console.error('GOOGLE AUTH VIEWER ERROR:', error);
+    next(error);
+  }
+};
+
+/**
  * @desc    Get Viewer Profile
  * @route   GET /api/viewers/profile
  * @access  Public / Private
@@ -168,11 +277,27 @@ const getPublicLiveFeed = async (req, res, next) => {
   try {
     const { category, search, platform } = req.query;
 
-    // 1. Fetch All Creators
+    // 1. Fetch All Creators, Profiles, Socials, Sessions, Follows & Donations
     const creators = await CreatorsModel.findAll({ raw: true }).catch(() => []);
     const profiles = await CreatorProfileModel.findAll({ raw: true }).catch(() => []);
     const socialLinks = await CreatorSocialLinkModel.findAll({ raw: true }).catch(() => []);
     const sessions = await DonationSession.findAll({ raw: true }).catch(() => []);
+    const follows = await FollowModel.findAll({ raw: true }).catch(() => []);
+    const donations = await Donation.findAll({ raw: true }).catch(() => []);
+
+    const followsMap = new Map();
+    follows.forEach(f => {
+      const cid = String(f.creator_id);
+      followsMap.set(cid, (followsMap.get(cid) || 0) + 1);
+    });
+
+    const answeredMap = new Map();
+    donations.forEach(d => {
+      const cid = String(d.creator_id);
+      if (d.status === 'answered' || d.status === 'completed' || d.payment_status === 'success') {
+        answeredMap.set(cid, (answeredMap.get(cid) || 0) + 1);
+      }
+    });
 
     const profileMap = new Map(profiles.map(p => [String(p.creator_id), p]));
 
@@ -200,19 +325,21 @@ const getPublicLiveFeed = async (req, res, next) => {
 
       // Format handle
       const cleanUsername = String(c.username || 'creator').replace(/^@+/, '');
+      const dynamicFollowers = followsMap.get(cid) !== undefined ? followsMap.get(cid) : parseInt(profile.followers_count || 0);
+      const dynamicAnswered = answeredMap.get(cid) !== undefined ? answeredMap.get(cid) : parseInt(profile.answered_count || 0);
 
       return {
         creatorId: c.id,
-        fullName: c.full_name || 'Creator',
+        fullName: c.full_name || '',
         username: `@${cleanUsername}`,
         cleanUsername: cleanUsername,
-        avatar: profile.profile_image || profile.profileImage || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80',
-        bio: profile.bio || 'Pro Esports player streaming GTA V, Valorant & BGMI. Ask about settings, sensitivity & pro tips!',
+        avatar: (profile.profile_image && profile.profile_image.trim()) || (profile.profileImage && profile.profileImage.trim()) || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80',
+        bio: profile.bio || '',
         category: latestSession?.category || profile.category || 'Gaming',
         minFee: parseFloat(profile.min_fee || latestSession?.min_donation_amount || 50),
-        followersCount: parseInt(profile.followers_count || 2100000),
+        followersCount: dynamicFollowers,
         rating: parseFloat(profile.rating || 4.85),
-        answeredCount: parseInt(profile.answered_count || 440),
+        answeredCount: dynamicAnswered,
         isVerified: profile.is_verified !== false,
         paidMailEnabled: profile.paid_mail_enabled !== false,
         paidMailLink: profile.paid_mail_link || null,
@@ -223,7 +350,7 @@ const getPublicLiveFeed = async (req, res, next) => {
           id: latestSession.id,
           sessionCode: latestSession.session_code,
           title: latestSession.title || `${c.full_name}'s Live AMA Session`,
-          category: latestSession.category || 'Gaming',
+          category: latestSession.category || 's',
           description: latestSession.description || 'Pro Esports player streaming GTA V, Valorant & BGMI. Ask about settings, sensitivity & pro tips!',
           platform: latestSession.platform || latestSession.streaming_platform || 'YouTube',
           thumbnail: latestSession.thumbnail_url || profile.profile_image || 'https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=600&q=80',
@@ -243,11 +370,15 @@ const getPublicLiveFeed = async (req, res, next) => {
 
     // 3. Filter by Category
     if (category && category.toLowerCase() !== 'all') {
-      const catLower = category.toLowerCase();
-      feedItems = feedItems.filter(item =>
-        item.category.toLowerCase().includes(catLower) ||
-        (item.session && item.session.category.toLowerCase().includes(catLower))
-      );
+      const catLower = category.toLowerCase().trim();
+      feedItems = feedItems.filter(item => {
+        const itemCat = String(item.category || '').toLowerCase();
+        const sessionCat = String(item.session?.category || '').toLowerCase();
+        return (
+          (itemCat && (itemCat.includes(catLower) || catLower.includes(itemCat))) ||
+          (sessionCat && (sessionCat.includes(catLower) || catLower.includes(sessionCat)))
+        );
+      });
     }
 
     // 4. Filter by Search Query
@@ -269,6 +400,19 @@ const getPublicLiveFeed = async (req, res, next) => {
       );
     }
 
+    // Extract dynamic categories from profiles & sessions
+    // const categorySet = new Set(['All']);
+    // creators.forEach(c => {
+    //   const cid = String(c.id);
+    //   const profile = profileMap.get(cid) || {};
+    //   const creatorSessions = sessions.filter(s => String(s.creator_id) === cid);
+    //   if (profile.category) categorySet.add(profile.category.trim());
+    //   creatorSessions.forEach(s => {
+    //     if (s.category) categorySet.add(s.category.trim());
+    //   });
+    // });
+    // // ['Gaming', 'News', 'Tech', 'Education', 'Comedy', 'Music', 'Business', 'Fitness', 'Entertainment'].forEach(cat => categorySet.add(cat));
+    // const dynamicCategories = Array.from(categorySet);
     // 6. Relevance Sorting (Live active broadcasts first, then highest followers, then recency)
     feedItems.sort((a, b) => {
       // 1. Live status priority
@@ -290,6 +434,7 @@ const getPublicLiveFeed = async (req, res, next) => {
       total: feedItems.length,
       data: {
         creators: feedItems,
+        // categories: dynamicCategories,
         activeLiveCount: feedItems.filter(i => i.isLive).length,
       },
     });
@@ -308,11 +453,6 @@ const getCreatorPublicProfile = async (req, res, next) => {
   try {
     const targetUsername = String(req.params.username || '').replace(/^@+/, '').toLowerCase();
 
-    const CreatorsModel = require('../models/CreatorsModel');
-    const CreatorProfileModel = require('../models/CreatorProfileModel');
-    const CreatorSocialLinkModel = require('../models/CreatorSocialLinkModel');
-    const DonationSession = require('../models/DonationSessionModels');
-
     const creators = await CreatorsModel.findAll({ raw: true }).catch(() => []);
     const creator = creators.find(c => String(c.username || '').toLowerCase() === targetUsername || String(c.id) === targetUsername);
 
@@ -323,11 +463,15 @@ const getCreatorPublicProfile = async (req, res, next) => {
       });
     }
 
-    const cid = String(creator.id);
     const profile = await CreatorProfileModel.findOne({ where: { creator_id: creator.id }, raw: true }).catch(() => null);
     const socials = await CreatorSocialLinkModel.findAll({ where: { creator_id: creator.id }, raw: true }).catch(() => []);
     const sessions = await DonationSession.findAll({ where: { creator_id: creator.id }, raw: true }).catch(() => []);
-
+    // Get total followers
+    const followCount = await FollowModel.count({
+      where: {
+        creator_id: creator.id,
+      },
+    }).catch(() => 0);
     const activeSession = sessions.find(s => s.status === 'active');
     const pastSessions = sessions
       .filter(s => s.status !== 'active')
@@ -344,8 +488,8 @@ const getCreatorPublicProfile = async (req, res, next) => {
           avatar: profile?.profile_image || profile?.profileImage || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80',
           bio: profile?.bio || 'Official AskMe Studio Creator',
           category: profile?.category || 'Content Creator',
-          country: creator.country || 'India',
-          followersCount: Math.floor(1500 + (creator.id * 347) % 8500),
+          country: creator.country || '',
+          followersCount: followCount,
           isLive: !!activeSession,
           activeSession: activeSession ? {
             id: activeSession.id,
@@ -729,9 +873,49 @@ const getPublicPastStreams = async (req, res, next) => {
   }
 };
 
+/**
+ * @desc    Get Dynamic Categories List for Viewers
+ * @route   GET /api/viewers/public/categories
+ * @access  Public
+ */
+const getPublicCategories = async (req, res, next) => {
+  try {
+
+    const profiles = await CreatorProfileModel.findAll({ raw: true }).catch(() => []);
+    const sessions = await DonationSession.findAll({ raw: true }).catch(() => []);
+
+    const categorySet = new Set();
+    categorySet.add("All");
+
+    profiles.forEach(p => {
+      if (p.category && String(p.category).trim()) {
+        categorySet.add(String(p.category).trim());
+      }
+    });
+
+    sessions.forEach(s => {
+      if (s.category && String(s.category).trim()) {
+        categorySet.add(String(s.category).trim());
+      }
+    });
+
+    const categories = Array.from(categorySet);
+
+    return res.status(200).json({
+      status: "success",
+      total: categories.length,
+      categories,
+    });
+  } catch (error) {
+    console.error("GET PUBLIC CATEGORIES ERROR:", error);
+    next(error);
+  }
+};
+
 module.exports = {
   registerViewer,
   loginViewer,
+  googleAuthViewer,
   getViewerProfile,
   getPublicLiveFeed,
   getCreatorPublicProfile,
@@ -739,4 +923,5 @@ module.exports = {
   getFollowingCreators,
   getViewerQuestions,
   getPublicPastStreams,
+  getPublicCategories,
 };

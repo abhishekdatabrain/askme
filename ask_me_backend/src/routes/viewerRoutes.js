@@ -3,6 +3,7 @@ const router = express.Router();
 const {
   registerViewer,
   loginViewer,
+  googleAuthViewer,
   getViewerProfile,
   getPublicLiveFeed,
   getCreatorPublicProfile,
@@ -10,6 +11,7 @@ const {
   getFollowingCreators,
   getViewerQuestions,
   getPublicPastStreams,
+  getPublicCategories,
 } = require('../controllers/viewerController');
 const {
   createVipSubscription,
@@ -32,6 +34,13 @@ router.post('/register', registerViewer);
  * @access  Public
  */
 router.post('/login', loginViewer);
+
+/**
+ * @route   POST /api/viewers/google-auth
+ * @desc    Google OAuth Viewer Login / Register
+ * @access  Public
+ */
+router.post('/google-auth', googleAuthViewer);
 
 /**
  * @route   GET /api/viewers/profile
@@ -60,6 +69,13 @@ router.get('/public/creators/:username', getCreatorPublicProfile);
  * @access  Public
  */
 router.get('/public/past-streams', getPublicPastStreams);
+
+/**
+ * @route   GET /api/viewers/public/categories
+ * @desc    Get Dynamic Categories List for Viewers
+ * @access  Public
+ */
+router.get('/public/categories', getPublicCategories);
 
 
 

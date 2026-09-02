@@ -191,17 +191,7 @@ function LiveSessionsContent() {
 
 
   return (
-    <div className={`min-h-screen font-sans flex transition-colors duration-200 ${theme === 'light' ? 'bg-[#F4F5F7] text-[#1A1D20] selection:bg-[#00F5D4] selection:text-[#0A0A0F]' : 'bg-[#0A0A0F] text-[#F5F5F7] selection:bg-[#00F5D4] selection:text-[#0A0A0F]'
-      }`}>
-      {/* 1. DESKTOP SIDEBAR */}
-      <div className="hidden md:block sticky top-0 h-screen overflow-y-auto shrink-0 z-30">
-        <ViewerSidebar
-          theme={theme}
-          onToggleTheme={(t) => setTheme(t)}
-          activeTab="live-sessions"
-        />
-      </div>
-
+    <>
       {/* 2. MAIN CONTENT CONTAINER */}
       <div className="flex-1 flex flex-col min-w-0 min-h-screen">
         {/* MOBILE HEADER */}
@@ -243,22 +233,22 @@ function LiveSessionsContent() {
         )}
 
         {/* TOP HEADER TITLE & LIVE STATS */}
-        <div className={`border-b px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 sticky top-0 z-20 backdrop-blur-md ${theme === 'light' ? 'bg-white/95 border-[#E9ECEF]' : 'bg-[#13131A]/95 border-[#1C1C26]'
+        <div className={`border-b px-4 sm:px-6 py-4 flex flex-col md:flex-row md:items-center justify-between gap-4 sticky top-0 z-20 backdrop-blur-md ${theme === 'light' ? 'bg-white/95 border-[#E9ECEF]' : 'bg-[#13131A]/95 border-[#1C1C26]'
           }`}>
           <div className="flex items-center gap-3">
             <div className="p-3 rounded-2xl bg-[#FF3D71]/10 text-[#FF3D71] border border-[#FF3D71]/30 animate-pulse shrink-0">
               <Tv className="h-6 w-6" />
             </div>
             <div>
-              <div className="flex items-center gap-2">
-                <span className="px-2.5 py-0.5 rounded-full bg-[#FF3D71] text-white text-[10px] font-black uppercase tracking-widest flex items-center gap-1">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="px-2.5 py-0.5 rounded-full bg-[#FF3D71] text-white text-[10px] font-black uppercase tracking-widest flex items-center gap-1 shrink-0">
                   <span className="h-1.5 w-1.5 rounded-full bg-white animate-ping"></span> ACTIVE BROADCASTS
                 </span>
                 <span className="text-xs font-bold text-[#8B8B96]">
-                  {liveCreators.length} Streamers Live Now
+                  {liveCreators.length} Streamer{liveCreators.length === 1 ? '' : 's'} Live Now
                 </span>
               </div>
-              <h1 className={`font-heading font-black text-xl mt-0.5 ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'}`}>
+              <h1 className={`font-heading font-black text-xl sm:text-2xl mt-1 ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'}`}>
                 Live Broadcast Sessions
               </h1>
             </div>
@@ -272,7 +262,7 @@ function LiveSessionsContent() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search active live streams..."
-              className={`w-full pl-10 pr-4 py-2 rounded-2xl border text-xs focus:outline-none focus:border-[#00F5D4] ${theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6] text-[#1A1D20]' : 'bg-[#0A0A0F] border-[#1C1C26] text-white'
+              className={`w-full pl-10 pr-4 py-2 rounded-2xl border text-xs focus:outline-none focus:border-[#00F5D4] transition ${theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6] text-[#1A1D20]' : 'bg-[#0A0A0F] border-[#1C1C26] text-white'
                 }`}
             />
           </div>
@@ -291,10 +281,10 @@ function LiveSessionsContent() {
                 key={cat}
                 onClick={() => setSelectedCategory(cat)}
                 className={`px-3.5 py-1.5 rounded-full text-xs font-bold shrink-0 transition ${selectedCategory === cat
-                    ? 'bg-[#FF3D71] text-white shadow-sm'
-                    : theme === 'light'
-                      ? 'bg-white text-[#495057] border border-[#DEE2E6] hover:bg-[#F1F3F5]'
-                      : 'bg-[#13131A] text-[#8B8B96] border border-[#1C1C26] hover:text-white'
+                  ? 'bg-[#FF3D71] text-white shadow-sm'
+                  : theme === 'light'
+                    ? 'bg-white text-[#495057] border border-[#DEE2E6] hover:bg-[#F1F3F5]'
+                    : 'bg-[#13131A] text-[#8B8B96] border border-[#1C1C26] hover:text-white'
                   }`}
               >
                 {cat}
@@ -325,12 +315,12 @@ function LiveSessionsContent() {
                 >
                   Reset Category Filter
                 </button>
-                <Link
+                {/* <Link
                   href="/viewers/dashboard?tab=creators"
                   className="px-4 py-2 rounded-xl bg-[#1C1C26] text-white text-xs font-bold border border-[#1C1C26]"
                 >
                   Explore Creator Directory →
-                </Link>
+                </Link> */}
               </div>
             </div>
           ) : (
@@ -373,8 +363,8 @@ function LiveSessionsContent() {
                           <button
                             onClick={() => handleToggleFollow(creator.creatorId)}
                             className={`px-3 py-1.5 rounded-full text-xs font-bold transition flex items-center gap-1.5 border ${isFollowing
-                                ? 'bg-[#00E676]/10 text-[#00E676] border-[#00E676]/30'
-                                : 'bg-[#00E676]/10 text-[#00E676] border-[#00E676]/30 hover:bg-[#00E676]/20'
+                              ? 'bg-[#00E676]/10 text-[#00E676] border-[#00E676]/30'
+                              : 'bg-[#00E676]/10 text-[#00E676] border-[#00E676]/30 hover:bg-[#00E676]/20'
                               }`}
                           >
                             <Bell className="h-3.5 w-3.5" />
@@ -486,7 +476,7 @@ function LiveSessionsContent() {
         creator={vipModalCreator}
         onSuccess={() => fetchMyVipMemberships()}
       />
-    </div>
+    </>
   );
 }
 

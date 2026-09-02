@@ -66,6 +66,34 @@ export default function CreatorNotificationsPage() {
     }
   };
 
+  const [activeFilter, setActiveFilter] = useState('all');
+  const [filterCounts, setFilterCounts] = useState({
+    all: 0,
+    priority: 0,
+    answered: 0,
+    rejected: 0,
+  });
+
+  const fetchNotifications = async (f = activeFilter) => {
+    try {
+      setIsLoading(true);
+      const creatorId = creator?.id || getCreatorUser()?.id || 1;
+      const res = await fetch(`${API_ENDPOINTS.CREATORS.OVERLAY_ALERTS}/${creatorId}?filter=${f}`);
+      const data = await res.json();
+      if (res.ok && data.status === 'success' && data.data) {
+        setNotifications(data.data.alerts || []);
+        setActiveSession(data.data.activeSession || null);
+        if (data.data.filterCounts) {
+          setFilterCounts(data.data.filterCounts);
+        }
+      }
+    } catch (err) {
+      console.warn('Notifications fetch notice:', err.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
     const token = getCreatorToken();
     const u = getCreatorUser();
@@ -73,28 +101,14 @@ export default function CreatorNotificationsPage() {
       window.location.href = '/creators/login';
       return;
     }
-
     setCreator(u);
-
-    const fetchNotifications = async () => {
-      try {
-        setIsLoading(true);
-        const creatorId = u?.id || 1;
-        const res = await fetch(`${API_ENDPOINTS.CREATORS.OVERLAY_ALERTS}/${creatorId}`);
-        const data = await res.json();
-        if (res.ok && data.status === 'success' && data.data) {
-          setNotifications(data.data.alerts || []);
-          setActiveSession(data.data.activeSession || null);
-        }
-      } catch (err) {
-        console.warn('Notifications fetch notice:', err.message);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchNotifications();
   }, []);
+
+  useEffect(() => {
+    if (creator?.id) {
+      fetchNotifications(activeFilter);
+    }
+  }, [activeFilter, creator]);
 
   // Action Handler 1: Tick Button -> Update DB status to 'read' & Remove from UI Row
   const handleMarkAnsweredAndRemoveRow = async (id, pos) => {
@@ -117,6 +131,7 @@ export default function CreatorNotificationsPage() {
         },
         body: JSON.stringify({ status: 'read' }),
       });
+      fetchNotifications(activeFilter);
     } catch (e) {
       console.warn('Update donation status to read notice:', e.message);
     }
@@ -151,6 +166,7 @@ export default function CreatorNotificationsPage() {
         },
         body: JSON.stringify({ status: 'cancelled' }),
       });
+      fetchNotifications(activeFilter);
     } catch (e) {
       console.warn('Update donation status to cancelled notice:', e.message);
     }
@@ -165,57 +181,55 @@ export default function CreatorNotificationsPage() {
   };
 
   // Action Handler 3: Broadcast / Remove from Stream Overlay
-  const handleToggleBroadcast = async (item, enable) => {
-    const itemKey = String(item.id || item.donationUuid);
+  // const handleToggleBroadcast = async (item, enable) => {
+  //   const itemKey = String(item.id || item.donationUuid);
 
-    if (enable) {
-      setBroadcastingId(itemKey);
-      toast.success('Question broadcasted to stream overlay!', 'Broadcast Active');
+  //   if (enable) {
+  //     setBroadcastingId(itemKey);
+  //     toast.success('Question broadcasted to stream overlay!', 'Broadcast Active');
 
-      try {
-        const token = getCreatorToken();
-        await fetch(`${API_ENDPOINTS.CREATORS.DONATION_STATUS}/${itemKey}/status`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
-          },
-          body: JSON.stringify({ status: 'read' }),
-        });
-      } catch (e) { }
+  //     try {
+  //       const token = getCreatorToken();
+  //       await fetch(`${API_ENDPOINTS.CREATORS.DONATION_STATUS}/${itemKey}/status`, {
+  //         method: 'PUT',
+  //         headers: {
+  //           'Content-Type': 'application/json',
+  //           ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  //         },
+  //         body: JSON.stringify({ status: 'read' }),
+  //       });
+  //     } catch (e) { }
 
-      try {
-        const socket = getSocket();
-        if (socket && creator?.id) {
-          socket.emit('show_overlay_alert', {
-            id: item.id || item.donationUuid,
-            donationUuid: item.donationUuid,
-            viewerName: item.viewerName,
-            amount: item.amount,
-            message: item.message,
-            paidAt: item.paidAt,
-            isVip: !!item.isVip,
-            creatorId: creator.id,
-          });
-        }
-      } catch (e) { }
-    } else {
-      setBroadcastingId(null);
-      toast.info('Question removed from stream overlay', 'Overlay Cleared');
+  //     try {
+  //       const socket = getSocket();
+  //       if (socket && creator?.id) {
+  //         socket.emit('show_overlay_alert', {
+  //           id: item.id || item.donationUuid,
+  //           donationUuid: item.donationUuid,
+  //           viewerName: item.viewerName,
+  //           amount: item.amount,
+  //           message: item.message,
+  //           paidAt: item.paidAt,
+  //           isVip: !!item.isVip,
+  //           creatorId: creator.id,
+  //         });
+  //       }
+  //     } catch (e) { }
+  //   } else {
+  //     setBroadcastingId(null);
+  //     toast.info('Question removed from stream overlay', 'Overlay Cleared');
 
-      try {
-        const socket = getSocket();
-        if (socket && creator?.id) {
-          socket.emit('clear_overlay_alert', { creatorId: creator.id });
-        }
-      } catch (e) { }
-    }
-  };
+  //     try {
+  //       const socket = getSocket();
+  //       if (socket && creator?.id) {
+  //         socket.emit('clear_overlay_alert', { creatorId: creator.id });
+  //       }
+  //     } catch (e) { }
+  //   }
+  // };
 
   return (
-    <div className={`min-h-screen font-sans flex transition-colors duration-200 ${theme === 'light' ? 'bg-[#F4F5F7] text-[#1A1D20] selection:bg-[#00F5D4] selection:text-[#0A0A0F]' : 'bg-[#0A0A0F] text-[#F5F5F7] selection:bg-[#00F5D4] selection:text-[#0A0A0F]'
-      }`}>
-      <CreatorSidebar theme={theme} onToggleTheme={toggleTheme} />
+    <>
       <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
         <header className={`border-b sticky top-0 z-20 px-6 py-4 flex items-center justify-between transition-colors duration-200 ${theme === 'light' ? 'border-[#E9ECEF] bg-white/90 backdrop-blur-md' : 'border-[#1C1C26] bg-[#0A0A0F]/80 backdrop-blur-md'
           }`}>
@@ -276,9 +290,7 @@ export default function CreatorNotificationsPage() {
                     {activeSession ? (
                       <>
                         <span>{activeSession.title}</span>
-                        <span className="px-2 py-0.5 rounded-full bg-[#00E676]/20 text-[#00E676] text-[10px] font-black font-mono">
-                          CODE: {activeSession.sessionCode}
-                        </span>
+
                       </>
                     ) : (
                       <span className="text-[#FF3D71]">No Active Broadcast Session Currently Running</span>
@@ -292,6 +304,39 @@ export default function CreatorNotificationsPage() {
                   {notifications.length} Active Queue Item(s)
                 </span>
               </div>
+            </div>
+
+            {/* DYNAMIC FILTER TABS BAR (All, Priority, AI Flagged, Unread, Accepted, Answered, Rejected) */}
+            <div className={`p-2 rounded-2xl border flex items-center gap-2 overflow-x-auto no-scrollbar ${theme === 'light' ? 'bg-white border-[#E9ECEF]' : 'bg-[#13131A] border-[#1C1C26]'}`}>
+              {[
+                { id: 'all', label: 'All', icon: null },
+                { id: 'priority', label: 'Priority', icon: '⚡' },
+                { id: 'answered', label: 'Answered', icon: null },
+                { id: 'rejected', label: 'Rejected', icon: null },
+              ].map(tab => {
+                const count = filterCounts[tab.id] !== undefined ? filterCounts[tab.id] : 0;
+                const isActive = activeFilter === tab.id;
+                return (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    onClick={() => setActiveFilter(tab.id)}
+                    className={`px-3.5 py-1.5 rounded-xl text-xs font-extrabold shrink-0 transition flex items-center gap-1.5 ${isActive
+                      ? 'bg-[#FF5722] text-white shadow-md glow-orange'
+                      : theme === 'light'
+                        ? 'bg-[#F8F9FA] text-[#495057] border border-[#DEE2E6] hover:bg-[#E9ECEF]'
+                        : 'bg-[#1C1C26] text-[#8B8B96] border border-[#2A2A3A] hover:text-white'
+                      }`}
+                  >
+                    {tab.icon && <span>{tab.icon}</span>}
+                    <span>{tab.label}</span>
+                    <span className={`px-1.5 py-0.5 rounded-full text-[10px] ${isActive ? 'bg-black/30 text-white' : 'bg-black/40 text-[#00F5D4]'
+                      }`}>
+                      ({count})
+                    </span>
+                  </button>
+                );
+              })}
             </div>
 
             <h3 className={`font-heading font-bold text-base flex items-center gap-2 ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'
@@ -331,14 +376,14 @@ export default function CreatorNotificationsPage() {
                     <div
                       key={itemKey}
                       className={`p-4 rounded-2xl border space-y-3 shadow-md transition-all ${isVipQuestion
-                          ? 'bg-[#1C1805] border-2 border-[#FFD60A]/80 shadow-xl glow-gold'
-                          : isCurrentTurn
-                            ? theme === 'light'
-                              ? 'bg-[#F0FDF4] border-2 border-[#00E676]/60 shadow-lg glow-teal'
-                              : 'bg-[#0E1A16] border-2 border-[#00E676]/60 shadow-lg glow-teal'
-                            : theme === 'light'
-                              ? 'bg-white border-[#E9ECEF]'
-                              : 'bg-[#13131A] border-[#1C1C26]'
+                        ? 'bg-[#1C1805] border-2 border-[#FFD60A]/80 shadow-xl glow-gold'
+                        : isCurrentTurn
+                          ? theme === 'light'
+                            ? 'bg-[#F0FDF4] border-2 border-[#00E676]/60 shadow-lg glow-teal'
+                            : 'bg-[#0E1A16] border-2 border-[#00E676]/60 shadow-lg glow-teal'
+                          : theme === 'light'
+                            ? 'bg-white border-[#E9ECEF]'
+                            : 'bg-[#13131A] border-[#1C1C26]'
                         }`}
                     >
                       <div className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b pb-3 ${theme === 'light' ? 'border-[#E9ECEF]' : 'border-[#1C1C26]'
@@ -360,8 +405,8 @@ export default function CreatorNotificationsPage() {
                               }`}>
                               <strong className="text-[#00F5D4]">{n.viewerName}</strong> donated <span className="text-[#00E676] font-black text-sm">₹{n.amount?.toFixed(2)}</span>
                             </h4>
-                            <span className={`text-[10px] ${theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'
-                              }`}>ID: {n.donationUuid}</span>
+                            {/* <span className={`text-[10px] ${theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'
+                              }`}>ID: {n.donationUuid}</span> */}
                           </div>
                         </div>
                         {/* VIP Member Priority Question Badge */}
@@ -429,36 +474,14 @@ export default function CreatorNotificationsPage() {
                         </div>
                       )}
 
-                      {/* ACTION BUTTONS ROW: Broadcast to Stream & Accepted / Answered badge */}
-                      <div className="flex flex-wrap items-center justify-between gap-3 pt-2.5 border-t border-[#1C1C26]/60">
-                        <div>
-                          {broadcastingId === itemKey ? (
-                            <button
-                              type="button"
-                              onClick={() => handleToggleBroadcast(n, false)}
-                              className="px-4 py-2 rounded-full bg-[#FF2D55] text-white font-extrabold text-xs flex items-center gap-2 shadow-lg animate-pulse border border-[#FF2D55] hover:bg-[#E02447] transition"
-                              title="Remove question from live stream overlay"
-                            >
-                              <Tv className="h-4 w-4" /> Remove from Overlay
-                            </button>
-                          ) : (
-                            <button
-                              type="button"
-                              onClick={() => handleToggleBroadcast(n, true)}
-                              className="px-4 py-2 rounded-full bg-[#1C1C26] hover:bg-[#252533] text-[#FF5722] hover:text-white border border-[#FF5722]/50 font-extrabold text-xs flex items-center gap-2 shadow-md transition"
-                              title="Broadcast question to live stream overlay"
-                            >
-                              <Tv className="h-4 w-4 text-[#FF5722]" /> Broadcast to Stream
-                            </button>
-                          )}
-                        </div>
-
-                        {n.status === 'read' && (
+                      {/* Accepted / Answered badge */}
+                      {n.status === 'read' && (
+                        <div className="pt-2.5 border-t border-[#1C1C26]/60 flex justify-end">
                           <span className="px-3 py-1.5 rounded-full bg-[#00E676]/15 text-[#00E676] border border-[#00E676]/30 text-xs font-bold flex items-center gap-1.5">
                             <CheckCircle2 className="h-4 w-4" /> Accepted & Answered
                           </span>
-                        )}
-                      </div>
+                        </div>
+                      )}
                     </div>
                   );
                 })
@@ -466,6 +489,6 @@ export default function CreatorNotificationsPage() {
           </div>
         </main>
       </div>
-    </div>
+    </>
   );
 }

@@ -80,16 +80,16 @@ export default function MyMembershipsPage() {
   // };
 
   if (loading) {
-    return <SplashLoader message="Loading My VIP Memberships..." />;
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center p-12 space-y-3 min-h-[60vh]">
+        <div className="h-8 w-8 border-2 border-[#00F5D4] border-t-transparent rounded-full animate-spin" />
+        <p className="text-xs font-semibold text-[#8B8B96]">Loading My VIP Memberships...</p>
+      </div>
+    );
   }
 
   return (
-    <div className="min-h-screen bg-[#0A0A0F] text-[#F5F5F7] font-sans selection:bg-[#00F5D4] selection:text-[#0A0A0F] flex">
-      {/* 1. DESKTOP SIDEBAR */}
-      <div className="hidden md:block sticky top-0 h-screen overflow-y-auto shrink-0 z-30">
-        <ViewerSidebar activeTab="memberships" />
-      </div>
-
+    <>
       {/* 2. MAIN CONTAINER */}
       <div className="flex-1 flex flex-col min-w-0 min-h-screen">
         {/* HEADER */}
@@ -245,38 +245,21 @@ export default function MyMembershipsPage() {
             </p>
 
             <div className="space-y-3 p-4 rounded-2xl bg-[#1C1805] border border-[#332700] text-xs font-semibold">
-              <div className="flex items-center gap-2 text-white">
-                <CheckCircle2 className="h-4 w-4 text-[#00E676]" />
-                <span>💎 Glowing VIP Badge in Live Chat</span>
-              </div>
-              <div className="flex items-center gap-2 text-white">
-                <CheckCircle2 className="h-4 w-4 text-[#00E676]" />
-                <span>⚡ Priority Queue in Live Broadcast Q&A</span>
-              </div>
-              <div className="flex items-center gap-2 text-white">
-                <CheckCircle2 className="h-4 w-4 text-[#00E676]" />
-                <span>🔒 Member Only Broadcast Streams</span>
-              </div>
-              <div className="flex items-center gap-2 text-white">
-                <CheckCircle2 className="h-4 w-4 text-[#00E676]" />
-                <span>🚀 Early Access to Announcements</span>
-              </div>
+              {(Array.isArray(showManageModal.perks)
+                ? showManageModal.perks
+                : String(showManageModal.perks || '').split(',')
+              ).map((perk, pIdx) => (
+                <div key={pIdx} className="flex items-center gap-2 text-white">
+                  <CheckCircle2 className="h-4 w-4 text-[#00E676] shrink-0" />
+                  <span>{perk.trim()}</span>
+                </div>
+              ))}
             </div>
 
-            <div className="space-y-2">
-              <button
-                onClick={() => {
-                  handleCancelMembership(showManageModal);
-                  setShowManageModal(null);
-                }}
-                className="w-full py-3 px-4 rounded-full bg-[#FF3D71]/15 hover:bg-[#FF3D71]/25 text-[#FF3D71] border border-[#FF3D71]/30 font-black text-xs transition"
-              >
-                Cancel Membership
-              </button>
-
+            <div className="pt-1">
               <button
                 onClick={() => setShowManageModal(null)}
-                className="w-full py-3 px-4 rounded-full bg-[#2A2A38] text-white font-bold text-xs"
+                className="w-full py-3 px-4 rounded-full bg-[#2A2A38] hover:bg-[#333345] text-white font-bold text-xs transition"
               >
                 Close
               </button>
@@ -284,6 +267,6 @@ export default function MyMembershipsPage() {
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }

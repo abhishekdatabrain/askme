@@ -2,11 +2,12 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { usePathname, useRouter } from 'next/navigation';
 import ViewerSidebar from '@/components/ViewerSidebar';
 import SplashLoader from '@/components/SplashLoader';
 import VipMembershipModal from '@/components/VipMembershipModal';
 import { API_ENDPOINTS } from '@/config/api';
-import { getViewerToken, getCookie } from '@/utils/cookies';
+import { getViewerToken, getViewerUser, getCookie } from '@/utils/cookies';
 import {
   Heart,
   Radio,
@@ -20,11 +21,21 @@ import {
 } from 'lucide-react';
 
 export default function ViewerFollowingPage() {
+  const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [creators, setCreators] = useState([]);
   const [followedIds, setFollowedIds] = useState(new Set());
   const [vipModalCreator, setVipModalCreator] = useState(null);
   const [vipCreatorIds, setVipCreatorIds] = useState(new Set());
+
+  // Auth Protection Guard
+  useEffect(() => {
+    const token = getViewerToken() || getCookie('askme_viewer_token') || getCookie('askme_token') || (typeof window !== 'undefined' ? (localStorage.getItem('askme_viewer_token') || localStorage.getItem('askme_token')) : null);
+    const user = getViewerUser();
+    if (!token && !user) {
+      router.replace('/viewers/login');
+    }
+  }, [router]);
 
   useEffect(() => {
     fetchData();
@@ -115,17 +126,17 @@ export default function ViewerFollowingPage() {
   };
 
   if (loading) {
-    return <SplashLoader message="Loading Followed Creators..." />;
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center p-12 space-y-3 min-h-[60vh]">
+        <div className="h-8 w-8 border-2 border-[#00F5D4] border-t-transparent rounded-full animate-spin" />
+        <p className="text-xs font-semibold text-[#8B8B96]">Loading Followed Creators...</p>
+      </div>
+    );
   }
 
   return (
-    <div className="min-h-screen bg-[#0A0A0F] text-[#F5F5F7] font-sans selection:bg-[#00F5D4] selection:text-[#0A0A0F] flex">
-      {/* 1. DESKTOP SIDEBAR */}
-      <div className="hidden md:block sticky top-0 h-screen overflow-y-auto shrink-0 z-30">
-        <ViewerSidebar activeTab="following" />
-      </div>
-
-      {/* 2. MAIN CONTAINER */}
+    <>
+      {/* MAIN CONTAINER */}
       <div className="flex-1 flex flex-col min-w-0 min-h-screen">
         {/* HEADER */}
         <header className="sticky top-0 z-40 bg-[#13131A]/95 backdrop-blur-md border-b border-[#1C1C26] px-4 sm:px-6 py-3.5 flex items-center justify-between">
@@ -257,17 +268,19 @@ export default function ViewerFollowingPage() {
                       {/* Divider */}
                       <div className="border-b border-[#22222E] pt-1"></div>
 
-                      {/* STATS ROW */}
+                      {/* STATS ROW (Dynamic Followers & Answered Count) */}
                       <div className="flex items-center justify-between text-xs text-[#8B8B96] pt-1">
                         <span className="flex items-center gap-1 font-bold text-white">
                           <Users className="h-3.5 w-3.5 text-[#FF5722]" />
-                          {creator.followersCount >= 1000000
-                            ? `${(creator.followersCount / 1000000).toFixed(1)}M`
-                            : `${(creator.followersCount / 1000).toFixed(0)}K`} Subs
+                          {(creator.followersCount || 0) >= 1000000
+                            ? `${((creator.followersCount || 0) / 1000000).toFixed(1)}M`
+                            : (creator.followersCount || 0) >= 1000
+                            ? `${((creator.followersCount || 0) / 1000).toFixed(1)}K`
+                            : (creator.followersCount || 0)} Followers
                         </span>
 
                         <span className="font-bold text-white">
-                          {creator.answeredCount || 440} Answered
+                          {creator.answeredCount !== undefined ? creator.answeredCount : 0} Answered
                         </span>
                       </div>
                     </div>
@@ -336,6 +349,6 @@ export default function ViewerFollowingPage() {
         creator={vipModalCreator}
         onSuccess={() => fetchMyVipMemberships()}
       />
-    </div>
+    </>
   );
 }

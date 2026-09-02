@@ -20,51 +20,68 @@ export default function WithdrawalsManager({ activeSubTab }) {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  useEffect(() => {
-    const fetchWithdrawals = async () => {
-      try {
-        setIsLoading(true);
-        const token = getAdminToken();
-        let statusParam = 'all';
-        if (activeSubTab === 'withdrawals_pending') statusParam = 'pending';
-        else if (activeSubTab === 'withdrawals_approved') statusParam = 'approved';
-        else if (activeSubTab === 'withdrawals_processing') statusParam = 'processing';
-        else if (activeSubTab === 'withdrawals_completed' || activeSubTab === 'withdrawals_paid') statusParam = 'completed';
-        else if (activeSubTab === 'withdrawals_rejected') statusParam = 'rejected';
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
 
-        const res = await fetch(`${API_ENDPOINTS.ADMIN.WITHDRAWALS}?status=${statusParam}`, {
-          headers: token ? { Authorization: `Bearer ${token}` } : {}
-        });
-        const data = await res.json();
-        if (data.status === 'success' && data.data?.withdrawals) {
-          setWithdrawals(data.data.withdrawals.map((w, idx) => ({
-            id: w.id ? (w.id.toString().startsWith('WTH') ? w.id : `WTH-${w.id}`) : `WTH-${idx + 500}`,
-            rawId: w.rawId || w.id,
-            creator: w.creator || w.creatorName || 'Creator Host',
-            creatorEmail: w.creatorEmail || '',
-            amount: parseFloat(w.amount || 0),
-            grossRevenue: w.grossRevenue || `₹${(w.amount || 0).toLocaleString()}`,
-            payoutAmount: w.payoutAmount || `₹${(w.amount || 0).toLocaleString()}`,
-            platformCut: w.platformCut || '₹0',
-            bankDetails: w.bankDetails || 'Bank Account Provided',
-            status: (w.status || 'pending').toLowerCase(),
-            requestedDate: w.requestedDate || w.requested_at || w.createdAt
-              ? (!isNaN(new Date(w.requestedDate || w.requested_at || w.createdAt).getTime())
-                ? new Date(w.requestedDate || w.requested_at || w.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
-                : String(w.requestedDate || w.requested_at || w.createdAt))
-              : new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }),
-            transactionReference: w.transactionReference || null,
-            rejectionReason: w.rejectionReason || null,
-          })));
-        }
-      } catch (err) {
-        console.warn('API fetch withdrawals notice:', err.message);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchWithdrawals();
+  useEffect(() => {
+    setCurrentPage(1);
   }, [activeSubTab]);
+
+  const fetchWithdrawals = async (pageParam = currentPage) => {
+    try {
+      setIsLoading(true);
+      const token = getAdminToken();
+      let statusParam = 'all';
+      if (activeSubTab === 'withdrawals_pending') statusParam = 'pending';
+      else if (activeSubTab === 'withdrawals_approved') statusParam = 'approved';
+      else if (activeSubTab === 'withdrawals_processing') statusParam = 'processing';
+      else if (activeSubTab === 'withdrawals_completed' || activeSubTab === 'withdrawals_paid') statusParam = 'completed';
+      else if (activeSubTab === 'withdrawals_rejected') statusParam = 'rejected';
+
+      const res = await fetch(`${API_ENDPOINTS.ADMIN.WITHDRAWALS}?status=${statusParam}&page=${pageParam}&limit=10`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {}
+      });
+      const data = await res.json();
+      if (data.status === 'success' && data.data?.withdrawals) {
+        setWithdrawals(data.data.withdrawals.map((w, idx) => ({
+          id: w.id ? (w.id.toString().startsWith('WTH') ? w.id : `WTH-${w.id}`) : `WTH-${idx + 500}`,
+          rawId: w.rawId || w.id,
+          creator: w.creator || w.creatorName || 'Creator Host',
+          creatorEmail: w.creatorEmail || '',
+          amount: parseFloat(w.amount || 0),
+          grossRevenue: w.grossRevenue || `₹${(w.amount || 0).toLocaleString()}`,
+          payoutAmount: w.payoutAmount || `₹${(w.amount || 0).toLocaleString()}`,
+          platformCut: w.platformCut || '₹0',
+          bankDetails: w.bankDetails || 'Bank Account Provided',
+          status: (w.status || 'pending').toLowerCase(),
+          requestedDate: w.requestedDate || w.requested_at || w.createdAt
+            ? (!isNaN(new Date(w.requestedDate || w.requested_at || w.createdAt).getTime())
+              ? new Date(w.requestedDate || w.requested_at || w.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
+              : String(w.requestedDate || w.requested_at || w.createdAt))
+            : new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }),
+          transactionReference: w.transactionReference || null,
+          rejectionReason: w.rejectionReason || null,
+        })));
+
+        const pag = data.pagination || data.data?.pagination;
+        if (pag) {
+          setTotalPages(pag.totalPages || 1);
+          setTotalCount(pag.totalCount || 0);
+        } else {
+          setTotalCount(data.totalCount || data.total || 0);
+        }
+      }
+    } catch (err) {
+      console.warn('API fetch withdrawals notice:', err.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchWithdrawals(currentPage);
+  }, [activeSubTab, currentPage]);
 
   // Update Withdrawal Status API call
   const handleUpdateStatusCall = async (id, newStatus, extraData = {}) => {
@@ -310,6 +327,34 @@ export default function WithdrawalsManager({ activeSubTab }) {
           </table>
         </div>
       )}
+
+      {/* PAGINATION CONTROLS BAR */}
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-[#1C1C26] text-xs">
+        <span className="text-[#8B8B96]">
+          Showing <strong className="text-white">{withdrawals.length}</strong> of <strong className="text-[#00F5D4]">{totalCount}</strong> Withdrawal Requests (Page {currentPage} of {totalPages})
+        </span>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            disabled={currentPage <= 1}
+            onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+            className="px-3.5 py-1.5 rounded-xl bg-[#1C1C26] text-white border border-[#2A2A3A] disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[#252533] transition"
+          >
+            ← Previous
+          </button>
+          <span className="px-3 py-1.5 rounded-xl bg-[#0A0A0F] border border-[#1C1C26] font-bold text-[#00F5D4]">
+            {currentPage} / {totalPages}
+          </span>
+          <button
+            type="button"
+            disabled={currentPage >= totalPages}
+            onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+            className="px-3.5 py-1.5 rounded-xl bg-[#1C1C26] text-white border border-[#2A2A3A] disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[#252533] transition"
+          >
+            Next →
+          </button>
+        </div>
+      </div>
 
       {/* MODAL: MARK WITHDRAWAL COMPLETED */}
       {completeModalItem && (

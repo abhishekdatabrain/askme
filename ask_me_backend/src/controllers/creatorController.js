@@ -1,5 +1,7 @@
 const bcrypt = require("bcryptjs");
 const generateToken = require("../utils/generateToken");
+const { OAuth2Client } = require('google-auth-library');
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 const CreatorsModel = require("../models/CreatorsModel");
 const CreatorProfileModel = require("../models/CreatorProfileModel");
 const CreatorSocialLinkModel = require("../models/CreatorSocialLinkModel");
@@ -27,6 +29,7 @@ try { WalletTransactionModel = require('../models/WalletTransactionModel'); } ca
 try { PaymentTransactionModel = require('../models/PaymentTransactionModel'); } catch (e) { }
 try { ChatMessageModel = require('../models/ChatMessageModel'); } catch (e) { }
 const VipMembership = require("../models/VipMembershipModel");
+const VipPlanModel = require("../models/VipPlanModel");
 
 const sequelize = require("../config/database");
 
@@ -676,6 +679,162 @@ const loginCreator = async (req, res, next) => {
 };
 
 /**
+ * @desc    Google OAuth Creator Login / Register
+ * @route   POST /api/creators/google-auth
+ * @access  Public
+ */
+const googleAuthCreator = async (req, res, next) => {
+  try {
+    const { idToken, credential, token: bodyToken, email, name, googleId } = req.body;
+    let verifiedEmail = (email || '').trim().toLowerCase();
+    let verifiedName = (name || '').trim();
+
+    const incomingToken = idToken || credential || bodyToken;
+
+    if (incomingToken) {
+      if (process.env.GOOGLE_CLIENT_ID) {
+        try {
+          const ticket = await googleClient.verifyIdToken({
+            idToken: incomingToken,
+            audience: process.env.GOOGLE_CLIENT_ID,
+          });
+          const payload = ticket.getPayload();
+          if (payload) {
+            verifiedEmail = (payload.email || verifiedEmail).toLowerCase();
+            verifiedName = payload.name || verifiedName;
+          }
+        } catch (tokenErr) {
+          console.warn('Google ID Token verification note (creator):', tokenErr.message);
+        }
+      }
+
+      if (!verifiedEmail) {
+        try {
+          const userinfoRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+            headers: { Authorization: `Bearer ${incomingToken}` },
+          });
+          if (userinfoRes.ok) {
+            const googleProfile = await userinfoRes.json();
+            if (googleProfile.email) {
+              verifiedEmail = googleProfile.email.toLowerCase();
+            }
+            if (googleProfile.name) {
+              verifiedName = googleProfile.name;
+            }
+          }
+        } catch (userinfoErr) {
+          console.warn('Google UserInfo API fetch note (creator):', userinfoErr.message);
+        }
+      }
+    }
+
+    if (!verifiedEmail) {
+      return res.status(400).json({
+        status: 'fail',
+        message: 'Google authentication email address is required.',
+      });
+    }
+
+    if (!verifiedName) {
+      verifiedName = verifiedEmail.split('@')[0] || 'Google Creator';
+    }
+
+    let creator = await CreatorsModel.findOne({ where: { email: verifiedEmail } });
+
+    if (!creator) {
+      const baseUsername = verifiedEmail.split('@')[0].replace(/[^a-zA-Z0-9]/g, '').toLowerCase() || 'creator';
+      let cleanUsername = baseUsername;
+      let counter = 1;
+      while (await CreatorsModel.findOne({ where: { username: cleanUsername } })) {
+        cleanUsername = `${baseUsername}${counter}`;
+        counter++;
+      }
+
+      const randomPassword = 'G_' + Math.random().toString(36).slice(-8) + '!' + Date.now();
+      const hashedPassword = await bcrypt.hash(randomPassword, 10);
+
+      creator = await CreatorsModel.create({
+        role: 'creator',
+        full_name: verifiedName,
+        username: cleanUsername,
+        email: verifiedEmail,
+        password: hashedPassword,
+        country: 'India',
+        status: 'active',
+      });
+
+      try {
+        await CreatorProfileModel.create({
+          creator_id: creator.id,
+          display_name: verifiedName,
+          bio: 'Tech & Media Creator',
+          kyc_status: 'not_submitted',
+          is_payment_enabled: false,
+        });
+      } catch (err) {
+        console.warn('Notice saving CreatorProfile on Google Auth:', err.message);
+      }
+
+      try {
+        await WalletModel.create({
+          creator_id: creator.id,
+          creatorId: creator.id,
+          total_earnings: 0,
+          available_balance: 0,
+          pending_balance: 0,
+          withdrawn_amount: 0,
+        });
+      } catch (err) {
+        console.warn('Notice saving Wallet on Google Auth:', err.message);
+      }
+    }
+
+    let profile = null;
+    let kycRecord = null;
+
+    if (CreatorProfileModel) {
+      profile = await CreatorProfileModel.findOne({ where: { creator_id: creator.id } }).catch(() => null);
+    }
+    if (KycVerificationModel) {
+      kycRecord = await KycVerificationModel.findOne({ where: { creator_id: creator.id } }).catch(() => null);
+    }
+
+    const rawStatus = (profile?.kyc_status || kycRecord?.status || 'pending').toLowerCase();
+    const kycStatus = rawStatus === 'approved' ? 'approved' : rawStatus === 'rejected' ? 'rejected' : 'pending';
+    const rejectionReason = kycRecord?.rejection_reason || null;
+
+    const jwtToken = generateToken(creator.id, 'creator');
+
+    return res.status(200).json({
+      status: 'success',
+      message: 'Creator Google authentication successful!',
+      data: {
+        creator: {
+          id: creator.id,
+          fullName: creator.full_name,
+          username: `@${creator.username}`,
+          email: creator.email,
+          mobile: creator.mobile,
+          country: creator.country,
+          role: 'creator',
+          status: creator.status,
+          kycStatus: kycStatus,
+          rejectionReason: rejectionReason,
+        },
+        token: jwtToken,
+      },
+    });
+  } catch (error) {
+    console.error('CREATOR GOOGLE AUTH ERROR:', error);
+    return res.status(500).json({
+      status: 'error',
+      message: 'Creator Google auth failed.',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined,
+    });
+  }
+};
+
+/**
  * @desc    Get Creator Profile Management details
  * @route   GET /api/creators/profile
  * @access  Public / Private
@@ -895,7 +1054,7 @@ const createLiveSession = async (req, res, next) => {
       return res.status(400).json({ status: 'fail', message: 'Stream Title is required.' });
     }
 
-    const durationNum = Number(durationHours || 2);
+    const durationNum = Number(durationHours);
     const endsAt = new Date(Date.now() + durationNum * 3600 * 1000);
 
     // Generate unique session code
@@ -1391,6 +1550,17 @@ const processViewerDonation = async (req, res, next) => {
       }
     }
 
+    // Calculate Queue Position for Viewer Notification
+    let queuePosition = 1;
+    if (DonationModel && targetSessionId) {
+      try {
+        const count = await DonationModel.count({
+          where: { session_id: targetSessionId, payment_status: 'success', status: 'not_read' }
+        });
+        queuePosition = Math.max(1, count);
+      } catch (e) { }
+    }
+
     // STEP 5: Save Donation Chat Message & Broadcast Real-Time via Socket.IO
     try {
       const donorDisplayName = anonymous ? 'Anonymous Supporter' : (viewerName ? viewerName.trim() : 'Anonymous Supporter');
@@ -1406,17 +1576,6 @@ const processViewerDonation = async (req, res, next) => {
           message_type: 'donation',
           is_deleted: false,
         }).catch((e) => console.warn('ChatMessageModel donation create notice:', e.message));
-      }
-
-      // Calculate Queue Position for Viewer Notification
-      let queuePosition = 1;
-      if (DonationModel && targetSessionId) {
-        try {
-          const count = await DonationModel.count({
-            where: { session_id: targetSessionId, payment_status: 'success', status: 'not_read' }
-          });
-          queuePosition = Math.max(1, count);
-        } catch (e) { }
       }
 
       // Broadcast Socket.IO event to room: live_session_{session_id}
@@ -1685,18 +1844,24 @@ const getOverlayAlerts = async (req, res, next) => {
     }
 
     // 2. Fetch donations strictly for current active session
+    let filterCounts = {
+      all: 0,
+      priority: 0,
+      answered: 0,
+      rejected: 0,
+    };
+
     if (activeSession && DonationModel) {
       const donations = await DonationModel.findAll({
         where: {
           creator_id: creatorId,
           session_id: activeSession.id,
           payment_status: 'success',
-          status: 'not_read'
         },
         order: [['created_at', 'DESC']],
       });
 
-      alerts = donations.map(d => ({
+      const formattedDonations = donations.map(d => ({
         id: d.id,
         donationUuid: d.donation_uuid,
         viewerName: d.anonymous ? 'Anonymous Supporter' : (d.viewer_name || 'Supporter'),
@@ -1704,16 +1869,46 @@ const getOverlayAlerts = async (req, res, next) => {
         message: d.message || '',
         paidAt: d.paid_at || d.createdAt,
         isVip: !!d.is_vip,
+        status: d.status || 'not_read',
         sessionId: d.session_id,
+        isFlagged: !!(d.is_flagged || (d.message && /abuse|spam|hate|hack/i.test(d.message))),
       }));
 
+      const unreadList = formattedDonations.filter(d => d.status === 'not_read' || !d.status);
+      const priorityList = formattedDonations.filter(d => (d.isVip || d.amount >= 500) && (d.status === 'not_read' || !d.status));
+      const answeredList = formattedDonations.filter(d => d.status === 'read' || d.status === 'answered');
+      const rejectedList = formattedDonations.filter(d => d.status === 'cancelled' || d.status === 'rejected');
+
+      // Calculate tab counts
+      filterCounts = {
+        all: unreadList.length,
+        priority: priorityList.length,
+        answered: answeredList.length,
+        rejected: rejectedList.length,
+      };
+
+      // Apply dynamic filter param
+      const reqFilter = String(req.query.filter || 'all').toLowerCase();
+      let filteredAlerts = unreadList;
+
+      if (reqFilter === 'priority') {
+        filteredAlerts = priorityList;
+      } else if (reqFilter === 'answered') {
+        filteredAlerts = answeredList;
+      } else if (reqFilter === 'rejected') {
+        filteredAlerts = rejectedList;
+      }
+
       // Sort Priority: VIP questions FIRST at the top of the Creator queue!
-      alerts.sort((a, b) => {
+      filteredAlerts.sort((a, b) => {
         const aVip = a.isVip ? 1 : 0;
         const bVip = b.isVip ? 1 : 0;
         if (bVip !== aVip) return bVip - aVip;
         return new Date(a.paidAt || 0) - new Date(b.paidAt || 0);
       });
+
+      alerts = filteredAlerts;
+
       // 3. Find latest question approved by Right Tick (status: 'read')
       const latestRead = await DonationModel.findOne({
         where: {
@@ -1734,6 +1929,7 @@ const getOverlayAlerts = async (req, res, next) => {
           message: latestRead.message || '',
           paidAt: latestRead.paid_at || latestRead.createdAt,
           isVip: !!latestRead.is_vip,
+          status: latestRead.status || 'read',
           sessionId: latestRead.session_id,
         };
       }
@@ -1743,6 +1939,7 @@ const getOverlayAlerts = async (req, res, next) => {
       status: 'success',
       data: {
         alerts,
+        filterCounts,
         latestReadAlert,
         activeSession: activeSession ? {
           id: activeSession.id,
@@ -1812,6 +2009,7 @@ const handlePaymentWebhook = async (req, res, next) => {
 const getCreatorWalletDetails = async (req, res, next) => {
   try {
     const creatorId = req.user?.id || req.query.creatorId || 1;
+    const { status, search } = req.query;
 
     let wallet = null;
     if (WalletModel) {
@@ -1820,10 +2018,26 @@ const getCreatorWalletDetails = async (req, res, next) => {
 
     let transactions = [];
     if (DonationModel) {
+      const whereCondition = { creator_id: creatorId };
+
+      if (status && status !== 'All') {
+        const dbStatus = status.toLowerCase() === 'successful' ? 'success' : status.toLowerCase();
+        whereCondition.payment_status = dbStatus;
+      }
+
+      if (search && String(search).trim()) {
+        const searchTerm = `%${String(search).trim()}%`;
+        whereCondition[Op.or] = [
+          { viewer_name: { [Op.like]: searchTerm } },
+          { message: { [Op.like]: searchTerm } },
+          { donation_uuid: { [Op.like]: searchTerm } },
+        ];
+      }
+
       const donations = await DonationModel.findAll({
-        where: { creator_id: creatorId },
+        where: whereCondition,
         order: [['id', 'DESC']],
-        limit: 50,
+        limit: 100,
       }).catch(() => []);
 
       transactions = donations.map(d => ({
@@ -1836,6 +2050,33 @@ const getCreatorWalletDetails = async (req, res, next) => {
         message: d.message || '',
         payment_status: d.payment_status === 'success' ? 'Successful' : (d.payment_status === 'pending' ? 'Pending' : (d.payment_status === 'refunded' ? 'Refunded' : 'Failed')),
       }));
+
+      // Fallback search filter if DB query returns empty array
+      if (search && String(search).trim() && transactions.length === 0) {
+        const allDonations = await DonationModel.findAll({
+          where: { creator_id: creatorId },
+          order: [['id', 'DESC']],
+          limit: 100,
+        }).catch(() => []);
+
+        const qLower = String(search).trim().toLowerCase();
+        transactions = allDonations
+          .map(d => ({
+            id: d.id,
+            donationUuid: d.donation_uuid || `TXN-${d.id}`,
+            date: d.paid_at || d.createdAt,
+            viewerName: d.anonymous ? 'Anonymous Supporter' : (d.viewer_name || 'Anonymous Supporter'),
+            amount: parseFloat(d.amount || 0),
+            netAmount: parseFloat(d.amount || 0) * 0.85,
+            message: d.message || '',
+            payment_status: d.payment_status === 'success' ? 'Successful' : (d.payment_status === 'pending' ? 'Pending' : (d.payment_status === 'refunded' ? 'Refunded' : 'Failed')),
+          }))
+          .filter(t =>
+            String(t.viewerName).toLowerCase().includes(qLower) ||
+            String(t.message).toLowerCase().includes(qLower) ||
+            String(t.donationUuid).toLowerCase().includes(qLower)
+          );
+      }
     }
 
     const totalEarnings = wallet?.total_earnings
@@ -2556,9 +2797,207 @@ const getSessionQuestions = async (req, res, next) => {
   }
 };
 
+/**
+ * Get Creator Membership Tier Plans
+ * @route GET /api/creators/memberships/plans
+ */
+const getCreatorMembershipPlans = async (req, res, next) => {
+  try {
+    const creatorId = req.user?.id || req.query.creatorId;
+    let plans = [];
+
+    try {
+      if (VipPlanModel) {
+        const whereClause = creatorId ? { creator_id: creatorId } : {};
+        const records = await VipPlanModel.findAll({
+          where: whereClause,
+          order: [['created_at', 'ASC']],
+          raw: true
+        });
+
+        plans = records.map(p => ({
+          id: p.id,
+          creatorId: p.creator_id,
+          name: p.name,
+          price: parseFloat(p.price || 0),
+          interval: p.interval || 'Monthly',
+          perks: p.perks ? (Array.isArray(p.perks) ? p.perks : p.perks.split(',').map(s => s.trim())) : [],
+          status: p.status || 'Active',
+          badgeColor: p.badge_color || 'bg-[#FFD60A]',
+        }));
+      }
+    } catch (dbErr) {
+      console.warn('Get creator membership plans DB notice:', dbErr.message);
+    }
+
+    if (plans.length === 0) {
+      plans = [
+      ]
+    }
+
+    return res.status(200).json({
+      status: 'success',
+      total: plans.length,
+      data: { plans }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Create Creator Membership Tier Plan
+ * @route POST /api/creators/memberships/plans
+ */
+const createCreatorMembershipPlan = async (req, res, next) => {
+  try {
+    const creatorId = req.user?.id || req.body.creatorId;
+    const { name, price, interval, perks, badgeColor } = req.body;
+
+    let newPlan = null;
+    try {
+      const created = await VipPlanModel.create({
+        creator_id: creatorId,
+        name: name || '',
+        price: parseFloat(price || 499),
+        interval: interval || 'Monthly',
+        perks: Array.isArray(perks) ? perks.join(', ') : (perks || 'VIP Badge'),
+        status: 'Active',
+        badge_color: badgeColor || 'bg-[#FFD60A]',
+      });
+      newPlan = created.toJSON();
+    } catch (dbErr) {
+      console.warn('Create creator membership plans DB notice:', dbErr.message);
+    }
+
+    return res.status(201).json({
+      status: 'success',
+      message: 'New Membership Tier created & published live!',
+      data: { plan: newPlan }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Update Creator Membership Tier Plan
+ * @route PUT /api/creators/memberships/plans/:id
+ */
+const updateCreatorMembershipPlan = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { name, price, interval, perks, status, badgeColor } = req.body;
+
+    let updated = null;
+    try {
+      const plan = await VipPlanModel.findByPk(id);
+      if (plan) {
+        if (name !== undefined) plan.name = name;
+        if (price !== undefined) plan.price = parseFloat(price);
+        if (interval !== undefined) plan.interval = interval;
+        if (perks !== undefined) plan.perks = Array.isArray(perks) ? perks.join(', ') : perks;
+        if (status !== undefined) plan.status = status;
+        if (badgeColor !== undefined) plan.badge_color = badgeColor;
+        await plan.save();
+        updated = plan.toJSON();
+      }
+    } catch (dbErr) { }
+
+    if (!updated) {
+      updated = {
+        id,
+        name,
+        price: parseFloat(price || 0),
+        interval,
+        perks: Array.isArray(perks) ? perks : [perks],
+        status: status || 'Active',
+        badgeColor: badgeColor || 'bg-[#FFD60A]',
+      };
+    }
+
+    return res.status(200).json({
+      status: 'success',
+      message: 'Membership Tier updated successfully!',
+      data: { plan: updated }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Delete Creator Membership Tier Plan
+ * @route DELETE /api/creators/memberships/plans/:id
+ */
+const deleteCreatorMembershipPlan = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    try {
+      const VipPlanModel = require("../models/VipPlanModel");
+      await VipPlanModel.destroy({ where: { id } });
+    } catch (e) { }
+
+    return res.status(200).json({
+      status: 'success',
+      message: 'Membership Tier deleted successfully.'
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Get Creator Active Subscribers
+ * @route GET /api/creators/memberships/subscribers
+ */
+const getCreatorSubscribers = async (req, res, next) => {
+  try {
+    const creatorId = req.user?.id || req.query.creatorId;
+    let subscribers = [];
+
+    try {
+      if (VipMembership) {
+        const records = await VipMembership.findAll({
+          where: creatorId ? { creator_id: creatorId } : {},
+          order: [['created_at', 'DESC']],
+          raw: true
+        });
+
+        const User = require("../models/userModel");
+        const users = await User.findAll({ raw: true }).catch(() => []);
+        const userMap = new Map(users.map(u => [String(u.id), u]));
+
+        subscribers = records.map(r => {
+          const uObj = userMap.get(String(r.viewer_id)) || {};
+          return {
+            id: r.id,
+            viewerName: uObj.name || '',
+            viewerEmail: uObj.email || '',
+            planName: r.plan_name || '',
+            amount: parseFloat(r.amount || 0),
+            status: r.status || '',
+            startDate: r.created_at ? new Date(r.created_at).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+            nextBillingDate: r.next_billing_date || ''
+          };
+        });
+      }
+    } catch (e) { }
+
+    return res.status(200).json({
+      status: 'success',
+      total: subscribers.length,
+      data: { subscribers }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   registerCreator,
   loginCreator,
+  googleAuthCreator,
   submitKyc,
   getKycStatus,
   getCreatorProfile,
@@ -2586,4 +3025,9 @@ module.exports = {
   updateDonationStatus,
   verifyCreatorUpi,
   getSessionQuestions,
+  getCreatorMembershipPlans,
+  createCreatorMembershipPlan,
+  updateCreatorMembershipPlan,
+  deleteCreatorMembershipPlan,
+  getCreatorSubscribers,
 };

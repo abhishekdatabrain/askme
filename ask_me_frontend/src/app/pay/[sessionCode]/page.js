@@ -90,6 +90,63 @@ function ViewerPaymentContent() {
     }
   }, [creatorData, queryCreatorId]);
 
+  const [publicVipPlans, setPublicVipPlans] = useState([]);
+  const [isJoiningVip, setIsJoiningVip] = useState(false);
+
+  useEffect(() => {
+    const fetchPublicPlans = async () => {
+      try {
+        const targetCid = creatorData?.id || queryCreatorId;
+        const res = await fetch(`${API_ENDPOINTS.VIEWERS.VIP_PLANS}?creatorId=${targetCid || ''}`);
+        const data = await res.json();
+        if (res.ok && data.status === 'success' && data.data?.plans) {
+          setPublicVipPlans(data.data.plans);
+        }
+      } catch (e) {
+        console.warn('Fetch public VIP plans notice:', e.message);
+      }
+    };
+
+    fetchPublicPlans();
+  }, [creatorData, queryCreatorId]);
+
+  const handleJoinVipSubmit = async (plan) => {
+    try {
+      setIsJoiningVip(true);
+      const token = getViewerToken();
+      const viewer = getViewerUser();
+
+      const payload = {
+        userId: viewer?.id || 1,
+        creatorId: creatorData?.id || queryCreatorId || 1,
+        planName: plan.name,
+        amount: plan.price,
+        transactionId: `PAY_VIP_${Date.now()}`,
+      };
+
+      const res = await fetch(API_ENDPOINTS.VIEWERS.VIP_SUBSCRIBE, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+      if (res.ok && data.status === 'success') {
+        setIsVipMember(true);
+        alert(`Congratulations! You are now a ${plan.name} member for ${creatorData?.fullName || 'Creator'}!`);
+      } else {
+        alert(data.message || 'Failed to join VIP membership.');
+      }
+    } catch (err) {
+      alert('Network error joining VIP membership.');
+    } finally {
+      setIsJoiningVip(false);
+    }
+  };
+
   useEffect(() => {
     const fetchSession = async () => {
       try {
@@ -165,25 +222,10 @@ function ViewerPaymentContent() {
 
       if (res.ok && data.status === 'success') {
         setPaymentSuccess(data.data);
-      } else {
-        // Fallback simulation
-        setPaymentSuccess({
-          donationUuid: `DON-${Math.random().toString(36).substring(2, 9).toUpperCase()}`,
-          amount: numericAmount,
-          viewerName: isAnonymous ? 'Anonymous Supporter' : viewerName || 'Supporter',
-          message: message || '',
-          paidAt: new Date(),
-        });
       }
     } catch (err) {
       console.error('Payment submit notice:', err);
-      setPaymentSuccess({
-        donationUuid: `DON-${Math.random().toString(36).substring(2, 9).toUpperCase()}`,
-        amount: numericAmount,
-        viewerName: isAnonymous ? 'Anonymous Supporter' : viewerName || 'Supporter',
-        message: message || '',
-        paidAt: new Date(),
-      });
+
     } finally {
       setIsProcessing(false);
     }
@@ -448,10 +490,11 @@ function ViewerPaymentContent() {
               {/* 3. Message / Paid Question */}
               <div>
                 <label className="block text-xs font-bold text-white mb-1.5">
-                  Live Stream Message / Paid Question (Optional)
+                  Live Stream Message / Paid Question
                 </label>
                 <textarea
                   rows={3}
+                  required
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
                   placeholder="Ask a question or send a shoutout to appear live on stream overlay..."

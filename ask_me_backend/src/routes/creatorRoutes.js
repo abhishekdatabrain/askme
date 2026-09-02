@@ -3,6 +3,7 @@ const router = express.Router();
 const {
   registerCreator,
   loginCreator,
+  googleAuthCreator,
   submitKyc,
   getKycStatus,
   getCreatorProfile,
@@ -29,6 +30,11 @@ const {
   updateDonationStatus,
   verifyCreatorUpi,
   getSessionQuestions,
+  getCreatorMembershipPlans,
+  createCreatorMembershipPlan,
+  updateCreatorMembershipPlan,
+  deleteCreatorMembershipPlan,
+  getCreatorSubscribers,
 } = require('../controllers/creatorController');
 
 /**
@@ -86,6 +92,13 @@ router.post('/register', registerCreator);
  * @access  Public
  */
 router.post('/login', loginCreator);
+
+/**
+ * @route   POST /api/creators/google-auth
+ * @desc    Creator Google OAuth Login / Register
+ * @access  Public
+ */
+router.post('/google-auth', googleAuthCreator);
 
 /**
  * @route   POST /api/creators/kyc
@@ -234,6 +247,15 @@ router.put('/notifications/:id/read', markSingleCreatorNotificationRead);
  * @access  Public / Private
  */
 router.put('/donations/:id/status', updateDonationStatus);
+
+/**
+ * Creator Membership Tiers Management Routes
+ */
+router.get('/memberships/plans', getCreatorMembershipPlans);
+router.post('/memberships/plans', createCreatorMembershipPlan);
+router.put('/memberships/plans/:id', updateCreatorMembershipPlan);
+router.delete('/memberships/plans/:id', deleteCreatorMembershipPlan);
+router.get('/memberships/subscribers', getCreatorSubscribers);
 
 module.exports = router;
 

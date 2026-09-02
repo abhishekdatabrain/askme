@@ -566,11 +566,7 @@ function CreatorDashboardContent() {
   const overlayUrl = activeSession?.overlayUrl || `${origin}/overlay/${creator?.username?.replace('@', '') || creator?.id || 'creator'}`;
 
   return (
-    <div className={`min-h-screen font-sans flex transition-colors duration-200 ${theme === 'light' ? 'bg-[#F4F5F7] text-[#1A1D20] selection:bg-[#00F5D4] selection:text-[#0A0A0F]' : 'bg-[#0A0A0F] text-[#F5F5F7] selection:bg-[#00F5D4] selection:text-[#0A0A0F]'
-      }`}>
-      {/* 1. Creator Sidebar */}
-      <CreatorSidebar theme={theme} onToggleTheme={toggleTheme} />
-
+    <>
       {/* 2. Main Studio Content Area */}
       <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
         {/* Header Bar */}
@@ -1290,7 +1286,7 @@ function CreatorDashboardContent() {
           )}
         </main>
       </div>
-    </div>
+    </>
   );
 }
 

@@ -157,6 +157,12 @@ function CreatorSidebarContent({ theme: propTheme, onToggleTheme }) {
       href: '/creators/live-question-queue',
       icon: MessageSquare,
     },
+    {
+      name: 'Memberships & VIP Tiers',
+      href: '/creators/memberships',
+      icon: Sparkles,
+      isVipBadge: true,
+    },
   ];
 
   return (
@@ -235,6 +241,13 @@ function CreatorSidebarContent({ theme: propTheme, onToggleTheme }) {
                   }`} />
                 <span className="truncate">{item.name}</span>
               </div>
+
+              {/* Dynamic VIP Badge */}
+              {item.isVipBadge && (
+                <span className={`px-2 py-0.5 rounded-full text-[9px] font-black tracking-wider uppercase ${isActive ? 'bg-[#0A0A0F]/20 text-[#0A0A0F]' : 'bg-[#FFD60A] text-[#0A0A0F]'}`}>
+                  VIP
+                </span>
+              )}
 
               {/* Dynamic KYC Badge (Always Visible on KYC Menu Item) */}
               {item.isKycItem && (

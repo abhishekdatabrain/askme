@@ -13,6 +13,7 @@ export const API_ENDPOINTS = {
   CREATORS: {
     REGISTER: `${API_BASE_URL}/creators/register`,
     LOGIN: `${API_BASE_URL}/creators/login`,
+    GOOGLE_AUTH: `${API_BASE_URL}/creators/google-auth`,
     LIST: `${API_BASE_URL}/admin/creators`,
     SUBMIT_KYC: `${API_BASE_URL}/creators/kyc`,
     KYC_STATUS: `${API_BASE_URL}/creators/kyc/status`,
@@ -31,6 +32,8 @@ export const API_ENDPOINTS = {
     NOTIFICATIONS: `${API_BASE_URL}/creators/notifications`,
     DONATION_STATUS: `${API_BASE_URL}/creators/donations`,
     VERIFY_UPI: `${API_BASE_URL}/creators/verify-upi`,
+    MEMBERSHIPS_PLANS: `${API_BASE_URL}/creators/memberships/plans`,
+    MEMBERSHIPS_SUBSCRIBERS: `${API_BASE_URL}/creators/memberships/subscribers`,
   },
   ADMIN: {
     DASHBOARD: `${API_BASE_URL}/admin/dashboard`,
@@ -53,6 +56,7 @@ export const API_ENDPOINTS = {
   VIEWERS: {
     REGISTER: `${API_BASE_URL}/viewers/register`,
     LOGIN: `${API_BASE_URL}/viewers/login`,
+    GOOGLE_AUTH: `${API_BASE_URL}/viewers/google-auth`,
     PROFILE: `${API_BASE_URL}/viewers/profile`,
     PUBLIC_LIVE_FEED: `${API_BASE_URL}/viewers/public/live-feed`,
     PUBLIC_CREATOR_PROFILE: `${API_BASE_URL}/viewers/public/creators`,
@@ -64,6 +68,7 @@ export const API_ENDPOINTS = {
     VIP_PLANS: `${API_BASE_URL}/viewers/vip/plans`,
     MY_QUESTIONS: `${API_BASE_URL}/viewers/my-questions`,
     PUBLIC_PAST_STREAMS: `${API_BASE_URL}/viewers/public/past-streams`,
+    PUBLIC_CATEGORIES: `${API_BASE_URL}/viewers/public/categories`,
   },
   KYC: `${API_BASE_URL}/admin/kyc`,
   PAYOUTS: `${API_BASE_URL}/admin/withdrawals`,

@@ -92,30 +92,9 @@ export default function CommissionSettings({ activeSubTab }) {
           <div>
             <h3 className="font-heading font-bold text-base text-white">Platform Commission & Revenue Rules</h3>
             <p className="text-xs text-[#8B8B96] mt-0.5">
-              Set global platform fee cut, minimum withdrawal limit, VIP tier overrides, and view commission history.
+              Set global platform fee cut, minimum withdrawal limit, and VIP tier overrides.
             </p>
           </div>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setActiveTabState('settings')}
-            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${activeTabState === 'settings'
-              ? 'bg-brand-gradient text-[#0A0A0F]'
-              : 'bg-[#1C1C26] text-[#8B8B96] hover:text-white'
-              }`}
-          >
-            Commission Settings
-          </button>
-          <button
-            onClick={() => setActiveTabState('history')}
-            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${activeTabState === 'history'
-              ? 'bg-brand-gradient text-[#0A0A0F]'
-              : 'bg-[#1C1C26] text-[#8B8B96] hover:text-white'
-              }`}
-          >
-            Commission History
-          </button>
         </div>
       </div>
 

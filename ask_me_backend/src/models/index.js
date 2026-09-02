@@ -35,6 +35,7 @@ DonationSession.hasMany(Notification, { foreignKey: "session_id", as: "notificat
 Notification.belongsTo(DonationSession, { foreignKey: "session_id", as: "session" });
 
 const VipPlan = require("./VipPlanModel");
+const CommissionSetting = require("./CommissionSettingModel");
 
 // VIP Membership Relationships
 User.hasMany(VipMembership, { foreignKey: "viewer_id", as: "vipMemberships" });
@@ -53,4 +54,5 @@ module.exports = {
     DonationSession,
     VipMembership,
     VipPlan,
+    CommissionSetting,
 };

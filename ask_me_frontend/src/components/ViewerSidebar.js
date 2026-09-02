@@ -169,12 +169,12 @@ function ViewerSidebarContent({ theme: propTheme, onToggleTheme, activeTab: curr
 
   const activeTab = currentTab || (
     pathname.includes('/viewers/past-streams') ? 'past-streams' :
-    pathname.includes('/viewers/my-questions') ? 'my-questions' :
-    pathname.includes('/viewers/live-sessions') ? 'live-sessions' :
-      pathname.includes('/viewers/following') ? 'following' :
-        pathname.includes('/viewers/memberships') ? 'memberships' :
-          pathname.includes('/viewers/notifications') ? 'notifications' :
-            (typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('tab') : null) || 'home'
+      pathname.includes('/viewers/my-questions') ? 'my-questions' :
+        pathname.includes('/viewers/live-sessions') ? 'live-sessions' :
+          pathname.includes('/viewers/following') ? 'following' :
+            pathname.includes('/viewers/memberships') ? 'memberships' :
+              pathname.includes('/viewers/notifications') ? 'notifications' :
+                (typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('tab') : null) || 'home'
   );
 
   const handleNavClick = (item) => {

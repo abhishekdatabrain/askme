@@ -30,6 +30,14 @@ export default function CreatorManagement({ activeSubTab }) {
   const [selectedStatus, setSelectedStatus] = useState('All');
   const [selectedCreatorForView, setSelectedCreatorForView] = useState(null);
 
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeSubTab, searchQuery]);
+
   useEffect(() => {
     const fetchCreators = async () => {
       try {
@@ -39,7 +47,8 @@ export default function CreatorManagement({ activeSubTab }) {
         else if (activeSubTab === 'creators_blocked') statusParam = 'Blocked';
         else if (activeSubTab === 'creators_all') statusParam = 'All';
 
-        const res = await fetch(`${API_ENDPOINTS.ADMIN.CREATORS}?status=${statusParam}`, {
+        const searchUrl = searchQuery.trim() ? `&search=${encodeURIComponent(searchQuery.trim())}` : '';
+        const res = await fetch(`${API_ENDPOINTS.ADMIN.CREATORS}?status=${statusParam}&page=${currentPage}&limit=10${searchUrl}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         const data = await res.json();
@@ -57,13 +66,21 @@ export default function CreatorManagement({ activeSubTab }) {
             createdAt: c.createdAt || c.created_at || 'N/A',
             walletBalance: `₹${(c.walletBalance || 0).toLocaleString()}`,
           })));
+
+          const pag = data.pagination || data.data?.pagination;
+          if (pag) {
+            setTotalPages(pag.totalPages || 1);
+            setTotalCount(pag.totalCount || 0);
+          } else {
+            setTotalCount(data.totalCount || data.results || 0);
+          }
         }
       } catch (err) {
         console.warn('API fetch creators warning:', err.message);
       }
     };
     fetchCreators();
-  }, [activeSubTab]);
+  }, [activeSubTab, currentPage, searchQuery]);
 
   const handleAction = async (id, action) => {
     const token = getAdminToken();
@@ -230,6 +247,34 @@ export default function CreatorManagement({ activeSubTab }) {
             ))}
           </tbody>
         </table>
+      </div>
+
+      {/* PAGINATION CONTROLS BAR */}
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-[#1C1C26] text-xs">
+        <span className="text-[#8B8B96]">
+          Showing <strong className="text-white">{creators.length}</strong> of <strong className="text-[#00F5D4]">{totalCount}</strong> Creators (Page {currentPage} of {totalPages})
+        </span>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            disabled={currentPage <= 1}
+            onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+            className="px-3.5 py-1.5 rounded-xl bg-[#1C1C26] text-white border border-[#2A2A3A] disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[#252533] transition"
+          >
+            ← Previous
+          </button>
+          <span className="px-3 py-1.5 rounded-xl bg-[#0A0A0F] border border-[#1C1C26] font-bold text-[#00F5D4]">
+            {currentPage} / {totalPages}
+          </span>
+          <button
+            type="button"
+            disabled={currentPage >= totalPages}
+            onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+            className="px-3.5 py-1.5 rounded-xl bg-[#1C1C26] text-white border border-[#2A2A3A] disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[#252533] transition"
+          >
+            Next →
+          </button>
+        </div>
       </div>
 
       {/* View Creator Details Modal */}

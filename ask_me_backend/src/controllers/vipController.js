@@ -1,5 +1,6 @@
 const VipMembership = require("../models/VipMembershipModel");
 const Creator = require("../models/CreatorsModel");
+const VipPlan = require("../models/VipPlanModel");
 
 // In-memory fallback map for VIP memberships in development mode
 const vipMemoryStore = new Map();
@@ -110,19 +111,33 @@ const getViewerMemberships = async (req, res, next) => {
       }
     }
 
-    // Attach creator details if available
+    // Attach creator details and plan perks if available
     const creators = await Creator.findAll({ raw: true }).catch(() => []);
     const creatorMap = new Map();
     creators.forEach((c) => creatorMap.set(String(c.id), c));
 
+    let plans = [];
+    if (VipPlan) {
+      plans = await VipPlan.findAll({ raw: true }).catch(() => []);
+    }
+    const planMap = new Map();
+    plans.forEach((p) => {
+      planMap.set(String(p.id), p);
+      if (p.creator_id) planMap.set(`creator_${p.creator_id}`, p);
+    });
+
     const enrichedMemberships = memberships.map((m) => {
       const creatorObj = creatorMap.get(String(m.creator_id)) || {};
       const cleanUsername = String(creatorObj.username || "creator").replace(/^@+/, "");
+      const planObj = (m.plan_id ? planMap.get(String(m.plan_id)) : null) || planMap.get(`creator_${m.creator_id}`) || {};
+      const perks = m.perks || planObj.perks || "Glowing VIP Badge in Live Chat, Priority Queue in Live Broadcast Q&A, Member Only Broadcast Streams, Early Access to Announcements";
+
       return {
         ...m,
         creatorName: creatorObj.full_name || `Creator #${m.creator_id}`,
         creatorUsername: `@${cleanUsername}`,
         creatorAvatar: creatorObj.profile_image || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80",
+        perks: perks,
       };
     });
 

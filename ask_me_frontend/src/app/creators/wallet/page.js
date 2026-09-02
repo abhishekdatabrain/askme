@@ -66,7 +66,8 @@ export default function CreatorWalletPage() {
     const fetchWallet = async () => {
       try {
         setIsLoading(true);
-        const res = await fetch(`${API_ENDPOINTS.CREATORS.WALLET_DETAILS}?creatorId=${creatorId}&status=${filterStatus}`, {
+        const searchParam = searchQuery ? `&search=${encodeURIComponent(searchQuery.trim())}` : '';
+        const res = await fetch(`${API_ENDPOINTS.CREATORS.WALLET_DETAILS}?creatorId=${creatorId}&status=${filterStatus}${searchParam}`, {
           headers: token ? { Authorization: `Bearer ${token}` } : {},
         });
         const data = await res.json();
@@ -87,28 +88,10 @@ export default function CreatorWalletPage() {
     };
 
     fetchWallet();
-  }, [filterStatus]);
-
-  // Filter transactions search query
-  const filteredTransactions = transactions.filter(t => {
-    if (!searchQuery.trim()) return true;
-    const vName = String(t.viewerName || t.viewer_name || '');
-    const msg = String(t.message || '');
-    const uuidStr = String(t.donationUuid || t.donation_uuid || '');
-    const q = searchQuery.toLowerCase();
-
-    return (
-      vName.toLowerCase().includes(q) ||
-      msg.toLowerCase().includes(q) ||
-      uuidStr.toLowerCase().includes(q)
-    );
-  });
+  }, [filterStatus, searchQuery]);
 
   return (
-    <div className={`min-h-screen font-sans flex transition-colors duration-200 ${theme === 'light' ? 'bg-[#F4F5F7] text-[#1A1D20] selection:bg-[#00F5D4] selection:text-[#0A0A0F]' : 'bg-[#0A0A0F] text-[#F5F5F7] selection:bg-[#00F5D4] selection:text-[#0A0A0F]'
-      }`}>
-      <CreatorSidebar theme={theme} onToggleTheme={toggleTheme} />
-
+    <>
       <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
         <header className={`border-b sticky top-0 z-20 px-6 py-4 flex items-center justify-between transition-colors duration-200 ${theme === 'light' ? 'border-[#E9ECEF] bg-white/90 backdrop-blur-md' : 'border-[#1C1C26] bg-[#0A0A0F]/80 backdrop-blur-md'
           }`}>
@@ -280,7 +263,7 @@ export default function CreatorWalletPage() {
                 <div className="h-8 w-8 border-2 border-[#00F5D4] border-t-transparent rounded-full animate-spin mx-auto" />
                 <p>Loading transaction history...</p>
               </div>
-            ) : filteredTransactions.length === 0 ? (
+            ) : transactions.length === 0 ? (
               <div className={`p-8 rounded-2xl border text-center space-y-2 ${theme === 'light' ? 'bg-[#F8F9FA] border-[#E9ECEF]' : 'bg-[#0A0A0F] border-[#1C1C26]'
                 }`}>
                 <Wallet className="h-10 w-10 text-[#8B8B96] mx-auto stroke-1" />
@@ -304,7 +287,7 @@ export default function CreatorWalletPage() {
                   </thead>
                   <tbody className={`divide-y ${theme === 'light' ? 'divide-[#E9ECEF]' : 'divide-[#1C1C26]'
                     }`}>
-                    {filteredTransactions.map((tx) => (
+                    {transactions.map((tx) => (
                       <tr key={tx.id || tx.donationUuid} className={`transition ${theme === 'light' ? 'hover:bg-[#F8F9FA]' : 'hover:bg-[#1A1A26]/50'
                         }`}>
 
@@ -370,6 +353,6 @@ export default function CreatorWalletPage() {
           </div>
         </main>
       </div>
-    </div>
+    </>
   );
 }

@@ -9,9 +9,6 @@ import { getAdminToken, getAdminUser, clearAdminSession } from '@/utils/cookies'
 import AdminSidebar from '@/components/AdminSidebar';
 import HeroStreamMarquee from '@/components/HeroStreamMarquee';
 import StatCard from '@/components/StatCard';
-import CreatorCard from '@/components/CreatorCard';
-import ModerationQueue from '@/components/ModerationQueue';
-import AskMePayTable from '@/components/AskMePayTable';
 import LiveBadge from '@/components/LiveBadge';
 import PlatformIcon from '@/components/PlatformIcon';
 import AskMePayBadge from '@/components/AskMePayBadge';
@@ -27,7 +24,6 @@ import WalletManagement from '@/components/WalletManagement';
 import ReportsAnalytics from '@/components/ReportsAnalytics';
 import AdminNotifications from '@/components/AdminNotifications';
 import UserAgreement from '@/components/UserAgreement';
-import AdminMembershipsManager from '@/components/AdminMembershipsManager';
 
 import {
     Radio,
@@ -62,12 +58,15 @@ export default function Home() {
     const [questionSubmitted, setQuestionSubmitted] = useState(false);
 
     const [dashboardStats, setDashboardStats] = useState({
-        totalCreators: '1,482',
-        activeStreamers: '142 Live',
-        totalDonations: '₹24,89,500',
-        totalRevenue: '₹3,73,425',
-        pendingWithdrawals: '18 Requests',
-        pendingKyc: '24 Applications'
+        totalCreators: 0,
+        registeredThisWeek: 0,
+        activeStreamers: 0,
+        totalDonations: 0,
+        totalRevenue: 0,
+        pendingWithdrawals: 0,
+        pendingWithdrawalsAmount: 0,
+        pendingKyc: 0,
+        commissionRate: 15
     });
 
     // Dark / Light Theme Toggle State
@@ -125,12 +124,15 @@ export default function Home() {
                 if (data.status === 'success' && data.data) {
                     const d = data.data;
                     setDashboardStats({
-                        totalCreators: typeof d.totalCreators === 'number' ? d.totalCreators.toLocaleString() : (d.totalCreators || '1,482'),
-                        activeStreamers: `${d.activeStreamers} Live`,
-                        totalDonations: `₹${(d.totalDonations || 0).toLocaleString()}`,
-                        totalRevenue: `₹${(d.totalRevenue || 0).toLocaleString()}`,
-                        pendingWithdrawals: `${d.pendingWithdrawals} Requests`,
-                        pendingKyc: `${d.pendingKyc} Applications`
+                        totalCreators: Number(d.totalCreators || 0),
+                        registeredThisWeek: Number(d.registeredThisWeek || 0),
+                        activeStreamers: Number(d.activeStreamers || 0),
+                        totalDonations: Number(d.totalDonations || 0),
+                        totalRevenue: Number(d.totalRevenue || 0),
+                        pendingWithdrawals: Number(d.pendingWithdrawals || 0),
+                        pendingWithdrawalsAmount: Number(d.pendingWithdrawalsAmount || 0),
+                        pendingKyc: Number(d.pendingKyc || 0),
+                        commissionRate: Number(d.commissionRate || 15)
                     });
                 }
             } catch (err) {
@@ -217,8 +219,8 @@ export default function Home() {
 
     return (
         <div className={`min-h-screen flex flex-col font-sans transition-colors ${theme === 'light'
-                ? 'bg-[#F8F9FA] text-[#212529]'
-                : 'bg-[#0A0A0F] text-[#F5F5F7]'
+            ? 'bg-[#F8F9FA] text-[#212529]'
+            : 'bg-[#0A0A0F] text-[#F5F5F7]'
             }`}>
             {/* Top Navbar with Theme Toggle */}
             <AdminNavbar
@@ -251,7 +253,6 @@ export default function Home() {
                     {activeTab === 'kyc' && activeSubTab !== 'user_agreement' && <KycApprovalQueue activeSubTab={activeSubTab} />}
                     {activeTab === 'user_agreement' && <UserAgreement activeSubTab={activeSubTab} />}
                     {activeTab === 'livesessions' && <LiveSessionManagement activeSubTab={activeSubTab} />}
-                    {activeTab === 'memberships' && <AdminMembershipsManager activeSubTab={activeSubTab} theme={theme} />}
                     {activeTab === 'payments' && <PaymentManagement activeSubTab={activeSubTab} />}
                     {activeTab === 'wallets' && <WalletManagement activeSubTab={activeSubTab} />}
                     {activeTab === 'withdrawals' && <WithdrawalsManager activeSubTab={activeSubTab} />}
@@ -262,11 +263,6 @@ export default function Home() {
 
                     {activeTab === 'overview' && (
                         <>
-                            {/* Hero Stream Marquee Section */}
-                            <section>
-                                <HeroStreamMarquee />
-                            </section>
-
                             {/* SECTION 14: Admin Dashboard Overview Header */}
                             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#1C1C26] pb-6">
                                 <div>
@@ -275,204 +271,70 @@ export default function Home() {
                                             Dashboard <span className="text-brand-gradient">Overview</span>
                                         </h1>
                                         <span className="px-3 py-1 rounded-full bg-[#FF3D71]/10 border border-[#FF3D71]/30 text-[#FF3D71] text-xs font-bold animate-live-pulse hidden sm:inline-flex">
-                                            142 STREAMERS LIVE NOW
+                                            {dashboardStats.activeStreamers} STREAMERS LIVE NOW
                                         </span>
                                     </div>
                                     <p className="text-xs md:text-sm text-[#8B8B96] mt-1 max-w-2xl leading-relaxed">
-                                        Real-time platform statistics, creator activity, total revenue share (15% platform cut / 85% creator net), pending withdrawals, and KYC verification queues.
+                                        Real-time platform statistics, creator activity, total revenue share ({dashboardStats.commissionRate}% platform cut / {100 - dashboardStats.commissionRate}% creator net), pending withdrawals, and KYC verification queues.
                                     </p>
                                 </div>
-
-                                {/* <div className="flex flex-wrap items-center gap-2">
-                  <Link
-                    href="/register"
-                    className="px-4 py-2 rounded-xl bg-brand-gradient text-[#0A0A0F] text-xs font-bold shadow-md glow-teal hover:opacity-95 transition-all flex items-center gap-1.5"
-                  >
-                    <Sparkles className="h-4 w-4" /> Become a Creator (Register)
-                  </Link>
-                  <Link
-                    href="/login"
-                    className="px-4 py-2 rounded-xl bg-[#1C1C26] text-white text-xs font-semibold hover:bg-[#1C1C26]/80 transition-colors border border-[#1C1C26]"
-                  >
-                    Creator Sign In
-                  </Link>
-                </div> */}
                             </div>
 
                             {/* SECTION 14: Admin Dashboard Overview 6 Key Statistics Cards */}
                             <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                                 <StatCard
                                     title="Total Creators"
-                                    value={dashboardStats.totalCreators}
-                                    change="+34 Registered This Week"
+                                    value={dashboardStats.totalCreators.toLocaleString()}
+                                    change={`+${dashboardStats.registeredThisWeek} Registered This Week`}
                                     subtitle="Active Verified Profiles"
                                     icon={Users}
                                     accent="teal"
                                 />
                                 <StatCard
                                     title="Active Streamers"
-                                    value={dashboardStats.activeStreamers}
-                                    change="+12 from 1h ago"
+                                    value={`${dashboardStats.activeStreamers} Live`}
+                                    change={dashboardStats.activeStreamers > 0 ? `${dashboardStats.activeStreamers} Active Streams` : 'Live Streamers'}
                                     subtitle="YouTube, Twitch, Kick, X"
                                     icon={Radio}
                                     accent="pink"
                                 />
                                 <StatCard
                                     title="Total Donations"
-                                    value={dashboardStats.totalDonations}
-                                    change="+18.4% Volume"
+                                    value={`₹${dashboardStats.totalDonations.toLocaleString()}`}
+                                    change="Gross Interaction Volume"
                                     subtitle="Gross Viewer Interaction Volume"
                                     icon={DollarSign}
                                     accent="yellow"
                                 />
                                 <StatCard
                                     title="Total Platform Revenue"
-                                    value={dashboardStats.totalRevenue}
-                                    change="15% Net Commission"
+                                    value={`₹${dashboardStats.totalRevenue.toLocaleString()}`}
+                                    change={`${dashboardStats.commissionRate}% Net Commission`}
                                     subtitle="Platform Operational Margin"
                                     icon={Sparkles}
                                     accent="violet"
                                 />
                                 <StatCard
                                     title="Pending Withdrawals"
-                                    value={dashboardStats.pendingWithdrawals}
-                                    change="₹4,12,000 Queued"
+                                    value={`${dashboardStats.pendingWithdrawals} Requests`}
+                                    change={`₹${dashboardStats.pendingWithdrawalsAmount.toLocaleString()} Queued`}
                                     subtitle="85% Net Payout Queue"
                                     icon={DollarSign}
                                     accent="yellow"
                                 />
                                 <StatCard
                                     title="Pending KYC"
-                                    value={dashboardStats.pendingKyc}
-                                    change="Identity Verification"
+                                    value={`${dashboardStats.pendingKyc} Applications`}
+                                    change="Identity Verification Queue"
                                     subtitle="Awaiting Admin Review"
                                     icon={CheckCircle2}
                                     accent="teal"
                                 />
                             </section>
 
-                            {/* AskMail & Brand Deals Banner Box (PDF Page 1 Reference) */}
-                            <section className="rounded-3xl bg-gradient-to-r from-[#1C1C26] via-[#13131A] to-[#1C1C26] border border-[#7B2FFF]/30 p-6 relative overflow-hidden shadow-2xl">
-                                <div className="flex flex-col md:flex-row items-center justify-between gap-6 relative z-10">
-                                    <div className="flex items-start gap-4">
-                                        <div className="p-3.5 rounded-2xl bg-[#7B2FFF]/20 border border-[#7B2FFF]/40 text-[#7B2FFF] shadow-lg">
-                                            <MessageSquare className="h-6 w-6" />
-                                        </div>
-                                        <div>
-                                            <div className="flex items-center gap-2">
-                                                <span className="text-[10px] font-extrabold tracking-widest text-[#00F5D4] uppercase bg-[#00F5D4]/10 px-2 py-0.5 rounded-md">
-                                                    OFFLINE PAID MAIL & BRAND DEALS
-                                                </span>
-                                            </div>
-                                            <h3 className="font-heading font-bold text-lg md:text-xl text-white mt-1">
-                                                Want to talk more to your favourite creator? Send them an askMail!
-                                            </h3>
-                                            <p className="text-xs text-[#8B8B96] mt-1 max-w-xl">
-                                                Send guaranteed paid offline messages, business inquiries, brand proposals, or consultations directly to their inbox with wallet hold protection.
-                                            </p>
-                                        </div>
-                                    </div>
 
-                                    <button className="px-6 py-3 rounded-2xl bg-brand-gradient text-[#0A0A0F] font-bold text-sm shadow-xl glow-teal hover:scale-105 transition-transform flex items-center gap-2 shrink-0">
-                                        <Send className="h-4 w-4" /> Send askMail Now
-                                    </button>
-                                </div>
-                            </section>
 
-                            {/* Creator Discovery Platform Header & Category Pills (PDF Page 1 & 2) */}
-                            <section className="space-y-4">
-                                <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
-                                    <div>
-                                        <h2 className="font-heading font-bold text-xl text-white">Creator Discovery Platform</h2>
-                                        <p className="text-xs text-[#8B8B96]">
-                                            Discover creators across categories, join live AskMe sessions, and support with paid questions.
-                                        </p>
-                                    </div>
 
-                                    <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#13131A] border border-[#1C1C26] text-xs">
-                                        <span className="text-[#FFD60A] font-bold">{filteredCreators.length} Creators Found</span>
-                                    </div>
-                                </div>
-
-                                {/* Category Filter Horizontal Scroll */}
-                                <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
-                                    {categories.map((cat) => (
-                                        <button
-                                            key={cat}
-                                            onClick={() => setSelectedCategory(cat)}
-                                            className={`px-4 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${selectedCategory === cat
-                                                ? 'bg-brand-gradient text-[#0A0A0F] font-bold shadow-md'
-                                                : 'bg-[#13131A] text-[#8B8B96] hover:text-white border border-[#1C1C26]'
-                                                }`}
-                                        >
-                                            {cat}
-                                        </button>
-                                    ))}
-                                </div>
-
-                                {/* Creator Grid */}
-                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                                    {filteredCreators.map((creator) => (
-                                        <CreatorCard
-                                            key={creator.id}
-                                            creator={creator}
-                                            onAskQuestion={(c) => setSelectedCreatorForAsk(c)}
-                                            onSelectCreator={(c) => setSelectedCreatorForAsk(c)}
-                                        />
-                                    ))}
-                                </div>
-                            </section>
-
-                            {/* AskMe Pay Ledger & Smart Moderation Sections */}
-                            <section className="space-y-8">
-                                <AskMePayTable />
-                                <ModerationQueue />
-                            </section>
-
-                            {/* Why AskMe Exists Section (PDF Page 2 Reference) */}
-                            <section className="rounded-3xl bg-[#13131A] border border-[#1C1C26] p-6 lg:p-8 space-y-6">
-                                <div className="text-center max-w-2xl mx-auto space-y-2">
-                                    <span className="text-[10px] font-extrabold tracking-widest text-[#00F5D4] uppercase bg-[#00F5D4]/10 px-3 py-1 rounded-full">
-                                        PURPOSE & VISION
-                                    </span>
-                                    <h2 className="font-heading font-black text-2xl lg:text-3xl text-white">Why AskMe Exists</h2>
-                                    <p className="text-xs text-[#8B8B96] leading-relaxed">
-                                        Every day, millions of viewers join livestreams hoping to interact with their favorite creators. As communities grow, meaningful interactions often become difficult because conversations move quickly and important messages can easily be overlooked.
-                                    </p>
-                                </div>
-
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                    <div className="p-4 rounded-2xl bg-[#0A0A0F] border border-[#1C1C26] space-y-2">
-                                        <div className="p-2 rounded-xl bg-[#00F5D4]/10 text-[#00F5D4] w-fit">
-                                            <Radio className="h-5 w-5" />
-                                        </div>
-                                        <h4 className="font-heading font-bold text-sm text-white">Creator Discovery</h4>
-                                        <p className="text-xs text-[#8B8B96] leading-relaxed">
-                                            Visibility through featured creators, live sessions, trending sections, and category spotlights.
-                                        </p>
-                                    </div>
-
-                                    <div className="p-4 rounded-2xl bg-[#0A0A0F] border border-[#1C1C26] space-y-2">
-                                        <div className="p-2 rounded-xl bg-[#FFD60A]/10 text-[#FFD60A] w-fit">
-                                            <Sparkles className="h-5 w-5" />
-                                        </div>
-                                        <h4 className="font-heading font-bold text-sm text-white">Unlock Earning Opportunities</h4>
-                                        <p className="text-xs text-[#8B8B96] leading-relaxed">
-                                            Sustainable monetization opportunities while growing audience with transparent 15% platform fees.
-                                        </p>
-                                    </div>
-
-                                    <div className="p-4 rounded-2xl bg-[#0A0A0F] border border-[#1C1C26] space-y-2">
-                                        <div className="p-2 rounded-xl bg-[#7B2FFF]/10 text-[#7B2FFF] w-fit">
-                                            <ShieldCheck className="h-5 w-5" />
-                                        </div>
-                                        <h4 className="font-heading font-bold text-sm text-white">Build Meaningful Communities</h4>
-                                        <p className="text-xs text-[#8B8B96] leading-relaxed">
-                                            Organize audience interactions, filter out fast-moving chat spam, and strengthen creator-viewer relationships.
-                                        </p>
-                                    </div>
-                                </div>
-                            </section>
 
                             {/* Footer Section (PDF Page 3 Reference) */}
                             <footer className="border-t border-[#1C1C26] pt-8 pb-12 text-xs text-[#8B8B96] space-y-6">
@@ -524,13 +386,7 @@ export default function Home() {
                                     </div>
                                 </div>
 
-                                <div className="flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-[#1C1C26] pt-6 text-[11px]">
-                                    <span>© 2026 AskMe (Futurepast ventures LLP). All rights reserved.</span>
-                                    <div className="flex items-center gap-2 text-[#00F5D4]">
-                                        <Lock className="h-3 w-3" />
-                                        <span>AskMe Staff Operations Portal (Bot Active)</span>
-                                    </div>
-                                </div>
+
                             </footer>
                         </>
                     )}

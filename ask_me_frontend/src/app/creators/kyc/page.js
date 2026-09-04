@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import CreatorSidebar from '@/components/CreatorSidebar';
 import CreatorNotificationDropdown from '@/components/CreatorNotificationDropdown';
 import { useToast } from '@/context/ToastContext';
 import {

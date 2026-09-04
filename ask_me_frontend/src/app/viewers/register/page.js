@@ -155,7 +155,7 @@ export default function ViewerRegisterPage() {
               <div className="relative">
                 <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[#8B8B96]" />
                 <input
-                  type="tel"
+                  type="number"
                   name="mobile"
                   placeholder="+91 9876543210"
                   value={formData.mobile}

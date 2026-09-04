@@ -58,11 +58,11 @@ function ViewerDashboardContent() {
 
     // Auth Protection Check
     useEffect(() => {
-        const token = getViewerToken() || getCookie('askme_viewer_token') || getCookie('askme_token') || (typeof window !== 'undefined' ? (localStorage.getItem('askme_viewer_token') || localStorage.getItem('askme_token')) : null);
+        const token = getViewerToken() || getCookie('askme_viewer_token') || (typeof window !== 'undefined' ? localStorage.getItem('askme_viewer_token') : null);
         const user = getViewerUser() || (typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('askme_viewer_user') || 'null') : null);
 
-        if (!token && !user) {
-            router.replace('/viewers/login');
+        if (!token || !user) {
+            window.location.href = '/viewers/login';
         } else {
             setIsAuthenticated(true);
             setCheckingAuth(false);
@@ -153,7 +153,7 @@ function ViewerDashboardContent() {
 
     const fetchMyVipMemberships = async () => {
         try {
-            const token = getViewerToken() || getCookie('askme_viewer_token') || getCookie('askme_token');
+            const token = getViewerToken() || getCookie('askme_viewer_token');
             const res = await fetch(API_ENDPOINTS.VIEWERS.VIP_MY_MEMBERSHIPS, {
                 headers: {
                     ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -217,7 +217,7 @@ function ViewerDashboardContent() {
 
     const fetchFollowing = async () => {
         try {
-            const token = getViewerToken() || getCookie('askme_viewer_token') || getCookie('askme_token');
+            const token = getViewerToken() || getCookie('askme_viewer_token');
             const res = await fetch(API_ENDPOINTS.VIEWERS.FOLLOWING, {
                 headers: {
                     ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -235,7 +235,7 @@ function ViewerDashboardContent() {
     const handleToggleFollow = async (creatorId) => {
         const cidStr = String(creatorId);
 
-        const token = getViewerToken() || getCookie('askme_viewer_token') || getCookie('askme_token');
+        const token = getViewerToken() || getCookie('askme_viewer_token');
 
         console.log("Follow Token (from cookies):", token);
 

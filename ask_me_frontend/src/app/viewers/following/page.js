@@ -30,10 +30,10 @@ export default function ViewerFollowingPage() {
 
   // Auth Protection Guard
   useEffect(() => {
-    const token = getViewerToken() || getCookie('askme_viewer_token') || getCookie('askme_token') || (typeof window !== 'undefined' ? (localStorage.getItem('askme_viewer_token') || localStorage.getItem('askme_token')) : null);
+    const token = getViewerToken() || getCookie('askme_viewer_token') || (typeof window !== 'undefined' ? localStorage.getItem('askme_viewer_token') : null);
     const user = getViewerUser();
-    if (!token && !user) {
-      router.replace('/viewers/login');
+    if (!token || !user) {
+      window.location.href = '/viewers/login';
     }
   }, [router]);
 

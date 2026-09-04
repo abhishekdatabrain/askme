@@ -7,10 +7,14 @@ import CreatorSidebar from '@/components/CreatorSidebar';
 export default function CreatorLayout({ children }) {
   const pathname = usePathname();
 
-  // Exclude auth pages (login & register) from sidebar layout
-  const isAuthPage = pathname === '/creators/login' || pathname === '/creators/register';
+  // Exclude auth & standalone pages (login, register & kyc) from sidebar layout
+  const isNoSidebarPage =
+    pathname === '/creators/login' ||
+    pathname === '/creators/register' ||
+    pathname === '/creators/kyc' ||
+    pathname?.startsWith('/creators/kyc');
 
-  if (isAuthPage) {
+  if (isNoSidebarPage) {
     return <>{children}</>;
   }
 

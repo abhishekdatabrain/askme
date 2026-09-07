@@ -69,7 +69,8 @@ export default function CreatorNotificationsPage() {
   const [activeFilter, setActiveFilter] = useState('all');
   const [filterCounts, setFilterCounts] = useState({
     all: 0,
-    priority: 0,
+    superchat: 0,
+    members: 0,
     answered: 0,
     rejected: 0,
   });
@@ -306,11 +307,12 @@ export default function CreatorNotificationsPage() {
               </div>
             </div>
 
-            {/* DYNAMIC FILTER TABS BAR (All, Priority, AI Flagged, Unread, Accepted, Answered, Rejected) */}
+            {/* DYNAMIC FILTER TABS BAR (All, Superchat, Members, Answered, Rejected) */}
             <div className={`p-2 rounded-2xl border flex items-center gap-2 overflow-x-auto no-scrollbar ${theme === 'light' ? 'bg-white border-[#E9ECEF]' : 'bg-[#13131A] border-[#1C1C26]'}`}>
               {[
                 { id: 'all', label: 'All', icon: null },
-                { id: 'priority', label: 'Priority', icon: '⚡' },
+                { id: 'superchat', label: 'Superchat', icon: '💬' },
+                { id: 'members', label: 'Members', icon: '👑' },
                 { id: 'answered', label: 'Answered', icon: null },
                 { id: 'rejected', label: 'Rejected', icon: null },
               ].map(tab => {

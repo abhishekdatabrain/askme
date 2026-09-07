@@ -1,14 +1,31 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { Search, Bell, Shield, Zap, Radio, User, ChevronDown, Activity, Settings, LogIn, Sun, Moon, Check, CheckCheck, Sparkles, UserCheck, DollarSign, ExternalLink, X } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { 
+  Search, Bell, Shield, Zap, Radio, User, ChevronDown, Activity, Settings, 
+  LogIn, Sun, Moon, Check, CheckCheck, Sparkles, UserCheck, DollarSign, 
+  ExternalLink, X, Loader2, ArrowRight, FileText, ChevronRight
+} from 'lucide-react';
 import { API_ENDPOINTS } from '@/config/api';
 import { getAdminToken } from '@/utils/cookies';
 import { getSocket } from '@/config/socket';
 
 export default function AdminNavbar({ activeView, setActiveView, onOpenAuthModal, isLoggedIn, onLogout, systemStatus = "OPERATIONAL", theme = 'dark', onToggleTheme }) {
+  const router = useRouter();
   const [notifications, setNotifications] = useState([]);
   const [isOpenNotifPopup, setIsOpenNotifPopup] = useState(false);
   const dropdownRef = useRef(null);
+
+  // Compute unread notifications count dynamically
+  const unreadCount = notifications.filter(n => !n.isRead && n.status !== 'read').length;
+
+  // Global Search State
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState(null);
+  const [isSearching, setIsSearching] = useState(false);
+  const [isOpenSearchPopup, setIsOpenSearchPopup] = useState(false);
+  const searchRef = useRef(null);
+  const searchInputRef = useRef(null);
 
   const fetchNotifications = async () => {
     try {
@@ -19,7 +36,11 @@ export default function AdminNavbar({ activeView, setActiveView, onOpenAuthModal
       const data = await res.json().catch(() => ({}));
       if (res.ok && data.status === 'success') {
         const notifs = data.data?.notifications || [];
-        setNotifications(notifs);
+        setNotifications(notifs.map(n => ({
+          ...n,
+          isRead: Boolean(n.isRead || n.is_read || n.status === 'read'),
+          status: (n.isRead || n.is_read || n.status === 'read') ? 'read' : 'unread'
+        })));
       }
     } catch (err) {
       console.warn('Failed to fetch admin notifications:', err.message);
@@ -29,26 +50,90 @@ export default function AdminNavbar({ activeView, setActiveView, onOpenAuthModal
   useEffect(() => {
     fetchNotifications();
 
+    // 15-second interval fallback to keep notifications synced
+    const interval = setInterval(fetchNotifications, 15000);
+
     const socket = getSocket();
     if (socket) {
       const handleNewNotif = (newNotif) => {
-        setNotifications(prev => [newNotif, ...prev]);
+        setNotifications(prev => [
+          {
+            ...newNotif,
+            isRead: false,
+            status: 'unread',
+            time: 'Just now',
+          },
+          ...prev,
+        ]);
       };
       socket.on('admin_notification', handleNewNotif);
       return () => {
+        clearInterval(interval);
         socket.off('admin_notification', handleNewNotif);
       };
     }
+
+    return () => clearInterval(interval);
   }, []);
 
+  // Debounced Search logic
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setSearchResults(null);
+      setIsSearching(false);
+      return;
+    }
+
+    setIsSearching(true);
+    const timer = setTimeout(async () => {
+      try {
+        const token = getAdminToken();
+        const res = await fetch(`${API_ENDPOINTS.ADMIN.SEARCH}?q=${encodeURIComponent(searchQuery.trim())}`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+        const data = await res.json().catch(() => ({}));
+        if (res.ok && data.status === 'success') {
+          setSearchResults(data.data || { creators: [], liveSessions: [], payments: [], kyc: [] });
+        } else {
+          setSearchResults({ creators: [], liveSessions: [], payments: [], kyc: [] });
+        }
+      } catch (err) {
+        console.warn('Failed to perform admin search:', err.message);
+        setSearchResults({ creators: [], liveSessions: [], payments: [], kyc: [] });
+      } finally {
+        setIsSearching(false);
+      }
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  // Click outside to close dropdowns & shortcut listener
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setIsOpenNotifPopup(false);
       }
+      if (searchRef.current && !searchRef.current.contains(event.target)) {
+        setIsOpenSearchPopup(false);
+      }
+    };
+    const handleKeyDown = (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        searchInputRef.current?.focus();
+        setIsOpenSearchPopup(true);
+      }
+      if (e.key === 'Escape') {
+        setIsOpenSearchPopup(false);
+      }
     };
     document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
   }, []);
 
   const handleMarkAllRead = async () => {
@@ -74,7 +159,22 @@ export default function AdminNavbar({ activeView, setActiveView, onOpenAuthModal
     } catch (err) {}
   };
 
-  const unreadCount = notifications.filter(n => !n.isRead && n.status !== 'read').length;
+  const handleNavigate = (path, viewName) => {
+    setIsOpenSearchPopup(false);
+    setSearchQuery('');
+    if (setActiveView && viewName) {
+      setActiveView(viewName);
+    }
+    if (router && path) {
+      router.push(path);
+    }
+  };
+  const totalResultsCount = searchResults
+    ? (searchResults.creators?.length || 0) +
+      (searchResults.liveSessions?.length || 0) +
+      (searchResults.payments?.length || 0) +
+      (searchResults.kyc?.length || 0)
+    : 0;
 
   return (
     <header className={`sticky top-0 z-40 w-full border-b backdrop-blur-md px-4 lg:px-8 py-3 transition-colors ${
@@ -85,7 +185,7 @@ export default function AdminNavbar({ activeView, setActiveView, onOpenAuthModal
       <div className="flex items-center justify-between gap-4">
         {/* Brand Logo & Signal Status */}
         <div className="flex items-center gap-6">
-          <div className="flex items-center gap-3 cursor-pointer" onClick={() => setActiveView && setActiveView('overview')}>
+          <div className="flex items-center gap-3 cursor-pointer" onClick={() => handleNavigate('/admin/dashboard', 'overview')}>
             <div className="h-9 w-9 rounded-xl bg-brand-gradient flex items-center justify-center text-[#0A0A0F] font-black text-xl shadow-lg glow-teal">
               a
             </div>
@@ -115,20 +215,238 @@ export default function AdminNavbar({ activeView, setActiveView, onOpenAuthModal
           </div>
         </div>
 
-        {/* Command Palette Search */}
-        <div className="flex-1 max-w-md hidden sm:block">
+        {/* Command Palette Search Container */}
+        <div className="flex-1 max-w-md hidden sm:block relative" ref={searchRef}>
           <div className="relative">
             <Search className={`absolute left-3 top-2.5 h-4 w-4 ${theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'}`} />
             <input
+              ref={searchInputRef}
               type="text"
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setIsOpenSearchPopup(true);
+              }}
+              onFocus={() => setIsOpenSearchPopup(true)}
               placeholder="Search creators, live streams, askMails, or transactions... (⌘K)"
-              className={`w-full rounded-full border pl-9 pr-4 py-2 text-xs focus:border-[#00F5D4] focus:outline-none transition-all ${
+              className={`w-full rounded-full border pl-9 pr-9 py-2 text-xs focus:border-[#00F5D4] focus:outline-none transition-all ${
                 theme === 'light'
                   ? 'bg-[#F8F9FA] border-[#E9ECEF] text-[#212529] placeholder-[#6C757D]'
                   : 'bg-[#13131A] border-[#1C1C26] text-[#F5F5F7] placeholder-[#8B8B96]'
               }`}
             />
+            {isSearching ? (
+              <Loader2 className="absolute right-3 top-2.5 h-4 w-4 animate-spin text-[#00F5D4]" />
+            ) : searchQuery ? (
+              <button
+                onClick={() => {
+                  setSearchQuery('');
+                  setSearchResults(null);
+                }}
+                className="absolute right-3 top-2.5 hover:opacity-80"
+              >
+                <X className="h-4 w-4 text-[#8B8B96]" />
+              </button>
+            ) : null}
           </div>
+
+          {/* Search Dropdown Modal */}
+          {isOpenSearchPopup && searchQuery.trim().length > 0 && (
+            <div className={`absolute left-0 right-0 top-full mt-2 rounded-2xl border shadow-2xl z-50 overflow-hidden animate-fade-in ${
+              theme === 'light'
+                ? 'bg-white border-[#E9ECEF] text-[#212529]'
+                : 'bg-[#13131A] border-[#1C1C26] text-white'
+            }`}>
+              {/* Dropdown Header */}
+              <div className={`p-3 border-b flex items-center justify-between text-xs ${
+                theme === 'light' ? 'border-[#E9ECEF] bg-[#F8F9FA]' : 'border-[#1C1C26] bg-[#1A1A26]'
+              }`}>
+                <div className="flex items-center gap-2 font-bold">
+                  <Search className="h-3.5 w-3.5 text-[#00F5D4]" />
+                  <span>Search Results</span>
+                  {isSearching ? (
+                    <span className="text-[10px] text-[#8B8B96] font-normal flex items-center gap-1">
+                      <Loader2 className="h-3 w-3 animate-spin text-[#00F5D4]" /> Searching...
+                    </span>
+                  ) : (
+                    <span className="px-1.5 py-0.5 text-[10px] rounded-md bg-[#00F5D4]/10 text-[#00F5D4] border border-[#00F5D4]/20">
+                      {totalResultsCount} found
+                    </span>
+                  )}
+                </div>
+                <span className="text-[10px] text-[#8B8B96]">Press ESC to close</span>
+              </div>
+
+              {/* Dropdown Results List */}
+              <div className="max-h-96 overflow-y-auto divide-y divide-[#1C1C26]/50">
+                {!isSearching && totalResultsCount === 0 && (
+                  <div className="p-8 text-center">
+                    <Search className="h-8 w-8 text-[#8B8B96] mx-auto mb-2 opacity-30" />
+                    <p className="text-xs font-semibold text-[#8B8B96]">No matching records found</p>
+                    <p className="text-[10px] text-[#8B8B96]/70 mt-1">Try searching by creator name, username, email, live stream code, or payment viewer name.</p>
+                  </div>
+                )}
+
+                {/* 1. CREATORS */}
+                {searchResults?.creators?.length > 0 && (
+                  <div className="p-2">
+                    <div className="px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-wider text-[#00F5D4] flex items-center gap-1.5">
+                      <User className="h-3 w-3" /> Creators ({searchResults.creators.length})
+                    </div>
+                    {searchResults.creators.map((c) => (
+                      <div
+                        key={c.id}
+                        onClick={() => handleNavigate('/admin/creators/all', 'creators')}
+                        className={`p-2 rounded-xl transition-all flex items-center justify-between cursor-pointer ${
+                          theme === 'light' ? 'hover:bg-[#F1F3F5]' : 'hover:bg-[#1A1A26]'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <div className="h-7 w-7 rounded-full bg-gradient-to-tr from-[#7B2FFF] to-[#00F5D4] p-0.5 shrink-0">
+                            {c.profile_image ? (
+                              <img src={c.profile_image} alt="" className="h-full w-full rounded-full object-cover" />
+                            ) : (
+                              <div className="h-full w-full rounded-full bg-[#0A0A0F] flex items-center justify-center text-[10px] font-bold text-[#00F5D4]">
+                                {c.full_name?.[0] || 'C'}
+                              </div>
+                            )}
+                          </div>
+                          <div className="min-w-0">
+                            <h4 className="text-xs font-bold truncate flex items-center gap-1.5">
+                              {c.full_name}
+                              <span className="text-[10px] font-normal text-[#8B8B96]">@{c.username}</span>
+                            </h4>
+                            <p className="text-[10px] text-[#8B8B96] truncate">{c.email}</p>
+                          </div>
+                        </div>
+                        <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full capitalize shrink-0 ${
+                          c.status === 'active' ? 'bg-[#00E676]/10 text-[#00E676] border border-[#00E676]/20' :
+                          c.status === 'blocked' ? 'bg-[#FF3D71]/10 text-[#FF3D71] border border-[#FF3D71]/20' :
+                          'bg-[#FFD60A]/10 text-[#FFD60A] border border-[#FFD60A]/20'
+                        }`}>
+                          {c.status}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* 2. LIVE SESSIONS */}
+                {searchResults?.liveSessions?.length > 0 && (
+                  <div className="p-2">
+                    <div className="px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-wider text-[#FFD60A] flex items-center gap-1.5">
+                      <Radio className="h-3 w-3" /> Live Streams & Sessions ({searchResults.liveSessions.length})
+                    </div>
+                    {searchResults.liveSessions.map((s) => (
+                      <div
+                        key={s.id}
+                        onClick={() => handleNavigate('/admin/live-sessions', 'live-sessions')}
+                        className={`p-2 rounded-xl transition-all flex items-center justify-between cursor-pointer ${
+                          theme === 'light' ? 'hover:bg-[#F1F3F5]' : 'hover:bg-[#1A1A26]'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <div className="p-1.5 rounded-lg bg-[#FFD60A]/10 text-[#FFD60A] border border-[#FFD60A]/20 shrink-0">
+                            <Radio className="h-3.5 w-3.5" />
+                          </div>
+                          <div className="min-w-0">
+                            <h4 className="text-xs font-bold truncate">{s.title}</h4>
+                            <p className="text-[10px] text-[#8B8B96] truncate">Code: {s.session_code} • {s.category || 'General'}</p>
+                          </div>
+                        </div>
+                        <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full capitalize shrink-0 ${
+                          s.status === 'active' ? 'bg-[#00E676]/10 text-[#00E676] border border-[#00E676]/20' :
+                          'bg-[#1C1C26] text-[#8B8B96] border border-[#2C2C3E]'
+                        }`}>
+                          {s.status}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* 3. PAYMENTS */}
+                {searchResults?.payments?.length > 0 && (
+                  <div className="p-2">
+                    <div className="px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-wider text-[#00E676] flex items-center gap-1.5">
+                      <DollarSign className="h-3 w-3" /> Payments & Transactions ({searchResults.payments.length})
+                    </div>
+                    {searchResults.payments.map((p) => (
+                      <div
+                        key={p.id}
+                        onClick={() => handleNavigate('/admin/payments/all', 'payments')}
+                        className={`p-2 rounded-xl transition-all flex items-center justify-between cursor-pointer ${
+                          theme === 'light' ? 'hover:bg-[#F1F3F5]' : 'hover:bg-[#1A1A26]'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <div className="p-1.5 rounded-lg bg-[#00E676]/10 text-[#00E676] border border-[#00E676]/20 shrink-0">
+                            <DollarSign className="h-3.5 w-3.5" />
+                          </div>
+                          <div className="min-w-0">
+                            <h4 className="text-xs font-bold truncate">{p.viewer_name || 'Anonymous Viewer'}</h4>
+                            <p className="text-[10px] text-[#8B8B96] truncate">{p.viewer_email || p.donation_uuid}</p>
+                          </div>
+                        </div>
+                        <div className="text-right shrink-0">
+                          <p className="text-xs font-bold text-[#00E676]">₹{parseFloat(p.amount || 0).toLocaleString()}</p>
+                          <span className={`text-[8px] font-bold px-1.5 py-0.2 rounded capitalize ${
+                            p.payment_status === 'success' ? 'bg-[#00E676]/10 text-[#00E676]' : 'bg-[#FF3D71]/10 text-[#FF3D71]'
+                          }`}>
+                            {p.payment_status}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* 4. KYC VERIFICATIONS */}
+                {searchResults?.kyc?.length > 0 && (
+                  <div className="p-2">
+                    <div className="px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-wider text-[#7B2FFF] flex items-center gap-1.5">
+                      <UserCheck className="h-3 w-3" /> KYC Applications ({searchResults.kyc.length})
+                    </div>
+                    {searchResults.kyc.map((k) => (
+                      <div
+                        key={k.id}
+                        onClick={() => handleNavigate('/admin/kyc/pending', 'kyc')}
+                        className={`p-2 rounded-xl transition-all flex items-center justify-between cursor-pointer ${
+                          theme === 'light' ? 'hover:bg-[#F1F3F5]' : 'hover:bg-[#1A1A26]'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <div className="p-1.5 rounded-lg bg-[#7B2FFF]/10 text-[#7B2FFF] border border-[#7B2FFF]/20 shrink-0">
+                            <UserCheck className="h-3.5 w-3.5" />
+                          </div>
+                          <div className="min-w-0">
+                            <h4 className="text-xs font-bold truncate">{k.full_name}</h4>
+                            <p className="text-[10px] text-[#8B8B96] truncate">PAN: {k.pan_number || 'N/A'}</p>
+                          </div>
+                        </div>
+                        <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full capitalize shrink-0 ${
+                          k.status === 'approved' ? 'bg-[#00E676]/10 text-[#00E676] border border-[#00E676]/20' :
+                          k.status === 'rejected' ? 'bg-[#FF3D71]/10 text-[#FF3D71] border border-[#FF3D71]/20' :
+                          'bg-[#FFD60A]/10 text-[#FFD60A] border border-[#FFD60A]/20'
+                        }`}>
+                          {k.status}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Dropdown Footer */}
+              <div className={`p-2.5 border-t text-center ${
+                theme === 'light' ? 'border-[#E9ECEF] bg-[#F8F9FA]' : 'border-[#1C1C26] bg-[#0A0A0F]'
+              }`}>
+                <span className="text-[10px] text-[#8B8B96]">
+                  Showing real-time results from AskMe Admin database
+                </span>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Right Section  Actions & Profile */}
@@ -338,4 +656,3 @@ export default function AdminNavbar({ activeView, setActiveView, onOpenAuthModal
     </header>
   );
 }
-

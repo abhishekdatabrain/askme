@@ -92,7 +92,7 @@ export default function WithdrawalsManager({ activeSubTab }) {
     try {
       setIsSubmitting(true);
       const res = await fetch(`${API_ENDPOINTS.ADMIN.WITHDRAWALS}/${targetId}/status`, {
-        method: 'PATCH',
+        method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
           ...(token ? { Authorization: `Bearer ${token}` } : {})
@@ -225,10 +225,10 @@ export default function WithdrawalsManager({ activeSubTab }) {
                   {/* Status Badge */}
                   <td className="py-3.5 px-2">
                     <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold capitalize ${w.status === 'completed' || w.status === 'paid' ? 'bg-[#00E676]/10 text-[#00E676] border border-[#00E676]/30' :
-                        w.status === 'approved' ? 'bg-[#00F5D4]/10 text-[#00F5D4] border border-[#00F5D4]/30' :
-                          w.status === 'processing' ? 'bg-[#FFD60A]/10 text-[#FFD60A] border border-[#FFD60A]/30' :
-                            w.status === 'pending' ? 'bg-[#FFD60A]/20 text-[#FFD60A] border border-[#FFD60A]/40' :
-                              'bg-[#FF3D71]/10 text-[#FF3D71] border border-[#FF3D71]/30'
+                      w.status === 'approved' ? 'bg-[#00F5D4]/10 text-[#00F5D4] border border-[#00F5D4]/30' :
+                        w.status === 'processing' ? 'bg-[#FFD60A]/10 text-[#FFD60A] border border-[#FFD60A]/30' :
+                          w.status === 'pending' ? 'bg-[#FFD60A]/20 text-[#FFD60A] border border-[#FFD60A]/40' :
+                            'bg-[#FF3D71]/10 text-[#FF3D71] border border-[#FF3D71]/30'
                       }`}>
                       {w.status === 'completed' || w.status === 'paid' ? 'Completed' : w.status}
                     </span>

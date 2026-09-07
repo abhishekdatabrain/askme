@@ -52,6 +52,51 @@ export function clearAdminSession() {
   removeCookie('askme_admin_user');
 }
 
+export function isTokenExpired(token) {
+  if (!token || token === 'undefined' || token === 'null') return true;
+  try {
+    const parts = token.split('.');
+    if (parts.length !== 3) return false;
+    const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
+    if (payload && payload.exp) {
+      return Date.now() >= payload.exp * 1000;
+    }
+  } catch (e) {
+    return false;
+  }
+  return false;
+}
+
+export function handleAdminTokenExpiration(message = "Invalid or expired token. Please log in again.") {
+  if (typeof window === 'undefined') return;
+
+  clearAdminSession();
+
+  const msgText = message || "Invalid or expired token. Please log in again.";
+
+  try {
+    sessionStorage.setItem('askme_toast_pending', JSON.stringify({
+      message: msgText,
+      type: 'error',
+      title: 'Session Expired'
+    }));
+  } catch (e) {}
+
+  window.dispatchEvent(new CustomEvent('askme_toast', {
+    detail: {
+      message: msgText,
+      type: 'error',
+      title: 'Session Expired'
+    }
+  }));
+
+  if (window.location.pathname !== '/admin/login') {
+    setTimeout(() => {
+      window.location.href = '/admin/login';
+    }, 150);
+  }
+}
+
 // Dedicated Creator Session Helpers
 export function getCreatorToken() {
   return getCookie('askme_token');

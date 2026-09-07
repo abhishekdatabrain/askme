@@ -161,7 +161,7 @@ function ViewerSidebarContent({ theme: propTheme, onToggleTheme, activeTab: curr
       id: 'notifications',
       label: 'Notifications',
       icon: Bell,
-      badge: 'LIVE',
+      badge: '',
       badgeColor: 'bg-[#00F5D4] text-[#0A0A0F]',
       href: '/viewers/notifications',
     },

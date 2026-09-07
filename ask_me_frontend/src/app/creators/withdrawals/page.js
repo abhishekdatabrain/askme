@@ -4,7 +4,29 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import CreatorSidebar from '@/components/CreatorSidebar';
 import CreatorNotificationDropdown from '@/components/CreatorNotificationDropdown';
-import { ArrowUpRight, Building2, Clock, CheckCircle2, ArrowLeft, Wallet, RefreshCw, XCircle, ShieldCheck, AlertCircle, FileText, Sun, Moon, Bell } from 'lucide-react';
+import {
+  ArrowUpRight,
+  Building2,
+  Clock,
+  CheckCircle2,
+  ArrowLeft,
+  Wallet,
+  RefreshCw,
+  XCircle,
+  ShieldCheck,
+  AlertCircle,
+  FileText,
+  Sun,
+  Moon,
+  Bell,
+  ChevronLeft,
+  ChevronRight,
+  Download,
+  Calendar,
+  Info,
+  Lock,
+  RotateCcw
+} from 'lucide-react';
 import { API_ENDPOINTS } from '@/config/api';
 import { getCreatorToken, getCreatorUser } from '@/utils/cookies';
 
@@ -16,9 +38,12 @@ export default function CreatorWithdrawalsPage() {
     withdrawnAmount: 0,
   });
 
+  const [currentSettlement, setCurrentSettlement] = useState(null);
   const [withdrawals, setWithdrawals] = useState([]);
   const [bankAccount, setBankAccount] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [pagination, setPagination] = useState(null);
 
   // Active Tab: 'history' | 'bank'
   const [activeTab, setActiveTab] = useState('history');
@@ -71,7 +96,7 @@ export default function CreatorWithdrawalsPage() {
   });
   const [isSavingBank, setIsSavingBank] = useState(false);
 
-  const fetchWithdrawalData = async () => {
+  const fetchWithdrawalData = async (targetPage = 1) => {
     const token = getCreatorToken();
     const u = getCreatorUser();
     if (!token || !u || !u.id) {
@@ -85,7 +110,7 @@ export default function CreatorWithdrawalsPage() {
       setIsLoading(true);
       const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
-      // 1. Fetch Wallet Balances
+      // 1. Fetch Wallet Balances & Current Settlement Record
       const resWallet = await fetch(`${API_ENDPOINTS.CREATORS.WALLET_DETAILS}?creatorId=${creatorId}`, { headers });
       const dataWallet = await resWallet.json();
       if (resWallet.ok && dataWallet.status === 'success' && dataWallet.data) {
@@ -95,13 +120,18 @@ export default function CreatorWithdrawalsPage() {
           pendingAmount: 0,
           withdrawnAmount: 0,
         });
+        setCurrentSettlement(dataWallet.data.currentSettlement || null);
       }
 
       // 2. Fetch Withdrawal Requests History
-      const resWth = await fetch(`${API_ENDPOINTS.CREATORS.WALLET_WITHDRAWALS}?creatorId=${creatorId}`, { headers });
+      const resWth = await fetch(`${API_ENDPOINTS.CREATORS.WALLET_WITHDRAWALS}?creatorId=${creatorId}&page=${targetPage}&limit=10`, { headers });
       const dataWth = await resWth.json();
       if (resWth.ok && dataWth.status === 'success' && dataWth.data?.withdrawals) {
         setWithdrawals(dataWth.data.withdrawals);
+        if (dataWth.data.pagination) {
+          setPagination(dataWth.data.pagination);
+          setPage(dataWth.data.pagination.page);
+        }
       }
 
       // 3. Fetch Saved Bank Account Info
@@ -111,13 +141,13 @@ export default function CreatorWithdrawalsPage() {
         const b = dataBank.data.bankAccount;
         setBankAccount(b);
         setBankForm({
-          accountHolderName: b.account_holder_name || '',
-          bankName: b.bank_name || '',
-          accountNumber: b.account_number || '',
-          ifscCode: b.ifsc_code || '',
-          upiId: b.upi_id || '',
+          accountHolderName: b.accountHolderName || '',
+          bankName: b.bankName || '',
+          accountNumber: b.accountNumber || '',
+          ifscCode: b.ifscCode || '',
+          upiId: b.upiId || '',
         });
-        setBankInfo(b.upi_id ? `UPI: ${b.upi_id}` : `${b.bank_name} A/C ****${(b.account_number || '').slice(-4)} (${b.account_holder_name})`);
+        setBankInfo(b.upiId ? `UPI: ${b.upiId}` : `${b.bankName} A/C ****${(b.accountNumber || '').slice(-4)} (${b.accountHolderName})`);
       }
     } catch (err) {
       console.warn('Withdrawal fetch notice:', err.message);
@@ -126,8 +156,57 @@ export default function CreatorWithdrawalsPage() {
     }
   };
 
+  const handlePageChange = (newPage) => {
+    if (!pagination) return;
+    if (newPage < 1 || newPage > pagination.totalPages) return;
+    fetchWithdrawalData(newPage);
+  };
+
+  const handleDownloadCSV = () => {
+    if (!withdrawals || withdrawals.length === 0) {
+      alert('No withdrawal history available to download.');
+      return;
+    }
+
+    const headers = [
+      'Sr No',
+      'Request Date',
+      'Settlement Cycle',
+      'Requested Amount (INR)',
+      'Payout Method / Bank Info',
+      'Status'
+    ];
+
+    const rows = withdrawals.map((w, index) => {
+      const rawDate = w.requestedDate || w.requested_at || w.createdAt || w.created_at;
+      const dateObj = rawDate ? new Date(rawDate) : new Date();
+      const dateStr = !isNaN(dateObj.getTime())
+        ? dateObj.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
+        : new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+
+      return [
+        index + 1,
+        `"${dateStr}"`,
+        `"${w.settlementMonth || ''}"`,
+        w.amount ? parseFloat(w.amount).toFixed(2) : '0.00',
+        `"${(w.bankDetails || '').replace(/"/g, '""')}"`,
+        `"${(w.status || 'Pending Admin').replace(/"/g, '""')}"`
+      ];
+    });
+
+    const csvData = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+    const blob = new Blob([csvData], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `creator_withdrawals_report_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   useEffect(() => {
-    fetchWithdrawalData();
+    fetchWithdrawalData(1);
   }, []);
 
   // Handle Payout Withdrawal Submission
@@ -144,7 +223,7 @@ export default function CreatorWithdrawalsPage() {
     }
 
     if (amt > walletData.availableBalance) {
-      alert('Insufficient available balance for this withdrawal request.');
+      alert(`Insufficient available balance for this request. Your Available Balance is ₹${walletData.availableBalance.toFixed(2)}.`);
       return;
     }
 
@@ -214,6 +293,8 @@ export default function CreatorWithdrawalsPage() {
     }
   };
 
+  const hasAlreadyWithdrawnInCycle = currentSettlement?.hasWithdrawn || false;
+
   return (
     <>
       <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
@@ -229,10 +310,8 @@ export default function CreatorWithdrawalsPage() {
           </div>
 
           <div className="flex items-center gap-3">
-            {/* Notification Bell Icon Popup Dropdown */}
             <CreatorNotificationDropdown theme={theme} />
 
-            {/* Header Theme Switcher Button */}
             <button
               onClick={toggleTheme}
               className={`px-3 py-1.5 rounded-xl border text-xs font-bold transition-all flex items-center gap-1.5 ${theme === 'light'
@@ -255,10 +334,27 @@ export default function CreatorWithdrawalsPage() {
             </button>
 
             <button
-              onClick={() => setShowWithdrawModal(true)}
-              className="px-4 py-2 rounded-xl bg-brand-gradient text-[#0A0A0F] text-xs font-black shadow-md glow-teal hover:opacity-95 transition flex items-center gap-1.5 shrink-0"
+              onClick={() => {
+                if (hasAlreadyWithdrawnInCycle) {
+                  alert("Withdrawal already processed for this settlement cycle.");
+                } else {
+                  setShowWithdrawModal(true);
+                }
+              }}
+              className={`px-4 py-2 rounded-xl text-xs font-black shadow-md transition flex items-center gap-1.5 shrink-0 ${hasAlreadyWithdrawnInCycle
+                ? 'bg-[#1C1C26] text-[#8B8B96] border border-[#2A2A3A] cursor-not-allowed'
+                : 'bg-brand-gradient text-[#0A0A0F] glow-teal hover:opacity-95'
+                }`}
             >
-              <ArrowUpRight className="h-4 w-4" /> Request Payout Withdrawal
+              {hasAlreadyWithdrawnInCycle ? (
+                <>
+                  <Lock className="h-4 w-4 text-[#FF3D71]" /> Cycle Withdrawal Done
+                </>
+              ) : (
+                <>
+                  <ArrowUpRight className="h-4 w-4" /> Request Payout Withdrawal
+                </>
+              )}
             </button>
           </div>
         </header>
@@ -280,7 +376,7 @@ export default function CreatorWithdrawalsPage() {
                 ₹{walletData.availableBalance.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
               </div>
               <span className={`text-[11px] ${theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'
-                }`}>Ready to Settle to Bank</span>
+                }`}>Includes Carried-Forward Balance</span>
             </div>
 
             {/* Pending Withdrawal */}
@@ -312,6 +408,34 @@ export default function CreatorWithdrawalsPage() {
             </div>
           </div>
 
+          {/* SINGLE WITHDRAWAL POLICY NOTICE BANNER */}
+          {hasAlreadyWithdrawnInCycle ? (
+            <div className="p-4 rounded-2xl border bg-[#FF3D71]/10 border-[#FF3D71]/30 text-white flex items-start gap-3 text-xs">
+              <Lock className="h-5 w-5 text-[#FF3D71] shrink-0 mt-0.5" />
+              <div className="space-y-1">
+                <strong className="text-[#FF3D71] text-sm flex items-center gap-1.5">
+                  Cycle Withdrawal Already Executed ({currentSettlement?.settlementMonth || 'Current Cycle'})
+                </strong>
+                <p className="text-[#E0E0E0] leading-relaxed">
+                  You have already submitted <strong>ONE withdrawal request</strong> for this settlement cycle. As per platform policy, only 1 withdrawal is permitted per monthly settlement. Your remaining balance (₹{(currentSettlement?.remainingAmount || walletData.availableBalance).toFixed(2)}) will automatically carry forward to your next monthly settlement.
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div className={`p-4 rounded-2xl border flex items-start gap-3 text-xs ${theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6] text-[#495057]' : 'bg-[#13131A] border-[#1C1C26] text-[#A0A0B0]'
+              }`}>
+              <Info className="h-5 w-5 text-[#00F5D4] shrink-0 mt-0.5" />
+              <div className="space-y-1">
+                <strong className={theme === 'light' ? 'text-[#1A1D20]' : 'text-white'}>
+                  1 Withdrawal Per Monthly Settlement Policy:
+                </strong>
+                <p>
+                  You are allowed <strong>1 payout withdrawal per monthly settlement cycle</strong>. Any unwithdrawn amount after your payout request will automatically carry forward to your next monthly settlement.
+                </p>
+              </div>
+            </div>
+          )}
+
           {/* 2. TABBED VIEW: WITHDRAWAL HISTORY / BANK DETAILS */}
           <div className={`p-6 rounded-3xl border space-y-5 shadow-xl transition-colors duration-200 ${theme === 'light' ? 'bg-white border-[#E9ECEF]' : 'bg-[#13131A] border-[#1C1C26]'
             }`}>
@@ -340,13 +464,24 @@ export default function CreatorWithdrawalsPage() {
                 </button>
               </div>
 
-              <button
-                onClick={fetchWithdrawalData}
-                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${theme === 'light' ? 'bg-[#E9ECEF] text-[#1A1D20] hover:bg-[#DEE2E6]' : 'bg-[#0A0A0F] border border-[#1C1C26] text-white hover:bg-[#1C1C26]'
-                  }`}
-              >
-                <RefreshCw className="h-3.5 w-3.5 text-[#00F5D4]" /> Refresh Statuses
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleDownloadCSV}
+                  title="Download Withdrawal History CSV"
+                  className="px-3.5 py-1.5 rounded-xl bg-brand-gradient text-[#0A0A0F] font-bold text-xs hover:opacity-90 transition flex items-center gap-1.5 shadow-sm"
+                >
+                  <Download className="h-4 w-4" />
+                  <span>Download CSV</span>
+                </button>
+
+                <button
+                  onClick={fetchWithdrawalData}
+                  className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${theme === 'light' ? 'bg-[#E9ECEF] text-[#1A1D20] hover:bg-[#DEE2E6]' : 'bg-[#0A0A0F] border border-[#1C1C26] text-white hover:bg-[#1C1C26]'
+                    }`}
+                >
+                  <RefreshCw className="h-3.5 w-3.5 text-[#00F5D4]" /> Refresh Statuses
+                </button>
+              </div>
             </div>
 
             {/* TAB 1: WITHDRAWAL REQUESTS HISTORY */}
@@ -368,7 +503,13 @@ export default function CreatorWithdrawalsPage() {
                       Request your first payout withdrawal to transfer available earnings to your bank account.
                     </p>
                     <button
-                      onClick={() => setShowWithdrawModal(true)}
+                      onClick={() => {
+                        if (hasAlreadyWithdrawnInCycle) {
+                          alert("Withdrawal already processed for this settlement cycle.");
+                        } else {
+                          setShowWithdrawModal(true);
+                        }
+                      }}
                       className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-brand-gradient text-[#0A0A0F] font-bold text-xs shadow-md glow-teal"
                     >
                       <ArrowUpRight className="h-4 w-4" /> Request Payout Now
@@ -380,7 +521,9 @@ export default function CreatorWithdrawalsPage() {
                       <thead>
                         <tr className={`border-b uppercase text-[10px] font-extrabold tracking-wider ${theme === 'light' ? 'border-[#E9ECEF] text-[#6C757D]' : 'border-[#1C1C26] text-[#8B8B96]'
                           }`}>
+                          <th className="py-3 px-3">Sr No</th>
                           <th className="py-3 px-3">Request Date</th>
+                          <th className="py-3 px-3">Settlement Cycle</th>
                           <th className="py-3 px-3">Requested Amount</th>
                           <th className="py-3 px-3">Payout Method / Bank Info</th>
                           <th className="py-3 px-3 text-right">Status</th>
@@ -388,9 +531,13 @@ export default function CreatorWithdrawalsPage() {
                       </thead>
                       <tbody className={`divide-y ${theme === 'light' ? 'divide-[#E9ECEF]' : 'divide-[#1C1C26]'
                         }`}>
-                        {withdrawals.map((w) => (
+                        {withdrawals.map((w, idx) => (
                           <tr key={w.id} className={`transition ${theme === 'light' ? 'hover:bg-[#F8F9FA]' : 'hover:bg-[#1A1A26]/50'
                             }`}>
+                            <td className="py-3.5 px-3 font-mono font-bold text-[#8B8B96]">
+                              {(page - 1) * 10 + idx + 1}
+                            </td>
+
                             <td className={`py-3.5 px-3 font-mono whitespace-nowrap ${theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'
                               }`}>
                               {(() => {
@@ -400,6 +547,10 @@ export default function CreatorWithdrawalsPage() {
                                   ? dateObj.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
                                   : new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
                               })()}
+                            </td>
+
+                            <td className="py-3.5 px-3 font-bold text-[#00F5D4] whitespace-nowrap">
+                              {w.settlementMonth || 'Current'}
                             </td>
 
                             <td className="py-3.5 px-3 font-heading font-black text-sm text-[#00E676] whitespace-nowrap">
@@ -553,7 +704,7 @@ export default function CreatorWithdrawalsPage() {
                 </h3>
                 <p className={`text-xs mt-0.5 ${theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'
                   }`}>
-                  Settle your available earnings directly to your Bank Account or UPI.
+                  Settle available earnings directly to Bank Account. (1 Withdrawal per Settlement Cycle)
                 </p>
               </div>
               <button
@@ -584,8 +735,6 @@ export default function CreatorWithdrawalsPage() {
                 <input
                   type="number"
                   placeholder="Minimum ₹500"
-                  // min="500"
-                  // max={walletData.availableBalance}
                   value={withdrawAmount}
                   onChange={(e) => setWithdrawAmount(e.target.value)}
                   className={`w-full px-4 py-2.5 rounded-xl border text-sm font-bold focus:outline-none focus:border-[#00F5D4] ${theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6] text-[#1A1D20]' : 'bg-[#0A0A0F] border-[#1C1C26] text-white'
@@ -593,7 +742,7 @@ export default function CreatorWithdrawalsPage() {
                   required
                 />
                 <span className={`text-[11px] mt-1 block ${theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'
-                  }`}>Minimum limit: ₹500.00</span>
+                  }`}>Minimum limit: ₹500.00. Unwithdrawn balance carries forward automatically.</span>
               </div>
 
               <div>

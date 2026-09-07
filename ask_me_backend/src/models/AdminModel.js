@@ -43,6 +43,7 @@ const Admin = sequelize.define(
     },
     {
         tableName: "admins",
+        schema: process.env.SCHEMA || "Abhishek",
         timestamps: true,
         createdAt: "created_at",
         updatedAt: "updated_at",

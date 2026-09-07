@@ -1,4 +1,8 @@
+'use client';
+
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { usePathname, useRouter } from 'next/navigation';
 import {
   Radio,
   Users,
@@ -28,7 +32,49 @@ import {
   Moon
 } from 'lucide-react';
 
-export default function AdminSidebar({ activeTab, setActiveTab, activeSubTab, setActiveSubTab, theme = 'dark', onToggleTheme }) {
+import { API_ENDPOINTS } from '@/config/api';
+import { getAdminToken } from '@/utils/cookies';
+import { getSocket } from '@/config/socket';
+
+export default function AdminSidebar({ activeTab: propsActiveTab, setActiveTab, activeSubTab: propsActiveSubTab, setActiveSubTab, theme = 'dark', onToggleTheme }) {
+  const pathname = usePathname();
+  const router = useRouter();
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  const fetchUnreadCount = async () => {
+    try {
+      const token = getAdminToken();
+      const res = await fetch(API_ENDPOINTS.ADMIN.NOTIFICATIONS, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.status === 'success') {
+        const notifs = data.data?.notifications || [];
+        const count = notifs.filter(n => !n.isRead && n.status !== 'read').length;
+        setUnreadCount(count);
+      }
+    } catch (err) {}
+  };
+
+  useEffect(() => {
+    fetchUnreadCount();
+    const interval = setInterval(fetchUnreadCount, 15000);
+
+    const socket = getSocket();
+    if (socket) {
+      const handleNewNotif = () => {
+        setUnreadCount(prev => prev + 1);
+      };
+      socket.on('admin_notification', handleNewNotif);
+      return () => {
+        clearInterval(interval);
+        socket.off('admin_notification', handleNewNotif);
+      };
+    }
+
+    return () => clearInterval(interval);
+  }, []);
+
   // Navigation structure definition matching exact requirements
   const menuStructure = [
     {
@@ -36,18 +82,28 @@ export default function AdminSidebar({ activeTab, setActiveTab, activeSubTab, se
       label: 'Dashboard',
       subtitle: 'Metrics & Platform Summary',
       icon: Radio,
-      badge: 'LIVE',
-      badgeColor: 'bg-[#FF3D71] animate-live-pulse text-white',
+      path: '/admin/dashboard',
     },
     {
       id: 'creators',
       label: 'Creators',
       subtitle: 'Management & Details',
       icon: Users,
+      path: '/admin/creators/all',
       children: [
-        { id: 'creators_all', label: 'All Creators' },
-        { id: 'creators_active', label: 'Active Creators' },
-        { id: 'creators_blocked', label: 'Blocked Creators' },
+        { id: 'creators_all', label: 'All Creators', path: '/admin/creators/all' },
+        { id: 'creators_active', label: 'Active Creators', path: '/admin/creators/active' },
+        { id: 'creators_blocked', label: 'Blocked Creators', path: '/admin/creators/blocked' },
+      ],
+    },
+    {
+      id: 'viewers',
+      label: 'Viewers',
+      subtitle: 'Management & Details',
+      icon: User,
+      path: '/admin/viewers',
+      children: [
+        { id: 'viewers_all', label: 'All Viewers', path: '/admin/viewers' },
       ],
     },
     {
@@ -55,11 +111,12 @@ export default function AdminSidebar({ activeTab, setActiveTab, activeSubTab, se
       label: 'KYC Management',
       subtitle: 'Identity & Bank Approvals',
       icon: ShieldCheck,
+      path: '/admin/kyc/pending',
       children: [
-        { id: 'kyc_pending', label: 'Pending KYC' },
-        { id: 'kyc_approved', label: 'Approved KYC' },
-        { id: 'kyc_rejected', label: 'Rejected KYC' },
-        { id: 'user_agreement', label: 'User Agreement' },
+        { id: 'kyc_pending', label: 'Pending KYC', path: '/admin/kyc/pending' },
+        { id: 'kyc_approved', label: 'Approved KYC', path: '/admin/kyc/approved' },
+        { id: 'kyc_rejected', label: 'Rejected KYC', path: '/admin/kyc/rejected' },
+        { id: 'user_agreement', label: 'User Agreement', path: '/admin/kyc/user-agreement' },
       ],
     },
     {
@@ -67,11 +124,11 @@ export default function AdminSidebar({ activeTab, setActiveTab, activeSubTab, se
       label: 'Live Sessions',
       subtitle: 'Stream QR Overlays',
       icon: Tv,
-      count: '',
+      path: '/admin/live-sessions/active',
       children: [
-        { id: 'livesessions_active', label: 'Active Sessions' },
-        { id: 'livesessions_closed', label: 'Closed Sessions' },
-        { id: 'livesessions_suspended', label: 'Suspended Sessions' },
+        { id: 'livesessions_active', label: 'Active Sessions', path: '/admin/live-sessions/active' },
+        { id: 'livesessions_closed', label: 'Closed Sessions', path: '/admin/live-sessions/closed' },
+        { id: 'livesessions_suspended', label: 'Suspended Sessions', path: '/admin/live-sessions/suspended' },
       ],
     },
 
@@ -80,12 +137,13 @@ export default function AdminSidebar({ activeTab, setActiveTab, activeSubTab, se
       label: 'Payments',
       subtitle: 'Transactions & Gateways',
       icon: DollarSign,
+      path: '/admin/payments/all',
       children: [
-        { id: 'payments_all', label: 'All Transactions' },
-        { id: 'payments_successful', label: 'Successful' },
-        { id: 'payments_failed', label: 'Failed' },
-        { id: 'payments_pending', label: 'Pending' },
-        { id: 'payments_refunds', label: 'Refunds' },
+        { id: 'payments_all', label: 'All Transactions', path: '/admin/payments/all' },
+        { id: 'payments_successful', label: 'Successful', path: '/admin/payments/successful' },
+        { id: 'payments_failed', label: 'Failed', path: '/admin/payments/failed' },
+        { id: 'payments_pending', label: 'Pending', path: '/admin/payments/pending' },
+        { id: 'payments_refunds', label: 'Refunds', path: '/admin/payments/refunds' },
       ],
     },
     {
@@ -93,8 +151,9 @@ export default function AdminSidebar({ activeTab, setActiveTab, activeSubTab, se
       label: 'Wallet',
       subtitle: 'Creator Balances & Settlements',
       icon: Wallet,
+      path: '/admin/wallets',
       children: [
-        { id: 'wallets_creators', label: 'Creator Wallets' },
+        { id: 'wallets_creators', label: 'Creator Wallets', path: '/admin/wallets' },
       ],
     },
     {
@@ -102,12 +161,13 @@ export default function AdminSidebar({ activeTab, setActiveTab, activeSubTab, se
       label: 'Withdrawals',
       subtitle: 'Payout Requests & Status',
       icon: ArrowUpRight,
+      path: '/admin/withdrawals/pending',
       children: [
-        { id: 'withdrawals_pending', label: 'Pending' },
-        { id: 'withdrawals_approved', label: 'Approved' },
-        { id: 'withdrawals_processing', label: 'Processing' },
-        { id: 'withdrawals_completed', label: 'Completed' },
-        { id: 'withdrawals_rejected', label: 'Rejected' },
+        { id: 'withdrawals_pending', label: 'Pending', path: '/admin/withdrawals/pending' },
+        { id: 'withdrawals_approved', label: 'Approved', path: '/admin/withdrawals/approved' },
+        { id: 'withdrawals_processing', label: 'Processing', path: '/admin/withdrawals/processing' },
+        { id: 'withdrawals_completed', label: 'Completed', path: '/admin/withdrawals/completed' },
+        { id: 'withdrawals_rejected', label: 'Rejected', path: '/admin/withdrawals/rejected' },
       ],
     },
     {
@@ -115,10 +175,11 @@ export default function AdminSidebar({ activeTab, setActiveTab, activeSubTab, se
       label: 'Commission',
       subtitle: '15% Revenue Rules',
       icon: Sparkles,
+      path: '/admin/commissions',
       badge: '15%',
       badgeColor: 'bg-[#FFD60A] text-[#0A0A0F]',
       children: [
-        { id: 'commissions_settings', label: 'Commission Settings' },
+        { id: 'commissions_settings', label: 'Commission Settings', path: '/admin/commissions' },
       ],
     },
     {
@@ -126,11 +187,12 @@ export default function AdminSidebar({ activeTab, setActiveTab, activeSubTab, se
       label: 'Reports',
       subtitle: 'Revenue & Performance',
       icon: BarChart2,
+      path: '/admin/reports/revenue',
       children: [
-        { id: 'reports_revenue', label: 'Revenue Report' },
-        { id: 'reports_creator', label: 'Creator Report' },
-        { id: 'reports_payment', label: 'Payment Report' },
-        { id: 'reports_withdrawal', label: 'Withdrawal Report' },
+        { id: 'reports_revenue', label: 'Revenue Report', path: '/admin/reports/revenue' },
+        { id: 'reports_creator', label: 'Creator Report', path: '/admin/reports/creator' },
+        { id: 'reports_payment', label: 'Payment Report', path: '/admin/reports/payment' },
+        { id: 'reports_withdrawal', label: 'Withdrawal Report', path: '/admin/reports/withdrawal' },
       ],
     },
     {
@@ -138,15 +200,25 @@ export default function AdminSidebar({ activeTab, setActiveTab, activeSubTab, se
       label: 'Notifications',
       subtitle: 'System Alerts & Logs',
       icon: Bell,
-      badge: '3',
-      badgeColor: 'bg-[#00F5D4] text-[#0A0A0F]',
+      path: '/admin/notifications',
+      badge: unreadCount > 0 ? (unreadCount > 9 ? '9+' : String(unreadCount)) : '',
+      badgeColor: unreadCount > 0 ? 'bg-[#FF3D71] text-white animate-pulse' : 'bg-[#00F5D4] text-[#0A0A0F]',
     },
   ];
 
-  // Track expanded accordion section - only 1 open at a time
-  const [expandedSections, setExpandedSections] = useState(() => {
-    return activeTab ? { [activeTab]: true } : {};
-  });
+  // Determine active item from current pathname
+  const activeItem = menuStructure.find((item) => {
+    if (item.path === pathname) return true;
+    if (item.children) {
+      return item.children.some((c) => c.path === pathname);
+    }
+    return false;
+  }) || menuStructure[0];
+
+  const activeTab = activeItem.id;
+
+  // Track expanded accordion section
+  const [expandedSections, setExpandedSections] = useState({ [activeTab]: true });
 
   useEffect(() => {
     if (activeTab) {
@@ -159,31 +231,19 @@ export default function AdminSidebar({ activeTab, setActiveTab, activeSubTab, se
   };
 
   const handleParentClick = (item) => {
-    setActiveTab(item.id);
-    if (item.children && item.children.length > 0) {
-      // Toggle single open section: if it was already open, close it, else open ONLY this item
-      toggleSection(item.id);
-      // Select first sub-item if activeSubTab is not already under this parent
-      if (!activeSubTab || !item.children.some(c => c.id === activeSubTab)) {
-        if (setActiveSubTab) {
-          setActiveSubTab(item.children[0].id);
-        }
-      }
-    } else {
-      setExpandedSections({});
-      if (setActiveSubTab) {
-        setActiveSubTab('');
-      }
+    toggleSection(item.id);
+    if (item.path) {
+      if (setActiveTab) setActiveTab(item.id);
+      router.push(item.path);
     }
   };
 
-  const handleChildClick = (parentId, childId, e) => {
+  const handleChildClick = (parentId, child, e) => {
     e.stopPropagation();
-    setActiveTab(parentId);
+    if (setActiveTab) setActiveTab(parentId);
+    if (setActiveSubTab) setActiveSubTab(child.id);
     setExpandedSections({ [parentId]: true });
-    if (setActiveSubTab) {
-      setActiveSubTab(childId);
-    }
+    router.push(child.path);
   };
 
   return (
@@ -202,7 +262,7 @@ export default function AdminSidebar({ activeTab, setActiveTab, activeSubTab, se
           <nav className="mt-2.5 space-y-1">
             {menuStructure.map((item) => {
               const Icon = item.icon;
-              const isParentActive = activeTab === item.id;
+              const isParentActive = activeTab === item.id || (item.path === pathname) || (item.children && item.children.some(c => c.path === pathname));
               const hasChildren = item.children && item.children.length > 0;
               const isExpanded = expandedSections[item.id];
 
@@ -255,7 +315,7 @@ export default function AdminSidebar({ activeTab, setActiveTab, activeSubTab, se
                         <div
                           onClick={(e) => {
                             e.stopPropagation();
-                            handleParentClick(item);
+                            toggleSection(item.id);
                           }}
                           className={`p-1 rounded transition ${theme === 'light' ? 'text-[#6C757D] hover:text-[#1A1D20]' : 'text-[#8B8B96] hover:text-white'}`}
                         >
@@ -274,11 +334,11 @@ export default function AdminSidebar({ activeTab, setActiveTab, activeSubTab, se
                     <div className={`pl-7 pr-1 py-1 space-y-1 border-l-2 ml-4 transition-all ${theme === 'light' ? 'border-[#E9ECEF]' : 'border-[#1C1C26]'
                       }`}>
                       {item.children.map((child) => {
-                        const isChildActive = isParentActive && activeSubTab === child.id;
+                        const isChildActive = pathname === child.path;
                         return (
                           <button
                             key={child.id}
-                            onClick={(e) => handleChildClick(item.id, child.id, e)}
+                            onClick={(e) => handleChildClick(item.id, child, e)}
                             className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-left text-xs transition-all ${isChildActive
                               ? 'bg-[#00F5D4]/15 text-[#00F5D4] font-bold border-l-2 border-[#00F5D4]'
                               : theme === 'light'

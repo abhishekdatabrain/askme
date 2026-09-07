@@ -37,6 +37,21 @@ export function ToastProvider({ children }) {
       }
     };
     window.addEventListener('askme_toast', handleGlobalToast);
+
+    // Check for queued pending toast (e.g. from session expiration redirect)
+    if (typeof window !== 'undefined') {
+      try {
+        const pending = sessionStorage.getItem('askme_toast_pending');
+        if (pending) {
+          sessionStorage.removeItem('askme_toast_pending');
+          const parsed = JSON.parse(pending);
+          if (parsed && parsed.message) {
+            showToast(parsed.message, parsed.type || 'error', parsed.title || 'Session Expired');
+          }
+        }
+      } catch (e) {}
+    }
+
     return () => window.removeEventListener('askme_toast', handleGlobalToast);
   }, [showToast]);
 

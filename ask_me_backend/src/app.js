@@ -1,9 +1,10 @@
+require('./config/env');
 const express = require('express');
 const cors = require('cors');
 const authRoutes = require('./routes/adminAuthRoutes');
-const adminRoutes = require('./routes/adminRoutes');
-const creatorRoutes = require('./routes/creatorRoutes');
-const viewerRoutes = require('./routes/viewerRoutes');
+const adminRoutes = require('./routes/admin/adminRoutes');
+const creatorRoutes = require('./routes/creator/creatorRoutes');
+const viewerRoutes = require('./routes/viewer/viewerRoutes');
 const { notFound, errorHandler } = require('./middlewares/errorMiddleware');
 
 const app = express();

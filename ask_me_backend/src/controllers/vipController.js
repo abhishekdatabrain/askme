@@ -196,71 +196,57 @@ const getViewerMemberships = async (req, res, next) => {
 // };
 
 /**
- * @desc    Get Public Active VIP Plans
+ * @desc    Get Public Active VIP Plans for a Creator
  * @route   GET /api/viewers/vip/plans
  * @access  Public
  */
 const getPublicVipPlans = async (req, res, next) => {
   try {
     const VipPlan = require("../models/VipPlanModel");
+    const Creator = require("../models/CreatorsModel");
     let plans = [];
 
-    try {
-      const records = await VipPlan.findAll({
-        where: { status: 'Active' },
-        order: [['created_at', 'ASC']],
-        raw: true,
-      });
-      plans = records.map((p) => ({
-        id: p.id,
-        name: p.name,
-        price: parseFloat(p.price),
-        interval: p.interval || 'Month',
-        badgeColor: p.badge_color || 'bg-[#FFD60A]',
-        perks: p.perks ? p.perks.split(',').map((s) => s.trim()) : [],
-      }));
-    } catch (e) {
-      console.warn("DB VipPlan read notice:", e.message);
+    let targetCreatorId = req.query.creatorId || req.query.creator_id || null;
+    const username = req.query.username || null;
+
+    if (!targetCreatorId && username) {
+      try {
+        const cleanUname = String(username).replace(/^@+/, '').toLowerCase();
+        const creators = await Creator.findAll({ raw: true }).catch(() => []);
+        const matched = creators.find(
+          (c) => String(c.username || '').toLowerCase().replace(/^@+/, '') === cleanUname || String(c.id) === cleanUname
+        );
+        if (matched) targetCreatorId = matched.id;
+      } catch (e) {
+        console.warn("Creator lookup error in VIP plans:", e.message);
+      }
     }
 
+    if (targetCreatorId) {
+      try {
+        const records = await VipPlan.findAll({
+          where: { creator_id: targetCreatorId, status: 'Active' },
+          order: [['price', 'ASC'], ['created_at', 'ASC']],
+          raw: true,
+        });
+
+        plans = records.map((p) => ({
+          id: p.id,
+          creatorId: p.creator_id,
+          name: p.name,
+          price: parseFloat(p.price || 0),
+          interval: p.interval || '',
+          badgeColor: p.badge_color || '',
+          perks: p.perks ? (Array.isArray(p.perks) ? p.perks : String(p.perks).split(',').map((s) => s.trim())) : [],
+        }));
+      } catch (e) {
+        console.warn("DB VipPlan read notice:", e.message);
+      }
+    }
+
+    // Default tiers for creator if creator has no custom plans saved yet
     if (!plans || plans.length === 0) {
       plans = [
-        {
-          id: 1,
-          name: 'VIP Membership',
-          price: 999,
-          interval: 'Month',
-          badgeColor: 'bg-[#FFD60A]',
-          perks: [
-            'VIP Badge in Live Chat & Profile',
-            'Priority in Live Q&A Stream Queue',
-            'Exclusive VIP Member Content',
-            'Early Access to Videos & Announcements',
-            'Member Only Live Sessions',
-            'Custom Emojis & Badges',
-          ],
-        },
-        {
-          id: 2,
-          name: 'Premium Pass',
-          price: 499,
-          interval: 'Month',
-          badgeColor: 'bg-[#7B2FFF]',
-          perks: [
-            'Priority in Live Q&A Stream Queue',
-            'Exclusive Member Content',
-            'Early Access to Videos',
-            'Custom Badges',
-          ],
-        },
-        {
-          id: 3,
-          name: 'Basic Supporter',
-          price: 99,
-          interval: 'Month',
-          badgeColor: 'bg-[#38BDF8]',
-          perks: ['Supporter Badge in Live Chat', 'Custom Emojis'],
-        },
       ];
     }
 
@@ -281,3 +267,4 @@ module.exports = {
   // cancelVipMembership,
   getPublicVipPlans,
 };
+

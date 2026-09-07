@@ -12,7 +12,7 @@ const Notification = sequelize.define(
 
         user_id: {
             type: DataTypes.BIGINT,
-            allowNull: false,
+            allowNull: true,
             references: {
                 model: {
                     tableName: "users",

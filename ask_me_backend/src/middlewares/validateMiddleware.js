@@ -1,76 +1,26 @@
-const { body, validationResult } = require('express-validator');
+const { ValidationError } = require('../errors/AppError');
 
 /**
- * Validation rules for User Registration
+ * Express middleware generator to validate req.body, req.query, or req.params against a Joi schema.
  */
-const registerValidationRules = [
-  body('name')
-    .trim()
-    .notEmpty()
-    .withMessage('Name is required')
-    .isLength({ min: 2, max: 50 })
-    .withMessage('Name must be between 2 and 50 characters'),
+const validate = (schema, source = 'body') => {
+  return (req, res, next) => {
+    const dataToValidate = req[source] || {};
+    const { error, value } = schema.validate(dataToValidate, {
+      abortEarly: false,
+      stripUnknown: true,
+    });
 
-  body('email')
-    .trim()
-    .notEmpty()
-    .withMessage('Email is required')
-    .isEmail()
-    .withMessage('Please enter a valid email address')
-    .normalizeEmail(),
+    if (error) {
+      const errorMessage = error.details.map((detail) => detail.message).join(', ');
+      return next(new ValidationError(errorMessage));
+    }
 
-  body('password')
-    .notEmpty()
-    .withMessage('Password is required')
-    .isLength({ min: 6 })
-    .withMessage('Password must be at least 6 characters long'),
-
-  body('role')
-    .optional()
-    .isIn(['user', 'creator', 'admin'])
-    .withMessage('Role must be user, creator, or admin'),
-];
-
-/**
- * Validation rules for User Login
- */
-const loginValidationRules = [
-  body('email')
-    .trim()
-    .notEmpty()
-    .withMessage('Email is required')
-    .isEmail()
-    .withMessage('Please enter a valid email address')
-    .normalizeEmail(),
-
-  body('password')
-    .notEmpty()
-    .withMessage('Password is required'),
-];
-
-/**
- * Middleware to check validation results and handle errors
- */
-const validate = (req, res, next) => {
-  const errors = validationResult(req);
-  if (errors.isEmpty()) {
-    return next();
-  }
-
-  const extractedErrors = errors.array().map((err) => ({
-    field: err.path || err.param,
-    message: err.msg,
-  }));
-
-  return res.status(400).json({
-    status: 'fail',
-    message: 'Validation failed',
-    errors: extractedErrors,
-  });
+    req[source] = value;
+    next();
+  };
 };
 
 module.exports = {
-  registerValidationRules,
-  loginValidationRules,
   validate,
 };

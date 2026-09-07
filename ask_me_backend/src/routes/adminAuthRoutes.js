@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { register, login } = require('../controllers/adminAuthController');
-const { registerCreator } = require('../controllers/creatorController');
+const { registerCreator } = require('../creator/controllers/creatorController');
 const { protect, authorize } = require('../middlewares/authMiddleware');
 const {
   registerValidationRules,

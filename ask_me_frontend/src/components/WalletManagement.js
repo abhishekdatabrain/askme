@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Wallet, 
-  DollarSign, 
-  Sparkles, 
-  TrendingUp, 
-  CheckCircle2, 
-  Clock, 
+import {
+  Wallet,
+  DollarSign,
+  Sparkles,
+  TrendingUp,
+  CheckCircle2,
+  Clock,
   ArrowUpRight,
   PieChart,
   FileText,
@@ -14,7 +14,9 @@ import {
   ShieldCheck,
   RefreshCw,
   XCircle,
-  HelpCircle
+  HelpCircle,
+  Download,
+  Calendar
 } from 'lucide-react';
 import { API_ENDPOINTS } from '@/config/api';
 import { useToast } from '@/context/ToastContext';
@@ -25,13 +27,13 @@ export default function WalletManagement({ activeSubTab }) {
   const [activeView, setActiveView] = useState('wallets');
   const [isLoading, setIsLoading] = useState(true);
   const [creatorWallets, setCreatorWallets] = useState([]);
-  const [ledgerEntries, setLedgerEntries] = useState([]);
 
   // Modal for editing creator balance
   const [selectedWalletModal, setSelectedWalletModal] = useState(null);
   const [editBalanceInput, setEditBalanceInput] = useState('');
   const [bonusCreditInput, setBonusCreditInput] = useState('');
   const [isUpdating, setIsUpdating] = useState(false);
+  const [isSettling, setIsSettling] = useState(false);
 
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -83,6 +85,52 @@ export default function WalletManagement({ activeSubTab }) {
   const totalCreatorNet = Math.round(totalGrossRevenue * 0.85);
   const totalAvailableBalance = creatorWallets.reduce((acc, w) => acc + (w.availableBalance || 0), 0);
 
+  // Handle Monthly Settlement API Call (Creator-wise or Bulk)
+  const handleSettleMonth = async (creatorId = null, creatorName = null) => {
+    try {
+      setIsSettling(true);
+      const token = getAdminToken();
+      const endpoint = API_ENDPOINTS.ADMIN.SETTLE_MONTH || `${API_ENDPOINTS.ADMIN.WALLETS.replace('/wallets', '/wallet/settle-month')}`;
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify({ creatorId })
+      });
+
+      const data = await res.json();
+      if (res.ok && data.status === 'success') {
+        const settledCount = data.data?.settledCount || 0;
+        const totalAmt = data.data?.totalSettledAmount || 0;
+        const month = data.data?.month || '';
+        if (settledCount > 0) {
+          toast.success(
+            creatorName
+              ? `Monthly settlement for ${creatorName} (${month}) completed! ₹${totalAmt.toLocaleString()} credited to Available Balance.`
+              : `Monthly settlement for ${settledCount} creator(s) (${month}) completed! Total ₹${totalAmt.toLocaleString()} credited.`,
+            'Settlement Executed'
+          );
+        } else {
+          toast.info(
+            creatorName
+              ? `Month ${month} already settled for ${creatorName} or no pending earnings to settle.`
+              : `Month ${month} already settled for all creators or no pending earnings.`,
+            'Settlement Info'
+          );
+        }
+        fetchWallets(currentPage);
+      } else {
+        toast.error(data.message || 'Failed to run monthly settlement.', 'Error');
+      }
+    } catch (err) {
+      toast.error('Network error executing monthly settlement.', 'Error');
+    } finally {
+      setIsSettling(false);
+    }
+  };
+
   // Handle Admin Balance Edit / Bonus Credit
   const handleSaveBalanceEdit = async (e) => {
     e.preventDefault();
@@ -129,9 +177,57 @@ export default function WalletManagement({ activeSubTab }) {
     }
   };
 
+  // Handle CSV Download for Creator Wallets Report
+  const handleDownloadCSV = () => {
+    if (!creatorWallets || creatorWallets.length === 0) {
+      toast.error('No creator wallet data available to download.', 'Export Notice');
+      return;
+    }
+
+    const headers = [
+      'Sr No',
+      'Creator Name',
+      'Handle',
+      'Email',
+      'Gross Raised (INR)',
+      'Platform Fee 15% (INR)',
+      'Creator Net Share 85% (INR)',
+      'Available Balance (INR)',
+      'Pending Balance (INR)',
+      'Withdrawn Amount (INR)',
+      'Settlement Status'
+    ];
+
+    const rows = creatorWallets.map((w, index) => [
+      index + 1,
+      `"${(w.creatorName || '').replace(/"/g, '""')}"`,
+      `"${(w.handle || '').replace(/"/g, '""')}"`,
+      `"${(w.email || '').replace(/"/g, '""')}"`,
+      w.grossEarnings || 0,
+      w.platformCommission || 0,
+      w.netCreatorShare || 0,
+      w.availableBalance || 0,
+      w.pendingBalance || 0,
+      w.withdrawnAmount || w.withdrawnTotal || 0,
+      `"${w.settlementStatus || ''}"`
+    ]);
+
+    const csvData = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+    const blob = new Blob([csvData], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `creator_wallets_report_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    toast.success('Creator wallets report CSV downloaded successfully!', 'Export Success');
+  };
+
   return (
     <div className="space-y-6 animate-fade-in font-sans">
-      
+
       {/* 1. System Earnings Overview Header (Requirement 19: Earnings Report) */}
       <div className="p-6 rounded-3xl bg-gradient-to-r from-[#13131A] via-[#1A1A26] to-[#13131A] border border-[#1C1C26] shadow-xl space-y-4">
         <div className="border-b border-[#1C1C26] pb-4">
@@ -182,18 +278,25 @@ export default function WalletManagement({ activeSubTab }) {
 
       {/* 2. CREATOR WISE REVENUE TABLE & BALANCE MANAGEMENT */}
       <div className="p-6 rounded-3xl bg-[#13131A] border border-[#1C1C26] space-y-4 shadow-xl">
-        <div className="flex items-center justify-between border-b border-[#1C1C26] pb-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#1C1C26] pb-3">
           <div>
             <h3 className="font-heading font-bold text-base text-white flex items-center gap-2">
               <TrendingUp className="h-5 w-5 text-[#00F5D4]" /> Creator Wise Revenue & Wallet Balances
             </h3>
             <p className="text-xs text-[#8B8B96] mt-0.5">
-              Admin can edit creator balances, adjust platform commission cuts, & trigger settlements.
+              Overview of creator revenue earnings, platform commissions, and monthly wallet balance settlements.
             </p>
           </div>
-          <span className="text-xs font-bold text-[#00F5D4] bg-[#00F5D4]/10 px-3 py-1 rounded-full border border-[#00F5D4]/30">
-            {creatorWallets.length} Creators Listed
-          </span>
+          <div className="flex flex-wrap items-center gap-2.5">
+            <button
+              onClick={handleDownloadCSV}
+              title="Download Creator Wallets CSV Report"
+              className="px-3.5 py-1.5 rounded-xl bg-brand-gradient text-[#0A0A0F] font-bold text-xs hover:opacity-90 transition flex items-center gap-1.5 shadow-sm"
+            >
+              <Download className="h-4 w-4" />
+              <span>Download CSV</span>
+            </button>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -206,44 +309,43 @@ export default function WalletManagement({ activeSubTab }) {
                 </div>
                 <div className="flex items-center gap-2">
                   {w.settlementStatus ? (
-                    <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase ${
-                      w.settlementStatus === 'Settled' ? 'bg-[#00E676]/10 text-[#00E676] border border-[#00E676]/30' : 'bg-[#FFD60A]/10 text-[#FFD60A] border border-[#FFD60A]/30'
-                    }`}>
+                    <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase ${w.settlementStatus === 'Settled' ? 'bg-[#00E676]/10 text-[#00E676] border border-[#00E676]/30' : 'bg-[#FFD60A]/10 text-[#FFD60A] border border-[#FFD60A]/30'
+                      }`}>
                       {w.settlementStatus}
                     </span>
                   ) : null}
-
-                  <button
-                    onClick={() => {
-                      setSelectedWalletModal(w);
-                      setEditBalanceInput((w.availableBalance || 0).toString());
-                      setBonusCreditInput('0');
-                    }}
-                    className="px-2.5 py-1 rounded-xl bg-[#1C1C26] text-white text-xs font-bold hover:bg-[#00F5D4] hover:text-[#0A0A0F] transition flex items-center gap-1"
-                  >
-                    <Edit3 className="h-3.5 w-3.5" /> Edit Balance
-                  </button>
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3 text-xs">
-                <div className="p-3 rounded-xl bg-[#13131A] border border-[#1C1C26]">
+              {/* Creator 6-Metric Grid */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 text-xs">
+                <div className="p-2.5 rounded-xl bg-[#13131A] border border-[#1C1C26]">
                   <span className="text-[10px] text-[#8B8B96] block font-semibold">Gross Raised</span>
                   <span className="font-heading font-black text-white text-sm">₹{(w.grossEarnings || 0).toLocaleString('en-IN')}</span>
                 </div>
-                <div className="p-3 rounded-xl bg-[#13131A] border border-[#1C1C26]">
-                  <span className="text-[10px] text-[#8B8B96] block font-semibold">Platform Fee (15%)</span>
+                <div className="p-2.5 rounded-xl bg-[#13131A] border border-[#1C1C26]">
+                  <span className="text-[10px] text-[#8B8B96] block font-semibold">Fee (15%)</span>
                   <span className="font-heading font-black text-[#FFD60A] text-sm">₹{(w.platformCommission || 0).toLocaleString('en-IN')}</span>
                 </div>
-                <div className="p-3 rounded-xl bg-[#13131A] border border-[#1C1C26]">
-                  <span className="text-[10px] text-[#8B8B96] block font-semibold">Creator Net Share (85%)</span>
+                <div className="p-2.5 rounded-xl bg-[#13131A] border border-[#1C1C26]">
+                  <span className="text-[10px] text-[#8B8B96] block font-semibold">Net Share (85%)</span>
                   <span className="font-heading font-black text-[#00E676] text-sm">₹{(w.netCreatorShare || 0).toLocaleString('en-IN')}</span>
                 </div>
-                <div className="p-3 rounded-xl bg-[#13131A] border border-[#1C1C26]">
-                  <span className="text-[10px] text-[#8B8B96] block font-semibold">Available Balance</span>
+                <div className="p-2.5 rounded-xl bg-[#13131A] border border-[#00F5D4]/30 bg-[#00F5D4]/5">
+                  <span className="text-[10px] text-[#00F5D4] block font-bold">Available Bal</span>
                   <span className="font-heading font-black text-[#00F5D4] text-sm">₹{(w.availableBalance || 0).toLocaleString('en-IN')}</span>
                 </div>
+                <div className="p-2.5 rounded-xl bg-[#13131A] border border-[#FFD60A]/30 bg-[#FFD60A]/5">
+                  <span className="text-[10px] text-[#FFD60A] block font-bold">Pending Bal</span>
+                  <span className="font-heading font-black text-[#FFD60A] text-sm">₹{(w.pendingBalance || 0).toLocaleString('en-IN')}</span>
+                </div>
+                <div className="p-2.5 rounded-xl bg-[#13131A] border border-[#1C1C26]">
+                  <span className="text-[10px] text-[#8B8B96] block font-semibold">Withdrawn</span>
+                  <span className="font-heading font-black text-[#00E676] text-sm">₹{(w.withdrawnAmount || w.withdrawnTotal || 0).toLocaleString('en-IN')}</span>
+                </div>
               </div>
+
+
             </div>
           ))}
         </div>

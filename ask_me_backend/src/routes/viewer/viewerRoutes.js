@@ -12,14 +12,13 @@ const {
   getViewerQuestions,
   getPublicPastStreams,
   getPublicCategories,
-} = require('../controllers/viewerController');
+} = require('../../controllers/viewerController');
 const {
   createVipSubscription,
   getViewerMemberships,
-  // cancelVipMembership,
   getPublicVipPlans,
-} = require('../controllers/vipController');
-const { protect, optionalAuth } = require('../middlewares/authMiddleware');
+} = require('../../controllers/vipController');
+const { protect } = require('../../middlewares/authMiddleware');
 
 /**
  * @route   POST /api/viewers/register
@@ -76,9 +75,6 @@ router.get('/public/past-streams', getPublicPastStreams);
  * @access  Public
  */
 router.get('/public/categories', getPublicCategories);
-
-
-
 
 /**
  * @route   GET /api/viewers/vip/plans

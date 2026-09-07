@@ -26,6 +26,16 @@ const WithdrawalRequest = sequelize.define(
             allowNull: false,
         },
 
+        settlement_id: {
+            type: DataTypes.BIGINT,
+            allowNull: true,
+        },
+
+        settlement_month: {
+            type: DataTypes.STRING(7), // Format: 'YYYY-MM' (e.g. '2026-10')
+            allowNull: true,
+        },
+
         bank_account_id: {
             type: DataTypes.BIGINT,
         },

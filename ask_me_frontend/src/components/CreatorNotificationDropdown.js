@@ -113,14 +113,17 @@ export default function CreatorNotificationDropdown({ theme = 'dark' }) {
     } catch (e) { }
   };
 
-  const unreadCount = notifications.filter(n => !n.isRead).length;
+  const adminAlertTypes = ['creator_registration', 'kyc', 'payout', 'withdrawal_request'];
+
+  const unreadCount = notifications.filter(n => !n.isRead && !adminAlertTypes.includes(n.type)).length;
 
   const filteredNotifications = notifications.filter(n => {
+    if (adminAlertTypes.includes(n.type)) return false;
     if (filter === 'All') return true;
     if (filter === 'kyc') return n.type === 'kyc_approved' || n.type === 'kyc_rejected';
     if (filter === 'payment') return n.type === 'payment_received';
-    if (filter === 'withdrawal') return n.type === 'withdrawal_approved' || n.type === 'withdrawal_rejected';
-    if (filter === 'system') return n.type === 'system_update';
+    if (filter === 'withdrawal') return n.type === 'withdrawal_approved' || n.type === 'withdrawal_processing' || n.type === 'withdrawal_completed' || n.type === 'withdrawal_rejected';
+    if (filter === 'system') return n.type === 'system_update' || n.type === 'account_blocked' || n.type === 'account_unblocked';
     return true;
   });
 
@@ -131,13 +134,12 @@ export default function CreatorNotificationDropdown({ theme = 'dark' }) {
         type="button"
         onClick={() => setIsOpen(!isOpen)}
         title="Notifications & Alerts Popup"
-        className={`p-2 rounded-xl border transition-all flex items-center justify-center relative ${
-          isOpen
+        className={`p-2 rounded-xl border transition-all flex items-center justify-center relative ${isOpen
             ? 'border-[#00F5D4] bg-[#00F5D4]/10 text-[#00F5D4] glow-teal'
             : theme === 'light'
               ? 'bg-[#F1F3F5] border-[#E9ECEF] text-[#00B49F] hover:bg-[#E9ECEF]'
               : 'bg-[#1C1C26] border-[#1C1C26] text-[#00F5D4] hover:border-[#00F5D4]/40 hover:bg-[#252533]'
-        }`}
+          }`}
       >
         <Bell className="h-5 w-5 text-[#00F5D4]" />
         {unreadCount > 0 && (
@@ -149,18 +151,15 @@ export default function CreatorNotificationDropdown({ theme = 'dark' }) {
 
       {/* Floating Notifications Popup Modal */}
       {isOpen && (
-        <div className={`absolute right-0 mt-2.5 w-80 sm:w-96 rounded-3xl border shadow-2xl z-50 overflow-hidden animate-scale-up ${
-          theme === 'light' ? 'bg-white border-[#E9ECEF]' : 'bg-[#13131A] border-[#1C1C26]'
-        }`}>
-          {/* Header */}
-          <div className={`p-4 border-b flex items-center justify-between ${
-            theme === 'light' ? 'border-[#E9ECEF] bg-[#F8F9FA]' : 'border-[#1C1C26] bg-[#0A0A0F]'
+        <div className={`absolute right-0 mt-2.5 w-80 sm:w-96 rounded-3xl border shadow-2xl z-50 overflow-hidden animate-scale-up ${theme === 'light' ? 'bg-white border-[#E9ECEF]' : 'bg-[#13131A] border-[#1C1C26]'
           }`}>
+          {/* Header */}
+          <div className={`p-4 border-b flex items-center justify-between ${theme === 'light' ? 'border-[#E9ECEF] bg-[#F8F9FA]' : 'border-[#1C1C26] bg-[#0A0A0F]'
+            }`}>
             <div className="flex items-center gap-2">
               <Bell className="h-4 w-4 text-[#00F5D4]" />
-              <h3 className={`font-heading font-black text-sm ${
-                theme === 'light' ? 'text-[#1A1D20]' : 'text-white'
-              }`}>
+              <h3 className={`font-heading font-black text-sm ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'
+                }`}>
                 Notifications
               </h3>
               {unreadCount > 0 && (
@@ -183,9 +182,8 @@ export default function CreatorNotificationDropdown({ theme = 'dark' }) {
               <button
                 type="button"
                 onClick={() => setIsOpen(false)}
-                className={`p-1 rounded-lg ${
-                  theme === 'light' ? 'text-[#6C757D] hover:bg-[#E9ECEF]' : 'text-[#8B8B96] hover:bg-[#1C1C26]'
-                }`}
+                className={`p-1 rounded-lg ${theme === 'light' ? 'text-[#6C757D] hover:bg-[#E9ECEF]' : 'text-[#8B8B96] hover:bg-[#1C1C26]'
+                  }`}
               >
                 <X className="h-4 w-4" />
               </button>
@@ -193,20 +191,18 @@ export default function CreatorNotificationDropdown({ theme = 'dark' }) {
           </div>
 
           {/* Quick Filter Tabs */}
-          <div className={`px-3 py-2 border-b flex items-center gap-1 overflow-x-auto text-[11px] font-bold ${
-            theme === 'light' ? 'border-[#E9ECEF] bg-[#F8F9FA]' : 'border-[#1C1C26] bg-[#0A0A0F]/60'
-          }`}>
+          <div className={`px-3 py-2 border-b flex items-center gap-1 overflow-x-auto text-[11px] font-bold ${theme === 'light' ? 'border-[#E9ECEF] bg-[#F8F9FA]' : 'border-[#1C1C26] bg-[#0A0A0F]/60'
+            }`}>
             {['All', 'kyc', 'payment', 'withdrawal', 'system'].map(f => (
               <button
                 key={f}
                 onClick={() => setFilter(f)}
-                className={`px-2.5 py-1 rounded-lg capitalize transition whitespace-nowrap ${
-                  filter === f
+                className={`px-2.5 py-1 rounded-lg capitalize transition whitespace-nowrap ${filter === f
                     ? 'bg-[#00F5D4] text-[#0A0A0F] font-black'
                     : theme === 'light'
                       ? 'text-[#6C757D] hover:text-[#1A1D20]'
                       : 'text-[#8B8B96] hover:text-white'
-                }`}
+                  }`}
               >
                 {f === 'kyc' ? 'KYC' : f === 'payment' ? 'Payments' : f === 'withdrawal' ? 'Payouts' : f === 'system' ? 'Updates' : 'All'}
               </button>
@@ -241,12 +237,21 @@ export default function CreatorNotificationDropdown({ theme = 'dark' }) {
                 } else if (n.type === 'payment_received') {
                   IconComp = Heart;
                   iconColor = 'text-[#00E676] bg-[#00E676]/10 border-[#00E676]/30';
-                } else if (n.type === 'withdrawal_approved') {
+                } else if (n.type === 'withdrawal_approved' || n.type === 'withdrawal_completed') {
                   IconComp = ArrowUpRight;
                   iconColor = 'text-[#00E676] bg-[#00E676]/10 border-[#00E676]/30';
+                } else if (n.type === 'withdrawal_processing') {
+                  IconComp = ArrowUpRight;
+                  iconColor = 'text-[#FFD60A] bg-[#FFD60A]/10 border-[#FFD60A]/30';
                 } else if (n.type === 'withdrawal_rejected') {
                   IconComp = XCircle;
                   iconColor = 'text-[#FF3D71] bg-[#FF3D71]/10 border-[#FF3D71]/30';
+                } else if (n.type === 'account_blocked') {
+                  IconComp = XCircle;
+                  iconColor = 'text-[#FF3D71] bg-[#FF3D71]/10 border-[#FF3D71]/30';
+                } else if (n.type === 'account_unblocked') {
+                  IconComp = CheckCircle2;
+                  iconColor = 'text-[#00E676] bg-[#00E676]/10 border-[#00E676]/30';
                 } else if (n.type === 'system_update') {
                   IconComp = Sparkles;
                   iconColor = 'text-[#7B2FFF] bg-[#7B2FFF]/10 border-[#7B2FFF]/30';
@@ -256,15 +261,14 @@ export default function CreatorNotificationDropdown({ theme = 'dark' }) {
                   <div
                     key={n.id}
                     onClick={() => markSingleRead(n.id)}
-                    className={`p-3 rounded-2xl border transition-all cursor-pointer space-y-1 ${
-                      !n.isRead
+                    className={`p-3 rounded-2xl border transition-all cursor-pointer space-y-1 ${!n.isRead
                         ? theme === 'light'
                           ? 'bg-[#F0FDF4] border-[#00E676]/40'
                           : 'bg-[#1A1A26] border-[#00F5D4]/30'
                         : theme === 'light'
                           ? 'bg-white border-[#E9ECEF] hover:bg-[#F8F9FA]'
                           : 'bg-[#13131A] border-[#1C1C26] hover:bg-[#1C1C26]/50'
-                    }`}
+                      }`}
                   >
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex items-center gap-2">
@@ -272,14 +276,12 @@ export default function CreatorNotificationDropdown({ theme = 'dark' }) {
                           <IconComp className="h-3.5 w-3.5" />
                         </div>
                         <div>
-                          <h4 className={`font-bold text-xs line-clamp-1 ${
-                            theme === 'light' ? 'text-[#1A1D20]' : 'text-white'
-                          }`}>
+                          <h4 className={`font-bold text-xs line-clamp-1 ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'
+                            }`}>
                             {n.title}
                           </h4>
-                          <span className={`text-[10px] font-mono ${
-                            theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'
-                          }`}>
+                          <span className={`text-[10px] font-mono ${theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'
+                            }`}>
                             {n.date ? new Date(n.date).toLocaleString('en-IN', { dateStyle: 'short', timeStyle: 'short' }) : 'Just now'}
                           </span>
                         </div>
@@ -288,9 +290,8 @@ export default function CreatorNotificationDropdown({ theme = 'dark' }) {
                         <span className="h-2 w-2 rounded-full bg-[#00F5D4] shrink-0 mt-1" />
                       )}
                     </div>
-                    <p className={`text-[11px] line-clamp-2 pl-7 ${
-                      theme === 'light' ? 'text-[#495057]' : 'text-[#8B8B96]'
-                    }`}>
+                    <p className={`text-[11px] line-clamp-2 pl-7 ${theme === 'light' ? 'text-[#495057]' : 'text-[#8B8B96]'
+                      }`}>
                       {n.message}
                     </p>
                   </div>

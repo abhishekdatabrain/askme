@@ -89,16 +89,21 @@ export default function AdminNotifications() {
   };
 
   const filteredNotifications = notifications.filter(n => {
+    // Ignore viewer/creator-only notifications like go_live or kyc_approved
+    if (['go_live', 'kyc_approved', 'kyc_verified', 'question_answered'].includes(n.type)) return false;
+
     if (filter === 'unread') return n.status === 'unread';
-    if (filter === 'creator') return n.type === 'creator_registration' || n.title?.toLowerCase().includes('creator');
+    if (filter === 'creator') return n.type === 'creator_registration' || n.type === 'creator_reg' || n.title?.toLowerCase().includes('creator');
+    if (filter === 'kyc') return n.type === 'kyc' || n.type === 'kyc_request' || n.type === 'kyc_submission';
+    if (filter === 'payout') return n.type === 'payout' || n.type === 'withdrawal_request' || n.type === 'withdrawal';
     if (filter !== 'all') return n.type === filter;
     return true;
   });
 
-  const unreadCount = notifications.filter(n => n.status === 'unread').length;
+  const unreadCount = notifications.filter(n => n.status === 'unread' && !['go_live', 'kyc_approved', 'kyc_verified'].includes(n.type)).length;
 
   const getNotifMeta = (notif) => {
-    const isCreatorReg = notif.type === 'creator_registration' || notif.title?.toLowerCase().includes('creator');
+    const isCreatorReg = notif.type === 'creator_registration' || notif.type === 'creator_reg' || notif.title?.toLowerCase().includes('creator');
     if (isCreatorReg) {
       return {
         icon: Sparkles,
@@ -106,18 +111,18 @@ export default function AdminNotifications() {
         badge: 'Creator Reg'
       };
     }
-    if (notif.type === 'kyc') {
+    if (['kyc', 'kyc_request', 'kyc_submission'].includes(notif.type)) {
       return {
         icon: UserCheck,
         color: 'text-[#FFD60A] bg-[#FFD60A]/10 border-[#FFD60A]/30',
-        badge: 'KYC'
+        badge: 'KYC Request'
       };
     }
-    if (notif.type === 'payout') {
+    if (['payout', 'withdrawal_request', 'withdrawal'].includes(notif.type)) {
       return {
         icon: DollarSign,
         color: 'text-[#00E676] bg-[#00E676]/10 border-[#00E676]/30',
-        badge: 'Payout'
+        badge: 'Payout Request'
       };
     }
     if (notif.type === 'security') {
@@ -130,7 +135,7 @@ export default function AdminNotifications() {
     return {
       icon: Info,
       color: 'text-[#00F5D4] bg-[#00F5D4]/10 border-[#00F5D4]/30',
-      badge: 'System'
+      badge: 'Admin Alert'
     };
   };
 
@@ -180,7 +185,7 @@ export default function AdminNotifications() {
 
       {/* Filter Tabs */}
       <div className="flex items-center gap-2 overflow-x-auto pb-2">
-        {['all', 'unread', 'creator', 'kyc', 'payout', 'security', 'system'].map((t) => (
+        {['all', 'unread', 'creator', 'kyc', 'payout', 'security'].map((t) => (
           <button
             key={t}
             onClick={() => setFilter(t)}
@@ -190,7 +195,15 @@ export default function AdminNotifications() {
                 : 'bg-[#13131A] text-[#8B8B96] hover:text-white border border-[#1C1C26]'
             }`}
           >
-            {t === 'all' ? 'All Alerts' : t === 'creator' ? 'Creator Registrations' : t}
+            {t === 'all'
+              ? 'All Alerts'
+              : t === 'creator'
+              ? 'Creator Registrations'
+              : t === 'kyc'
+              ? 'KYC Requests'
+              : t === 'payout'
+              ? 'Payout Requests'
+              : t}
           </button>
         ))}
       </div>

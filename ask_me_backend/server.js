@@ -10,14 +10,16 @@ app.use(cookieParser());
 const { connectDB } = require('./src/config/db.js');
 const { initSocket } = require('./src/config/socket.js');
 const { startSessionScheduler } = require('./src/utils/sessionScheduler.js');
+const { startMonthlySettlementCron } = require('./src/utils/settlementCron.js');
 
 const PORT = process.env.PORT || 5000;
 
 // Initialize Sequelize Connection & Model Sync
 connectDB();
 
-// Initialize Live Session Auto-Expiry Cron/Scheduler Runner
+// Initialize Live Session Auto-Expiry & Monthly Settlement Schedulers
 startSessionScheduler(30000);
+startMonthlySettlementCron();
 
 // Create HTTP Server & Attach Socket.IO
 const server = http.createServer(app);

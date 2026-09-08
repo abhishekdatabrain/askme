@@ -36,6 +36,10 @@ const User = sequelize.define(
         this.setDataValue('email', value ? value.trim().toLowerCase() : value);
       },
     },
+    phone: {
+      type: DataTypes.STRING(50),
+      allowNull: true,
+    },
     password: {
       type: DataTypes.STRING(255),
       allowNull: false,

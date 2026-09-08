@@ -50,7 +50,7 @@ const getCreatorNotificationsService = async (creatorId) => {
     throw err;
   }
 
-  const adminAlertTypes = ['creator_registration', 'kyc', 'payout', 'withdrawal_request'];
+  const excludedTypes = ['creator_registration', 'kyc', 'payout', 'withdrawal_request', 'go_live'];
 
   const dbRecords = await Notification.findAll({
     where: {
@@ -59,7 +59,7 @@ const getCreatorNotificationsService = async (creatorId) => {
         { creator_id: creatorId },
       ],
       type: {
-        [Op.notIn]: adminAlertTypes,
+        [Op.notIn]: excludedTypes,
       },
     },
     order: [["id", "DESC"]],

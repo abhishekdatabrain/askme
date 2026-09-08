@@ -7,6 +7,7 @@ const CreatorProfile = models.CreatorProfile || require("../../models/CreatorPro
 const Donation = models.Donation || require("../../models/DonationModel");
 const QrCode = models.QrCode || require("../../models/QrCodeModel");
 const { parsePagination, buildPaginationMeta } = require("../../utils/pagination");
+const { triggerGoLiveBroadcast } = require("../../services/broadcastService");
 
 /**
  * Create a new Live Donation Session
@@ -87,6 +88,20 @@ const createLiveSessionService = async (creatorId, data) => {
     );
 
     await transaction.commit();
+
+    console.log(`[LiveSessionService] Creator ID ${creatorId} launched live session ID ${newSession.id} ("${newSession.title}")`);
+
+    // Trigger Mass Follower Notification (In-App + WhatsApp)
+    triggerGoLiveBroadcast({
+      creatorId,
+      sessionId: newSession.id,
+      title: newSession.title,
+      sessionCode: newSession.session_code,
+    }).then((res) => {
+      console.log(`[LiveSessionService] Go-Live broadcast completed for session ID ${newSession.id}:`, JSON.stringify(res));
+    }).catch((err) => {
+      console.warn("Notice: Go-Live broadcast alert error:", err.message);
+    });
 
     return {
       session: {
@@ -333,6 +348,20 @@ const startLiveSessionByIdService = async (sessionId, creatorId) => {
     );
 
     await transaction.commit();
+
+    console.log(`[LiveSessionService] Creator ID ${targetCreatorId} activated live session ID ${session.id} ("${session.title}")`);
+
+    // Trigger Mass Follower Notification (In-App + WhatsApp)
+    triggerGoLiveBroadcast({
+      creatorId: targetCreatorId,
+      sessionId: session.id,
+      title: session.title,
+      sessionCode: session.session_code,
+    }).then((res) => {
+      console.log(`[LiveSessionService] Go-Live broadcast completed for session ID ${session.id}:`, JSON.stringify(res));
+    }).catch((err) => {
+      console.warn("Notice: Go-Live broadcast alert error:", err.message);
+    });
 
     const origin = process.env.FRONTEND_URL || "http://localhost:3000";
     const paymentLink = `${origin}/pay/${session.session_code}?creatorId=${session.creator_id}&sessionId=${session.id}`;

@@ -29,7 +29,8 @@ import {
   ArrowLeft
 } from 'lucide-react';
 import { API_ENDPOINTS } from '@/config/api';
-import { getViewerUser, getViewerToken, setViewerSession, clearViewerSession } from '@/utils/cookies';
+import { getViewerToken, getViewerUser, setViewerSession, clearViewerSession, removeCookie } from '@/utils/cookies';
+import Logo from '@/components/Logo';
 import GoogleAuthProvider from '@/components/GoogleAuthProvider';
 import { useGoogleLogin } from '@react-oauth/google';
 
@@ -292,6 +293,90 @@ function ViewerPaymentContent() {
     }
   };
 
+  // WhatsApp OTP Pay State
+  const [waPayStep, setWaPayStep] = useState('phone'); // 'phone' | 'otp'
+  const [waPayPhone, setWaPayPhone] = useState('');
+  const [waPayOtp, setWaPayOtp] = useState('');
+  const [waPayDebugOtp, setWaPayDebugOtp] = useState('');
+
+  const openWaPayAuth = () => {
+    setAuthMode('whatsapp');
+    setWaPayStep('phone');
+    setAuthError('');
+    setAuthSuccess('');
+    setWaPayOtp('');
+  };
+
+  const handleSendWaPayOtp = async (e) => {
+    if (e) e.preventDefault();
+    setAuthError('');
+    setAuthSuccess('');
+
+    const clean = waPayPhone.replace(/[^0-9]/g, '');
+    if (!clean || clean.length < 10) {
+      setAuthError('Please enter a valid 10-digit mobile number.');
+      return;
+    }
+
+    try {
+      setAuthLoading(true);
+      const res = await fetch(API_ENDPOINTS.VIEWERS.WHATSAPP_SEND_OTP, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone: clean }),
+      });
+      const data = await res.json();
+      if (res.ok && data.status === 'success') {
+        setWaPayStep('otp');
+        setAuthSuccess(data.message || 'OTP sent to your WhatsApp!');
+        if (data.debugOtp) setWaPayDebugOtp(data.debugOtp);
+      } else {
+        setAuthError(data.message || 'Failed to send OTP to WhatsApp.');
+      }
+    } catch (err) {
+      setAuthError('Server error while sending WhatsApp OTP.');
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
+  const handleVerifyWaPayOtp = async (e) => {
+    if (e) e.preventDefault();
+    setAuthError('');
+    setAuthSuccess('');
+
+    if (!waPayOtp || waPayOtp.trim().length < 6) {
+      setAuthError('Please enter the 6-digit OTP code received on WhatsApp.');
+      return;
+    }
+
+    try {
+      setAuthLoading(true);
+      const res = await fetch(API_ENDPOINTS.VIEWERS.WHATSAPP_VERIFY_OTP, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone: waPayPhone, otp: waPayOtp }),
+      });
+      const data = await res.json();
+      if (res.ok && data.status === 'success' && data.data) {
+        setAuthSuccess('WhatsApp Login Verified!');
+        setViewerSession(data.data.token, data.data.user);
+        setViewerUser(data.data.user);
+        if (data.data.user?.name) setViewerName(data.data.user.name);
+        setTimeout(() => {
+          setShowAuthModal(false);
+          setAuthSuccess('');
+        }, 600);
+      } else {
+        setAuthError(data.message || 'Invalid or expired OTP code.');
+      }
+    } catch (err) {
+      setAuthError('Server error during OTP verification.');
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
   // Register New Account
   const handleRegisterSubmit = async (e) => {
     e.preventDefault();
@@ -502,9 +587,7 @@ function ViewerPaymentContent() {
       {/* Header Bar */}
       <header className="border-b border-[#1C1C26] bg-[#13131A] px-6 py-4 flex items-center justify-between sticky top-0 z-20 shadow-xl">
         <Link href="/" className="flex items-center gap-2.5">
-          <div className="h-9 w-9 rounded-xl bg-brand-gradient flex items-center justify-center text-[#0A0A0F] font-black text-xl shadow-md glow-teal">
-            a
-          </div>
+          <Logo size="md" />
           <div>
             <span className="font-heading font-black text-lg text-white block leading-none">
               AskMe <span className="text-brand-gradient">PAY</span>
@@ -536,7 +619,7 @@ function ViewerPaymentContent() {
             <button
               type="button"
               onClick={() => setShowAuthModal(true)}
-              className="px-3 py-1.5 rounded-xl bg-brand-gradient text-[#0A0A0F] font-black text-xs shadow-md glow-teal hover:opacity-95 transition cursor-pointer flex items-center gap-1.5"
+              className="px-3 py-1.5 rounded-xl bg-brand-gradient text-white font-black text-xs shadow-md glow-teal hover:opacity-95 transition cursor-pointer flex items-center gap-1.5"
             >
               <LogIn className="h-3.5 w-3.5" /> Login
             </button>
@@ -629,7 +712,7 @@ function ViewerPaymentContent() {
                 setPaymentSuccess(null);
                 setMessage('');
               }}
-              className="w-full py-3 rounded-xl bg-brand-gradient text-[#0A0A0F] font-bold text-xs shadow-md glow-teal hover:opacity-95 transition"
+              className="w-full py-3 rounded-xl bg-brand-gradient text-white font-bold text-xs shadow-md glow-teal hover:opacity-95 transition"
             >
               Send Another Question / Support
             </button>
@@ -704,7 +787,7 @@ function ViewerPaymentContent() {
                       type="button"
                       onClick={() => setAmount(val)}
                       className={`py-2 rounded-xl text-xs font-black transition-all cursor-pointer ${amount === val
-                        ? 'bg-brand-gradient text-[#0A0A0F] shadow-md scale-105'
+                        ? 'bg-brand-gradient text-white shadow-md scale-105'
                         : 'bg-[#0A0A0F] text-white border border-[#1C1C26] hover:border-[#00F5D4]/40'
                         }`}
                     >
@@ -757,7 +840,7 @@ function ViewerPaymentContent() {
                     <button
                       type="button"
                       onClick={() => setShowAuthModal(true)}
-                      className="px-3 py-1.5 rounded-xl bg-[#FFD60A] text-[#0A0A0F] font-black text-[11px] hover:opacity-90 transition shadow-md cursor-pointer"
+                      className="px-3 py-1.5 rounded-xl bg-[#FFD60A] text-white font-black text-[11px] hover:opacity-90 transition shadow-md cursor-pointer"
                     >
                       Login / Sign Up
                     </button>
@@ -812,7 +895,7 @@ function ViewerPaymentContent() {
                   disabled={isProcessing || (sessionData?.status && sessionData.status !== 'active')}
                   className={`w-full py-3.5 rounded-2xl font-black text-sm shadow-xl transition-all flex items-center justify-center gap-2 mt-4 cursor-pointer ${sessionData?.status && sessionData.status !== 'active'
                     ? 'bg-[#1C1C26] text-[#8B8B96] cursor-not-allowed border border-[#1C1C26]'
-                    : 'bg-brand-gradient text-[#0A0A0F] glow-teal hover:opacity-95'
+                    : 'bg-brand-gradient text-white glow-teal hover:opacity-95'
                     }`}
                 >
                   {sessionData?.status && sessionData.status !== 'active' ? (
@@ -837,7 +920,7 @@ function ViewerPaymentContent() {
                     }
                     setShowAuthModal(true);
                   }}
-                  className="w-full py-3.5 rounded-2xl font-black text-sm shadow-xl transition-all flex items-center justify-center gap-2 mt-4 bg-brand-gradient text-[#0A0A0F] glow-teal hover:opacity-95 cursor-pointer"
+                  className="w-full py-3.5 rounded-2xl font-black text-sm shadow-xl transition-all flex items-center justify-center gap-2 mt-4 bg-brand-gradient text-white glow-teal hover:opacity-95 cursor-pointer"
                 >
                   <Lock className="h-4 w-4" /> Login to Pay ₹{amount || '100'} & Send Question
                 </button>
@@ -866,7 +949,7 @@ function ViewerPaymentContent() {
 
             {/* Header */}
             <div className="text-center space-y-1.5 pt-2">
-              <div className="h-12 w-12 rounded-2xl bg-brand-gradient flex items-center justify-center text-[#0A0A0F] font-black text-2xl mx-auto shadow-lg glow-teal">
+              <div className="h-12 w-12 rounded-2xl bg-brand-gradient flex items-center justify-center text-white font-black text-2xl mx-auto shadow-lg glow-teal">
                 <Lock className="h-6 w-6 stroke-[2.5]" />
               </div>
               <h3 className="font-heading font-black text-xl text-white">
@@ -984,7 +1067,7 @@ function ViewerPaymentContent() {
                 <button
                   type="submit"
                   disabled={authLoading}
-                  className="w-full py-2.5 rounded-xl bg-brand-gradient text-[#0A0A0F] font-black text-xs shadow-md glow-teal hover:opacity-95 transition flex items-center justify-center gap-2 cursor-pointer mt-2"
+                  className="w-full py-2.5 rounded-xl bg-brand-gradient text-white font-black text-xs shadow-md glow-teal hover:opacity-95 transition flex items-center justify-center gap-2 cursor-pointer mt-2"
                 >
                   {authLoading ? (
                     <RefreshCw className="h-4 w-4 animate-spin" />
@@ -995,7 +1078,84 @@ function ViewerPaymentContent() {
                     </>
                   )}
                 </button>
+
+                {/* WhatsApp Login Button */}
+                <button
+                  type="button"
+                  onClick={openWaPayAuth}
+                  disabled={authLoading}
+                  className="w-full py-2.5 rounded-xl bg-[#25D366] hover:bg-[#20bd5a] text-[#FFFFFF] font-black text-xs shadow-md transition flex items-center justify-center gap-2 cursor-pointer mt-2"
+                >
+                  <svg className="h-4 w-4 fill-current shrink-0" viewBox="0 0 24 24">
+                    <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z" />
+                  </svg>
+                  <span>WhatsApp Login with OTP</span>
+                </button>
               </form>
+            ) : authMode === 'whatsapp' ? (
+              <div className="space-y-3 pt-1">
+                {waPayStep === 'phone' ? (
+                  <form onSubmit={handleSendWaPayOtp} className="space-y-3">
+                    <div>
+                      <label className="block text-xs font-bold text-white mb-1">WhatsApp Mobile Number</label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-gray-400 font-bold">+91</span>
+                        <input
+                          type="tel"
+                          required
+                          placeholder="9876543210"
+                          value={waPayPhone}
+                          onChange={(e) => setWaPayPhone(e.target.value)}
+                          className="w-full pl-11 pr-4 py-2 rounded-xl bg-[#0A0A0F] border border-[#1C1C26] text-xs text-white placeholder-[#8B8B96] focus:outline-none focus:border-[#25D366] font-mono"
+                        />
+                      </div>
+                    </div>
+
+                    <button
+                      type="submit"
+                      disabled={authLoading}
+                      className="w-full py-2.5 rounded-xl bg-[#25D366] hover:bg-[#20bd5a] text-white font-bold text-xs shadow-md transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                    >
+                      {authLoading ? <RefreshCw className="h-4 w-4 animate-spin" /> : <span>Send WhatsApp OTP</span>}
+                    </button>
+                  </form>
+                ) : (
+                  <form onSubmit={handleVerifyWaPayOtp} className="space-y-3">
+                    <div className="p-2.5 bg-[#0A0A0F] border border-[#25D366]/30 rounded-xl text-center text-xs space-y-1">
+                      <p className="text-gray-300">🔐 Code sent to <strong className="text-white">+91 {waPayPhone.slice(-10)}</strong></p>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-white mb-1 text-center">6-Digit Code</label>
+                      <input
+                        type="text"
+                        maxLength={6}
+                        required
+                        placeholder="123456"
+                        value={waPayOtp}
+                        onChange={(e) => setWaPayOtp(e.target.value)}
+                        className="w-full text-center py-2.5 rounded-xl bg-[#0A0A0F] border border-[#1C1C26] text-base font-bold text-[#25D366] tracking-widest focus:outline-none focus:border-[#25D366] font-mono"
+                      />
+                    </div>
+
+                    <button
+                      type="submit"
+                      disabled={authLoading}
+                      className="w-full py-2.5 rounded-xl bg-[#25D366] hover:bg-[#20bd5a] text-white font-bold text-xs shadow-md transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                    >
+                      {authLoading ? <RefreshCw className="h-4 w-4 animate-spin" /> : <span>Verify & Continue</span>}
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setWaPayStep('phone')}
+                      className="text-xs text-gray-400 hover:text-white w-full text-center block"
+                    >
+                      ← Change Mobile Number
+                    </button>
+                  </form>
+                )}
+              </div>
             ) : (
               <form onSubmit={handleRegisterSubmit} className="space-y-3">
                 <div>
@@ -1037,7 +1197,7 @@ function ViewerPaymentContent() {
                 <button
                   type="submit"
                   disabled={authLoading}
-                  className="w-full py-2.5 rounded-xl bg-brand-gradient text-[#0A0A0F] font-black text-xs shadow-md glow-teal hover:opacity-95 transition flex items-center justify-center gap-2 cursor-pointer mt-2"
+                  className="w-full py-2.5 rounded-xl bg-brand-gradient text-white font-black text-xs shadow-md glow-teal hover:opacity-95 transition flex items-center justify-center gap-2 cursor-pointer mt-2"
                 >
                   {authLoading ? (
                     <RefreshCw className="h-4 w-4 animate-spin" />
@@ -1158,8 +1318,8 @@ function ViewerPaymentContent() {
                         type="button"
                         onClick={() => setRazorpayTab(item.id)}
                         className={`w-full p-3.5 rounded-2xl border text-left flex items-center justify-between transition cursor-pointer ${isSel
-                            ? 'bg-[#1F1905] border-[#FFD60A] text-white shadow-md'
-                            : 'bg-[#181820] border-[#22222E] text-[#8B8B96] hover:border-[#333344]'
+                          ? 'bg-[#1F1905] border-[#FFD60A] text-white shadow-md'
+                          : 'bg-[#181820] border-[#22222E] text-[#8B8B96] hover:border-[#333344]'
                           }`}
                       >
                         <div className="flex items-center gap-3">
@@ -1263,8 +1423,8 @@ function ViewerPaymentContent() {
                           type="button"
                           onClick={() => setSelectedBank(b)}
                           className={`p-2.5 rounded-xl text-xs font-bold border transition text-left flex items-center justify-between cursor-pointer ${selectedBank === b
-                              ? 'bg-[#1F1905] border-[#FFD60A] text-[#FFD60A]'
-                              : 'bg-[#181820] border-[#2A2A3A] text-[#8B8B96] hover:text-white'
+                            ? 'bg-[#1F1905] border-[#FFD60A] text-[#FFD60A]'
+                            : 'bg-[#181820] border-[#2A2A3A] text-[#8B8B96] hover:text-white'
                             }`}
                         >
                           <span>{b}</span>

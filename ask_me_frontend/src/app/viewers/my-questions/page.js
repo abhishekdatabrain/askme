@@ -135,7 +135,7 @@ export default function ViewerMyQuestionsPage() {
                   </p>
                   <Link
                     href="/viewers/live-sessions"
-                    className="inline-block px-5 py-2.5 rounded-2xl bg-brand-gradient text-[#0A0A0F] font-black text-xs shadow-md glow-teal hover:scale-105 transition"
+                    className="inline-block px-5 py-2.5 rounded-2xl bg-brand-gradient text-white font-black text-xs shadow-md glow-teal hover:scale-105 transition"
                   >
                     Browse Live Sessions →
                   </Link>
@@ -168,7 +168,7 @@ export default function ViewerMyQuestionsPage() {
                         </div>
 
                         {q.isVip && (
-                          <span className="px-2.5 py-0.5 rounded-full bg-gradient-to-r from-[#FFD60A] to-[#FF9500] text-[#0A0A0F] text-[10px] font-black uppercase flex items-center gap-1 shadow-md ml-2">
+                          <span className="px-2.5 py-0.5 rounded-full bg-gradient-to-r from-[#FFD60A] to-[#FF9500] text-white text-[10px] font-black uppercase flex items-center gap-1 shadow-md ml-2">
                             ⚡ VIP PRIORITY
                           </span>
                         )}

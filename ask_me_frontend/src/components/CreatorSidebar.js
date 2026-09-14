@@ -26,6 +26,7 @@ import {
 } from 'lucide-react';
 import { API_ENDPOINTS } from '@/config/api';
 import { getCreatorToken, getCreatorUser, setCookie, clearCreatorSession } from '@/utils/cookies';
+import Logo from '@/components/Logo';
 
 function CreatorSidebarContent({ theme: propTheme, onToggleTheme }) {
   const pathname = usePathname();
@@ -172,9 +173,7 @@ function CreatorSidebarContent({ theme: propTheme, onToggleTheme }) {
       <div className={`p-5 border-b flex items-center justify-between ${theme === 'light' ? 'border-[#E9ECEF]' : 'border-[#1C1C26]'
         }`}>
         <Link href="/creators/dashboard" className="flex items-center gap-2.5 group">
-          <div className="h-9 w-9 rounded-xl bg-brand-gradient flex items-center justify-center text-[#0A0A0F] font-black text-xl shadow-md glow-teal group-hover:scale-105 transition">
-            a
-          </div>
+          <Logo size="md" />
           <div>
             <span className={`font-heading font-black text-lg block leading-none ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'
               }`}>
@@ -230,14 +229,14 @@ function CreatorSidebarContent({ theme: propTheme, onToggleTheme }) {
               key={item.name}
               href={item.href}
               className={`flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${isActive
-                ? 'bg-brand-gradient text-[#0A0A0F] shadow-lg glow-teal font-black'
+                ? 'bg-brand-gradient text-white shadow-lg glow-brand font-black'
                 : theme === 'light'
-                  ? 'text-[#495057] hover:text-[#1A1D20] hover:bg-[#E9ECEF]'
+                  ? 'text-[#495057] hover:text-[#1A1D20] hover:bg-[#FEF2F2] hover:text-[#EB1000]'
                   : 'text-[#8B8B96] hover:text-white hover:bg-[#1C1C26]'
                 }`}
             >
               <div className="flex items-center gap-2.5 min-w-0">
-                <Icon className={`h-4 w-4 shrink-0 ${isActive ? 'text-[#0A0A0F]' : theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'
+                <Icon className={`h-4 w-4 shrink-0 ${isActive ? 'text-white' : theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'
                   }`} />
                 <span className="truncate">{item.name}</span>
               </div>

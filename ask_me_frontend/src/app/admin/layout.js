@@ -107,7 +107,7 @@ export default function AdminLayout({ children }) {
   if (loading || !isAuthorized) {
     return (
       <div className="min-h-screen bg-[#0A0A0F] text-[#F5F5F7] flex flex-col items-center justify-center space-y-4">
-        <div className="h-12 w-12 rounded-2xl bg-brand-gradient flex items-center justify-center text-[#0A0A0F] font-black text-2xl animate-pulse glow-teal">
+        <div className="h-12 w-12 rounded-2xl bg-brand-gradient flex items-center justify-center text-white font-black text-2xl animate-pulse glow-teal">
           a
         </div>
         <div className="flex items-center gap-2 text-sm font-semibold text-[#8B8B96]">

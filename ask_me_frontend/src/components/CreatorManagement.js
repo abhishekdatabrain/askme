@@ -52,20 +52,36 @@ export default function CreatorManagement({ activeSubTab }) {
           headers: { Authorization: `Bearer ${token}` }
         });
         const data = await res.json();
-        if (data.status === 'success' && data.data?.creators) {
-          setCreators(data.data.creators.map((c, idx) => ({
-            id: c.id || (idx + 100),
-            name: c.name || c.fullName || 'Creator Host',
-            email: c.email || 'N/A',
-            mobile: c.mobile || 'N/A',
-            category: c.category || 'Creator',
-            kycStatus: c.kycStatus || 'Approved',
-            accountStatus: c.accountStatus ? (c.accountStatus.charAt(0).toUpperCase() + c.accountStatus.slice(1)) : 'Active',
-            totalDonations: `₹${(c.totalRevenue || 0).toLocaleString()}`,
-            platform: 'youtube',
-            createdAt: c.createdAt || c.created_at || 'N/A',
-            walletBalance: `₹${(c.walletBalance || 0).toLocaleString()}`,
-          })));
+        if (data.status === 'success' && (data.data?.creators || data.creators)) {
+          const list = data.data?.creators || data.creators || [];
+          setCreators(list.map((c, idx) => {
+            const rawDate = c.regDate || c.createdAt || c.created_at;
+            let formattedDate = 'N/A';
+            if (rawDate && rawDate !== 'N/A') {
+              try {
+                formattedDate = new Date(rawDate).toISOString().split('T')[0];
+              } catch (e) {
+                formattedDate = String(rawDate);
+              }
+            }
+            const bal = c.balance !== undefined ? c.balance : (c.walletBalance !== undefined ? c.walletBalance : (c.wallet_balance !== undefined ? c.wallet_balance : 0));
+
+            return {
+              id: c.id || (idx + 100),
+              name: c.name || c.fullName || 'Creator Host',
+              email: c.email || 'N/A',
+              mobile: c.mobile || 'N/A',
+              category: c.category || 'Creator',
+              kycStatus: c.kycStatus || 'Approved',
+              accountStatus: c.accountStatus ? (c.accountStatus.charAt(0).toUpperCase() + c.accountStatus.slice(1)) : 'Active',
+              totalDonations: `₹${(c.totalRevenue || bal || 0).toLocaleString()}`,
+              platform: 'youtube',
+              createdAt: formattedDate,
+              regDate: formattedDate,
+              registeredDate: formattedDate,
+              walletBalance: `₹${(bal || 0).toLocaleString()}`,
+            };
+          }));
 
           const pag = data.pagination || data.data?.pagination;
           if (pag) {
@@ -329,7 +345,7 @@ export default function CreatorManagement({ activeSubTab }) {
             <div className="pt-2 flex justify-end">
               <button
                 onClick={() => setSelectedCreatorForView(null)}
-                className="px-4 py-2 rounded-xl bg-brand-gradient text-[#0A0A0F] font-bold text-xs"
+                className="px-4 py-2 rounded-xl bg-brand-gradient text-white font-bold text-xs"
               >
                 Close Details
               </button>

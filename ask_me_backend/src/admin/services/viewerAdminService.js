@@ -20,6 +20,9 @@ class ViewerAdminService {
     const isBlocked = (v.role || '').toLowerCase() === 'blocked';
     const status = isBlocked ? 'Blocked' : 'Active';
 
+    const rawDate = v.createdAt || v.created_at;
+    const formattedDate = rawDate ? new Date(rawDate).toISOString().split('T')[0] : 'N/A';
+
     return {
       id: v.id,
       name: fullName,
@@ -27,8 +30,9 @@ class ViewerAdminService {
       role: (v.role === 'viewer') ? 'Viewer' : (v.role || 'Viewer'),
       status,
       avatar: avatarInitials,
-      regDate: v.created_at ? new Date(v.created_at).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
-      createdAt: v.created_at || new Date().toISOString(),
+      regDate: formattedDate,
+      createdAt: rawDate || formattedDate,
+      created_at: rawDate || formattedDate,
       totalSpent: parseFloat(totalSpent.toFixed(2)),
       formattedTotalSpent: `₹${totalSpent.toLocaleString()}`,
       totalQuestions,

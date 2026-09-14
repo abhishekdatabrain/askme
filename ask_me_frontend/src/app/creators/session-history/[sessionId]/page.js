@@ -300,7 +300,7 @@ export default function DedicatedSessionQuestionsPage() {
                 <div className="flex items-center gap-2 shrink-0">
                   <button
                     type="submit"
-                    className="px-4 py-2 rounded-xl bg-brand-gradient text-[#0A0A0F] font-bold text-xs shadow-md glow-teal hover:scale-105 transition flex items-center gap-1.5"
+                    className="px-4 py-2 rounded-xl bg-brand-gradient text-white font-bold text-xs shadow-md glow-teal hover:scale-105 transition flex items-center gap-1.5"
                   >
                     <Search className="h-3.5 w-3.5" /> Search
                   </button>
@@ -372,7 +372,7 @@ export default function DedicatedSessionQuestionsPage() {
                         </div>
 
                         {q.isVip && (
-                          <span className="px-2.5 py-0.5 rounded-full bg-gradient-to-r from-[#FFD60A] to-[#FF9500] text-[#0A0A0F] text-[10px] font-black uppercase flex items-center gap-1 shadow-md">
+                          <span className="px-2.5 py-0.5 rounded-full bg-gradient-to-r from-[#FFD60A] to-[#FF9500] text-white text-[10px] font-black uppercase flex items-center gap-1 shadow-md">
                             ⚡ VIP PRIORITY
                           </span>
                         )}

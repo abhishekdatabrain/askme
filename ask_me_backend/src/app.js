@@ -53,7 +53,16 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+const path = require('path');
+const truecallerRoutes = require('./routes/truecallerRoutes');
+const uploadRoutes = require('./routes/uploadRoutes');
+
+// Serve static uploaded files (/uploads/profiles/..., /uploads/documents/...)
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+
 // API Routes
+app.use('/api/upload', uploadRoutes);
+app.use('/api/auth/truecaller', truecallerRoutes);
 app.use('/api/adminauth', authRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/creators', creatorRoutes);

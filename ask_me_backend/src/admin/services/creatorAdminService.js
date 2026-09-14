@@ -15,9 +15,16 @@ class CreatorAdminService {
     const fullName = c.full_name || '';
     const avatarInitials = fullName.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2) || 'CR';
 
-    const balanceVal = c.wallet
-      ? parseFloat(c.wallet.available_balance ?? c.wallet.total_earnings ?? 0)
-      : 0;
+    const walletObj = c.wallet || {};
+    const totalEarnings = parseFloat(walletObj.total_earnings || walletObj.totalEarnings || 0);
+    const availableBal = parseFloat(walletObj.available_balance || walletObj.availableBalance || 0);
+    const pendingBal = parseFloat(walletObj.pending_balance || walletObj.pendingBalance || 0);
+    const withdrawnAmt = parseFloat(walletObj.withdrawn_amount || walletObj.withdrawnAmount || 0);
+
+    const balanceVal = totalEarnings > 0 ? totalEarnings : (availableBal + pendingBal);
+
+    const rawDate = c.createdAt || c.created_at;
+    const formattedDate = rawDate ? new Date(rawDate).toISOString().split('T')[0] : 'N/A';
 
     return {
       id: c.id,
@@ -26,14 +33,21 @@ class CreatorAdminService {
       email: c.email || 'N/A',
       mobile: c.mobile || 'N/A',
       country: c.country || 'India',
-      regDate: c.created_at ? new Date(c.created_at).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+      regDate: formattedDate,
+      createdAt: rawDate || formattedDate,
+      created_at: rawDate || formattedDate,
       kycStatus,
       accountStatus,
       balance: balanceVal,
+      walletBalance: balanceVal,
+      totalRevenue: totalEarnings,
+      availableBalance: availableBal,
+      pendingBalance: pendingBal,
+      withdrawnAmount: withdrawnAmt,
       avatar: avatarInitials,
       profileImage: c.profile_image || null,
       bio: c.profile?.bio || '',
-      category: 'Technology',
+      category: c.profile?.category || 'Technology',
       socialLinks: Array.isArray(c.socialLinks)
         ? c.socialLinks.map((s) => ({
           platform: s.platform,

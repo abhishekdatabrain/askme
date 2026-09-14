@@ -52,6 +52,7 @@ import {
   Users
 } from 'lucide-react';
 import { API_ENDPOINTS } from '@/config/api';
+import BrandedQrCode from '@/components/BrandedQrCode';
 
 function CreatorDashboardContent() {
   const { toast } = useToast();
@@ -655,10 +656,10 @@ function CreatorDashboardContent() {
                     </div>
 
                     <div className="flex items-center gap-2 shrink-0">
-                      <Link href="/creators/active-session" className="px-4 py-2 rounded-xl bg-[#00F5D4] text-[#0A0A0F] font-bold text-xs shadow-md hover:scale-105 transition">
+                      <Link href="/creators/active-session" className="px-4 py-2 rounded-xl bg-[#00F5D4] text-white font-bold text-xs shadow-md hover:scale-105 transition">
                         Manage Session
                       </Link>
-                      <button onClick={handleEndSession} className="px-4 py-2 rounded-xl bg-[#FF3D71]/10 text-[#FF3D71] border border-[#FF3D71]/30 font-bold text-xs hover:bg-[#FF3D71]/20 transition">
+                      <button onClick={handleEndSession} className="px-4 py-2 rounded-xl bg-[#FF3D71] text-white border border-[#FF3D71] font-bold text-xs hover:bg-[#E03563] transition shadow-md">
                         End Session
                       </button>
                     </div>
@@ -668,12 +669,12 @@ function CreatorDashboardContent() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {/* QR & Payment Link */}
                     <div className={`p-4 rounded-2xl border flex items-center gap-4 ${theme === 'light' ? 'bg-[#F8F9FA] border-[#E9ECEF]' : 'bg-[#0A0A0F] border-[#1C1C26]'}`}>
-                      <img src={activeSession.qrCodeUrl} alt="QR Code" className="h-24 w-24 rounded-xl bg-white p-1 shrink-0 border border-[#00F5D4]/40 shadow-md" />
+                      <BrandedQrCode qrUrl={activeSession.qrCodeUrl} size="sm" showBrandHeader={false} />
                       <div className="space-y-1 min-w-0 flex-1">
                         <span className="text-[10px] font-bold text-[#00F5D4] uppercase">Instant UPI Payment Link & QR</span>
                         <p className="text-xs font-mono truncate">{activeSession.paymentLink}</p>
                         <div className="flex flex-wrap gap-2 pt-1">
-                          <button onClick={() => copyPaymentLink(activeSession.paymentLink)} className="px-3.5 py-1.5 rounded-lg bg-[#00F5D4] text-[#0A0A0F] font-bold text-[11px] shadow-sm hover:scale-105 transition flex items-center gap-1">
+                          <button onClick={() => copyPaymentLink(activeSession.paymentLink)} className="px-3.5 py-1.5 rounded-lg bg-[#00F5D4] text-white font-bold text-[11px] shadow-sm hover:scale-105 transition flex items-center gap-1">
                             <Copy className="h-3.5 w-3.5" /> Copy Link
                           </button>
                           <button onClick={() => downloadQrCode(activeSession.qrCodeUrl, `askme_qr_${activeSession.sessionCode || 'code'}.png`)} className="px-3.5 py-1.5 rounded-lg bg-[#1C1C26] text-[#00F5D4] text-[11px] font-bold border border-[#00F5D4]/40 hover:bg-[#00F5D4]/10 transition flex items-center gap-1">
@@ -728,7 +729,7 @@ function CreatorDashboardContent() {
 
                 <Link
                   href="/creators/start-live"
-                  className="px-5 py-3 rounded-2xl bg-brand-gradient text-[#0A0A0F] font-black text-xs shadow-lg glow-teal hover:scale-105 transition-all flex items-center gap-2 shrink-0"
+                  className="px-5 py-3 rounded-2xl bg-brand-gradient text-white font-black text-xs shadow-lg glow-teal hover:scale-105 transition-all flex items-center gap-2 shrink-0"
                 >
                   <Radio className="h-5 w-5 stroke-[2.5]" /> Launch New Live Session
                 </Link>
@@ -892,7 +893,7 @@ function CreatorDashboardContent() {
                     </div>
 
                     <div className="pt-4 flex justify-end">
-                      <button onClick={() => setWizardStep(2)} disabled={!sessionForm.title.trim()} className="px-6 py-3 rounded-xl bg-brand-gradient text-[#0A0A0F] font-bold text-xs flex items-center gap-1.5 shadow-md">
+                      <button onClick={() => setWizardStep(2)} disabled={!sessionForm.title.trim()} className="px-6 py-3 rounded-xl bg-brand-gradient text-white font-bold text-xs flex items-center gap-1.5 shadow-md">
                         Next: Donation Settings <ArrowRight className="h-4 w-4" />
                       </button>
                     </div>
@@ -942,7 +943,7 @@ function CreatorDashboardContent() {
                       <button onClick={() => setWizardStep(1)} className="px-4 py-2.5 rounded-xl border text-xs font-bold text-[#8B8B96]">
                         Back to Step 1
                       </button>
-                      <button onClick={handleCreateSessionSubmit} disabled={isSubmittingSession} className="px-6 py-3 rounded-xl bg-brand-gradient text-[#0A0A0F] font-black text-xs flex items-center gap-2 shadow-md glow-teal">
+                      <button onClick={handleCreateSessionSubmit} disabled={isSubmittingSession} className="px-6 py-3 rounded-xl bg-brand-gradient text-white font-black text-xs flex items-center gap-2 shadow-md glow-teal">
                         {isSubmittingSession ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />} Launch Session & Generate Output
                       </button>
                     </div>
@@ -956,13 +957,13 @@ function CreatorDashboardContent() {
                       <CheckCircle2 className="h-5 w-5" /> Step 3: Unique Instant UPI QR Code Generated!
                     </div>
 
-                    <div className="p-6 rounded-3xl bg-white text-[#0A0A0F] inline-block shadow-2xl border-2 border-[#00F5D4]">
-                      <img src={createdSessionOutput.qrCodeUrl} alt="Generated QR" className="h-48 w-48 mx-auto rounded-xl" />
+                    <div className="p-6 rounded-3xl bg-white text-[#0A0A0F] inline-block shadow-2xl border-2 border-[#EB1000]">
+                      <BrandedQrCode qrUrl={createdSessionOutput.qrCodeUrl} size="lg" showBrandHeader={true} />
                       <p className="text-xs font-black mt-2 font-mono">{createdSessionOutput.paymentLink}</p>
                     </div>
 
                     <div className="flex flex-wrap items-center justify-center gap-3">
-                      <button onClick={() => copyText(createdSessionOutput.paymentLink, 'Payment Link')} className="px-4 py-2.5 rounded-xl bg-[#00F5D4] text-[#0A0A0F] font-bold text-xs flex items-center gap-1">
+                      <button onClick={() => copyText(createdSessionOutput.paymentLink, 'Payment Link')} className="px-4 py-2.5 rounded-xl bg-[#00F5D4] text-white font-bold text-xs flex items-center gap-1">
                         <Copy className="h-4 w-4" /> Copy Payment Link
                       </button>
                       <button onClick={() => downloadQrCode(createdSessionOutput.qrCodeUrl, `askme_qr_${createdSessionOutput.sessionCode || 'code'}.png`)} className="px-4 py-2.5 rounded-xl bg-[#1C1C26] text-[#00F5D4] font-bold text-xs border border-[#00F5D4]/40 hover:bg-[#00F5D4]/10 transition flex items-center gap-1">
@@ -991,13 +992,13 @@ function CreatorDashboardContent() {
                       <button onClick={() => copyText(createdSessionOutput.overlayUrl, 'OBS Overlay URL')} className="px-5 py-2.5 rounded-xl bg-[#7B2FFF] text-white font-bold text-xs">
                         <Copy className="h-4 w-4 inline mr-1" /> Copy Overlay URL
                       </button>
-                      <a href={createdSessionOutput.overlayUrl} target="_blank" rel="noopener noreferrer" className="px-5 py-2.5 rounded-xl bg-[#00F5D4] text-[#0A0A0F] font-bold text-xs">
+                      <a href={createdSessionOutput.overlayUrl} target="_blank" rel="noopener noreferrer" className="px-5 py-2.5 rounded-xl bg-[#00F5D4] text-white font-bold text-xs">
                         Preview Overlay Widget <ExternalLink className="h-4 w-4 inline ml-1" />
                       </a>
                     </div>
 
                     <div className="pt-4">
-                      <button onClick={() => switchTab('active-session')} className="px-6 py-2.5 rounded-xl bg-brand-gradient text-[#0A0A0F] font-black text-xs shadow-md">
+                      <button onClick={() => switchTab('active-session')} className="px-6 py-2.5 rounded-xl bg-brand-gradient text-white font-black text-xs shadow-md">
                         Go to Active Session Dashboard
                       </button>
                     </div>
@@ -1037,8 +1038,8 @@ function CreatorDashboardContent() {
                       </div>
                     </div>
 
-                    <button onClick={handleEndSession} className="px-5 py-2.5 rounded-xl bg-[#FF3D71]/10 text-[#FF3D71] border border-[#FF3D71]/30 hover:bg-[#FF3D71]/20 font-bold text-xs flex items-center gap-1.5 shrink-0">
-                      <StopCircle className="h-4 w-4" /> End Live Session
+                    <button onClick={handleEndSession} className="px-5 py-2.5 rounded-xl bg-[#FF3D71] text-white border border-[#FF3D71] hover:bg-[#E03563] font-bold text-xs flex items-center gap-1.5 shrink-0 shadow-md">
+                      <StopCircle className="h-4 w-4 text-white" /> End Live Session
                     </button>
                   </div>
 
@@ -1046,12 +1047,12 @@ function CreatorDashboardContent() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {/* QR & Payment Link */}
                     <div className={`p-4 rounded-2xl border flex items-center gap-4 ${theme === 'light' ? 'bg-[#F8F9FA] border-[#E9ECEF]' : 'bg-[#0A0A0F] border-[#1C1C26]'}`}>
-                      <img src={activeSession.qrCodeUrl} alt="QR Code" className="h-20 w-20 rounded-xl bg-white p-1 shrink-0 border border-[#00F5D4]/40" />
+                      <BrandedQrCode qrUrl={activeSession.qrCodeUrl} size="sm" showBrandHeader={false} />
                       <div className="space-y-1 min-w-0 flex-1">
                         <span className="text-[10px] font-bold text-[#00F5D4] uppercase">Viewer Payment Link & QR</span>
                         <p className="text-xs font-mono truncate">{activeSession.paymentLink}</p>
                         <div className="flex flex-wrap gap-2 pt-1">
-                          <button onClick={() => copyText(activeSession.paymentLink, 'Payment Link')} className="px-2.5 py-1 rounded-lg bg-[#00F5D4] text-[#0A0A0F] font-bold text-[11px] flex items-center gap-1">
+                          <button onClick={() => copyText(activeSession.paymentLink, 'Payment Link')} className="px-2.5 py-1 rounded-lg bg-[#00F5D4] text-white font-bold text-[11px] flex items-center gap-1">
                             <Copy className="h-3 w-3" /> Copy Link
                           </button>
                           <button onClick={() => downloadQrCode(activeSession.qrCodeUrl, `askme_qr_${activeSession.sessionCode || 'code'}.png`)} className="px-2.5 py-1 rounded-lg bg-[#1C1C26] text-[#00F5D4] text-[11px] font-bold border border-[#00F5D4]/40 hover:bg-[#00F5D4]/10 transition flex items-center gap-1">
@@ -1090,7 +1091,7 @@ function CreatorDashboardContent() {
                   <Radio className="h-12 w-12 text-[#8B8B96] mx-auto stroke-1" />
                   <h4 className={`font-bold text-lg ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'}`}>No Active Broadcast Session</h4>
                   <p className="text-xs text-[#8B8B96] max-w-md mx-auto">Launch a new session to generate unique payment links, QR codes, and OBS stream overlays.</p>
-                  <button onClick={() => switchTab('start-live')} className="px-6 py-3 rounded-2xl bg-brand-gradient text-[#0A0A0F] font-black text-xs shadow-md glow-teal">
+                  <button onClick={() => switchTab('start-live')} className="px-6 py-3 rounded-2xl bg-brand-gradient text-white font-black text-xs shadow-md glow-teal">
                     + Launch Live Session Now
                   </button>
                 </div>
@@ -1125,7 +1126,7 @@ function CreatorDashboardContent() {
                         </div>
 
                         {s.status !== 'active' && (
-                          <button onClick={() => handleReStartSession(s.id)} className="px-4 py-2 rounded-xl bg-brand-gradient text-[#0A0A0F] font-bold text-xs shadow-md">
+                          <button onClick={() => handleReStartSession(s.id)} className="px-4 py-2 rounded-xl bg-brand-gradient text-white font-bold text-xs shadow-md">
                             Re-launch Session
                           </button>
                         )}
@@ -1277,7 +1278,7 @@ function CreatorDashboardContent() {
                 </div>
 
                 <div className="pt-4 flex justify-end">
-                  <button type="submit" disabled={isSavingProfile} className="px-6 py-3 rounded-xl bg-brand-gradient text-[#0A0A0F] font-black text-xs flex items-center gap-2 shadow-md glow-teal">
+                  <button type="submit" disabled={isSavingProfile} className="px-6 py-3 rounded-xl bg-brand-gradient text-white font-black text-xs flex items-center gap-2 shadow-md glow-teal">
                     {isSavingProfile ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />} Save Profile & Bank Settings
                   </button>
                 </div>

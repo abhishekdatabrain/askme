@@ -4,8 +4,8 @@ import React, { useState, useEffect, Suspense } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
 import { Radio, QrCode, Sparkles, Heart, ShieldCheck } from 'lucide-react';
 import { API_ENDPOINTS } from '@/config/api';
-
 import { getSocket } from '@/config/socket';
+import BrandedQrCode from '@/components/BrandedQrCode';
 
 function StreamOverlayContent() {
   const params = useParams();
@@ -110,10 +110,8 @@ function StreamOverlayContent() {
         if (res.ok && data.status === 'success' && data.data) {
           const activeItem = data.data.latestReadAlert;
           if (activeItem) {
-            if (activeItem.id !== lastAlertId) {
-              setLastAlertId(activeItem.id);
-              setActiveAlert(activeItem);
-            }
+            setLastAlertId(activeItem.id);
+            setActiveAlert(activeItem);
           } else {
             setActiveAlert(null);
           }
@@ -124,7 +122,7 @@ function StreamOverlayContent() {
     fetchAlerts();
     const alertInterval = setInterval(fetchAlerts, 3000);
     return () => clearInterval(alertInterval);
-  }, [overlayData, lastAlertId]);
+  }, [overlayData]);
 
   if (isLoading) {
     return (
@@ -156,12 +154,14 @@ function StreamOverlayContent() {
           </span>
         </div>
 
-        {/* Small Size QR Code */}
-        <div className="p-2 rounded-2xl bg-white shadow-inner flex items-center justify-center border border-[#00F5D4]/30">
-          <img
-            src={qrUrl}
-            alt="Live Stream QR Code"
-            className="h-28 w-28 object-contain"
+        {/* Branded QR Code */}
+        <div className="flex justify-center my-1">
+          <BrandedQrCode
+            qrUrl={qrUrl}
+            size="sm"
+            showCenterLogo={true}
+            showBrandHeader={false}
+            alt="AskMe Live Stream QR Code"
           />
         </div>
 

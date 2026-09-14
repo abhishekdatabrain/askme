@@ -291,7 +291,7 @@ export default function WalletManagement({ activeSubTab }) {
             <button
               onClick={handleDownloadCSV}
               title="Download Creator Wallets CSV Report"
-              className="px-3.5 py-1.5 rounded-xl bg-brand-gradient text-[#0A0A0F] font-bold text-xs hover:opacity-90 transition flex items-center gap-1.5 shadow-sm"
+              className="px-3.5 py-1.5 rounded-xl bg-brand-gradient text-white font-bold text-xs hover:opacity-90 transition flex items-center gap-1.5 shadow-sm"
             >
               <Download className="h-4 w-4" />
               <span>Download CSV</span>
@@ -436,7 +436,7 @@ export default function WalletManagement({ activeSubTab }) {
                 <button
                   type="submit"
                   disabled={isUpdating}
-                  className="px-5 py-2 rounded-xl bg-brand-gradient text-[#0A0A0F] text-xs font-extrabold shadow-md glow-teal hover:opacity-95 flex items-center gap-1.5"
+                  className="px-5 py-2 rounded-xl bg-brand-gradient text-white text-xs font-extrabold shadow-md glow-teal hover:opacity-95 flex items-center gap-1.5"
                 >
                   {isUpdating ? <RefreshCw className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />} Save Balance Changes
                 </button>

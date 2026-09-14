@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import VipMembershipModal from '@/components/VipMembershipModal';
-import { API_ENDPOINTS } from '@/config/api';
+import { API_ENDPOINTS, getMediaUrl } from '@/config/api';
 import { getViewerToken, getViewerUser, getCookie } from '@/utils/cookies';
 import {
   Heart,
@@ -19,7 +19,8 @@ import {
   ChevronsLeft,
   ChevronsRight,
   Search,
-  X
+  X,
+  Tv
 } from 'lucide-react';
 
 export default function ViewerFollowingPage() {
@@ -151,6 +152,129 @@ export default function ViewerFollowingPage() {
     fetchData(currentPage, activeSearch);
     fetchMyVipMemberships();
   }, [currentPage, activeSearch, fetchData]);
+
+  // Helper to safely extract YouTube Channel Info (channelId or channel handle)
+  const getYoutubeWidgetInfo = (creator) => {
+    if (!creator) return null;
+
+    const platform = String(
+      creator.platform ||
+      creator.channel_platform ||
+      creator.primaryPlatform ||
+      creator.session?.platform ||
+      ''
+    ).toLowerCase();
+
+    // 1. Direct Channel ID on creator object
+    const directChannelId =
+      creator.youtubeChannelId ||
+      creator.channelId ||
+      creator.youtube_channel_id ||
+      creator.channel_id;
+
+    if (directChannelId && /^UC[\w-]{20,}$/i.test(String(directChannelId).trim())) {
+      return { channelId: String(directChannelId).trim() };
+    }
+
+    // 2. Direct channel / handle on creator object
+    const directChannel =
+      creator.youtubeChannel ||
+      creator.channel ||
+      creator.youtube_channel ||
+      creator.youtubeHandle;
+
+    if (directChannel && typeof directChannel === 'string') {
+      let value = directChannel.trim();
+      if (/^UC[\w-]{20,}$/i.test(value)) {
+        return { channelId: value };
+      }
+      value = value.replace(/^@/, '');
+      if (value && !value.includes('/') && !value.includes('.')) {
+        return { channel: value };
+      }
+    }
+
+    // Collect URLs to search
+    let urlStr =
+      creator.profile_url ||
+      creator.profileUrl ||
+      creator.youtube_url ||
+      creator.youtubeUrl ||
+      creator.channelUrl ||
+      creator.streamUrl ||
+      creator.session?.streamUrl ||
+      creator.session?.stream_url ||
+      '';
+
+    if (Array.isArray(creator.socialLinks)) {
+      const ytSocial = creator.socialLinks.find((s) => {
+        const p = String(s.platform || '').toLowerCase();
+        const u = String(s.url || s.profile_url || s.profileUrl || '').toLowerCase();
+        return p.includes('youtube') || u.includes('youtube.com') || u.includes('youtu.be');
+      });
+      if (ytSocial) {
+        urlStr = ytSocial.profile_url || ytSocial.profileUrl || ytSocial.url || urlStr;
+      }
+    }
+
+    // 3. Extract Channel ID from URL
+    if (urlStr) {
+      const channelIdMatch = String(urlStr).match(/youtube\.com\/channel\/(UC[\w-]{20,})/i);
+      if (channelIdMatch) {
+        return { channelId: channelIdMatch[1] };
+      }
+      // 4. Extract @handle from URL
+      const handleMatch = String(urlStr).match(/youtube\.com\/@([^/?#]+)/i);
+      if (handleMatch) {
+        return { channel: handleMatch[1].replace(/^@/, '') };
+      }
+      // 5. /c/ or /user/ URL
+      const legacyMatch = String(urlStr).match(/youtube\.com\/(?:c|user)\/([^/?#]+)/i);
+      if (legacyMatch) {
+        return { channel: legacyMatch[1] };
+      }
+    }
+
+    // 6. Check if creator is explicitly on a non-YouTube platform without any YouTube links/info
+    const lowerUrl = String(urlStr).toLowerCase();
+    const hasYtLink = lowerUrl.includes('youtube.com') || lowerUrl.includes('youtu.be');
+    const nonYtPlatforms = ['twitch', 'instagram', 'kick', 'tiktok', 'facebook', 'twitter'];
+    if (platform && nonYtPlatforms.some(p => platform.includes(p)) && !hasYtLink) {
+      return null;
+    }
+
+    // 7. Fallback to creator username or handle
+    const handle = creator.cleanUsername || creator.username || creator.handle;
+    if (handle) {
+      const cleanHandle = String(handle).trim().replace(/^@+/, '');
+      if (cleanHandle) {
+        return { channel: cleanHandle };
+      }
+    }
+
+    return null;
+  };
+
+  // Trigger Google YouTube Subscribe button rendering when creators list loads
+  useEffect(() => {
+    const renderYtWidgets = () => {
+      if (typeof window !== 'undefined' && window.gapi && window.gapi.ytsubscribe) {
+        try {
+          window.gapi.ytsubscribe.go();
+        } catch (err) {
+          console.warn('gapi render error:', err);
+        }
+      }
+    };
+
+    renderYtWidgets();
+    const timer1 = setTimeout(renderYtWidgets, 300);
+    const timer2 = setTimeout(renderYtWidgets, 1000);
+    return () => {
+      clearTimeout(timer1);
+      clearTimeout(timer2);
+    };
+  }, [creators, loading]);
 
   // Search input handler with debounce
   const handleSearchChange = (e) => {
@@ -320,7 +444,7 @@ export default function ViewerFollowingPage() {
               ) : (
                 <Link
                   href="/viewers/dashboard"
-                  className="px-4 py-2.5 rounded-xl bg-[#00F5D4] text-[#0A0A0F] text-xs font-bold shadow-md inline-block"
+                  className="px-4 py-2.5 rounded-xl bg-[#00F5D4] text-white text-xs font-bold shadow-md inline-block"
                 >
                   Explore Live Feed
                 </Link>
@@ -328,7 +452,7 @@ export default function ViewerFollowingPage() {
             </div>
           ) : (
             <div className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                 {creators.map(creator => {
                   const isFollowing = followedIds.has(String(creator.creatorId || creator.id));
 
@@ -356,29 +480,33 @@ export default function ViewerFollowingPage() {
                         </div>
 
                         <div className="flex items-center justify-between gap-3 border-b border-[#22222E] pb-3.5">
-                          {/* Avatar & Name Info */}
-                          <div className="flex items-center gap-3 min-w-0">
+                          {/* Avatar & Name Info (Clickable link to Creator Profile) */}
+                          <Link
+                            href={`/creator/${creator.cleanUsername}`}
+                            className="flex items-center gap-3 min-w-0 group hover:opacity-90 transition cursor-pointer"
+                            title={`View ${creator.fullName}'s Profile`}
+                          >
                             <div className="relative shrink-0">
                               <img
-                                src={creator.avatar}
+                                src={getMediaUrl(creator.avatar) || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80'}
                                 alt={creator.fullName}
-                                className="h-12 w-12 rounded-full object-cover border border-[#2A2A3A]"
+                                className="h-12 w-12 rounded-full object-cover border border-[#2A2A3A] group-hover:border-[#00F5D4] transition"
                               />
                               <span className="absolute -bottom-1 -right-1 h-4 w-4 rounded-full bg-[#FF5722] text-white text-[9px] font-bold flex items-center justify-center border border-[#13131A]" title="Verified Creator">
                                 ✓
                               </span>
                             </div>
                             <div className="min-w-0">
-                              <h4 className="font-heading font-black text-base text-white truncate leading-tight">
+                              <h4 className="font-heading font-black text-base text-white truncate leading-tight group-hover:text-[#00F5D4] transition">
                                 {creator.fullName}
                               </h4>
                               <p className="text-xs text-[#8B8B96] font-mono truncate mt-0.5">
                                 {creator.username}
                               </p>
                             </div>
-                          </div>
+                          </Link>
 
-                          {/* Follow & Clickable Social Stream Icon */}
+                          {/* Following Button */}
                           <div className="flex items-center gap-2 shrink-0">
                             <button
                               onClick={() => handleToggleFollow(creator.creatorId || creator.id)}
@@ -387,17 +515,6 @@ export default function ViewerFollowingPage() {
                               <Bell className="h-3.5 w-3.5" />
                               Following
                             </button>
-
-                            {/* Clickable Social Stream Platform Icon */}
-                            <a
-                              href={creator.session?.streamUrl || creator.socialLinks?.[0]?.url || 'https://youtube.com'}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="h-7 w-7 rounded-full bg-[#FF0000] text-white font-bold text-xs flex items-center justify-center shrink-0 hover:scale-110 transition shadow-md"
-                              title={`Watch ${creator.session?.platform || 'YouTube'} Live Stream`}
-                            >
-                              ▶
-                            </a>
                           </div>
                         </div>
 
@@ -409,8 +526,8 @@ export default function ViewerFollowingPage() {
                         {/* Divider */}
                         <div className="border-b border-[#22222E] pt-1"></div>
 
-                        {/* STATS ROW (Dynamic Followers & Answered Count) */}
-                        <div className="flex items-center justify-between text-xs text-[#8B8B96] pt-1">
+                        {/* STATS ROW (Followers Count) */}
+                        <div className="flex items-center text-xs text-[#8B8B96] pt-1">
                           <span className="flex items-center gap-1 font-bold text-white">
                             <Users className="h-3.5 w-3.5 text-[#FF5722]" />
                             {(creator.followersCount || 0) >= 1000000
@@ -419,36 +536,25 @@ export default function ViewerFollowingPage() {
                               ? `${((creator.followersCount || 0) / 1000).toFixed(1)}K`
                               : (creator.followersCount || 0)} Followers
                           </span>
-
-                          <span className="font-bold text-white">
-                            {creator.answeredCount !== undefined ? creator.answeredCount : 0} Answered
-                          </span>
                         </div>
                       </div>
 
-                      {/* ACTION BUTTONS ROW */}
+                      {/* ACTION BUTTONS ROW (Ask Question) */}
                       <div className="space-y-2.5 pt-4">
-                        <div className="grid grid-cols-2 gap-3">
-                          <Link
-                            href={`/creator/${creator.cleanUsername}`}
-                            className="py-3 px-4 rounded-full bg-[#202026] hover:bg-[#2A2A33] text-white font-extrabold text-xs transition flex items-center justify-center gap-1.5"
-                          >
-                            Profile <ArrowUpRight className="h-4 w-4 text-white" />
-                          </Link>
-
+                        <div className="flex items-center w-full">
                           {creator.session?.sessionCode ? (
                             <Link
                               href={`/pay/${creator.session.sessionCode}`}
-                              className="py-3 px-4 rounded-full bg-gradient-to-r from-[#FF5722] to-[#FF7043] hover:from-[#FF7043] hover:to-[#FF8A65] text-white font-black text-xs transition flex items-center justify-center gap-2 shadow-xl glow-pay"
+                              className="w-full py-2.5 px-4 rounded-full bg-gradient-to-r from-[#FF5722] to-[#FF7043] hover:from-[#FF7043] hover:to-[#FF8A65] text-white font-black text-xs transition flex items-center justify-center gap-2 shadow-xl glow-pay text-center truncate"
                             >
-                              <MessageSquare className="h-4 w-4 fill-white" /> Ask Question
+                              <MessageSquare className="h-4 w-4 shrink-0 fill-white" /> Ask Question
                             </Link>
                           ) : (
                             <Link
                               href={`/creator/${creator.cleanUsername}`}
-                              className="py-3 px-4 rounded-full bg-gradient-to-r from-[#FF5722] to-[#FF7043] hover:from-[#FF7043] hover:to-[#FF8A65] text-white font-black text-xs transition flex items-center justify-center gap-2 shadow-xl glow-pay"
+                              className="w-full py-2.5 px-4 rounded-full bg-gradient-to-r from-[#FF5722] to-[#FF7043] hover:from-[#FF7043] hover:to-[#FF8A65] text-white font-black text-xs transition flex items-center justify-center gap-2 shadow-xl glow-pay text-center truncate"
                             >
-                              <MessageSquare className="h-4 w-4 fill-white" /> Ask Question
+                              <MessageSquare className="h-4 w-4 shrink-0 fill-white" /> Ask Question
                             </Link>
                           )}
                         </div>
@@ -524,7 +630,7 @@ export default function ViewerFollowingPage() {
                           disabled={loading}
                           className={`h-8 min-w-[32px] px-2.5 rounded-xl text-xs font-black transition ${
                             isCurrent
-                              ? 'bg-brand-gradient text-[#0A0A0F] shadow-sm glow-teal font-black scale-105'
+                              ? 'bg-brand-gradient text-white shadow-sm glow-teal font-black scale-105'
                               : 'bg-[#0A0A0F] border border-[#1C1C26] text-[#8B8B96] hover:text-white hover:bg-[#1C1C26]'
                           }`}
                         >

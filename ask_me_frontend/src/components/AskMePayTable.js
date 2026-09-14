@@ -60,7 +60,7 @@ export default function AskMePayTable() {
       {/* Header Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#1C1C26] pb-4">
         <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded-xl bg-[#FFD60A] text-[#0A0A0F] font-bold shadow-md glow-pay">
+          <div className="p-2.5 rounded-xl bg-[#FFD60A] text-white font-bold shadow-md glow-pay">
             <DollarSign className="h-5 w-5 stroke-[2.5]" />
           </div>
           <div>

@@ -14,44 +14,7 @@ export default function VipMembershipModal({ isOpen, onClose, creator, onSuccess
 
   // Dynamic Plans State
   const [plans, setPlans] = useState([
-    {
-      id: 1,
-      name: 'VIP Membership',
-      price: 999,
-      interval: 'Month',
-      badgeColor: 'bg-[#FFD60A]',
-      perks: [
-        'VIP Badge in Live Chat & Profile',
-        'Priority in Live Q&A Stream Queue',
-        'Exclusive VIP Member Content',
-        'Early Access to Videos & Announcements',
-        'Member Only Live Sessions',
-        'Custom Emojis & Badges',
-      ],
-    },
-    {
-      id: 2,
-      name: 'Premium Pass',
-      price: 499,
-      interval: 'Month',
-      badgeColor: 'bg-[#7B2FFF]',
-      perks: [
-        'Priority in Live Q&A Stream Queue',
-        'Exclusive Member Content',
-        'Early Access to Videos',
-        'Custom Badges',
-      ],
-    },
-    {
-      id: 3,
-      name: 'Basic Supporter',
-      price: 99,
-      interval: 'Month',
-      badgeColor: 'bg-[#38BDF8]',
-      perks: ['Supporter Badge in Live Chat', 'Custom Emojis'],
-    },
   ]);
-
   const [selectedPlan, setSelectedPlan] = useState(plans[0]);
   const [loadingPlans, setLoadingPlans] = useState(false);
 
@@ -77,25 +40,6 @@ export default function VipMembershipModal({ isOpen, onClose, creator, onSuccess
       if (res.ok && data.status === 'success' && data.data?.plans && data.data.plans.length > 0) {
         setPlans(data.data.plans);
         setSelectedPlan(data.data.plans[0]);
-      } else {
-        // Fallback default tier if creator has not added custom plans
-        const defaultTier = [
-          {
-            id: 1,
-            name: 'VIP Membership',
-            price: 499,
-            interval: 'Month',
-            badgeColor: 'bg-[#FFD60A]',
-            perks: [
-              'VIP Badge in Live Chat & Profile',
-              'Priority in Live Q&A Stream Queue',
-              'Exclusive VIP Member Content',
-              'Early Access to Videos & Announcements',
-            ],
-          },
-        ];
-        setPlans(defaultTier);
-        setSelectedPlan(defaultTier[0]);
       }
     } catch (err) {
       console.warn("Fetch VIP plans notice:", err.message);
@@ -136,7 +80,8 @@ export default function VipMembershipModal({ isOpen, onClose, creator, onSuccess
 
     const planAmount = selectedPlan?.price;
     const planName = selectedPlan?.name;
-
+    const interval = selectedPlan?.interval;
+    const duration = selectedPlan?.duration;
     try {
       const token = getViewerToken() || getCookie('askme_viewer_token') || getCookie('askme_token') || (typeof window !== 'undefined' ? (localStorage.getItem('askme_viewer_token') || localStorage.getItem('askme_token')) : null);
       const targetCid = creator?.creatorId || creator?.id || creator?.creator_id || 1;
@@ -151,16 +96,41 @@ export default function VipMembershipModal({ isOpen, onClose, creator, onSuccess
           creatorId: targetCid,
           planName: planName,
           amount: planAmount,
+          duration: duration,
+          interval: interval,
           transactionId: generatedTxnId,
-          paymentMethod: selectedPayMethod || 'razorpay',
+          paymentMethod: selectedPayMethod,
         }),
       });
 
       const data = await res.json();
+      const getNextBillingDate = (duration) => {
+        const nextBilling = new Date();
 
-      const nextBilling = new Date();
-      nextBilling.setDate(nextBilling.getDate() + 30);
-      const dateFormatted = nextBilling.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+        const match = duration.match(/(\d+)\s*(Day|Days|Month|Months|Year|Years)/i);
+
+        if (!match) {
+          throw new Error("Invalid duration format");
+        }
+
+        const value = parseInt(match[1]);
+        const unit = match[2].toLowerCase();
+
+        if (unit.startsWith("day")) {
+          nextBilling.setDate(nextBilling.getDate() + value);
+        }
+        else if (unit.startsWith("month")) {
+          nextBilling.setMonth(nextBilling.getMonth() + value);
+        }
+        else if (unit.startsWith("year")) {
+          nextBilling.setFullYear(nextBilling.getFullYear() + value);
+        }
+
+        return nextBilling.toISOString().split("T")[0];
+      };
+      const nextBillingStr = getNextBillingDate(duration);
+
+      const dateFormatted = nextBillingStr.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
 
       const details = {
         txnId: generatedTxnId,
@@ -179,27 +149,12 @@ export default function VipMembershipModal({ isOpen, onClose, creator, onSuccess
       }
     } catch (err) {
       console.warn('VIP Subscription error:', err.message);
-      const nextBilling = new Date();
-      nextBilling.setDate(nextBilling.getDate() + 30);
-      const dateFormatted = nextBilling.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
-
-      const details = {
-        txnId: generatedTxnId,
-        planName: planName,
-        amount: planAmount,
-        nextBillingDate: dateFormatted,
-        creatorName,
-      };
-      setTxnDetails(details);
-      setProcessing(false);
-      setStep(4);
-      if (onSuccess) onSuccess(details);
     }
   };
 
   const handleProcessPayment = async () => {
-    const planAmount = selectedPlan?.price || 499;
-    const planName = selectedPlan?.name || 'VIP Membership';
+    const planAmount = selectedPlan?.price;
+    const planName = selectedPlan?.name;
 
     setProcessing(true);
     setStep(3);
@@ -345,7 +300,7 @@ export default function VipMembershipModal({ isOpen, onClose, creator, onSuccess
                         key={p.id}
                         onClick={() => setSelectedPlan(p)}
                         className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 whitespace-nowrap ${isSel
-                          ? 'bg-[#FFD60A] text-black shadow-md'
+                          ? 'bg-[#FFD60A] text-white shadow-md'
                           : 'bg-[#181820] text-[#8B8B96] border border-[#262007] hover:text-white'
                           }`}
                       >
@@ -431,10 +386,10 @@ export default function VipMembershipModal({ isOpen, onClose, creator, onSuccess
                 <span className="text-2xl">💎</span>
                 <div>
                   <h4 className="font-bold text-sm text-white">{selectedPlan?.name || 'VIP Membership'} – {creatorName}</h4>
-                  <p className="text-xs text-[#8B8B96]">₹{selectedPlan?.price || 999} / {selectedPlan?.interval || 'Month'}</p>
+                  <p className="text-xs text-[#8B8B96]">₹{selectedPlan?.price} / {selectedPlan?.interval || 'Month'}</p>
                 </div>
               </div>
-              <span className="font-black text-lg text-[#FFD60A]">₹{selectedPlan?.price || 999}</span>
+              <span className="font-black text-lg text-[#FFD60A]">₹{selectedPlan?.price}</span>
             </div>
 
             {/* PAYMENT METHOD SELECTION */}
@@ -570,12 +525,12 @@ export default function VipMembershipModal({ isOpen, onClose, creator, onSuccess
 
               <div className="flex items-center justify-between pb-2 border-b border-[#332700]">
                 <span className="text-[#8B8B96]">Amount</span>
-                <span className="font-bold text-[#FFD60A]">₹{txnDetails?.amount || 999} / {selectedPlan?.interval || 'Month'}</span>
+                <span className="font-bold text-[#FFD60A]">₹{txnDetails?.amount} / {selectedPlan?.interval || 'Month'}</span>
               </div>
 
               <div className="flex items-center justify-between pb-2 border-b border-[#332700]">
                 <span className="text-[#8B8B96]">Next Billing Date</span>
-                <span className="font-bold text-white">{txnDetails?.nextBillingDate || '24 Sep 2026'}</span>
+                <span className="font-bold text-white">{txnDetails?.nextBillingDate}</span>
               </div>
 
               <div className="flex items-center justify-between">

@@ -47,6 +47,12 @@ const VipPlan = sequelize.define(
       defaultValue: "Monthly",
     },
 
+    duration: {
+      type: DataTypes.STRING(50),
+      allowNull: false,
+      defaultValue: "30 Days",
+    },
+
     perks: {
       type: DataTypes.TEXT,
       allowNull: true,

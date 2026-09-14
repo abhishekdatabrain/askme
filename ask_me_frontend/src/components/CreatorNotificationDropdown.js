@@ -198,7 +198,7 @@ export default function CreatorNotificationDropdown({ theme = 'dark' }) {
                 key={f}
                 onClick={() => setFilter(f)}
                 className={`px-2.5 py-1 rounded-lg capitalize transition whitespace-nowrap ${filter === f
-                    ? 'bg-[#00F5D4] text-[#0A0A0F] font-black'
+                    ? 'bg-[#00F5D4] text-white font-black'
                     : theme === 'light'
                       ? 'text-[#6C757D] hover:text-[#1A1D20]'
                       : 'text-[#8B8B96] hover:text-white'

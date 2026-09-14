@@ -73,7 +73,7 @@ export default function LoginPage() {
           {/* Header Branding */}
           <div className="text-center space-y-2">
             <div className="inline-flex items-center gap-2">
-              <div className="h-9 w-9 rounded-xl bg-brand-gradient flex items-center justify-center text-[#0A0A0F] font-black text-xl shadow-md glow-teal">
+              <div className="h-9 w-9 rounded-xl bg-brand-gradient flex items-center justify-center text-white font-black text-xl shadow-md glow-teal">
                 a
               </div>
               <span className="font-heading font-black text-2xl text-white">AskMe <span className="text-brand-gradient">PRO</span></span>
@@ -134,7 +134,7 @@ export default function LoginPage() {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full py-2.5 rounded-xl bg-brand-gradient text-[#0A0A0F] font-bold text-xs shadow-xl glow-teal hover:opacity-95 transition-all flex items-center justify-center gap-1.5 disabled:opacity-50"
+                className="w-full py-2.5 rounded-xl bg-brand-gradient text-white font-bold text-xs shadow-xl glow-teal hover:opacity-95 transition-all flex items-center justify-center gap-1.5 disabled:opacity-50"
               >
                 <ShieldCheck className="h-4 w-4" /> {isSubmitting ? 'Signing In...' : 'Sign In to Admin Dashboard'}
               </button>

@@ -86,7 +86,7 @@ export default function CommissionSettings({ activeSubTab }) {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#1C1C26] pb-4">
         <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded-xl bg-brand-gradient text-[#0A0A0F] font-bold shadow-md">
+          <div className="p-2.5 rounded-xl bg-brand-gradient text-white font-bold shadow-md">
             <Sliders className="h-5 w-5" />
           </div>
           <div>
@@ -204,7 +204,7 @@ export default function CommissionSettings({ activeSubTab }) {
           <div className="flex justify-end">
             <button
               type="submit"
-              className="px-6 py-2.5 rounded-xl bg-brand-gradient text-[#0A0A0F] font-bold text-xs shadow-lg shadow-[#00F5D4]/20 flex items-center gap-2"
+              className="px-6 py-2.5 rounded-xl bg-brand-gradient text-white font-bold text-xs shadow-lg shadow-[#00F5D4]/20 flex items-center gap-2"
             >
               <Save className="h-4 w-4" /> Save Commission Settings
             </button>

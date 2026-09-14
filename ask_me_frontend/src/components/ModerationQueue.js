@@ -156,7 +156,7 @@ export default function ModerationQueue() {
                       </button>
                       <button
                         onClick={() => handleAction(item.id, 'approved')}
-                        className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-[#00E676] text-[#0A0A0F] text-xs font-bold shadow-md hover:bg-[#00E676]/90 transition-all"
+                        className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-[#00E676] text-white text-xs font-bold shadow-md hover:bg-[#00E676]/90 transition-all"
                       >
                         <Check className="h-3.5 w-3.5 stroke-[3]" />
                         Approve

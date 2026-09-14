@@ -300,6 +300,7 @@ export default function StartLivePage() {
                 <input
                   type="url"
                   value={form.streamUrl}
+                  required
                   onChange={(e) => setForm(prev => ({ ...prev, streamUrl: e.target.value }))}
                   placeholder="https://youtube.com/live/your-broadcast-id or twitch.tv/your-channel"
                   className={`w-full rounded-xl border px-4 py-3 text-xs focus:outline-none focus:border-[#00F5D4] ${theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6]' : 'bg-[#0A0A0F] border-[#1C1C26]'
@@ -363,7 +364,7 @@ export default function StartLivePage() {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="px-8 py-3.5 rounded-2xl bg-brand-gradient text-[#0A0A0F] font-black text-xs shadow-lg glow-teal hover:scale-105 transition-all flex items-center gap-2"
+                className="px-8 py-3.5 rounded-2xl bg-brand-gradient text-white font-black text-xs shadow-lg glow-teal hover:scale-105 transition-all flex items-center gap-2"
               >
                 {isSubmitting ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Radio className="h-4 w-4" />}
                 🔴 Launch Live Session Now

@@ -8,6 +8,10 @@ const CreatorSocialLinkModel = require('../models/CreatorSocialLinkModel');
 const DonationSession = require('../models/DonationSessionModels');
 const FollowModel = require('../models/FollowModel');
 const Donation = require('../models/DonationModel');
+const { sendLoginOtpWhatsApp } = require('../services/whatsappService');
+const { generateAndStoreOtp, verifyStoredOtp } = require('../utils/whatsappOtpStore');
+const { verifyTruecallerToken } = require('../services/truecallerService');
+const { Op } = require('sequelize');
 
 const { OAuth2Client } = require('google-auth-library');
 
@@ -30,10 +34,16 @@ const registerViewer = async (req, res, next) => {
       });
     }
 
-    if (password.length < 6) {
+    const hasLength = password.length >= 8;
+    const hasUpper = /[A-Z]/.test(password);
+    const hasLower = /[a-z]/.test(password);
+    const hasNumber = /[0-9]/.test(password);
+    const hasSpecial = /[@$!%*?&#^()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password);
+
+    if (!hasLength || !hasUpper || !hasLower || !hasNumber || !hasSpecial) {
       return res.status(400).json({
         status: 'fail',
-        message: 'Password must be at least 6 characters long.',
+        message: 'Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one number, and one special character.',
       });
     }
 
@@ -112,7 +122,7 @@ const loginViewer = async (req, res, next) => {
       });
     }
 
-    const token = generateToken(user.id, user.role || 'user');
+    const token = generateToken(user.id, user.role);
 
     return res.status(200).json({
       status: 'success',
@@ -292,10 +302,19 @@ const getPublicLiveFeed = async (req, res, next) => {
     });
 
     const answeredMap = new Map();
+    const pendingQueueMap = new Map();
+    const totalQuestionsMap = new Map();
+
     donations.forEach(d => {
       const cid = String(d.creator_id);
-      if (d.status === 'answered' || d.status === 'completed' || d.payment_status === 'success') {
+      totalQuestionsMap.set(cid, (totalQuestionsMap.get(cid) || 0) + 1);
+
+      if (d.status === 'read' || d.status === 'completed') {
         answeredMap.set(cid, (answeredMap.get(cid) || 0) + 1);
+      } else if (
+        (d.status === 'not_read')
+      ) {
+        pendingQueueMap.set(cid, (pendingQueueMap.get(cid) || 0) + 1);
       }
     });
 
@@ -326,20 +345,24 @@ const getPublicLiveFeed = async (req, res, next) => {
       // Format handle
       const cleanUsername = String(c.username || 'creator').replace(/^@+/, '');
       const dynamicFollowers = followsMap.get(cid) !== undefined ? followsMap.get(cid) : parseInt(profile.followers_count || 0);
-      const dynamicAnswered = answeredMap.get(cid) !== undefined ? answeredMap.get(cid) : parseInt(profile.answered_count || 0);
+      const dynamicAnswered = answeredMap.get(cid) || 0;
+      const dynamicPendingQueue = pendingQueueMap.get(cid) || 0;
+      const dynamicTotalQuestions = totalQuestionsMap.get(cid) || 0;
 
       return {
         creatorId: c.id,
         fullName: c.full_name || '',
         username: `@${cleanUsername}`,
         cleanUsername: cleanUsername,
-        avatar: (profile.profile_image && profile.profile_image.trim()) || (profile.profileImage && profile.profileImage.trim()) || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80',
+        avatar: (c.profile_image && c.profile_image.trim()) || (profile.profile_image && profile.profile_image.trim()) || (profile.profileImage && profile.profileImage.trim()) || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80',
         bio: profile.bio || '',
         category: latestSession?.category || profile.category || 'Gaming',
         minFee: parseFloat(profile.min_fee || latestSession?.min_donation_amount || 50),
         followersCount: dynamicFollowers,
         rating: parseFloat(profile.rating || 4.85),
         answeredCount: dynamicAnswered,
+        pendingQueue: dynamicPendingQueue,
+        totalQuestions: dynamicTotalQuestions,
         isVerified: profile.is_verified !== false,
         paidMailEnabled: profile.paid_mail_enabled !== false,
         paidMailLink: profile.paid_mail_link || null,
@@ -353,13 +376,14 @@ const getPublicLiveFeed = async (req, res, next) => {
           category: latestSession.category || 's',
           description: latestSession.description || 'Pro Esports player streaming GTA V, Valorant & BGMI. Ask about settings, sensitivity & pro tips!',
           platform: latestSession.platform || latestSession.streaming_platform || 'YouTube',
-          thumbnail: latestSession.thumbnail_url || profile.profile_image || 'https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=600&q=80',
+          thumbnail: latestSession.thumbnail_url || c.profile_image || profile.profile_image || 'https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=600&q=80',
           streamUrl: latestSession.stream_url || '',
           startedAt: latestSession.started_at || latestSession.created_at,
           status: latestSession.status,
           minDonationAmount: parseFloat(latestSession.min_donation_amount || profile.min_fee || 50),
-          totalQuestions: Math.floor(45 + (c.id * 23) % 65),
-          pendingQueue: Math.floor(10 + (c.id * 7) % 25),
+          totalQuestions: dynamicTotalQuestions,
+          pendingQueue: dynamicPendingQueue,
+          answeredCount: dynamicAnswered,
         } : null,
         socialLinks: creatorSocials.length > 0 ? creatorSocials : [
           { platform: 'YouTube', url: 'https://youtube.com' },
@@ -485,7 +509,7 @@ const getCreatorPublicProfile = async (req, res, next) => {
           fullName: creator.full_name,
           username: `@${creator.username}`,
           cleanUsername: creator.username,
-          avatar: profile?.profile_image || profile?.profileImage || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80',
+          avatar: creator.profile_image || profile?.profile_image || profile?.profileImage || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80',
           bio: profile?.bio || 'Official AskMe Studio Creator',
           category: profile?.category || 'Content Creator',
           country: creator.country || '',
@@ -688,10 +712,20 @@ const getFollowingCreators = async (req, res, next) => {
     });
 
     const answeredMap = new Map();
+    const pendingQueueMap = new Map();
+    const totalQuestionsMap = new Map();
+
     donations.forEach((d) => {
       const cid = String(d.creator_id);
-      if (d.status === 'answered' || d.status === 'completed' || d.payment_status === 'success') {
+      totalQuestionsMap.set(cid, (totalQuestionsMap.get(cid) || 0) + 1);
+
+      if (d.status === 'answered' || d.status === 'completed') {
         answeredMap.set(cid, (answeredMap.get(cid) || 0) + 1);
+      } else if (
+        (d.payment_status === 'success' || d.payment_status === 'paid' || d.status === 'pending' || d.status === 'unread' || d.status === 'not_read') &&
+        d.status !== 'rejected'
+      ) {
+        pendingQueueMap.set(cid, (pendingQueueMap.get(cid) || 0) + 1);
       }
     });
 
@@ -720,7 +754,9 @@ const getFollowingCreators = async (req, res, next) => {
 
       const cleanUsername = String(c.username || 'creator').replace(/^@+/, '');
       const dynamicFollowers = followsMap.get(cid) !== undefined ? followsMap.get(cid) : parseInt(profile.followers_count || 0);
-      const dynamicAnswered = answeredMap.get(cid) !== undefined ? answeredMap.get(cid) : parseInt(profile.answered_count || 0);
+      const dynamicAnswered = answeredMap.get(cid) || 0;
+      const dynamicPendingQueue = pendingQueueMap.get(cid) || 0;
+      const dynamicTotalQuestions = totalQuestionsMap.get(cid) || 0;
 
       return {
         creatorId: c.id,
@@ -728,13 +764,15 @@ const getFollowingCreators = async (req, res, next) => {
         fullName: c.full_name || '',
         username: `@${cleanUsername}`,
         cleanUsername: cleanUsername,
-        avatar: (profile.profile_image && profile.profile_image.trim()) || (profile.profileImage && profile.profileImage.trim()) || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80',
+        avatar: (c.profile_image && c.profile_image.trim()) || (profile.profile_image && profile.profile_image.trim()) || (profile.profileImage && profile.profileImage.trim()) || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80',
         bio: profile.bio || '',
         category: latestSession?.category || profile.category || 'Gaming',
         minFee: parseFloat(profile.min_fee || latestSession?.min_donation_amount || 50),
         followersCount: dynamicFollowers,
         rating: parseFloat(profile.rating || 4.85),
         answeredCount: dynamicAnswered,
+        pendingQueue: dynamicPendingQueue,
+        totalQuestions: dynamicTotalQuestions,
         isVerified: profile.is_verified !== false,
         paidMailEnabled: profile.paid_mail_enabled !== false,
         paidMailLink: profile.paid_mail_link || null,
@@ -748,13 +786,14 @@ const getFollowingCreators = async (req, res, next) => {
           category: latestSession.category || 'General',
           description: latestSession.description || '',
           platform: latestSession.platform || latestSession.streaming_platform || 'YouTube',
-          thumbnail: latestSession.thumbnail_url || profile.profile_image || 'https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=600&q=80',
+          thumbnail: latestSession.thumbnail_url || c.profile_image || profile.profile_image || 'https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=600&q=80',
           streamUrl: latestSession.stream_url || '',
           startedAt: latestSession.started_at || latestSession.created_at,
           status: latestSession.status,
           minDonationAmount: parseFloat(latestSession.min_donation_amount || profile.min_fee || 50),
-          totalQuestions: Math.floor(45 + (c.id * 23) % 65),
-          pendingQueue: Math.floor(10 + (c.id * 7) % 25),
+          totalQuestions: dynamicTotalQuestions,
+          pendingQueue: dynamicPendingQueue,
+          answeredCount: dynamicAnswered,
         } : null,
         socialLinks: creatorSocials.length > 0 ? creatorSocials : [
           { platform: 'YouTube', url: 'https://youtube.com' },
@@ -979,7 +1018,7 @@ const getPublicPastStreams = async (req, res, next) => {
         title: s.title || `${creatorObj.full_name || 'Creator'}'s Live Session`,
         category: s.category || profileObj.category || 'General',
         description: s.description || '',
-        thumbnailUrl: s.thumbnail_url || profileObj.profile_image || 'https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=600&q=80',
+        thumbnailUrl: s.thumbnail_url || creatorObj.profile_image || profileObj.profile_image || 'https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=600&q=80',
         streamUrl: s.stream_url || '',
         streamingPlatform: s.streaming_platform || s.platform || 'YouTube Live',
         status: s.status || 'closed',
@@ -992,7 +1031,7 @@ const getPublicPastStreams = async (req, res, next) => {
           id: s.creator_id,
           fullName: creatorObj.full_name || 'Live Creator',
           username: `@${cleanUsername}`,
-          avatar: profileObj.profile_image || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80',
+          avatar: creatorObj.profile_image || profileObj.profile_image || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80',
         }
       };
     }));
@@ -1089,10 +1128,139 @@ const getPublicCategories = async (req, res, next) => {
   }
 };
 
+/**
+ * @desc    Send WhatsApp OTP to Viewer
+ * @route   POST /api/viewers/whatsapp-otp/send
+ * @access  Public
+ */
+const sendWhatsAppOtpViewer = async (req, res, next) => {
+  try {
+    const { mobile, phone } = req.body;
+    const rawPhone = mobile || phone;
+    const cleanPhone = String(rawPhone || '').replace(/[^0-9]/g, '');
+
+    let tenDigit = cleanPhone;
+    if (tenDigit.length === 12 && tenDigit.startsWith('91')) {
+      tenDigit = tenDigit.slice(2);
+    }
+
+    if (!tenDigit || tenDigit.length !== 10) {
+      return res.status(400).json({
+        status: 'fail',
+        message: 'Invalid mobile number. Please enter a valid 10-digit phone number.',
+      });
+    }
+
+    const { cleanPhone: targetPhone, otp } = generateAndStoreOtp(tenDigit);
+
+    // Send WhatsApp OTP template message using askme_login_otp
+    await sendLoginOtpWhatsApp({
+      phone: targetPhone,
+      otp,
+      expiresMinutes: 5,
+    });
+
+    console.log(`[WhatsApp OTP] Code ${otp} generated and sent to ${targetPhone}`);
+
+    return res.status(200).json({
+      status: 'success',
+      message: 'Verification code sent to your WhatsApp number!',
+      expiresMinutes: 5,
+      phone: targetPhone,
+      ...(process.env.NODE_ENV !== 'production' ? { debugOtp: otp } : {}),
+    });
+  } catch (error) {
+    console.error('SEND WHATSAPP OTP VIEWER ERROR:', error);
+    next(error);
+  }
+};
+
+/**
+ * @desc    Verify WhatsApp OTP and Login/Register Viewer
+ * @route   POST /api/viewers/whatsapp-otp/verify
+ * @access  Public
+ */
+const verifyWhatsAppOtpViewer = async (req, res, next) => {
+  try {
+    const { mobile, phone, otp } = req.body;
+    const rawPhone = mobile || phone;
+    const cleanPhone = String(rawPhone || '').replace(/[^0-9]/g, '');
+
+    if (!cleanPhone || !otp) {
+      return res.status(400).json({
+        status: 'fail',
+        message: 'Mobile number and 6-digit OTP code are required.',
+      });
+    }
+
+    const verification = verifyStoredOtp(cleanPhone, otp);
+    if (!verification.valid) {
+      return res.status(400).json({
+        status: 'fail',
+        message: verification.message,
+      });
+    }
+
+    // Find existing viewer by phone or whatsapp email
+    let targetPhone = cleanPhone;
+    if (targetPhone.length === 10) targetPhone = `91${targetPhone}`;
+
+    const tenDigit = targetPhone.slice(-10);
+
+    let user = await User.findOne({
+      where: {
+        [Op.or]: [
+          { phone: targetPhone },
+          { phone: tenDigit },
+          { email: `${targetPhone}@whatsapp.user` },
+          { email: `${tenDigit}@whatsapp.user` },
+        ],
+      },
+    }).catch(() => null);
+
+    if (!user) {
+      // Auto-register new viewer
+      const randomPassword = await bcrypt.hash(`wa_${Date.now()}_${Math.random()}`, 10);
+      user = await User.create({
+        name: `Viewer ${tenDigit.slice(-4)}`,
+        email: `${targetPhone}@whatsapp.user`,
+        phone: targetPhone,
+        password: randomPassword,
+        role: 'user', // Viewer role in users table
+      });
+    }
+
+    const token = generateToken(user.id, user.role || 'user');
+
+    return res.status(200).json({
+      status: 'success',
+      message: 'WhatsApp authentication successful!',
+      data: {
+        token,
+        user: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          phone: user.phone,
+          role: user.role,
+        },
+      },
+    });
+  } catch (error) {
+    console.error('VERIFY WHATSAPP OTP VIEWER ERROR:', error);
+    next(error);
+  }
+};
+
+const { truecallerAuthViewer } = require('./truecaller.controller');
+
 module.exports = {
   registerViewer,
   loginViewer,
   googleAuthViewer,
+  sendWhatsAppOtpViewer,
+  verifyWhatsAppOtpViewer,
+  truecallerAuthViewer,
   getViewerProfile,
   getPublicLiveFeed,
   getCreatorPublicProfile,

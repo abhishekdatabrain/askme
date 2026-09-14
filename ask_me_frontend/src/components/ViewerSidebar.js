@@ -24,7 +24,8 @@ import {
   History
 } from 'lucide-react';
 import { API_ENDPOINTS } from '@/config/api';
-import { getViewerUser, clearViewerSession, removeCookie } from '@/utils/cookies';
+import { getViewerToken, getViewerUser, clearViewerSession, removeCookie } from '@/utils/cookies';
+import Logo from '@/components/Logo';
 
 function ViewerSidebarContent({ theme: propTheme, onToggleTheme, activeTab: currentTab, onSelectTab }) {
   const pathname = usePathname();
@@ -145,7 +146,7 @@ function ViewerSidebarContent({ theme: propTheme, onToggleTheme, activeTab: curr
       label: 'My Memberships',
       icon: Sparkles,
       badge: 'VIP',
-      badgeColor: 'bg-[#FFD60A] text-[#0A0A0F] font-black',
+      badgeColor: 'bg-[#FFD60A] text-white font-black',
       iconColor: 'text-[#FFD60A]',
       href: '/viewers/memberships',
     },
@@ -154,7 +155,7 @@ function ViewerSidebarContent({ theme: propTheme, onToggleTheme, activeTab: curr
       label: 'Past Streams',
       icon: History,
       badge: null,
-      iconColor: 'text-[#00F5D4]',
+      iconColor: 'text-[#EB1000]',
       href: '/viewers/past-streams',
     },
     {
@@ -162,7 +163,7 @@ function ViewerSidebarContent({ theme: propTheme, onToggleTheme, activeTab: curr
       label: 'Notifications',
       icon: Bell,
       badge: '',
-      badgeColor: 'bg-[#00F5D4] text-[#0A0A0F]',
+      badgeColor: 'badge-light',
       href: '/viewers/notifications',
     },
   ];
@@ -222,14 +223,12 @@ function ViewerSidebarContent({ theme: propTheme, onToggleTheme, activeTab: curr
         {/* BRANDING HEADER */}
         <div className="flex items-center justify-between px-2 pt-2">
           <Link href="/" onClick={() => setMobileOpen(false)} className="flex items-center gap-2.5 group">
-            <div className="h-9 w-9 rounded-2xl bg-brand-gradient flex items-center justify-center text-[#0A0A0F] font-black text-xl shadow-md glow-teal group-hover:scale-105 transition">
-              a
-            </div>
+            <Logo size="md" />
             <div>
               <span className={`font-heading font-black text-lg block leading-none ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'}`}>
                 AskMe <span className="text-brand-gradient">VIEWER</span>
               </span>
-              <span className={`text-[10px] font-extrabold uppercase tracking-widest block mt-0.5 ${theme === 'light' ? 'text-[#6C757D]' : 'text-[#00F5D4]'}`}>
+              <span className={`text-[10px] font-extrabold uppercase tracking-widest block mt-0.5 ${theme === 'light' ? 'text-[#6C757D]' : 'text-[#EB1000]'}`}>
                 Public Studio App
               </span>
             </div>
@@ -246,7 +245,7 @@ function ViewerSidebarContent({ theme: propTheme, onToggleTheme, activeTab: curr
         {viewerUser && (
           <div className={`p-3 rounded-2xl border flex items-center gap-3 ${theme === 'light' ? 'bg-[#F1F3F5] border-[#E9ECEF]' : 'bg-[#0A0A0F] border-[#1C1C26]'
             }`}>
-            <div className={`h-9 w-9 rounded-xl border overflow-hidden shrink-0 flex items-center justify-center font-bold text-sm ${theme === 'light' ? 'bg-[#E9ECEF] border-[#DEE2E6] text-[#00F5D4]' : 'bg-[#1C1C26] border-[#252533] text-[#00F5D4]'
+            <div className={`h-9 w-9 rounded-xl border overflow-hidden shrink-0 flex items-center justify-center font-bold text-sm ${theme === 'light' ? 'bg-[#FEF2F2] border-[#EB1000]/20 text-[#EB1000]' : 'bg-[#1C1C26] border-[#EB1000]/30 text-[#EB1000]'
               }`}>
               {viewerUser.avatar || viewerUser.profileImage ? (
                 <img src={viewerUser.avatar || viewerUser.profileImage} alt={viewerUser.fullName || viewerUser.name || 'Viewer'} className="h-full w-full object-cover" />
@@ -303,14 +302,14 @@ function ViewerSidebarContent({ theme: propTheme, onToggleTheme, activeTab: curr
                     setMobileOpen(false);
                   }}
                   className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs font-bold transition-all duration-150 cursor-pointer ${isActive
-                    ? 'bg-brand-gradient text-[#0A0A0F] shadow-md glow-teal'
+                    ? 'bg-brand-gradient text-white shadow-md glow-brand font-black'
                     : theme === 'light'
-                      ? 'text-[#495057] hover:bg-[#F1F3F5] hover:text-[#1A1D20]'
+                      ? 'text-[#495057] hover:bg-[#FEF2F2] hover:text-[#EB1000]'
                       : 'text-[#8B8B96] hover:bg-[#1C1C26] hover:text-white'
                     }`}
                 >
                   <div className="flex items-center gap-3">
-                    <IconComp className={`h-4 w-4 ${isActive ? 'text-[#0A0A0F]' : item.iconColor || (theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]')}`} />
+                    <IconComp className={`h-4 w-4 ${isActive ? 'text-white' : item.iconColor || (theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]')}`} />
                     <span>{item.label}</span>
                   </div>
 
@@ -376,7 +375,7 @@ function ViewerSidebarContent({ theme: propTheme, onToggleTheme, activeTab: curr
           </button>
 
           <Link href="/" className="flex items-center gap-2">
-            <div className="h-7 w-7 rounded-lg bg-brand-gradient flex items-center justify-center text-[#0A0A0F] font-black text-sm">
+            <div className="h-7 w-7 rounded-lg bg-brand-gradient flex items-center justify-center text-white font-black text-sm">
               a
             </div>
             <span className="font-heading font-black text-sm">

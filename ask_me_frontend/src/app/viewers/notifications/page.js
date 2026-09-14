@@ -4,8 +4,35 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import ViewerSidebar from '@/components/ViewerSidebar';
 import SplashLoader from '@/components/SplashLoader';
-import { API_ENDPOINTS } from '@/config/api';
+import { API_ENDPOINTS, getMediaUrl } from '@/config/api';
 import { getViewerToken, getCookie } from '@/utils/cookies';
+
+const formatDateTime = (dateVal) => {
+  if (!dateVal) {
+    return new Date().toLocaleString('en-IN', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true,
+    });
+  }
+  try {
+    const d = new Date(dateVal);
+    if (isNaN(d.getTime())) return String(dateVal);
+    return d.toLocaleString('en-IN', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true,
+    });
+  } catch (e) {
+    return String(dateVal);
+  }
+};
 import {
   Bell,
   Radio,
@@ -65,6 +92,8 @@ export default function ViewerNotificationsPage() {
 
         liveNotifications = liveCreators.map((creator, idx) => {
           const isFollowing = fSet.has(String(creator.creatorId || creator.id));
+          const startedAt = creator.session?.startedAt || creator.session?.started_at || creator.createdAt || creator.created_at;
+
           return {
             id: `notif_${creator.creatorId || idx}_${Date.now()}`,
             type: 'live_stream',
@@ -78,7 +107,7 @@ export default function ViewerNotificationsPage() {
             platform: creator.session?.platform || 'YouTube',
             category: creator.category || creator.session?.category || 'General Q&A',
             isFollowing,
-            time: `${(idx + 1) * 2} mins ago`,
+            time: formatDateTime(startedAt),
             isRead: false,
           };
         });
@@ -187,7 +216,7 @@ export default function ViewerNotificationsPage() {
               </p>
               <Link
                 href="/viewers/dashboard"
-                className="px-5 py-2.5 rounded-xl bg-[#00F5D4] text-[#0A0A0F] text-xs font-bold shadow-md inline-block"
+                className="px-5 py-2.5 rounded-xl bg-[#00F5D4] text-white text-xs font-bold shadow-md inline-block"
               >
                 Browse Live Feed
               </Link>
@@ -233,7 +262,7 @@ export default function ViewerNotificationsPage() {
                     <div className="flex items-center gap-3.5 min-w-0">
                       <div className="relative shrink-0">
                         <img
-                          src={notif.avatar}
+                          src={getMediaUrl(notif.avatar)}
                           alt={notif.creatorName}
                           className="h-12 w-12 rounded-2xl object-cover border border-[#00F5D4]/40"
                         />
@@ -276,7 +305,7 @@ export default function ViewerNotificationsPage() {
                       ) : (
                         <Link
                           href={`/creator/${notif.username.replace(/^@+/, '')}`}
-                          className="px-4 py-2 rounded-xl bg-[#00F5D4] text-[#0A0A0F] font-black text-xs transition flex items-center gap-1.5 shadow-lg"
+                          className="px-4 py-2 rounded-xl bg-[#00F5D4] text-white font-black text-xs transition flex items-center gap-1.5 shadow-lg"
                         >
                           View Creator
                         </Link>

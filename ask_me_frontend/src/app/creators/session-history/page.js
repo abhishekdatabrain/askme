@@ -172,7 +172,7 @@ export default function CreatorSessionHistoryPage() {
               </div>
               <Link
                 href="/creators/start-live"
-                className="px-4 py-2 rounded-xl bg-brand-gradient text-[#0A0A0F] font-bold text-xs shadow-md glow-teal hover:scale-105 transition"
+                className="px-4 py-2 rounded-xl bg-brand-gradient text-white font-bold text-xs shadow-md glow-teal hover:scale-105 transition"
               >
                 + Start Live Broadcast
               </Link>
@@ -247,7 +247,7 @@ export default function CreatorSessionHistoryPage() {
                 <div className="flex items-center gap-2 shrink-0">
                   <button
                     type="submit"
-                    className="px-4 py-2 rounded-xl bg-brand-gradient text-[#0A0A0F] font-bold text-xs shadow-md glow-teal hover:scale-105 transition flex items-center gap-1.5"
+                    className="px-4 py-2 rounded-xl bg-brand-gradient text-white font-bold text-xs shadow-md glow-teal hover:scale-105 transition flex items-center gap-1.5"
                   >
                     <Search className="h-3.5 w-3.5" /> Search
                   </button>
@@ -357,7 +357,7 @@ export default function CreatorSessionHistoryPage() {
                             key={pageNum}
                             onClick={() => handlePageChange(pageNum)}
                             className={`w-8 h-8 rounded-xl text-xs font-extrabold flex items-center justify-center transition ${pageNum === pagination.page
-                                ? 'bg-brand-gradient text-[#0A0A0F] shadow-md glow-teal'
+                                ? 'bg-brand-gradient text-white shadow-md glow-teal'
                                 : theme === 'light'
                                   ? 'bg-white border border-[#E9ECEF] text-[#6C757D] hover:bg-[#F8F9FA]'
                                   : 'bg-[#0A0A0F] border border-[#1C1C26] text-[#8B8B96] hover:text-white'

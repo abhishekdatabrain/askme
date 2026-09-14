@@ -3,7 +3,7 @@
 import React, { useState, useEffect, use } from 'react';
 import Link from 'next/link';
 import SplashLoader from '@/components/SplashLoader';
-import { API_ENDPOINTS } from '@/config/api';
+import { API_ENDPOINTS, getMediaUrl } from '@/config/api';
 import {
   User,
   Radio,
@@ -38,6 +38,130 @@ export default function CreatorPublicProfilePage({ params: paramsPromise }) {
       fetchCreatorProfile();
     }
   }, [rawUsername]);
+
+  // Helper to safely extract YouTube Channel Info (channelId or channel handle) only if platform is YouTube
+  // Helper to safely extract YouTube Channel Info (channelId or channel handle)
+  const getYoutubeWidgetInfo = (c) => {
+    if (!c) return null;
+
+    const platform = String(
+      c.platform ||
+      c.channel_platform ||
+      c.primaryPlatform ||
+      c.session?.platform ||
+      ''
+    ).toLowerCase();
+
+    // 1. Direct Channel ID on creator object
+    const directChannelId =
+      c.youtubeChannelId ||
+      c.channelId ||
+      c.youtube_channel_id ||
+      c.channel_id;
+
+    if (directChannelId && /^UC[\w-]{20,}$/i.test(String(directChannelId).trim())) {
+      return { channelId: String(directChannelId).trim() };
+    }
+
+    // 2. Direct channel / handle on creator object
+    const directChannel =
+      c.youtubeChannel ||
+      c.channel ||
+      c.youtube_channel ||
+      c.youtubeHandle;
+
+    if (directChannel && typeof directChannel === 'string') {
+      let value = directChannel.trim();
+      if (/^UC[\w-]{20,}$/i.test(value)) {
+        return { channelId: value };
+      }
+      value = value.replace(/^@/, '');
+      if (value && !value.includes('/') && !value.includes('.')) {
+        return { channel: value };
+      }
+    }
+
+    // Collect URLs to search
+    let urlStr =
+      c.profile_url ||
+      c.profileUrl ||
+      c.youtube_url ||
+      c.youtubeUrl ||
+      c.channelUrl ||
+      c.streamUrl ||
+      c.session?.streamUrl ||
+      c.session?.stream_url ||
+      '';
+
+    if (Array.isArray(c.socialLinks)) {
+      const ytSocial = c.socialLinks.find((s) => {
+        const p = String(s.platform || '').toLowerCase();
+        const u = String(s.url || s.profile_url || s.profileUrl || '').toLowerCase();
+        return p.includes('youtube') || u.includes('youtube.com') || u.includes('youtu.be');
+      });
+      if (ytSocial) {
+        urlStr = ytSocial.profile_url || ytSocial.profileUrl || ytSocial.url || urlStr;
+      }
+    }
+
+    // 3. Extract Channel ID from URL
+    if (urlStr) {
+      const channelIdMatch = String(urlStr).match(/youtube\.com\/channel\/(UC[\w-]{20,})/i);
+      if (channelIdMatch) {
+        return { channelId: channelIdMatch[1] };
+      }
+      // 4. Extract @handle from URL
+      const handleMatch = String(urlStr).match(/youtube\.com\/@([^/?#]+)/i);
+      if (handleMatch) {
+        return { channel: handleMatch[1].replace(/^@/, '') };
+      }
+      // 5. /c/ or /user/ URL
+      const legacyMatch = String(urlStr).match(/youtube\.com\/(?:c|user)\/([^/?#]+)/i);
+      if (legacyMatch) {
+        return { channel: legacyMatch[1] };
+      }
+    }
+
+    // 6. Check if creator is explicitly on a non-YouTube platform without any YouTube links/info
+    const lowerUrl = String(urlStr).toLowerCase();
+    const hasYtLink = lowerUrl.includes('youtube.com') || lowerUrl.includes('youtu.be');
+    const nonYtPlatforms = ['twitch', 'instagram', 'kick', 'tiktok', 'facebook', 'twitter'];
+    if (platform && nonYtPlatforms.some(p => platform.includes(p)) && !hasYtLink) {
+      return null;
+    }
+
+    // 7. Fallback to creator username or handle
+    const handle = c.cleanUsername || c.username || c.handle;
+    if (handle) {
+      const cleanHandle = String(handle).trim().replace(/^@+/, '');
+      if (cleanHandle) {
+        return { channel: cleanHandle };
+      }
+    }
+
+    return null;
+  };
+
+  // Trigger Google YouTube Subscribe button rendering when profile loads
+  useEffect(() => {
+    const renderYtWidgets = () => {
+      if (typeof window !== 'undefined' && window.gapi && window.gapi.ytsubscribe) {
+        try {
+          window.gapi.ytsubscribe.go();
+        } catch (err) {
+          console.warn('gapi render error:', err);
+        }
+      }
+    };
+
+    renderYtWidgets();
+    const timer1 = setTimeout(renderYtWidgets, 300);
+    const timer2 = setTimeout(renderYtWidgets, 1000);
+    return () => {
+      clearTimeout(timer1);
+      clearTimeout(timer2);
+    };
+  }, [creator, loading]);
 
   const fetchCreatorProfile = async () => {
     try {
@@ -84,7 +208,7 @@ export default function CreatorPublicProfilePage({ params: paramsPromise }) {
           <p className="text-xs text-[#8B8B96]">{errorMsg || `No channel or profile exists for @${rawUsername}.`}</p>
           <Link
             href="/viewers/dashboard"
-            className="px-6 py-3 rounded-xl bg-brand-gradient text-[#0A0A0F] font-bold text-xs shadow-lg glow-teal hover:opacity-95 transition inline-flex items-center gap-2"
+            className="px-6 py-3 rounded-xl bg-brand-gradient text-white font-bold text-xs shadow-lg glow-teal hover:opacity-95 transition inline-flex items-center gap-2"
           >
             <ArrowLeft className="h-4 w-4" /> Return to Public Live Feed
           </Link>
@@ -102,7 +226,7 @@ export default function CreatorPublicProfilePage({ params: paramsPromise }) {
         </Link>
 
         <div className="flex items-center gap-2.5">
-          <div className="h-8 w-8 rounded-xl bg-brand-gradient flex items-center justify-center text-[#0A0A0F] font-black text-lg shadow-md glow-teal">
+          <div className="h-8 w-8 rounded-xl bg-brand-gradient flex items-center justify-center text-white font-black text-lg shadow-md glow-teal">
             a
           </div>
           <span className="font-heading font-black text-sm text-white tracking-wide">
@@ -121,7 +245,7 @@ export default function CreatorPublicProfilePage({ params: paramsPromise }) {
             {/* Creator Avatar & Identity Info */}
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5">
               <img
-                src={creator.avatar}
+                src={getMediaUrl(creator.avatar)}
                 alt={creator.fullName}
                 className="h-24 w-24 sm:h-28 sm:w-28 rounded-2xl object-cover border-2 border-[#00F5D4]/40 shadow-xl bg-[#0A0A0F] shrink-0"
               />
@@ -160,8 +284,30 @@ export default function CreatorPublicProfilePage({ params: paramsPromise }) {
               </div>
             </div>
 
-            {/* Creator Actions (Share & Ask Question CTA) */}
-            <div className="flex items-center gap-2.5 w-full sm:w-auto shrink-0">
+            {/* Creator Actions (YouTube Subscribe, Share & Ask Question CTA) */}
+            <div className="flex items-center gap-2.5 w-full sm:w-auto shrink-0 flex-wrap">
+              {/* Watch Now Button */}
+              {(() => {
+                const watchUrl =
+                  creator?.session?.streamUrl ||
+                  creator?.session?.stream_url ||
+                  creator?.streamUrl ||
+                  (Array.isArray(creator?.socialLinks) && creator?.socialLinks.find(s => String(s.platform || s.url).toLowerCase().includes('youtube'))?.url) ||
+                  (Array.isArray(creator?.socialLinks) && creator?.socialLinks[0]?.url) ||
+                  `https://youtube.com/@${creator?.cleanUsername || creator?.username || ''}`;
+
+                return (
+                  <a
+                    href={watchUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-4 py-3 rounded-2xl bg-gradient-to-r from-[#EB1000] to-[#CC0E00] hover:from-[#CC0E00] hover:to-[#B80D00] text-white font-black text-xs shadow-lg transition flex items-center gap-2 cursor-pointer"
+                  >
+                    <Tv className="h-4 w-4 shrink-0" /> Watch Now
+                  </a>
+                );
+              })()}
+
               <button
                 onClick={handleShareProfile}
                 className="px-4 py-3 rounded-2xl bg-[#1C1C26] hover:bg-[#252533] border border-[#2A2A3A] text-xs font-bold text-white transition flex items-center gap-2"
@@ -182,7 +328,7 @@ export default function CreatorPublicProfilePage({ params: paramsPromise }) {
               {creator.isLive && creator.activeSession && (
                 <Link
                   href={`/pay/${creator.activeSession.sessionCode}`}
-                  className="px-6 py-3 rounded-2xl bg-brand-gradient text-[#0A0A0F] font-black text-xs shadow-xl glow-teal hover:scale-105 transition flex items-center justify-center gap-2"
+                  className="px-6 py-3 rounded-2xl bg-brand-gradient text-white font-black text-xs shadow-xl glow-teal hover:scale-105 transition flex items-center justify-center gap-2"
                 >
                   <MessageSquare className="h-4 w-4" /> Ask Paid Question (UPI)
                 </Link>
@@ -244,7 +390,7 @@ export default function CreatorPublicProfilePage({ params: paramsPromise }) {
 
               <Link
                 href={`/pay/${creator.activeSession.sessionCode}`}
-                className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-brand-gradient text-[#0A0A0F] font-bold text-xs shadow-md glow-teal hover:opacity-95 transition flex items-center justify-center gap-1.5"
+                className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-brand-gradient text-white font-bold text-xs shadow-md glow-teal hover:opacity-95 transition flex items-center justify-center gap-1.5"
               >
                 <MessageSquare className="h-4 w-4" /> Ask Paid Question (UPI)
               </Link>

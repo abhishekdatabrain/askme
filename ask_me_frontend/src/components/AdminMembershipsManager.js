@@ -983,7 +983,7 @@ export default function AdminMembershipsManager({ activeSubTab = 'overview', the
 
             <button
               onClick={() => triggerToast('Membership global settings saved successfully!')}
-              className="w-full py-3.5 rounded-full bg-brand-gradient text-[#0A0A0F] font-black text-sm shadow-xl glow-teal hover:opacity-95"
+              className="w-full py-3.5 rounded-full bg-brand-gradient text-white font-black text-sm shadow-xl glow-teal hover:opacity-95"
             >
               Save Settings
             </button>

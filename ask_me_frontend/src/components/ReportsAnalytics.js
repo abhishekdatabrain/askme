@@ -142,15 +142,9 @@ export default function ReportsAnalytics({ activeSubTab }) {
         rows.push([tf, item.gross || 0, item.commission || 0, item.creatorNet || 0, `${item.growth || 0}%`]);
       });
     } else if (activeReportSection === 'creator') {
-      rows.push(['Rank', 'Creator Name', 'Handle', 'Platform', 'Total Donations (INR)', 'Questions Answered', 'Rating']);
+      rows.push(['Rank', 'Creator Name', 'Handle', 'Total Donations (INR)', 'Questions Answered']);
       topCreators.forEach(c => {
-        rows.push([c.rank || 0, `"${(c.name || '').replace(/"/g, '""')}"`, c.handle || '', c.platform || '', c.totalDonations || 0, c.questionsAnswered || 0, c.rating || '0']);
-      });
-      rows.push([]);
-      rows.push(['Highest Individual Donations']);
-      rows.push(['ID', 'Viewer Name', 'Creator Name', 'Amount (INR)', 'Message', 'Paid At']);
-      highestDonations.forEach(h => {
-        rows.push([h.id || 0, `"${(h.viewerName || '').replace(/"/g, '""')}"`, `"${(h.creatorName || '').replace(/"/g, '""')}"`, h.amount || 0, `"${(h.message || '').replace(/"/g, '""')}"`, h.paidAt || '']);
+        rows.push([c.rank || 0, `"${(c.name || '').replace(/"/g, '""')}"`, c.handle || '', c.totalDonations || 0, c.questionsAnswered || 0]);
       });
     } else if (activeReportSection === 'payment') {
       rows.push(['Metric', 'Value']);
@@ -216,7 +210,7 @@ export default function ReportsAnalytics({ activeSubTab }) {
         <div className="flex items-center gap-3 overflow-x-auto pb-1">
           <button
             onClick={handleDownloadReport}
-            className="px-3.5 py-2 rounded-2xl bg-brand-gradient text-[#0A0A0F] font-bold text-xs flex items-center gap-1.5 hover:opacity-90 transition-all shrink-0 shadow-lg shadow-[#00F5D4]/10"
+            className="px-3.5 py-2 rounded-2xl bg-brand-gradient text-white font-bold text-xs flex items-center gap-1.5 hover:opacity-90 transition-all shrink-0 shadow-lg shadow-[#00F5D4]/10"
             title="Download CSV Report"
           >
             <Download className="h-4 w-4" />
@@ -271,7 +265,7 @@ export default function ReportsAnalytics({ activeSubTab }) {
                   Revenue Report ({reportTimeframe})
                 </span>
                 <span className="text-xs text-[#00F5D4] font-semibold bg-[#00F5D4]/10 px-2.5 py-1 rounded-full border border-[#00F5D4]/30">
-                  Dynamic Calculation
+                  Dynamic Calculation ({reportTimeframe})
                 </span>
               </div>
 
@@ -301,7 +295,7 @@ export default function ReportsAnalytics({ activeSubTab }) {
                   <h3 className="font-heading font-black text-3xl text-[#FFD60A]">
                     {formatCurrency(activeRev.commission)}
                   </h3>
-                  <p className="text-xs text-[#8B8B96]">Retained platform operational margin</p>
+                  <p className="text-xs text-[#8B8B96]">Retained platform operational margin ({reportTimeframe})</p>
                 </div>
 
                 <div className="rounded-3xl bg-[#13131A] border border-[#1C1C26] p-6 space-y-3">
@@ -314,7 +308,7 @@ export default function ReportsAnalytics({ activeSubTab }) {
                   <h3 className="font-heading font-black text-3xl text-[#00E676]">
                     {formatCurrency(activeRev.creatorNet)}
                   </h3>
-                  <p className="text-xs text-[#00F5D4]">Settled to creator bank accounts</p>
+                  <p className="text-xs text-[#00F5D4]">Settled to creator bank accounts ({reportTimeframe})</p>
                 </div>
               </div>
             </div>
@@ -327,19 +321,19 @@ export default function ReportsAnalytics({ activeSubTab }) {
                 <div>
                   <h3 className="font-heading font-bold text-base text-white flex items-center gap-2">
                     <Award className="h-5 w-5 text-[#FFD60A]" />
-                    Creator Performance Report
+                    Creator Performance Report ({reportTimeframe})
                   </h3>
-                  <p className="text-xs text-[#8B8B96]">Top creators ranked by audience donations and rating.</p>
+                  <p className="text-xs text-[#8B8B96]">Top creators ranked by audience donations ({reportTimeframe.toLowerCase()}).</p>
                 </div>
                 <span className="text-xs font-bold text-[#FFD60A] bg-[#FFD60A]/10 px-2.5 py-1 rounded-full border border-[#FFD60A]/30">
-                  Top Creators
+                  Top Creators ({reportTimeframe})
                 </span>
               </div>
 
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div className="space-y-3">
-                  <span className="text-xs font-bold text-[#8B8B96] uppercase tracking-wider block">Top Creators Leaderboard</span>
-                  {topCreators.slice(0, 5).map((creator) => (
+              <div className="space-y-3">
+                <span className="text-xs font-bold text-[#8B8B96] uppercase tracking-wider block">Top Creators Leaderboard</span>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {topCreators.map((creator) => (
                     <div key={creator.rank || creator.id} className="flex items-center justify-between p-3.5 rounded-2xl bg-[#0A0A0F] border border-[#1C1C26]">
                       <div className="flex items-center gap-3">
                         <span className={`h-7 w-7 rounded-xl flex items-center justify-center font-black text-xs ${creator.rank === 1 ? 'bg-[#FFD60A] text-[#0A0A0F]' : 'bg-[#1C1C26] text-[#8B8B96]'
@@ -347,9 +341,8 @@ export default function ReportsAnalytics({ activeSubTab }) {
                           #{creator.rank}
                         </span>
                         <div>
-                          <div className="font-bold text-white text-xs flex items-center gap-1.5">
+                          <div className="font-bold text-white text-xs">
                             {creator.name}
-                            <PlatformIcon platform={creator.platform} className="h-3.5 w-3.5" />
                           </div>
                           <span className="text-[10px] text-[#8B8B96]">{creator.handle} • {creator.questionsAnswered} Answered</span>
                         </div>
@@ -357,29 +350,10 @@ export default function ReportsAnalytics({ activeSubTab }) {
 
                       <div className="text-right">
                         <span className="font-mono text-xs font-bold text-[#00E676] block">{formatCurrency(creator.totalDonations)}</span>
-                        <span className="text-[10px] text-[#FFD60A]">★ {creator.rating}</span>
                       </div>
                     </div>
                   ))}
                 </div>
-
-                {highestDonations && highestDonations.length > 0 && (
-                  <div className="space-y-3">
-                    <span className="text-xs font-bold text-[#FFD60A] uppercase tracking-wider block">Highest Individual Donations</span>
-                    <div className="space-y-2 max-h-96 overflow-y-auto custom-scrollbar pr-1">
-                      {highestDonations.map((hd, i) => (
-                        <div key={hd.id || i} className="flex items-center justify-between text-xs p-3 rounded-2xl bg-[#0A0A0F] border border-[#1C1C26]">
-                          <div>
-                            <span className="text-white font-semibold block">{hd.viewerName}</span>
-                            <span className="text-[#8B8B96] text-[10px]">Donated to {hd.creatorName}</span>
-                            <p className="text-[11px] text-[#00F5D4] mt-0.5 font-medium">"{hd.message}"</p>
-                          </div>
-                          <span className="font-mono font-bold text-[#00E676] text-sm">{formatCurrency(hd.amount)}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
               </div>
             </div>
           )}
@@ -391,9 +365,9 @@ export default function ReportsAnalytics({ activeSubTab }) {
                 <div>
                   <h3 className="font-heading font-bold text-base text-white flex items-center gap-2">
                     <PieChart className="h-5 w-5 text-[#00F5D4]" />
-                    Payment Reports
+                    Payment Reports ({reportTimeframe})
                   </h3>
-                  <p className="text-xs text-[#8B8B96]">Transaction health metrics (Successful vs. Failed attempts).</p>
+                  <p className="text-xs text-[#8B8B96]">Transaction health metrics ({reportTimeframe.toLowerCase()}: Successful vs. Failed attempts).</p>
                 </div>
                 <span className="text-xs font-bold text-[#00E676] bg-[#00E676]/10 px-2.5 py-1 rounded-full border border-[#00E676]/30">
                   {paymentReport.gatewaySuccessRate}% Success Rate
@@ -404,7 +378,7 @@ export default function ReportsAnalytics({ activeSubTab }) {
                 <div className="p-4 rounded-2xl bg-[#0A0A0F] border border-[#00E676]/30 space-y-2">
                   <div className="flex items-center gap-2 text-[#00E676]">
                     <CheckCircle2 className="h-4 w-4" />
-                    <span className="text-xs font-bold uppercase">Successful Transactions</span>
+                    <span className="text-xs font-bold uppercase">Successful Transactions ({reportTimeframe})</span>
                   </div>
                   <h4 className="font-heading font-black text-2xl text-white">
                     {Number(paymentReport.successfulCount || 0).toLocaleString()}
@@ -417,7 +391,7 @@ export default function ReportsAnalytics({ activeSubTab }) {
                 <div className="p-4 rounded-2xl bg-[#0A0A0F] border border-[#FF5252]/30 space-y-2">
                   <div className="flex items-center gap-2 text-[#FF5252]">
                     <XCircle className="h-4 w-4" />
-                    <span className="text-xs font-bold uppercase">Failed Transactions</span>
+                    <span className="text-xs font-bold uppercase">Failed Transactions ({reportTimeframe})</span>
                   </div>
                   <h4 className="font-heading font-black text-2xl text-white">
                     {Number(paymentReport.failedCount || 0).toLocaleString()}
@@ -430,7 +404,7 @@ export default function ReportsAnalytics({ activeSubTab }) {
 
               {paymentReport.recentTransactions && paymentReport.recentTransactions.length > 0 && (
                 <div className="pt-4 border-t border-[#1C1C26] space-y-3">
-                  <span className="text-xs font-bold text-[#00F5D4] uppercase tracking-wider block">Recent Gateway Activity Log</span>
+                  <span className="text-xs font-bold text-[#00F5D4] uppercase tracking-wider block">Recent Gateway Activity Log ({reportTimeframe})</span>
                   <div className="space-y-2 max-h-64 overflow-y-auto custom-scrollbar pr-1">
                     {paymentReport.recentTransactions.map((tx, idx) => (
                       <div key={tx.id || idx} className="flex items-center justify-between text-xs p-3 rounded-2xl bg-[#0A0A0F] border border-[#1C1C26]">
@@ -458,52 +432,52 @@ export default function ReportsAnalytics({ activeSubTab }) {
                 <div className="rounded-3xl bg-[#13131A] border border-[#1C1C26] p-6 space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="text-[10px] font-extrabold text-[#8B8B96] uppercase tracking-wider">
-                      Total Payout Requested
+                      Total Payout Requested ({reportTimeframe})
                     </span>
                     <ArrowUpRight className="h-4 w-4 text-[#FFD60A]" />
                   </div>
                   <h3 className="font-heading font-black text-3xl text-[#FFD60A]">
                     {formatCurrency(withdrawalSummary.totalRequested)}
                   </h3>
-                  <p className="text-xs text-[#8B8B96]">Gross withdrawal requests volume</p>
+                  <p className="text-xs text-[#8B8B96]">Gross withdrawal requests volume ({reportTimeframe.toLowerCase()})</p>
                 </div>
 
                 <div className="rounded-3xl bg-[#13131A] border border-[#1C1C26] p-6 space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="text-[10px] font-extrabold text-[#8B8B96] uppercase tracking-wider">
-                      Approved & Disbursed
+                      Approved & Disbursed ({reportTimeframe})
                     </span>
                     <CheckCircle2 className="h-4 w-4 text-[#00E676]" />
                   </div>
                   <h3 className="font-heading font-black text-3xl text-[#00E676]">
                     {formatCurrency(withdrawalSummary.totalApproved)}
                   </h3>
-                  <p className="text-xs text-[#00E676] font-semibold">Settled to bank accounts</p>
+                  <p className="text-xs text-[#00E676] font-semibold">Settled to bank accounts ({reportTimeframe.toLowerCase()})</p>
                 </div>
 
                 <div className="rounded-3xl bg-[#13131A] border border-[#1C1C26] p-6 space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="text-[10px] font-extrabold text-[#8B8B96] uppercase tracking-wider">
-                      Pending Payout Requests
+                      Pending Payout Requests ({reportTimeframe})
                     </span>
                     <Users className="h-4 w-4 text-[#00F5D4]" />
                   </div>
                   <h3 className="font-heading font-black text-3xl text-[#00F5D4]">
                     {formatCurrency(withdrawalSummary.totalPending)}
                   </h3>
-                  <p className="text-xs text-[#00F5D4]">{withdrawalSummary.pendingCount || 0} requests awaiting review</p>
+                  <p className="text-xs text-[#00F5D4]">{withdrawalSummary.pendingCount || 0} requests awaiting review ({reportTimeframe.toLowerCase()})</p>
                 </div>
               </div>
 
-              {/* Monthly Breakdowns */}
+              {/* Monthly / Timeframe Breakdowns */}
               <div className="rounded-3xl bg-[#13131A] border border-[#1C1C26] p-6 space-y-4 shadow-xl">
                 <div className="flex items-center justify-between border-b border-[#1C1C26] pb-4">
                   <div>
                     <h3 className="font-heading font-bold text-base text-white flex items-center gap-2">
                       <ArrowUpRight className="h-5 w-5 text-[#00F5D4]" />
-                      Monthly Withdrawal Trends
+                      Withdrawal Trends ({reportTimeframe})
                     </h3>
-                    <p className="text-xs text-[#8B8B96]">Monthly payout volume requested vs processed.</p>
+                    <p className="text-xs text-[#8B8B96]">Payout volume requested vs processed ({reportTimeframe.toLowerCase()}).</p>
                   </div>
                 </div>
 

@@ -22,6 +22,7 @@ import {
   Download
 } from 'lucide-react';
 import { API_ENDPOINTS } from '@/config/api';
+import BrandedQrCode from '@/components/BrandedQrCode';
 
 export default function CreatorLiveSessionsPage() {
   const { toast } = useToast();
@@ -300,8 +301,8 @@ export default function CreatorLiveSessionsPage() {
                   </div>
                 </div>
 
-                <button onClick={handleEndSession} className="px-5 py-2.5 rounded-xl bg-[#FF3D71]/10 text-[#FF3D71] border border-[#FF3D71]/30 hover:bg-[#FF3D71]/20 font-bold text-xs flex items-center gap-1.5 shrink-0">
-                  <StopCircle className="h-4 w-4" /> End Live Session
+                <button onClick={handleEndSession} className="px-5 py-2.5 rounded-xl bg-[#FF3D71] text-white border border-[#FF3D71] hover:bg-[#E03563] font-bold text-xs flex items-center gap-1.5 shrink-0 shadow-md">
+                  <StopCircle className="h-4 w-4 text-white" /> End Live Session
                 </button>
               </div>
 
@@ -309,12 +310,12 @@ export default function CreatorLiveSessionsPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* QR & Payment Link */}
                 <div className={`p-4 rounded-2xl border flex items-center gap-4 ${theme === 'light' ? 'bg-[#F8F9FA] border-[#E9ECEF]' : 'bg-[#0A0A0F] border-[#1C1C26]'}`}>
-                  <img src={activeSession.qrCodeUrl} alt="QR Code" className="h-24 w-24 rounded-xl bg-white p-1 shrink-0 border border-[#00F5D4]/40 shadow-md" />
+                  <BrandedQrCode qrUrl={activeSession.qrCodeUrl} size="sm" showBrandHeader={false} />
                   <div className="space-y-1 min-w-0 flex-1">
                     <span className="text-[10px] font-bold text-[#00F5D4] uppercase">Instant UPI Payment Link & QR</span>
                     <p className="text-xs font-mono truncate">{activeSession.paymentLink}</p>
                     <div className="flex flex-wrap gap-2 pt-1">
-                      <button onClick={() => copyText(activeSession.paymentLink, 'Payment Link')} className="px-3.5 py-1.5 rounded-lg bg-[#00F5D4] text-[#0A0A0F] font-bold text-[11px] shadow-sm hover:scale-105 transition flex items-center gap-1">
+                      <button onClick={() => copyText(activeSession.paymentLink, 'Payment Link')} className="px-3.5 py-1.5 rounded-lg bg-[#00F5D4] text-white font-bold text-[11px] shadow-sm hover:scale-105 transition flex items-center gap-1">
                         <Copy className="h-3.5 w-3.5" /> Copy Link
                       </button>
                       <button onClick={() => downloadQrCode(activeSession.qrCodeUrl, `askme_qr_${activeSession.sessionCode || 'code'}.png`)} className="px-3.5 py-1.5 rounded-lg bg-[#1C1C26] text-[#00F5D4] text-[11px] font-bold border border-[#00F5D4]/40 hover:bg-[#00F5D4]/10 transition flex items-center gap-1">
@@ -472,7 +473,7 @@ export default function CreatorLiveSessionsPage() {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="px-8 py-3.5 rounded-2xl bg-brand-gradient text-[#0A0A0F] font-black text-xs shadow-lg glow-teal hover:scale-105 transition-all flex items-center gap-2"
+                className="px-8 py-3.5 rounded-2xl bg-brand-gradient text-white font-black text-xs shadow-lg glow-teal hover:scale-105 transition-all flex items-center gap-2"
               >
                 {isSubmitting ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Radio className="h-4 w-4" />}
                 🔴 Launch Live Session Now

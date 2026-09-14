@@ -2,11 +2,14 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { User, Mail, Lock, Phone, ArrowRight, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { User, Mail, Lock, Phone, ArrowRight, AlertCircle, CheckCircle2, Check, X, Eye, EyeOff } from 'lucide-react';
 import { API_ENDPOINTS } from '@/config/api';
 import { setViewerSession } from '@/utils/cookies';
+import { useToast } from '@/context/ToastContext';
+import Logo from '@/components/Logo';
 
 export default function ViewerRegisterPage() {
+  const { toast } = useToast();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -14,6 +17,7 @@ export default function ViewerRegisterPage() {
     mobile: '',
   });
 
+  const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
@@ -26,18 +30,50 @@ export default function ViewerRegisterPage() {
     setErrorMessage('');
   };
 
+  const pass = formData.password || '';
+  const passCriteria = {
+    length: pass.length >= 8,
+    upper: /[A-Z]/.test(pass),
+    lower: /[a-z]/.test(pass),
+    number: /[0-9]/.test(pass),
+    special: /[@$!%*?&#^()_+\-=\[\]{};':"\\|,.<>\/?]/.test(pass),
+  };
+
+  const passScore = Object.values(passCriteria).filter(Boolean).length;
+
+  const getStrengthLabel = () => {
+    if (!pass) return { label: '', color: 'bg-gray-700', text: 'text-gray-400' };
+    if (passScore <= 2) return { label: 'Weak Password', color: 'bg-[#FF3D71]', text: 'text-[#FF3D71]' };
+    if (passScore <= 4) return { label: 'Medium Password', color: 'bg-[#FFAA00]', text: 'text-[#FFAA00]' };
+    return { label: 'Strong Password ✓', color: 'bg-[#00E676]', text: 'text-[#00E676]' };
+  };
+
+  const strengthInfo = getStrengthLabel();
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setErrorMessage('');
     setSuccessMessage('');
 
-    if (!formData.name || !formData.email || !formData.password) {
-      setErrorMessage('Please fill in all required fields.');
+    if (!formData.name || !formData.email || !formData.password || !formData.mobile) {
+      const msg = 'Please fill in all required fields.';
+      setErrorMessage(msg);
+      toast.error(msg, 'Validation Error');
       return;
     }
 
-    if (formData.password.length < 6) {
-      setErrorMessage('Password must be at least 6 characters long.');
+    if (!passCriteria.length || !passCriteria.upper || !passCriteria.lower || !passCriteria.number || !passCriteria.special) {
+      const msg = 'Please create a strong password (at least 8 characters with uppercase, lowercase, number, and special character).';
+      setErrorMessage(msg);
+      toast.error(msg, 'Weak Password');
+      return;
+    }
+
+    const cleanMobile = (formData.mobile || '').replace(/[^0-9]/g, '');
+    if (!cleanMobile || cleanMobile.length !== 10) {
+      const msg = 'Invalid mobile number. Please enter a valid 10-digit phone number.';
+      setErrorMessage(msg);
+      toast.error(msg, 'Invalid Mobile Number');
       return;
     }
 
@@ -46,13 +82,19 @@ export default function ViewerRegisterPage() {
       const res = await fetch(API_ENDPOINTS.VIEWERS.REGISTER, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          ...formData,
+          mobile: cleanMobile,
+        }),
       });
 
       const data = await res.json();
 
       if (res.ok && data.status === 'success') {
-        setSuccessMessage('Account created successfully! Redirecting...');
+        const msg = 'Account created successfully! Redirecting...';
+        setSuccessMessage(msg);
+        toast.success(msg, 'Registration Successful');
+
         if (data.data?.token && data.data?.user) {
           setViewerSession(data.data.token, data.data.user);
         }
@@ -63,11 +105,15 @@ export default function ViewerRegisterPage() {
           window.location.href = redirectUrl;
         }, 800);
       } else {
-        setErrorMessage(data.message || 'Failed to create viewer account. Please try again.');
+        const msg = data.message || 'Failed to create viewer account. Please try again.';
+        setErrorMessage(msg);
+        toast.error(msg, 'Registration Failed');
       }
     } catch (err) {
       console.error('Registration error:', err);
-      setErrorMessage('Server connection error. Please check backend API server.');
+      const msg = 'Server connection error. Please check backend API server.';
+      setErrorMessage(msg);
+      toast.error(msg, 'Connection Error');
     } finally {
       setIsLoading(false);
     }
@@ -79,9 +125,7 @@ export default function ViewerRegisterPage() {
       {/* Top Header Logo */}
       <div className="sm:mx-auto sm:w-full sm:max-w-md text-center space-y-3">
         <Link href="/" className="inline-flex items-center gap-2.5">
-          <div className="h-10 w-10 rounded-2xl bg-brand-gradient flex items-center justify-center text-[#0A0A0F] font-black text-2xl shadow-lg glow-teal">
-            a
-          </div>
+          <Logo size="lg" />
           <span className="font-heading font-black text-2xl text-white">
             AskMe <span className="text-brand-gradient">Viewer</span>
           </span>
@@ -150,50 +194,117 @@ export default function ViewerRegisterPage() {
             {/* Mobile Number */}
             <div>
               <label className="block text-xs font-bold text-white mb-1">
-                Mobile Number (Optional)
+                Mobile Number <span className="text-[#FF3D71]">*</span>
               </label>
               <div className="relative">
                 <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[#8B8B96]" />
                 <input
-                  type="number"
+                  type="tel"
                   name="mobile"
-                  placeholder="+91 9876543210"
+                  maxLength={10}
+                  placeholder="9876543210"
                   value={formData.mobile}
-                  onChange={handleChange}
-                  className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[#0A0A0F] border border-[#1C1C26] text-xs text-white placeholder-[#8B8B96] focus:outline-none focus:border-[#00F5D4] transition"
+                  onChange={(e) => {
+                    const val = e.target.value.replace(/[^0-9]/g, '').slice(0, 10);
+                    setFormData({ ...formData, mobile: val });
+                    setErrorMessage('');
+                  }}
+                  required
+                  className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[#0A0A0F] border border-[#1C1C26] text-xs text-white placeholder-[#8B8B96] focus:outline-none focus:border-[#00F5D4] transition font-mono"
                 />
               </div>
             </div>
 
-            {/* Password */}
+            {/* Strong Password Input with Live Indicator */}
             <div>
-              <label className="block text-xs font-bold text-white mb-1">
-                Password <span className="text-[#FF3D71]">*</span>
-              </label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-xs font-bold text-white">
+                  Password <span className="text-[#FF3D71]">*</span>
+                </label>
+                {pass && (
+                  <span className={`text-[11px] font-bold ${strengthInfo.text}`}>
+                    {strengthInfo.label}
+                  </span>
+                )}
+              </div>
               <div className="relative">
                 <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[#8B8B96]" />
                 <input
-                  type="password"
+                  type={showPassword ? 'text' : 'password'}
                   name="password"
                   required
-                  minLength={6}
-                  placeholder="At least 6 characters"
+                  placeholder="e.g. StrongPass@123"
                   value={formData.password}
                   onChange={handleChange}
-                  className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[#0A0A0F] border border-[#1C1C26] text-xs text-white placeholder-[#8B8B96] focus:outline-none focus:border-[#00F5D4] transition"
+                  className="w-full pl-10 pr-10 py-2.5 rounded-xl bg-[#0A0A0F] border border-[#1C1C26] text-xs text-white placeholder-[#8B8B96] focus:outline-none focus:border-[#00F5D4] transition"
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#8B8B96] hover:text-white transition focus:outline-none cursor-pointer"
+                  title={showPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4 shrink-0" />
+                  ) : (
+                    <Eye className="h-4 w-4 shrink-0" />
+                  )}
+                </button>
               </div>
+
+              {/* Strength Meter Bar */}
+              {pass && (
+                <div className="mt-2 space-y-1.5">
+                  <div className="grid grid-cols-5 gap-1.5">
+                    {[1, 2, 3, 4, 5].map((level) => (
+                      <div
+                        key={level}
+                        className={`h-1.5 rounded-full transition-all duration-300 ${
+                          level <= passScore ? strengthInfo.color : 'bg-[#1C1C26]'
+                        }`}
+                      />
+                    ))}
+                  </div>
+
+                  {/* Criteria Checklist */}
+                  <div className="p-3 bg-[#0A0A0F] border border-[#1C1C26] rounded-xl text-[11px] space-y-1 mt-2">
+                    <p className="font-bold text-gray-300 text-[10px] uppercase tracking-wider mb-1">Strong Password Requirements:</p>
+                    <div className="grid grid-cols-2 gap-1 text-[#8B8B96]">
+                      <span className={`flex items-center gap-1.5 ${passCriteria.length ? 'text-[#00E676] font-bold' : ''}`}>
+                        {passCriteria.length ? <Check className="h-3 w-3 shrink-0 text-[#00E676]" /> : <X className="h-3 w-3 shrink-0 text-gray-500" />}
+                        <span>8+ Characters</span>
+                      </span>
+                      <span className={`flex items-center gap-1.5 ${passCriteria.upper ? 'text-[#00E676] font-bold' : ''}`}>
+                        {passCriteria.upper ? <Check className="h-3 w-3 shrink-0 text-[#00E676]" /> : <X className="h-3 w-3 shrink-0 text-gray-500" />}
+                        <span>Uppercase (A-Z)</span>
+                      </span>
+                      <span className={`flex items-center gap-1.5 ${passCriteria.lower ? 'text-[#00E676] font-bold' : ''}`}>
+                        {passCriteria.lower ? <Check className="h-3 w-3 shrink-0 text-[#00E676]" /> : <X className="h-3 w-3 shrink-0 text-gray-500" />}
+                        <span>Lowercase (a-z)</span>
+                      </span>
+                      <span className={`flex items-center gap-1.5 ${passCriteria.number ? 'text-[#00E676] font-bold' : ''}`}>
+                        {passCriteria.number ? <Check className="h-3 w-3 shrink-0 text-[#00E676]" /> : <X className="h-3 w-3 shrink-0 text-gray-500" />}
+                        <span>Number (0-9)</span>
+                      </span>
+                      <span className={`flex items-center gap-1.5 col-span-2 ${passCriteria.special ? 'text-[#00E676] font-bold' : ''}`}>
+                        {passCriteria.special ? <Check className="h-3 w-3 shrink-0 text-[#00E676]" /> : <X className="h-3 w-3 shrink-0 text-gray-500" />}
+                        <span>Special Symbol (@, #, $, !, %, etc.)</span>
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Submit Button */}
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full py-3 rounded-xl bg-brand-gradient text-[#0A0A0F] font-black text-xs shadow-lg glow-teal hover:opacity-95 transition flex items-center justify-center gap-2"
+              className="w-full py-3 rounded-xl bg-brand-gradient text-white font-black text-xs shadow-lg glow-teal hover:opacity-95 transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
             >
               {isLoading ? (
                 <>
-                  <div className="h-4 w-4 border-2 border-[#0A0A0F] border-t-transparent rounded-full animate-spin" />
+                  <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                   <span>Creating Account...</span>
                 </>
               ) : (

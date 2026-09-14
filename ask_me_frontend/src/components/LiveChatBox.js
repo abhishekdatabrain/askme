@@ -327,7 +327,7 @@ export default function LiveChatBox({ sessionId = 1, userType = 'viewer', userId
 
           <button
             type="submit"
-            className="px-4 py-2 rounded-xl bg-brand-gradient text-[#0A0A0F] text-xs font-extrabold shadow-md glow-teal hover:opacity-95 flex items-center gap-1"
+            className="px-4 py-2 rounded-xl bg-brand-gradient text-white text-xs font-extrabold shadow-md glow-teal hover:opacity-95 flex items-center gap-1"
           >
             <Send className="h-3.5 w-3.5" /> Send
           </button>

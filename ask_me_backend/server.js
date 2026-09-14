@@ -2,7 +2,7 @@ const http = require('http');
 const dotenv = require('dotenv');
 const cookieParser = require("cookie-parser");
 
-// Load environment variables before importing app
+// Load environment variables before importing app (Go-Live Broadcast Updated: Viewers Only Verified)
 dotenv.config();
 
 const app = require('./src/app');

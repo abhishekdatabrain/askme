@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import ViewerSidebar from '@/components/ViewerSidebar';
 import SplashLoader from '@/components/SplashLoader';
-import { API_ENDPOINTS } from '@/config/api';
+import { API_ENDPOINTS, getMediaUrl } from '@/config/api';
 import { getViewerToken, getCookie } from '@/utils/cookies';
 import {
   ArrowLeft,
@@ -133,7 +133,7 @@ export default function MyMembershipsPage() {
               </p>
               <Link
                 href="/"
-                className="px-5 py-2.5 rounded-xl bg-brand-gradient text-[#0A0A0F] text-xs font-bold shadow-md inline-block glow-teal"
+                className="px-5 py-2.5 rounded-xl bg-brand-gradient text-white text-xs font-bold shadow-md inline-block glow-teal"
               >
                 Explore Live Creators
               </Link>
@@ -157,18 +157,20 @@ export default function MyMembershipsPage() {
                         </h3>
                       </div>
 
-                      <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${isActive
+                      <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${membership.status === 'active'
                         ? 'bg-[#00E676]/15 text-[#00E676] border border-[#00E676]/30'
-                        : 'bg-[#FF3D71]/15 text-[#FF3D71] border border-[#FF3D71]/30'
+                        : membership.status === 'expired'
+                          ? 'bg-[#FF9500]/15 text-[#FF9500] border border-[#FF9500]/30'
+                          : 'bg-[#FF3D71]/15 text-[#FF3D71] border border-[#FF3D71]/30'
                         }`}>
-                        {isActive ? 'Active' : 'Cancelled'}
+                        {membership.status === 'active' ? 'Active' : membership.status === 'expired' ? 'Expired' : 'Cancelled'}
                       </span>
                     </div>
 
                     {/* CREATOR INFO */}
                     <div className="flex items-center gap-3 p-3.5 rounded-2xl bg-[#13131A] border border-[#332700]">
                       <img
-                        src={membership.creatorAvatar}
+                        src={getMediaUrl(membership.creatorAvatar)}
                         alt={membership.creatorName}
                         className="h-11 w-11 rounded-full object-cover border border-[#FFD60A]"
                       />
@@ -182,8 +184,16 @@ export default function MyMembershipsPage() {
                     {/* BILLING BREAKDOWN */}
                     <div className="space-y-2 text-xs">
                       <div className="flex items-center justify-between text-[#8B8B96]">
-                        <span>Amount</span>
-                        <span className="font-bold text-[#FFD60A]">₹{membership.amount} / {membership.interval}</span>
+                        <span>Amount / Interval</span>
+                        <span className="font-bold text-[#FFD60A]">
+                          ₹{parseFloat(membership.amount || 0).toFixed(2)} / {membership.interval}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between text-[#8B8B96]">
+                        <span>Duration / Validity</span>
+                        <span className={`font-bold ${membership.status === 'expired' ? 'text-[#FF3D71]' : 'text-[#00E676]'}`}>
+                          {membership.duration}
+                        </span>
                       </div>
                       <div className="flex items-center justify-between text-[#8B8B96]">
                         <span>Member Since</span>
@@ -197,12 +207,14 @@ export default function MyMembershipsPage() {
                               minute: "2-digit",
                               hour12: true,
                             })
-                            : ""}
+                            : "N/A"}
                         </span>
                       </div>
                       <div className="flex items-center justify-between text-[#8B8B96]">
                         <span>Next Billing Date</span>
-                        <span className="font-bold text-white">{membership.next_billing_date || ''}</span>
+                        <span className={`font-bold ${membership.status === 'expired' ? 'text-[#FF3D71]' : 'text-white'}`}>
+                          {membership.next_billing_date ? `${membership.next_billing_date} ${membership.status === 'expired' ? '(Expired)' : ''}` : 'N/A'}
+                        </span>
                       </div>
                     </div>
 

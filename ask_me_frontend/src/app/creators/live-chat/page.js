@@ -206,7 +206,7 @@ export default function CreatorLiveChatModulePage() {
               <div className="pt-2">
                 <Link
                   href="/creators/dashboard"
-                  className="px-5 py-2.5 rounded-xl bg-brand-gradient text-[#0A0A0F] font-bold text-xs shadow-md glow-teal hover:opacity-95 transition inline-flex items-center gap-2"
+                  className="px-5 py-2.5 rounded-xl bg-brand-gradient text-white font-bold text-xs shadow-md glow-teal hover:opacity-95 transition inline-flex items-center gap-2"
                 >
                   <Radio className="h-4 w-4" /> Go to Dashboard & Start Session
                 </Link>
@@ -344,7 +344,7 @@ export default function CreatorLiveChatModulePage() {
                   </p>
                   <button
                     onClick={() => copyLink(selectedSession.paymentLink)}
-                    className="w-full py-2 rounded-xl bg-[#00F5D4] text-[#0A0A0F] font-bold text-xs hover:opacity-90 transition flex items-center justify-center gap-1"
+                    className="w-full py-2 rounded-xl bg-[#00F5D4] text-white font-bold text-xs hover:opacity-90 transition flex items-center justify-center gap-1"
                   >
                     <Copy className="h-3.5 w-3.5" /> Copy Payment Link
                   </button>

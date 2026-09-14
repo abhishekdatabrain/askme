@@ -6,7 +6,7 @@ const { sequelize } = require('../config/db');
  * Sequelize User Model Definition matching "Abhishek".users PostgreSQL table
  */
 const User = sequelize.define(
-  'user',
+  'users',
   {
     id: {
       type: DataTypes.BIGINT,
@@ -39,6 +39,19 @@ const User = sequelize.define(
     phone: {
       type: DataTypes.STRING(50),
       allowNull: true,
+    },
+    truecaller_id: {
+      type: DataTypes.STRING(255),
+      allowNull: true,
+      unique: {
+        name: 'users_truecaller_id_key',
+        msg: 'A user with this Truecaller ID already exists',
+      },
+    },
+    truecaller_verified: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
     },
     password: {
       type: DataTypes.STRING(255),

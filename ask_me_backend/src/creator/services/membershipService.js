@@ -18,6 +18,7 @@ const getCreatorMembershipPlansService = async (creatorId) => {
     name: p.name,
     price: parseFloat(p.price || 0),
     interval: p.interval || "",
+    duration: p.duration,
     perks: p.perks ? (Array.isArray(p.perks) ? p.perks : String(p.perks).split(",").map((s) => s.trim())) : [],
     status: p.status || "",
     badgeColor: p.badge_color || "bg-[#FFD60A]",
@@ -36,7 +37,7 @@ const createCreatorMembershipPlanService = async (creatorId, data) => {
     throw err;
   }
 
-  const { name, price, interval, perks, badgeColor } = data;
+  const { name, price, interval, duration, perks, badgeColor } = data;
 
   if (!name || !String(name).trim()) {
     const err = new Error("Plan name is required.");
@@ -55,7 +56,8 @@ const createCreatorMembershipPlanService = async (creatorId, data) => {
     creator_id: creatorId,
     name: name.trim(),
     price: parsedPrice,
-    interval: interval || "Monthly",
+    interval: interval,
+    duration: duration,
     perks: Array.isArray(perks) ? perks.join(", ") : perks || "VIP Badge",
     status: "Active",
     badge_color: badgeColor || "bg-[#FFD60A]",
@@ -87,11 +89,12 @@ const updateCreatorMembershipPlanService = async (creatorId, planId, data) => {
     throw err;
   }
 
-  const { name, price, interval, perks, status, badgeColor } = data;
+  const { name, price, interval, duration, perks, status, badgeColor } = data;
 
   if (name !== undefined) plan.name = name;
   if (price !== undefined) plan.price = parseFloat(price);
   if (interval !== undefined) plan.interval = interval;
+  if (duration !== undefined) plan.duration = duration;
   if (perks !== undefined) plan.perks = Array.isArray(perks) ? perks.join(", ") : perks;
   if (status !== undefined) plan.status = status;
   if (badgeColor !== undefined) plan.badge_color = badgeColor;

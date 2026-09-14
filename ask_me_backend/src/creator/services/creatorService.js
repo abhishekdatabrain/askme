@@ -13,6 +13,10 @@ const Notification = models.Notification || require("../../models/NotificationMo
 const { validateEmail, validatePassword, validateIFSC, validateUPI } = require("../validators/creatorValidator");
 const { maskBankAccount } = require("../../utils/maskSensitiveData");
 const { getIO } = require("../../config/socket");
+const { sendLoginOtpWhatsApp } = require("../../services/whatsappService");
+const { generateAndStoreOtp, verifyStoredOtp } = require("../../utils/whatsappOtpStore");
+const { verifyTruecallerToken } = require("../../services/truecallerService");
+const { Op } = require("sequelize");
 
 /**
  * Register a new Creator with atomic transaction
@@ -669,10 +673,239 @@ const verifyCreatorUpiService = async (creatorId, upiId) => {
   };
 };
 
+/**
+ * Send WhatsApp OTP to Creator
+ */
+const sendWhatsAppOtpCreatorService = async (data) => {
+  const { mobile, phone } = data || {};
+  const rawPhone = mobile || phone;
+  const cleanPhone = String(rawPhone || "").replace(/[^0-9]/g, "");
+
+  if (!cleanPhone || cleanPhone.length < 10) {
+    const err = new Error("Please provide a valid 10-digit mobile number.");
+    err.statusCode = 400;
+    throw err;
+  }
+
+  const { cleanPhone: targetPhone, otp } = generateAndStoreOtp(cleanPhone);
+
+  await sendLoginOtpWhatsApp({
+    phone: targetPhone,
+    otp,
+    expiresMinutes: 5,
+  });
+
+  console.log(`[WhatsApp OTP Creator] Code ${otp} sent to ${targetPhone} (Template: askme_login_otp)`);
+
+  return {
+    message: "Verification code sent to your WhatsApp number!",
+    expiresMinutes: 5,
+    phone: targetPhone,
+    ...(process.env.NODE_ENV !== "production" ? { debugOtp: otp } : {}),
+  };
+};
+
+/**
+ * Verify WhatsApp OTP and Login / Register Creator
+ */
+const verifyWhatsAppOtpCreatorService = async (data) => {
+  const { mobile, phone, otp } = data || {};
+  const rawPhone = mobile || phone;
+  const cleanPhone = String(rawPhone || "").replace(/[^0-9]/g, "");
+
+  if (!cleanPhone || !otp) {
+    const err = new Error("Mobile number and 6-digit OTP code are required.");
+    err.statusCode = 400;
+    throw err;
+  }
+
+  const verification = verifyStoredOtp(cleanPhone, otp);
+  if (!verification.valid) {
+    const err = new Error(verification.message);
+    err.statusCode = 400;
+    throw err;
+  }
+
+  let targetPhone = cleanPhone;
+  if (targetPhone.length === 10) targetPhone = `91${targetPhone}`;
+  const tenDigit = targetPhone.slice(-10);
+
+  let creator = await CreatorsModel.findOne({
+    where: {
+      [Op.or]: [
+        { mobile: targetPhone },
+        { mobile: tenDigit },
+        { email: `${targetPhone}@whatsapp.creator` },
+        { email: `${tenDigit}@whatsapp.creator` },
+      ],
+    },
+  });
+
+  if (!creator) {
+    const transaction = await sequelize.transaction();
+    try {
+      const cleanUsername = `creator_${tenDigit.slice(-6)}_${Math.floor(100 + Math.random() * 900)}`;
+      const hashedPassword = await bcrypt.hash(`wa_${Date.now()}_${Math.random()}`, 10);
+      const creatorName = `Creator ${tenDigit.slice(-4)}`;
+
+      creator = await CreatorsModel.create(
+        {
+          role: "creator",
+          full_name: creatorName,
+          username: cleanUsername,
+          email: `${targetPhone}@whatsapp.creator`,
+          mobile: targetPhone,
+          password: hashedPassword,
+          status: "active",
+        },
+        { transaction }
+      );
+
+      await CreatorProfile.create(
+        {
+          creator_id: creator.id,
+          display_name: creatorName,
+          bio: "Creator on AskMe",
+          kyc_status: "approved",
+          is_payment_enabled: true,
+        },
+        { transaction }
+      );
+
+      await Wallet.create(
+        {
+          creator_id: creator.id,
+          total_earnings: 0,
+          available_balance: 0,
+          pending_balance: 0,
+          withdrawn_amount: 0,
+        },
+        { transaction }
+      );
+
+      await transaction.commit();
+    } catch (createErr) {
+      await transaction.rollback();
+      throw createErr;
+    }
+  }
+
+  const token = generateToken(creator.id, "creator");
+
+  const profile = await CreatorProfile.findOne({ where: { creator_id: creator.id } });
+
+  return {
+    token,
+    creator: {
+      id: creator.id,
+      role: creator.role,
+      fullName: creator.full_name,
+      full_name: creator.full_name,
+      username: creator.username,
+      cleanUsername: creator.username,
+      email: creator.email,
+      mobile: creator.mobile,
+      kycStatus: profile?.kyc_status || "approved",
+    },
+  };
+};
+
+/**
+ * Truecaller 1-Tap Auth for Creator
+ */
+const truecallerAuthCreatorService = async (data) => {
+  const { phone, name, email, payload, signature, accessToken } = data || {};
+
+  const verification = await verifyTruecallerToken({
+    phone,
+    name,
+    email,
+    payload,
+    signature,
+    accessToken,
+  });
+
+  if (!verification.success || !verification.phone) {
+    const err = new Error(verification.reason || "Truecaller authentication verification failed.");
+    err.statusCode = 400;
+    throw err;
+  }
+
+  const cleanPhone = verification.phone;
+  const tenDigit = cleanPhone.slice(-10);
+  const displayName = verification.name || `Creator ${tenDigit.slice(-4)}`;
+  const creatorEmail = verification.email || `${cleanPhone}@truecaller.creator`;
+
+  let creator = await CreatorsModel.findOne({
+    where: {
+      [Op.or]: [
+        { mobile: cleanPhone },
+        { mobile: tenDigit },
+        { email: creatorEmail },
+        { email: `${cleanPhone}@truecaller.creator` },
+        { email: `${tenDigit}@truecaller.creator` },
+      ],
+    },
+  });
+
+  if (!creator) {
+    const transaction = await sequelize.transaction();
+    try {
+      const cleanUsername = `creator_${tenDigit.slice(-6)}_${Math.floor(100 + Math.random() * 900)}`;
+      const hashedPassword = await bcrypt.hash(`tc_${Date.now()}_${Math.random()}`, 10);
+
+      creator = await CreatorsModel.create(
+        {
+          role: "creator",
+          full_name: displayName,
+          username: cleanUsername,
+          email: creatorEmail,
+          mobile: cleanPhone,
+          password: hashedPassword,
+          status: "active",
+        },
+        { transaction }
+      );
+
+      await CreatorProfile.create(
+        { creator_id: creator.id, display_name: displayName },
+        { transaction }
+      );
+
+      await Wallet.create(
+        { creator_id: creator.id, balance: 0.0, currency: "INR" },
+        { transaction }
+      );
+
+      await transaction.commit();
+    } catch (err) {
+      await transaction.rollback();
+      throw err;
+    }
+  }
+
+  const token = generateToken(creator.id, "creator");
+  return {
+    token,
+    creator: {
+      id: creator.id,
+      full_name: creator.full_name,
+      username: creator.username,
+      email: creator.email,
+      mobile: creator.mobile,
+      role: creator.role,
+      kycStatus: creator.kycStatus || 'pending',
+    },
+  };
+};
+
 module.exports = {
   registerCreatorService,
   loginCreatorService,
   googleAuthCreatorService,
+  sendWhatsAppOtpCreatorService,
+  verifyWhatsAppOtpCreatorService,
+  truecallerAuthCreatorService,
   getCreatorProfileService,
   updateCreatorProfileService,
   getCreatorBankAccountService,

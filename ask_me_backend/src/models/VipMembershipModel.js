@@ -72,6 +72,18 @@ const VipMembership = sequelize.define(
       defaultValue: "active",
     },
 
+    duration: {
+      type: DataTypes.STRING(50),
+      allowNull: false,
+      defaultValue: "30 Days",
+    },
+
+    interval: {
+      type: DataTypes.STRING(50),
+      allowNull: false,
+      defaultValue: "Month",
+    },
+
     transaction_id: {
       type: DataTypes.STRING(100),
       allowNull: true,

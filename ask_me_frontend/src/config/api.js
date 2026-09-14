@@ -14,6 +14,9 @@ export const API_ENDPOINTS = {
     REGISTER: `${API_BASE_URL}/creators/register`,
     LOGIN: `${API_BASE_URL}/creators/login`,
     GOOGLE_AUTH: `${API_BASE_URL}/creators/google-auth`,
+    WHATSAPP_SEND_OTP: `${API_BASE_URL}/creators/whatsapp-otp/send`,
+    WHATSAPP_VERIFY_OTP: `${API_BASE_URL}/creators/whatsapp-otp/verify`,
+    TRUECALLER_AUTH: `${API_BASE_URL}/creators/truecaller-auth`,
     LIST: `${API_BASE_URL}/admin/creators`,
     SUBMIT_KYC: `${API_BASE_URL}/creators/kyc`,
     KYC_STATUS: `${API_BASE_URL}/creators/kyc/status`,
@@ -32,6 +35,8 @@ export const API_ENDPOINTS = {
     NOTIFICATIONS: `${API_BASE_URL}/creators/notifications`,
     DONATION_STATUS: `${API_BASE_URL}/creators/donations`,
     VERIFY_UPI: `${API_BASE_URL}/creators/verify-upi`,
+    VERIFY_PAN: `${API_BASE_URL}/creators/kyc/verify-pan`,
+    VERIFY_BANK: `${API_BASE_URL}/creators/kyc/verify-bank`,
     MEMBERSHIPS_PLANS: `${API_BASE_URL}/creators/memberships/plans`,
     MEMBERSHIPS_SUBSCRIBERS: `${API_BASE_URL}/creators/memberships/subscribers`,
   },
@@ -60,6 +65,10 @@ export const API_ENDPOINTS = {
     REGISTER: `${API_BASE_URL}/viewers/register`,
     LOGIN: `${API_BASE_URL}/viewers/login`,
     GOOGLE_AUTH: `${API_BASE_URL}/viewers/google-auth`,
+    WHATSAPP_SEND_OTP: `${API_BASE_URL}/viewers/whatsapp-otp/send`,
+    WHATSAPP_VERIFY_OTP: `${API_BASE_URL}/viewers/whatsapp-otp/verify`,
+    TRUECALLER_AUTH: `${API_BASE_URL}/viewers/truecaller-auth`,
+    TRUECALLER_VIEWER_AUTH: `${API_BASE_URL}/auth/truecaller/viewer`,
     PROFILE: `${API_BASE_URL}/viewers/profile`,
     PUBLIC_LIVE_FEED: `${API_BASE_URL}/viewers/public/live-feed`,
     PUBLIC_CREATOR_PROFILE: `${API_BASE_URL}/viewers/public/creators`,
@@ -73,6 +82,23 @@ export const API_ENDPOINTS = {
     PUBLIC_PAST_STREAMS: `${API_BASE_URL}/viewers/public/past-streams`,
     PUBLIC_CATEGORIES: `${API_BASE_URL}/viewers/public/categories`,
   },
+  UPLOAD: `${API_BASE_URL}/upload`,
   KYC: `${API_BASE_URL}/admin/kyc`,
   PAYOUTS: `${API_BASE_URL}/admin/withdrawals`,
 };
+
+/**
+ * Get accessible media URL for images/documents stored in backend or external URLs
+ * @param {string} path - Upload path (e.g. /uploads/profiles/123.png) or external URL
+ * @returns {string} Complete image/file URL for preview
+ */
+export const getMediaUrl = (path) => {
+  if (!path) return '';
+  if (path.startsWith('http://') || path.startsWith('https://') || path.startsWith('data:')) {
+    return path;
+  }
+  const backendBase = SOCKET_URL || 'http://localhost:5000';
+  const cleanPath = path.startsWith('/') ? path : `/${path}`;
+  return `${backendBase}${cleanPath}`;
+};
+

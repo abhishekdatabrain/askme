@@ -105,7 +105,7 @@ export default function PlatformOperations({ activeSubTab }) {
             onClick={() => setActiveSection('profile')}
             className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
               activeSection === 'profile'
-                ? 'bg-brand-gradient text-[#0A0A0F]'
+                ? 'bg-brand-gradient text-white'
                 : 'bg-[#1C1C26] text-[#8B8B96] hover:text-white'
             }`}
           >
@@ -115,7 +115,7 @@ export default function PlatformOperations({ activeSubTab }) {
             onClick={() => setActiveSection('gateway')}
             className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
               activeSection === 'gateway'
-                ? 'bg-brand-gradient text-[#0A0A0F]'
+                ? 'bg-brand-gradient text-white'
                 : 'bg-[#1C1C26] text-[#8B8B96] hover:text-white'
             }`}
           >
@@ -125,7 +125,7 @@ export default function PlatformOperations({ activeSubTab }) {
             onClick={() => setActiveSection('platform')}
             className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
               activeSection === 'platform'
-                ? 'bg-brand-gradient text-[#0A0A0F]'
+                ? 'bg-brand-gradient text-white'
                 : 'bg-[#1C1C26] text-[#8B8B96] hover:text-white'
             }`}
           >
@@ -172,7 +172,7 @@ export default function PlatformOperations({ activeSubTab }) {
           <div className="flex justify-end">
             <button
               type="submit"
-              className="px-5 py-2 rounded-xl bg-brand-gradient text-[#0A0A0F] font-bold text-xs flex items-center gap-2"
+              className="px-5 py-2 rounded-xl bg-brand-gradient text-white font-bold text-xs flex items-center gap-2"
             >
               <Save className="h-4 w-4" /> Save Profile
             </button>

@@ -162,7 +162,7 @@ export default function WithdrawalsManager({ activeSubTab }) {
       {/* Header */}
       <div className="border-b border-[#1C1C26] pb-4">
         <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded-xl bg-[#FFD60A] text-[#0A0A0F] font-bold shadow-md glow-pay">
+          <div className="p-2.5 rounded-xl bg-[#FFD60A] text-white font-bold shadow-md glow-pay">
             <Wallet className="h-5 w-5" />
           </div>
           <div>
@@ -243,14 +243,14 @@ export default function WithdrawalsManager({ activeSubTab }) {
                         <>
                           <button
                             onClick={() => handleUpdateStatusCall(w.id, 'approved')}
-                            className="px-2.5 py-1 rounded-lg bg-[#00F5D4] text-[#0A0A0F] font-bold text-[11px] hover:opacity-90 transition"
+                            className="px-2.5 py-1 rounded-lg bg-[#00F5D4] text-white font-bold text-[11px] hover:opacity-90 transition"
                           >
                             Approve
                           </button>
 
                           <button
                             onClick={() => handleUpdateStatusCall(w.id, 'processing')}
-                            className="px-2.5 py-1 rounded-lg bg-[#FFD60A] text-[#0A0A0F] font-bold text-[11px] hover:opacity-90 transition"
+                            className="px-2.5 py-1 rounded-lg bg-[#FFD60A] text-white font-bold text-[11px] hover:opacity-90 transition"
                           >
                             Set Processing
                           </button>
@@ -273,7 +273,7 @@ export default function WithdrawalsManager({ activeSubTab }) {
                           {w.status === 'approved' && (
                             <button
                               onClick={() => handleUpdateStatusCall(w.id, 'processing')}
-                              className="px-2.5 py-1 rounded-lg bg-[#FFD60A] text-[#0A0A0F] font-bold text-[11px] hover:opacity-90 transition"
+                              className="px-2.5 py-1 rounded-lg bg-[#FFD60A] text-white font-bold text-[11px] hover:opacity-90 transition"
                             >
                               Set Processing
                             </button>
@@ -284,7 +284,7 @@ export default function WithdrawalsManager({ activeSubTab }) {
                               setCompleteModalItem(w);
                               setTransactionRefInput('');
                             }}
-                            className="px-2.5 py-1 rounded-lg bg-brand-gradient text-[#0A0A0F] font-black text-[11px] shadow-sm hover:opacity-90 transition flex items-center gap-1"
+                            className="px-2.5 py-1 rounded-lg bg-brand-gradient text-white font-black text-[11px] shadow-sm hover:opacity-90 transition flex items-center gap-1"
                           >
                             <CheckCircle2 className="h-3 w-3" /> Complete Payment
                           </button>
@@ -408,7 +408,7 @@ export default function WithdrawalsManager({ activeSubTab }) {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="px-5 py-2 rounded-xl bg-brand-gradient text-[#0A0A0F] text-xs font-extrabold shadow-md glow-teal hover:opacity-95 flex items-center gap-1.5"
+                  className="px-5 py-2 rounded-xl bg-brand-gradient text-white text-xs font-extrabold shadow-md glow-teal hover:opacity-95 flex items-center gap-1.5"
                 >
                   {isSubmitting ? <RefreshCw className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />} Mark Payment Completed
                 </button>

@@ -38,27 +38,41 @@ class WalletService {
       rows.map(async (w) => {
         const creator = w.creator || {};
         const creatorId = creator.id || w.creator_id;
-        let gross = parseFloat(w.total_earnings || 0);
         const available = parseFloat(w.available_balance || 0);
         const withdrawn = parseFloat(w.withdrawn_amount || 0);
+        const rawPending = parseFloat(w.pending_balance || 0);
 
-        // If total_earnings is 0, check if there are actual successful donations for THIS specific creator
-        if (gross === 0 && creatorId) {
-          try {
-            const { Donation } = require('../../models');
-            const creatorDonations = (await Donation.sum('amount', {
-              where: { creator_id: creatorId, payment_status: 'success' }
-            })) || 0;
-            gross = parseFloat(creatorDonations);
-          } catch (err) {
-            gross = 0;
+        let gross = 0;
+        try {
+          const { Donation } = require('../../models');
+          const creatorDonations = (await Donation.sum('amount', {
+            where: { creator_id: creatorId, payment_status: 'success' }
+          })) || 0;
+          gross = parseFloat(creatorDonations);
+        } catch (err) {
+          gross = 0;
+        }
+
+        // If no donation rows, infer gross raised from stored net earnings/pending (storedNet = gross * 0.85)
+        if (gross === 0) {
+          const storedEarnings = parseFloat(w.total_earnings || 0);
+          const refNet = storedEarnings > 0 ? storedEarnings : rawPending;
+          if (refNet > 0) {
+            gross = Math.round((refNet / 0.85) * 100) / 100;
           }
         }
 
         const platformCut = calculateCommission(gross, commPercent);
         const creatorNet = calculateCreatorShare(gross, commPercent);
         const cleanUsername = String(creator.username || `creator_${creatorId}`).replace(/^@+/, '');
-        const pending = parseFloat(w.pending_balance || 0);
+        const isApproved = String(creator.kyc_status || '').toLowerCase() === 'approved';
+
+        // Available & Pending balances represent actual net wallet balance (85% net creator share)
+        let pending = !isApproved ? (rawPending > 0 && rawPending <= creatorNet ? rawPending : creatorNet - withdrawn) : 0;
+        let avail = isApproved ? (available > 0 && available <= creatorNet ? available : creatorNet - withdrawn) : 0;
+
+        if (pending < 0) pending = 0;
+        if (avail < 0) avail = 0;
 
         return {
           creatorId,
@@ -70,9 +84,9 @@ class WalletService {
           netCreatorShare: creatorNet,
           withdrawnTotal: withdrawn,
           withdrawnAmount: withdrawn,
-          availableBalance: available,
+          availableBalance: avail,
           pendingBalance: pending,
-          settlementStatus: String(creator.kyc_status || '').toLowerCase() === 'approved' ? 'Settled' : '',
+          settlementStatus: isApproved ? 'Settled' : '',
         };
       })
     );

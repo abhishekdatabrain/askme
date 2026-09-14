@@ -1,8 +1,9 @@
 const crypto = require("crypto");
 const sequelize = require("../../config/database");
-const { DonationSession, Donation, PaymentTransaction, PaymentWebhook, Wallet, WalletTransaction, VipMembership } = require("../../models");
+const { DonationSession, Donation, PaymentTransaction, PaymentWebhook, Wallet, WalletTransaction, VipMembership, Creator } = require("../../models");
 const { getCreatorNetSharePercent } = require("../../config/commissionConfig");
 const { createCreatorNotificationService } = require("./notificationService");
+const { sendAskListedWhatsApp, sendNewAskReceivedWhatsApp } = require("../../services/whatsappService");
 const { getIO } = require("../../config/socket");
 const { normalizeMoney, subtractMoney } = require("../../utils/money");
 
@@ -183,6 +184,32 @@ const processViewerDonationService = async (data, authenticatedUser = null) => {
     await transaction.commit();
 
     // 6. Notifications & Socket Events (post-transaction commit)
+    (async () => {
+      try {
+        const creatorObj = await Creator.findByPk(targetCreatorId);
+        const creatorName = creatorObj?.full_name || creatorObj?.username || "Creator";
+        const creatorMobile = creatorObj?.mobile;
+        console.log("CreatorName in chat", viewerMobile);
+        return
+        if (viewerMobile) {
+          sendAskListedWhatsApp({
+            viewerPhone: viewerMobile,
+            creatorName: creatorName,
+            sessionCode: session?.session_code || sessionCode
+          }).catch(err => console.error('[WhatsApp Service] Error sending ask_listed:', err.message));
+        }
+
+        if (creatorMobile) {
+          sendNewAskReceivedWhatsApp({
+            creatorPhone: creatorMobile,
+            viewerName: donorDisplayName
+          }).catch(err => console.error('[WhatsApp Service] Error sending new_ask_received:', err.message));
+        }
+      } catch (err) {
+        console.error('[WhatsApp Service] Error fetching creator details for notification:', err.message);
+      }
+    })();
+
     createCreatorNotificationService({
       creatorId: targetCreatorId,
       type: "payment_received",

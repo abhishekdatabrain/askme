@@ -275,7 +275,7 @@ export default function ViewerPastStreamsPage() {
               ) : (
                 <Link
                   href="/viewers/live-sessions"
-                  className="inline-block px-5 py-2.5 rounded-2xl bg-brand-gradient text-[#0A0A0F] font-black text-xs shadow-md glow-teal hover:scale-105 transition"
+                  className="inline-block px-5 py-2.5 rounded-2xl bg-brand-gradient text-white font-black text-xs shadow-md glow-teal hover:scale-105 transition"
                 >
                   Browse Live Sessions →
                 </Link>
@@ -338,7 +338,7 @@ export default function ViewerPastStreamsPage() {
                     <div className="shrink-0 flex items-center gap-3 justify-end">
                       <Link
                         href={`/viewers/past-streams/${s.id}`}
-                        className="px-4 py-2 rounded-xl bg-brand-gradient text-[#0A0A0F] font-black text-xs shadow-md glow-teal hover:scale-105 transition flex items-center gap-1.5 whitespace-nowrap"
+                        className="px-4 py-2 rounded-xl bg-brand-gradient text-white font-black text-xs shadow-md glow-teal hover:scale-105 transition flex items-center gap-1.5 whitespace-nowrap"
                       >
                         View Questions <ArrowRight className="h-3.5 w-3.5" />
                       </Link>
@@ -400,7 +400,7 @@ export default function ViewerPastStreamsPage() {
                           disabled={isLoading}
                           className={`h-8 min-w-[32px] px-2.5 rounded-xl text-xs font-black transition ${
                             isCurrent
-                              ? 'bg-brand-gradient text-[#0A0A0F] shadow-sm glow-teal font-black scale-105'
+                              ? 'bg-brand-gradient text-white shadow-sm glow-teal font-black scale-105'
                               : theme === 'light'
                                 ? 'bg-[#F8F9FA] border border-[#E9ECEF] text-[#495057] hover:bg-[#E9ECEF]'
                                 : 'bg-[#0A0A0F] border border-[#1C1C26] text-[#8B8B96] hover:text-white hover:bg-[#1C1C26]'

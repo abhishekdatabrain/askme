@@ -7,18 +7,6 @@ class CreatorRepository {
       limit,
       offset,
       order,
-      attributes: [
-        'id',
-        'full_name',
-        'username',
-        'email',
-        'mobile',
-        'country',
-        'status',
-        'profile_image',
-        'created_at',
-        'updated_at',
-      ],
       include: [
         {
           model: CreatorProfile,
@@ -45,18 +33,6 @@ class CreatorRepository {
 
   async findById(id, { transaction } = {}) {
     return await Creator.findByPk(id, {
-      attributes: [
-        'id',
-        'full_name',
-        'username',
-        'email',
-        'mobile',
-        'country',
-        'status',
-        'profile_image',
-        'created_at',
-        'updated_at',
-      ],
       include: [
         { model: CreatorProfile, as: 'profile', required: false },
         { model: Wallet, as: 'wallet', required: false },

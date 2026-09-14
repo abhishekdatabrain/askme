@@ -19,7 +19,10 @@ import {
   Sparkles,
   Check,
   X,
-  Tv
+  Tv,
+  ShieldAlert,
+  Volume2,
+  Search
 } from 'lucide-react';
 import { API_ENDPOINTS } from '@/config/api';
 import { getCreatorToken, getCreatorUser } from '@/utils/cookies';
@@ -33,6 +36,7 @@ export default function CreatorNotificationsPage() {
   const [broadcastingId, setBroadcastingId] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [creator, setCreator] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Theme State
   const [theme, setTheme] = useState('dark');
@@ -75,11 +79,12 @@ export default function CreatorNotificationsPage() {
     rejected: 0,
   });
 
-  const fetchNotifications = async (f = activeFilter) => {
+  const fetchNotifications = async (f = activeFilter, s = searchQuery) => {
     try {
       setIsLoading(true);
       const creatorId = creator?.id || getCreatorUser()?.id || 1;
-      const res = await fetch(`${API_ENDPOINTS.CREATORS.OVERLAY_ALERTS}/${creatorId}?filter=${f}`);
+      const searchParam = s && s.trim() ? `&search=${encodeURIComponent(s.trim())}` : '';
+      const res = await fetch(`${API_ENDPOINTS.CREATORS.OVERLAY_ALERTS}/${creatorId}?filter=${f}${searchParam}`);
       const data = await res.json();
       if (res.ok && data.status === 'success' && data.data) {
         setNotifications(data.data.alerts || []);
@@ -107,15 +112,36 @@ export default function CreatorNotificationsPage() {
 
   useEffect(() => {
     if (creator?.id) {
-      fetchNotifications(activeFilter);
+      const timer = setTimeout(() => {
+        fetchNotifications(activeFilter, searchQuery);
+      }, 300);
+
+      try {
+        const socket = getSocket();
+        if (socket) {
+          socket.emit('join_creator_room', { creatorId: creator.id });
+        }
+      } catch (e) { }
+
+      return () => clearTimeout(timer);
     }
-  }, [activeFilter, creator]);
+  }, [activeFilter, searchQuery, creator]);
 
   // Action Handler 1: Tick Button -> Update DB status to 'read' & Remove from UI Row
   const handleMarkAnsweredAndRemoveRow = async (id, pos) => {
     if (pos !== 1) {
       toast.error('Only the current queue item (#1 in turn) can be answered!', 'Queue Restriction');
       return;
+    }
+
+    if (String(id) === broadcastingId) {
+      setBroadcastingId(null);
+      try {
+        const socket = getSocket();
+        if (socket && creator?.id) {
+          socket.emit('clear_overlay_alert', { creatorId: creator.id });
+        }
+      } catch (e) { }
     }
 
     setNotifications(prev => prev.filter(item => String(item.id || item.donationUuid) !== String(id)));
@@ -153,6 +179,16 @@ export default function CreatorNotificationsPage() {
       return;
     }
 
+    if (String(id) === broadcastingId) {
+      setBroadcastingId(null);
+      try {
+        const socket = getSocket();
+        if (socket && creator?.id) {
+          socket.emit('clear_overlay_alert', { creatorId: creator.id });
+        }
+      } catch (e) { }
+    }
+
     setNotifications(prev => prev.filter(item => String(item.id || item.donationUuid) !== String(id)));
     toast.error('Question cancelled!', 'Cancelled');
 
@@ -181,53 +217,41 @@ export default function CreatorNotificationsPage() {
     } catch (e) { }
   };
 
-  // Action Handler 3: Broadcast / Remove from Stream Overlay
-  // const handleToggleBroadcast = async (item, enable) => {
-  //   const itemKey = String(item.id || item.donationUuid);
+  // Action Handler 3: Broadcast / Remove from Stream Overlay (Without marking question as Answered)
+  const handleToggleBroadcast = async (item, enable) => {
+    const itemKey = String(item.id || item.donationUuid);
 
-  //   if (enable) {
-  //     setBroadcastingId(itemKey);
-  //     toast.success('Question broadcasted to stream overlay!', 'Broadcast Active');
+    if (enable) {
+      setBroadcastingId(itemKey);
+      toast.success('Question broadcasted to stream overlay!', 'Broadcast Active');
 
-  //     try {
-  //       const token = getCreatorToken();
-  //       await fetch(`${API_ENDPOINTS.CREATORS.DONATION_STATUS}/${itemKey}/status`, {
-  //         method: 'PUT',
-  //         headers: {
-  //           'Content-Type': 'application/json',
-  //           ...(token ? { Authorization: `Bearer ${token}` } : {}),
-  //         },
-  //         body: JSON.stringify({ status: 'read' }),
-  //       });
-  //     } catch (e) { }
+      try {
+        const socket = getSocket();
+        if (socket && creator?.id) {
+          socket.emit('show_overlay_alert', {
+            id: item.id || item.donationUuid,
+            donationUuid: item.donationUuid,
+            viewerName: item.viewerName,
+            amount: item.amount,
+            message: item.message,
+            paidAt: item.paidAt,
+            isVip: !!item.isVip,
+            creatorId: creator.id,
+          });
+        }
+      } catch (e) { }
+    } else {
+      setBroadcastingId(null);
+      toast.info('Question removed from stream overlay', 'Overlay Cleared');
 
-  //     try {
-  //       const socket = getSocket();
-  //       if (socket && creator?.id) {
-  //         socket.emit('show_overlay_alert', {
-  //           id: item.id || item.donationUuid,
-  //           donationUuid: item.donationUuid,
-  //           viewerName: item.viewerName,
-  //           amount: item.amount,
-  //           message: item.message,
-  //           paidAt: item.paidAt,
-  //           isVip: !!item.isVip,
-  //           creatorId: creator.id,
-  //         });
-  //       }
-  //     } catch (e) { }
-  //   } else {
-  //     setBroadcastingId(null);
-  //     toast.info('Question removed from stream overlay', 'Overlay Cleared');
-
-  //     try {
-  //       const socket = getSocket();
-  //       if (socket && creator?.id) {
-  //         socket.emit('clear_overlay_alert', { creatorId: creator.id });
-  //       }
-  //     } catch (e) { }
-  //   }
-  // };
+      try {
+        const socket = getSocket();
+        if (socket && creator?.id) {
+          socket.emit('clear_overlay_alert', { creatorId: creator.id });
+        }
+      } catch (e) { }
+    }
+  };
 
   return (
     <>
@@ -307,43 +331,70 @@ export default function CreatorNotificationsPage() {
               </div>
             </div>
 
-            {/* DYNAMIC FILTER TABS BAR (All, Superchat, Members, Answered, Rejected) */}
-            <div className={`p-2 rounded-2xl border flex items-center gap-2 overflow-x-auto no-scrollbar ${theme === 'light' ? 'bg-white border-[#E9ECEF]' : 'bg-[#13131A] border-[#1C1C26]'}`}>
-              {[
-                { id: 'all', label: 'All', icon: null },
-                { id: 'superchat', label: 'Superchat', icon: '💬' },
-                { id: 'members', label: 'Members', icon: '👑' },
-                { id: 'answered', label: 'Answered', icon: null },
-                { id: 'rejected', label: 'Rejected', icon: null },
-              ].map(tab => {
-                const count = filterCounts[tab.id] !== undefined ? filterCounts[tab.id] : 0;
-                const isActive = activeFilter === tab.id;
-                return (
+            {/* DYNAMIC FILTER TABS BAR & VIEWER SEARCH BAR */}
+            <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+              <div className={`p-2 rounded-2xl border flex items-center gap-2 overflow-x-auto no-scrollbar flex-1 ${theme === 'light' ? 'bg-white border-[#E9ECEF]' : 'bg-[#13131A] border-[#1C1C26]'}`}>
+                {[
+                  { id: 'all', label: 'All', icon: null },
+                  { id: 'superchat', label: 'Superchat', icon: '💬' },
+                  { id: 'members', label: 'Members', icon: '👑' },
+                  { id: 'answered', label: 'Answered', icon: null },
+                  { id: 'rejected', label: 'Rejected', icon: null },
+                ].map(tab => {
+                  const count = filterCounts[tab.id] !== undefined ? filterCounts[tab.id] : 0;
+                  const isActive = activeFilter === tab.id;
+                  return (
+                    <button
+                      key={tab.id}
+                      type="button"
+                      onClick={() => setActiveFilter(tab.id)}
+                      className={`px-3.5 py-1.5 rounded-xl text-xs font-extrabold shrink-0 transition flex items-center gap-1.5 ${isActive
+                        ? 'bg-[#FF5722] text-white shadow-md glow-orange'
+                        : theme === 'light'
+                          ? 'bg-[#F8F9FA] text-[#495057] border border-[#DEE2E6] hover:bg-[#E9ECEF]'
+                          : 'bg-[#1C1C26] text-[#8B8B96] border border-[#2A2A3A] hover:text-white'
+                        }`}
+                    >
+                      {tab.icon && <span>{tab.icon}</span>}
+                      <span>{tab.label}</span>
+                      <span className={`px-1.5 py-0.5 rounded-full text-[10px] ${isActive ? 'bg-black/30 text-white' : 'bg-black/40 text-[#00F5D4]'
+                        }`}>
+                        ({count})
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* SEARCH BAR BY VIEWER NAME */}
+              <div className="relative min-w-[240px] md:w-72">
+                <Search className={`absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 ${theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'}`} />
+                <input
+                  type="text"
+                  placeholder="Search viewer name..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className={`w-full pl-10 pr-9 py-2 rounded-2xl text-xs font-semibold focus:outline-none transition border ${theme === 'light'
+                    ? 'bg-white border-[#E9ECEF] text-[#1A1D20] placeholder-[#6C757D] focus:border-[#00F5D4]'
+                    : 'bg-[#13131A] border-[#1C1C26] text-white placeholder-[#8B8B96] focus:border-[#00F5D4]'
+                  }`}
+                />
+                {searchQuery && (
                   <button
-                    key={tab.id}
                     type="button"
-                    onClick={() => setActiveFilter(tab.id)}
-                    className={`px-3.5 py-1.5 rounded-xl text-xs font-extrabold shrink-0 transition flex items-center gap-1.5 ${isActive
-                      ? 'bg-[#FF5722] text-white shadow-md glow-orange'
-                      : theme === 'light'
-                        ? 'bg-[#F8F9FA] text-[#495057] border border-[#DEE2E6] hover:bg-[#E9ECEF]'
-                        : 'bg-[#1C1C26] text-[#8B8B96] border border-[#2A2A3A] hover:text-white'
-                      }`}
+                    onClick={() => setSearchQuery('')}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[#8B8B96] hover:text-white transition p-1 cursor-pointer"
+                    title="Clear search"
                   >
-                    {tab.icon && <span>{tab.icon}</span>}
-                    <span>{tab.label}</span>
-                    <span className={`px-1.5 py-0.5 rounded-full text-[10px] ${isActive ? 'bg-black/30 text-white' : 'bg-black/40 text-[#00F5D4]'
-                      }`}>
-                      ({count})
-                    </span>
+                    <X className="h-3.5 w-3.5" />
                   </button>
-                );
-              })}
+                )}
+              </div>
             </div>
 
             <h3 className={`font-heading font-bold text-base flex items-center gap-2 ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'
               }`}>
-              <Heart className="h-4 w-4 text-[#00E676]" /> Recent Viewer Donations & Questions
+              <Heart className="h-4 w-4 text-[#00E676]" /> Recent Viewer Paid & Questions
             </h3>
 
             {isLoading ? (
@@ -352,14 +403,34 @@ export default function CreatorNotificationsPage() {
                 <p>Fetching live notifications...</p>
               </div>
             ) : notifications.length === 0 ? (
-              <div className={`p-8 rounded-2xl border text-center space-y-2 ${theme === 'light' ? 'bg-white border-[#E9ECEF]' : 'bg-[#13131A] border-[#1C1C26]'
-                }`}>
-                <Sparkles className="h-10 w-10 text-[#00F5D4] mx-auto stroke-1" />
-                <h4 className={`font-bold text-sm ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'
-                  }`}>All Queue Questions Answered! 🎉</h4>
-                <p className={`text-xs ${theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'
-                  }`}>Database records are saved safely. New viewer donations will arrive here in real-time.</p>
-              </div>
+              searchQuery.trim() ? (
+                <div className={`p-8 rounded-2xl border text-center space-y-3 ${theme === 'light' ? 'bg-white border-[#E9ECEF]' : 'bg-[#13131A] border-[#1C1C26]'}`}>
+                  <Search className="h-8 w-8 text-[#8B8B96] mx-auto opacity-60" />
+                  <h4 className={`font-bold text-sm ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'}`}>
+                    No Viewer Found Matching "{searchQuery}"
+                  </h4>
+                  <p className={`text-xs ${theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'}`}>
+                    Try searching with a different viewer name or keyword.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setSearchQuery('')}
+                    className="px-3.5 py-1.5 rounded-xl bg-[#00F5D4]/10 border border-[#00F5D4]/30 text-[#00F5D4] text-xs font-bold hover:bg-[#00F5D4]/20 transition"
+                  >
+                    Clear Search Filter
+                  </button>
+                </div>
+              ) : (
+                <div className={`p-8 rounded-2xl border text-center space-y-2 ${theme === 'light' ? 'bg-white border-[#E9ECEF]' : 'bg-[#13131A] border-[#1C1C26]'}`}>
+                  <Sparkles className="h-10 w-10 text-[#00F5D4] mx-auto stroke-1" />
+                  <h4 className={`font-bold text-sm ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'}`}>
+                    All Queue Questions Answered! 🎉
+                  </h4>
+                  <p className={`text-xs ${theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'}`}>
+                    Database records are saved safely. New viewer donations will arrive here in real-time.
+                  </p>
+                </div>
+              )
             ) : (
               [...notifications]
                 .sort((a, b) => {
@@ -371,7 +442,8 @@ export default function CreatorNotificationsPage() {
                 .map((n, index) => {
                   const itemKey = String(n.id || n.donationUuid);
                   const queuePos = index + 1;
-                  const isCurrentTurn = queuePos === 1;
+                  const isPendingOrActive = activeFilter !== 'rejected' && activeFilter !== 'answered' && n.status !== 'read' && n.status !== 'answered' && n.status !== 'cancelled' && n.status !== 'rejected';
+                  const isCurrentTurn = isPendingOrActive && queuePos === 1;
                   const isVipQuestion = !!n.isVip;
 
                   return (
@@ -393,7 +465,7 @@ export default function CreatorNotificationsPage() {
                         <div className="flex items-center gap-2.5 flex-wrap">
                           {/* Queue Position Badge */}
                           <span className={`px-2.5 py-1 rounded-xl text-xs font-black flex items-center gap-1 ${isCurrentTurn
-                            ? 'bg-[#00E676] text-[#0A0A0F] glow-teal'
+                            ? 'bg-[#00E676] text-white glow-teal'
                             : 'bg-[#00F5D4]/10 text-[#00F5D4] border border-[#00F5D4]/30'
                             }`}>
                             #{queuePos} {isCurrentTurn ? 'CURRENT TURN' : ''}
@@ -405,53 +477,28 @@ export default function CreatorNotificationsPage() {
                           <div>
                             <h4 className={`font-bold text-xs ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'
                               }`}>
-                              <strong className="text-[#00F5D4]">{n.viewerName}</strong> donated <span className="text-[#00E676] font-black text-sm">₹{n.amount?.toFixed(2)}</span>
+                              <strong className="text-[#00F5D4]">{n.viewerName}</strong> paid <span className="text-[#00E676] font-black text-sm">₹{n.amount?.toFixed(2)}</span>
                             </h4>
                             {/* <span className={`text-[10px] ${theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'
                               }`}>ID: {n.donationUuid}</span> */}
                           </div>
                         </div>
-                        {/* VIP Member Priority Question Badge */}
-                        {isVipQuestion && (
-                          <span className="px-2.5 py-1 rounded-xl bg-gradient-to-r from-[#FFD60A] to-[#FF9500] text-[#0A0A0F] text-xs font-black flex items-center gap-1 shadow-md animate-pulse">
-                            👑 VIP Question
-                          </span>
-                        )}
-                        {/* Right Action Bar: Timestamp, Tick (Answer) & Cross (Reject) Buttons for Current Turn Only */}
                         <div className="flex items-center gap-2">
-                          <span className={`text-[10px] font-mono mr-1 ${theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'
-                            }`}>
+                          <span className={`text-[10px] font-mono mr-1 ${theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'}`}>
                             {n.paidAt && !isNaN(new Date(n.paidAt).getTime())
                               ? new Date(n.paidAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true })
                               : 'Just now'}
                           </span>
 
-                          {isCurrentTurn ? (
-                            <>
-                              {/* TICK BUTTON (Approve / Mark Answered & Remove Row) */}
-                              <button
-                                type="button"
-                                onClick={() => handleMarkAnsweredAndRemoveRow(itemKey, queuePos)}
-                                className="px-3 py-1.5 rounded-xl bg-[#00E676]/15 border border-[#00E676]/40 text-[#00E676] hover:bg-[#00E676] hover:text-[#0A0A0F] hover:scale-105 transition-all shadow-md glow-teal flex items-center gap-1.5"
-                                title="Answer current turn question & remove from row"
-                              >
-                                <CheckCircle2 className="h-4 w-4" />
-                                {/* <span className="text-xs font-bold hidden sm:inline">Answered</span> */}
-                              </button>
+                          {/* VIP Member Priority Question Badge */}
+                          {isVipQuestion && (
+                            <span className="px-2.5 py-1 rounded-xl bg-gradient-to-r from-[#FFD60A] to-[#FF9500] text-white text-xs font-black flex items-center gap-1 shadow-md animate-pulse">
+                              👑 VIP Question
+                            </span>
+                          )}
 
-                              {/* CROSS BUTTON (Reject & Remove Row) */}
-                              <button
-                                type="button"
-                                onClick={() => handleRejectAndRemoveRow(itemKey, queuePos)}
-                                className="px-3 py-1.5 rounded-xl bg-[#FF3D71]/15 border border-[#FF3D71]/40 text-[#FF3D71] hover:bg-[#FF3D71] hover:text-white hover:scale-105 transition-all shadow-md glow-red flex items-center gap-1.5"
-                                title="Reject current turn question & remove from row"
-                              >
-                                <XCircle className="h-4 w-4" />
-                                {/* <span className="text-xs font-bold hidden sm:inline">Reject</span> */}
-                              </button>
-                            </>
-                          ) : (
-                            /* Waiting in Queue Badge for non-#1 items */
+                          {/* Waiting in Queue Badge for non-#1 items */}
+                          {!isCurrentTurn && isPendingOrActive && (
                             <span className={`px-3 py-1.5 rounded-xl border text-xs font-semibold flex items-center gap-1.5 ${theme === 'light'
                               ? 'bg-[#F8F9FA] border-[#E9ECEF] text-[#6C757D]'
                               : 'bg-[#1C1C26] border-[#1C1C26] text-[#8B8B96]'
@@ -476,11 +523,60 @@ export default function CreatorNotificationsPage() {
                         </div>
                       )}
 
+                      {/* ACTION BUTTONS BAR: Broadcast to Stream | Skip Question (Inappropriate) | Answer Question (Auto-Broadcast) */}
+                      {isCurrentTurn && (
+                        <div className="pt-3 border-t border-[#1C1C26]/80 flex flex-wrap items-center justify-end gap-2.5">
+                          {/* 1. Broadcast to Stream Button */}
+                          <button
+                            type="button"
+                            onClick={() => handleToggleBroadcast(n, broadcastingId !== itemKey)}
+                            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all shadow-md flex items-center gap-2 border ${broadcastingId === itemKey
+                              ? 'bg-[#FF3D71] text-white border-[#FF3D71] animate-pulse'
+                              : theme === 'light'
+                                ? 'bg-[#F1F3F5] text-[#212529] border-[#DEE2E6] hover:bg-[#E9ECEF]'
+                                : 'bg-[#1C1C26] text-white border-[#2A2A3A] hover:bg-[#252533]'
+                              }`}
+                          >
+                            <Tv className="h-4 w-4 text-[#00F5D4]" />
+                            <span>{broadcastingId === itemKey ? 'Live on Stream (Stop)' : 'Broadcast to Stream'}</span>
+                          </button>
+
+                          {/* 2. Skip Question (Inappropriate) Button */}
+                          <button
+                            type="button"
+                            onClick={() => handleRejectAndRemoveRow(itemKey, queuePos)}
+                            className="px-3.5 py-2 rounded-xl text-xs font-bold transition-all shadow-md flex items-center gap-2 border bg-[#FF3D71] text-white border-[#FF3D71] hover:bg-[#E03563]"
+                          >
+                            <ShieldAlert className="h-4 w-4 text-white" />
+                            <span>Skip Question (Inappropriate)</span>
+                          </button>
+
+                          {/* 3. Answer Question (Auto-Broadcast) Button */}
+                          <button
+                            type="button"
+                            onClick={() => handleMarkAnsweredAndRemoveRow(itemKey, queuePos)}
+                            className="px-4 py-2 rounded-xl bg-[#00E676] hover:bg-[#00C853] text-white text-xs font-black transition-all shadow-lg glow-teal flex items-center gap-2"
+                          >
+                            <Volume2 className="h-4 w-4 text-white" />
+                            <span>Answer Question (Auto-Broadcast)</span>
+                          </button>
+                        </div>
+                      )}
+
                       {/* Accepted / Answered badge */}
-                      {n.status === 'read' && (
+                      {(n.status === 'read' || n.status === 'answered' || activeFilter === 'answered') && (
                         <div className="pt-2.5 border-t border-[#1C1C26]/60 flex justify-end">
                           <span className="px-3 py-1.5 rounded-full bg-[#00E676]/15 text-[#00E676] border border-[#00E676]/30 text-xs font-bold flex items-center gap-1.5">
                             <CheckCircle2 className="h-4 w-4" /> Accepted & Answered
+                          </span>
+                        </div>
+                      )}
+
+                      {/* Skipped / Rejected badge */}
+                      {(n.status === 'cancelled' || n.status === 'rejected' || activeFilter === 'rejected') && (
+                        <div className="pt-2.5 border-t border-[#1C1C26]/60 flex justify-end">
+                          <span className="px-3 py-1.5 rounded-full bg-[#FF3D71]/15 text-[#FF3D71] border border-[#FF3D71]/30 text-xs font-bold flex items-center gap-1.5">
+                            <XCircle className="h-4 w-4" /> Skipped / Rejected (Inappropriate)
                           </span>
                         </div>
                       )}

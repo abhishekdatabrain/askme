@@ -191,7 +191,7 @@ export default function AdminNotifications() {
             onClick={() => setFilter(t)}
             className={`px-4 py-2 text-xs font-bold rounded-xl capitalize transition whitespace-nowrap ${
               filter === t
-                ? 'bg-brand-gradient text-[#0A0A0F] shadow-lg shadow-[#00F5D4]/20'
+                ? 'bg-brand-gradient text-white shadow-lg shadow-[#00F5D4]/20'
                 : 'bg-[#13131A] text-[#8B8B96] hover:text-white border border-[#1C1C26]'
             }`}
           >

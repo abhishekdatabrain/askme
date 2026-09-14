@@ -258,7 +258,7 @@ export default function CreatorWalletPage() {
 
             <Link
               href="/creators/withdrawals"
-              className="px-4 py-2 rounded-xl bg-brand-gradient text-[#0A0A0F] text-xs font-black shadow-md glow-teal hover:opacity-95 transition flex items-center gap-1.5 shrink-0"
+              className="px-4 py-2 rounded-xl bg-brand-gradient text-white text-xs font-black shadow-md glow-teal hover:opacity-95 transition flex items-center gap-1.5 shrink-0"
             >
               <ArrowUpRight className="h-4 w-4" /> Go to Payout Withdrawal
             </Link>
@@ -343,7 +343,7 @@ export default function CreatorWalletPage() {
                 <button
                   onClick={() => setActiveTab('ledger')}
                   className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${activeTab === 'ledger'
-                    ? 'bg-brand-gradient text-[#0A0A0F] shadow-md glow-teal'
+                    ? 'bg-brand-gradient text-white shadow-md glow-teal'
                     : theme === 'light' ? 'bg-[#F1F3F5] text-[#6C757D] hover:text-[#1A1D20]' : 'bg-[#0A0A0F] text-[#8B8B96] hover:text-white'
                     }`}
                 >
@@ -353,7 +353,7 @@ export default function CreatorWalletPage() {
                 <button
                   onClick={() => setActiveTab('settlements')}
                   className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${activeTab === 'settlements'
-                    ? 'bg-brand-gradient text-[#0A0A0F] shadow-md glow-teal'
+                    ? 'bg-brand-gradient text-white shadow-md glow-teal'
                     : theme === 'light' ? 'bg-[#F1F3F5] text-[#6C757D] hover:text-[#1A1D20]' : 'bg-[#0A0A0F] text-[#8B8B96] hover:text-white'
                     }`}
                 >
@@ -387,7 +387,7 @@ export default function CreatorWalletPage() {
                           key={st}
                           onClick={() => setFilterStatus(st)}
                           className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition ${filterStatus === st
-                            ? 'bg-[#00F5D4] text-[#0A0A0F]'
+                            ? 'bg-[#00F5D4] text-white'
                             : theme === 'light' ? 'text-[#6C757D] hover:text-[#1A1D20]' : 'text-[#8B8B96] hover:text-white'
                             }`}
                         >
@@ -401,7 +401,7 @@ export default function CreatorWalletPage() {
                 <button
                   onClick={handleDownloadCSV}
                   title={activeTab === 'ledger' ? 'Download Ledger CSV' : 'Download Monthly Settlements CSV'}
-                  className="px-3.5 py-1.5 rounded-xl bg-brand-gradient text-[#0A0A0F] font-bold text-xs hover:opacity-90 transition flex items-center gap-1.5 shadow-sm shrink-0"
+                  className="px-3.5 py-1.5 rounded-xl bg-brand-gradient text-white font-bold text-xs hover:opacity-90 transition flex items-center gap-1.5 shadow-sm shrink-0"
                 >
                   <Download className="h-4 w-4" />
                   <span>Download CSV</span>
@@ -538,7 +538,7 @@ export default function CreatorWalletPage() {
                                 key={pageNum}
                                 onClick={() => handlePageChange(pageNum)}
                                 className={`w-8 h-8 rounded-xl text-xs font-extrabold flex items-center justify-center transition ${pageNum === pagination.page
-                                  ? 'bg-brand-gradient text-[#0A0A0F] shadow-md glow-teal'
+                                  ? 'bg-brand-gradient text-white shadow-md glow-teal'
                                   : theme === 'light'
                                     ? 'bg-white border border-[#E9ECEF] text-[#6C757D] hover:bg-[#F8F9FA]'
                                     : 'bg-[#0A0A0F] border border-[#1C1C26] text-[#8B8B96] hover:text-white'

@@ -13,6 +13,7 @@ import {
   Eye
 } from 'lucide-react';
 import PlatformIcon from './PlatformIcon';
+import BrandedQrCode from './BrandedQrCode';
 import LiveBadge from './LiveBadge';
 import { API_ENDPOINTS } from '@/config/api';
 import { useToast } from '@/context/ToastContext';
@@ -151,8 +152,8 @@ export default function LiveSessionManagement({ activeSubTab }) {
 
             <div className="flex items-center gap-4 mb-3">
               {/* Generated QR Code Preview matching requirement #17 */}
-              <div className="p-2 bg-white rounded-xl shrink-0 cursor-pointer hover:scale-105 transition" onClick={() => setSelectedQrModal(session)}>
-                <img src={session.qrImageUrl} alt="Stream QR" className="h-16 w-16 object-contain" />
+              <div className="shrink-0 cursor-pointer hover:scale-105 transition" onClick={() => setSelectedQrModal(session)}>
+                <BrandedQrCode qrUrl={session.qrImageUrl} size="sm" showBrandHeader={false} />
               </div>
 
               <div className="flex-1 space-y-2 text-xs">
@@ -170,7 +171,7 @@ export default function LiveSessionManagement({ activeSubTab }) {
               <button
                 onClick={() => toggleSuspendSession(session.id)}
                 className={`px-3 py-1.5 rounded-xl font-bold text-xs transition flex items-center gap-1 ${session.sessionStatus === 'Suspended'
-                  ? 'bg-[#00E676] text-[#0A0A0F]'
+                  ? 'bg-[#00E676] text-white'
                   : 'bg-[#FF3D71]/10 text-[#FF3D71] hover:bg-[#FF3D71]/20 border border-[#FF3D71]/30'
                   }`}
               >
@@ -216,12 +217,12 @@ export default function LiveSessionManagement({ activeSubTab }) {
           <div className="bg-[#13131A] border border-[#1C1C26] rounded-2xl w-full max-w-xs p-6 space-y-4 text-center animate-scale-up">
             <h3 className="font-bold text-white text-base">Generated Stream QR Overlay</h3>
             <p className="text-xs text-[#8B8B96]">{selectedQrModal.creatorName} ({selectedQrModal.handle})</p>
-            <div className="p-4 bg-white rounded-2xl inline-block mx-auto">
-              <img src={selectedQrModal.qrImageUrl} alt="QR Overlay" className="h-40 w-40 object-contain mx-auto" />
+            <div className="inline-block mx-auto">
+              <BrandedQrCode qrUrl={selectedQrModal.qrImageUrl} size="lg" showBrandHeader={true} />
             </div>
             <button
               onClick={() => setSelectedQrModal(null)}
-              className="w-full py-2 rounded-xl bg-brand-gradient text-[#0A0A0F] font-bold text-xs"
+              className="w-full py-2 rounded-xl bg-brand-gradient text-white font-bold text-xs"
             >
               Close QR View
             </button>

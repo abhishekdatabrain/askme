@@ -9,9 +9,9 @@ const triggerGoLiveBroadcast = async ({ creatorId, sessionId, title, sessionCode
   if (!creatorId) return null;
 
   try {
-    // 1. Fetch Creator Info
+    // 1. Fetch Creator Info from verified single Creator record
     const creator = await Creator.findByPk(creatorId).catch(() => null);
-    const creatorName = creator?.full_name || creator?.name || "Creator Host";
+    const creatorName = creator?.display_name || creator?.full_name || creator?.username || "Creator";
 
     // 2. Fetch all followers of this creator
     const follows = await Follow.findAll({
@@ -23,6 +23,7 @@ const triggerGoLiveBroadcast = async ({ creatorId, sessionId, title, sessionCode
           attributes: ["id", "name", "email", "phone"],
         },
       ],
+      raw: true
     });
 
     if (!follows || follows.length === 0) {
@@ -34,68 +35,50 @@ const triggerGoLiveBroadcast = async ({ creatorId, sessionId, title, sessionCode
 
     const followerUserIds = [];
     const notificationRecords = [];
+    const recipients = [];
 
     follows.forEach((f) => {
-      const viewer = f.viewer;
-      if (viewer && viewer.id) {
-        followerUserIds.push(viewer.id);
+      const viewerId = f.viewer?.id || f['viewer.id'] || f.viewer_id;
+      const viewerName = f.viewer?.name || f['viewer.name'] || '';
+      const viewerPhone = f.viewer?.phone || f['viewer.phone'];
+
+      if (viewerId) {
+        followerUserIds.push(viewerId);
 
         notificationRecords.push({
-          user_id: viewer.id,
+          user_id: viewerId,
           creator_id: creatorId,
           session_id: null,
           type: "go_live",
           title: `🔴 ${creatorName} is NOW LIVE!`,
-          message: `"${title || "Live Broadcast"}" has started! Join the live stream and ask your questions.`,
+          message: `"${title}" has started! Join the live stream and ask your questions.`,
           is_read: false,
         });
       }
+
+      if (viewerPhone) {
+        recipients.push({ phone: viewerPhone, name: viewerName });
+      }
     });
 
-    // 3. Bulk Insert In-App Notifications for Followers
-    if (notificationRecords.length > 0) {
-      await Notification.bulkCreate(notificationRecords, { ignoreDuplicates: true }).catch((err) => {
-        console.warn("[Broadcast Service] Bulk insert notifications notice:", err.message);
-      });
-    }
-
-    // 4. Socket.io Live Broadcast Event
-    try {
-      const io = getIO();
-      if (io) {
-        io.emit("broadcast_go_live", {
+    // Recipients list contains ONLY followers (viewers)
+    const whatsappPromises = recipients.map(async (r) => {
+      console.log(`[Broadcast Service] Sending WhatsApp Go-Live alert to "${r.name}" (${r.phone})`);
+      try {
+        const waRes = await sendGoLiveWhatsAppAlert({
+          followerPhone: r.phone,
+          followerName: r.name,
           creatorId,
+          creator,
           creatorName,
-          sessionId,
+          sessionTitle: title,
           sessionCode,
-          title,
-          startedAt: new Date(),
         });
-      }
-    } catch (e) {}
-
-    // 5. Trigger Async WhatsApp Alerts to followers with valid phone numbers via Fonada / WhatsApp Service
-    const whatsappPromises = follows.map(async (f) => {
-      const phone = f.viewer?.phone;
-      if (phone) {
-        console.log(`[Broadcast Service] Sending WhatsApp Go-Live alert to follower "${f.viewer?.name}" (${phone})`);
-        try {
-          const waRes = await sendGoLiveWhatsAppAlert({
-            followerPhone: phone,
-            followerName: f.viewer?.name,
-            creatorName,
-            sessionTitle: title,
-            sessionCode,
-          });
-          console.log(`[Broadcast Service] WhatsApp alert dispatched to "${f.viewer?.name}" (${phone}):`, JSON.stringify(waRes));
-          return waRes;
-        } catch (err) {
-          console.warn(`[Broadcast Service] WhatsApp alert error for phone ${phone}:`, err.message);
-          return { success: false, error: err.message };
-        }
-      } else {
-        console.warn(`[Broadcast Service] Follower ID ${f.viewer?.id} has no phone number on file.`);
-        return null;
+        console.log(`[Broadcast Service] WhatsApp alert dispatched to "${r.name}" (${r.phone}):`, JSON.stringify(waRes));
+        return waRes;
+      } catch (err) {
+        console.warn(`[Broadcast Service] WhatsApp alert error for phone ${r.phone}:`, err.message);
+        return { success: false, error: err.message };
       }
     });
 

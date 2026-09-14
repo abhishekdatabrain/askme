@@ -256,7 +256,7 @@ export default function KycApprovalQueue({ activeSubTab }) {
                   <>
                     <button
                       onClick={() => handleUpdateStatus(item.creatorId || item.id, 'verified')}
-                      className="px-3 py-1.5 rounded-xl bg-[#00E676] text-[#0A0A0F] font-bold text-xs hover:opacity-90 transition"
+                      className="px-3 py-1.5 rounded-xl bg-[#00E676] text-white font-bold text-xs hover:opacity-90 transition"
                     >
                       Approve KYC
                     </button>

@@ -119,7 +119,7 @@ export default function CreatorCard({ creator, onAskQuestion, onSelectCreator })
 
           <button
             onClick={() => onAskQuestion && onAskQuestion(creator)}
-            className="flex items-center justify-center gap-1 py-1.5 px-3 rounded-xl bg-[#00F5D4] text-[#0A0A0F] text-xs font-bold shadow-md hover:bg-[#00F5D4]/90 transition-all glow-teal"
+            className="flex items-center justify-center gap-1 py-1.5 px-3 rounded-xl bg-[#00F5D4] text-white text-xs font-bold shadow-md hover:bg-[#00F5D4]/90 transition-all glow-teal"
           >
             <MessageSquare className="h-3.5 w-3.5 fill-[#0A0A0F]" />
             <span>Ask Question</span>

@@ -6,8 +6,16 @@
     --bg-card: #13131A;
     --bg-secondary: #1C1C26;
     
-    --accent-teal: #00F5D4;
-    --accent-violet: #7B2FFF;
+    --brand-primary: #EB1000;
+    --brand-hover: #CC0E00;
+    --brand-active: #CC0E00;
+    --brand-shadow: #B80D00;
+    --brand-accent: #B80D00;
+    --badge-light: #FEF2F2;
+    
+    --accent-red: #EB1000;
+    --accent-red-hover: #CC0E00;
+    --accent-red-shadow: #B80D00;
     
     --live-pink: #FF3D71;
     --pay-yellow: #FFD60A;
@@ -16,7 +24,7 @@
     --text-muted: #8B8B96;
     
     --semantic-success: #00E676;
-    --semantic-error: #FF5252;
+    --semantic-error: #EB1000;
     --semantic-warning: #FFB300;
     
     --font-heading: var(--font-space-grotesk), sans-serif;
@@ -35,24 +43,52 @@ h1, h2, h3, h4, h5, h6, .font-heading {
   font-family: var(--font-space-grotesk), sans-serif;
 }
 
-/* Brand Gradient Utilities */
+/* Brand Color & Gradient Utilities */
+.bg-brand-primary {
+  background-color: #EB1000;
+}
+
+.bg-brand-primary:hover {
+  background-color: #CC0E00;
+}
+
+.bg-brand-primary:active {
+  background-color: #CC0E00;
+}
+
 .bg-brand-gradient {
-  background: linear-gradient(135deg, #00F5D4 0%, #7B2FFF 100%);
+  background: linear-gradient(135deg, #EB1000 0%, #CC0E00 100%);
+}
+
+.bg-brand-gradient:hover {
+  background: linear-gradient(135deg, #CC0E00 0%, #B80D00 100%);
 }
 
 .text-brand-gradient {
-  background: linear-gradient(135deg, #00F5D4 0%, #7B2FFF 100%);
+  background: linear-gradient(135deg, #EB1000 0%, #B80D00 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
 .border-brand-gradient {
-  border-image: linear-gradient(135deg, #00F5D4, #7B2FFF) 1;
+  border-image: linear-gradient(135deg, #EB1000, #B80D00) 1;
 }
 
-/* Glowing Effects */
-.glow-teal {
-  box-shadow: 0 0 20px rgba(0, 245, 212, 0.25);
+/* Light Badge Utility */
+.badge-light {
+  background-color: #FEF2F2;
+  color: #EB1000;
+  border: 1px solid rgba(235, 16, 0, 0.2);
+}
+
+.badge-light:hover {
+  background-color: #FEE2E2;
+  color: #CC0E00;
+}
+
+/* Glowing & Accent Shadow Effects */
+.glow-teal, .glow-red, .glow-brand {
+  box-shadow: 0 4px 20px rgba(184, 13, 0, 0.4);
 }
 
 .glow-live {

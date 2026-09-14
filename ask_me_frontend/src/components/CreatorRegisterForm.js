@@ -4,6 +4,7 @@ import LiveBadge from './LiveBadge';
 import Link from 'next/link';
 import { useToast } from '@/context/ToastContext';
 import { setCreatorSession } from '@/utils/cookies';
+import Logo from '@/components/Logo';
 
 import {
   User,
@@ -251,9 +252,7 @@ export default function CreatorRegisterForm({ onClose, onComplete }) {
         {/* Header Branding */}
         <div className="text-center space-y-2">
           <div className="inline-flex items-center gap-2">
-            <div className="h-8 w-8 rounded-xl bg-brand-gradient flex items-center justify-center text-[#0A0A0F] font-black text-lg shadow-md glow-teal">
-              a
-            </div>
+            <Logo size="sm" />
             <span className="font-heading font-black text-2xl text-white">AskMe <span className="text-brand-gradient">PRO</span></span>
           </div>
           <h2 className="font-heading font-bold text-lg text-white mt-1">Creator Registration</h2>
@@ -273,7 +272,7 @@ export default function CreatorRegisterForm({ onClose, onComplete }) {
                 onClick={() => setStep(1)}
                 className="flex items-center gap-2 text-left focus:outline-none"
               >
-                <span className={`h-6 w-6 rounded-full flex items-center justify-center text-xs font-bold ${step >= 1 ? 'bg-[#00F5D4] text-[#0A0A0F]' : 'bg-[#1C1C26] text-[#8B8B96]'}`}>
+                <span className={`h-6 w-6 rounded-full flex items-center justify-center text-xs font-bold ${step >= 1 ? 'bg-[#00F5D4] text-white' : 'bg-[#1C1C26] text-[#8B8B96]'}`}>
                   1
                 </span>
                 <span className={`text-xs font-bold ${step === 1 ? 'text-white' : 'text-[#8B8B96]'}`}>
@@ -288,7 +287,7 @@ export default function CreatorRegisterForm({ onClose, onComplete }) {
                 onClick={handleNextStep}
                 className="flex items-center gap-2 text-left focus:outline-none"
               >
-                <span className={`h-6 w-6 rounded-full flex items-center justify-center text-xs font-bold ${step >= 2 ? 'bg-[#00F5D4] text-[#0A0A0F]' : 'bg-[#1C1C26] text-[#8B8B96]'}`}>
+                <span className={`h-6 w-6 rounded-full flex items-center justify-center text-xs font-bold ${step >= 2 ? 'bg-[#00F5D4] text-white' : 'bg-[#1C1C26] text-[#8B8B96]'}`}>
                   2
                 </span>
                 <span className={`text-xs font-bold ${step === 2 ? 'text-white' : 'text-[#8B8B96]'}`}>
@@ -487,7 +486,7 @@ export default function CreatorRegisterForm({ onClose, onComplete }) {
                 <button
                   type="button"
                   onClick={handleNextStep}
-                  className="w-full py-2.5 rounded-xl bg-brand-gradient text-[#0A0A0F] font-bold text-xs shadow-md glow-teal hover:opacity-95 transition-all flex items-center justify-center gap-1.5"
+                  className="w-full py-2.5 rounded-xl bg-brand-gradient text-white font-bold text-xs shadow-md glow-teal hover:opacity-95 transition-all flex items-center justify-center gap-1.5"
                 >
                   <span>Next: Social Links</span> <ArrowRight className="h-4 w-4" />
                 </button>
@@ -561,7 +560,7 @@ export default function CreatorRegisterForm({ onClose, onComplete }) {
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="flex-1 py-2.5 rounded-xl bg-brand-gradient text-[#0A0A0F] font-bold text-xs shadow-md glow-teal hover:opacity-95 transition-all flex items-center justify-center gap-1.5 disabled:opacity-50"
+                    className="flex-1 py-2.5 rounded-xl bg-brand-gradient text-white font-bold text-xs shadow-md glow-teal hover:opacity-95 transition-all flex items-center justify-center gap-1.5 disabled:opacity-50"
                   >
                     <Sparkles className="h-4 w-4" /> {isSubmitting ? 'Registering Creator Account...' : 'Complete Creator Registration'}
                   </button>
@@ -631,7 +630,7 @@ export default function CreatorRegisterForm({ onClose, onComplete }) {
                 onClick={() => {
                   window.location.href = '/creators/kyc';
                 }}
-                className="w-full py-2.5 rounded-xl bg-brand-gradient text-[#0A0A0F] text-xs font-bold shadow-md glow-teal hover:opacity-95 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                className="w-full py-2.5 rounded-xl bg-brand-gradient text-white text-xs font-bold shadow-md glow-teal hover:opacity-95 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
               >
                 Complete KYC Verification Now <ArrowRight className="h-4 w-4" />
               </button>

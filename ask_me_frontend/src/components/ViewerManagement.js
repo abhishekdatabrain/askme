@@ -151,7 +151,7 @@ export default function ViewerManagement() {
               key={st}
               onClick={() => setSelectedStatus(st)}
               className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${selectedStatus === st
-                  ? 'bg-brand-gradient text-[#0A0A0F] shadow-sm'
+                  ? 'bg-brand-gradient text-white shadow-sm'
                   : 'text-[#8B8B96] hover:text-white'
                 }`}
             >
@@ -504,7 +504,7 @@ export default function ViewerManagement() {
                       setSelectedViewerId(null);
                       setViewerDetail(null);
                     }}
-                    className="px-4 py-2 rounded-xl bg-brand-gradient text-[#0A0A0F] font-bold text-xs"
+                    className="px-4 py-2 rounded-xl bg-brand-gradient text-white font-bold text-xs"
                   >
                     Close
                   </button>

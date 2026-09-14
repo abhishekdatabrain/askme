@@ -177,7 +177,7 @@ export default function AdminSidebar({ activeTab: propsActiveTab, setActiveTab, 
       icon: Sparkles,
       path: '/admin/commissions',
       badge: '15%',
-      badgeColor: 'bg-[#FFD60A] text-[#0A0A0F]',
+      badgeColor: 'bg-[#FFD60A] text-white',
       children: [
         { id: 'commissions_settings', label: 'Commission Settings', path: '/admin/commissions' },
       ],
@@ -202,7 +202,7 @@ export default function AdminSidebar({ activeTab: propsActiveTab, setActiveTab, 
       icon: Bell,
       path: '/admin/notifications',
       badge: unreadCount > 0 ? (unreadCount > 9 ? '9+' : String(unreadCount)) : '',
-      badgeColor: unreadCount > 0 ? 'bg-[#FF3D71] text-white animate-pulse' : 'bg-[#00F5D4] text-[#0A0A0F]',
+      badgeColor: unreadCount > 0 ? 'bg-[#FF3D71] text-white animate-pulse' : 'bg-[#00F5D4] text-white',
     },
   ];
 
@@ -402,7 +402,7 @@ export default function AdminSidebar({ activeTab: propsActiveTab, setActiveTab, 
                 </>
               )}
             </div>
-            <span className="text-[10px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-brand-gradient text-[#0A0A0F]">
+            <span className="text-[10px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-brand-gradient text-white">
               TOGGLE
             </span>
           </button>

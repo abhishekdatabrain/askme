@@ -5,6 +5,9 @@ const {
   registerCreator,
   loginCreator,
   googleAuthCreator,
+  sendWhatsAppOtpCreator,
+  verifyWhatsAppOtpCreator,
+  truecallerAuthCreator,
   submitKyc,
   getKycStatus,
   getCreatorProfile,
@@ -36,6 +39,8 @@ const {
   updateCreatorMembershipPlan,
   deleteCreatorMembershipPlan,
   getCreatorSubscribers,
+  verifyPanController,
+  verifyBankController,
 } = require('../../creator/controllers/creatorController');
 
 /**
@@ -44,6 +49,9 @@ const {
 router.post('/register', registerCreator);
 router.post('/login', loginCreator);
 router.post('/google-auth', googleAuthCreator);
+router.post('/whatsapp-otp/send', sendWhatsAppOtpCreator);
+router.post('/whatsapp-otp/verify', verifyWhatsAppOtpCreator);
+router.post('/truecaller-auth', truecallerAuthCreator);
 
 /**
  * Public Viewer Payment & Overlay Routes
@@ -55,6 +63,12 @@ router.get('/overlay/data/:identifier', getOverlayData);
 router.get('/overlay/alerts/:creatorId', getOverlayAlerts);
 router.get('/live-sessions/:sessionId/messages', getSessionMessages);
 router.post('/verify-upi', verifyCreatorUpi);
+
+/**
+ * Cashfree KYC Instant Verification Routes
+ */
+router.post('/kyc/verify-pan', verifyPanController);
+router.post('/kyc/verify-bank', verifyBankController);
 
 /**
  * Private Creator Routes (JWT Protected)

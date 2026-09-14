@@ -6,7 +6,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import ViewerSidebar from '@/components/ViewerSidebar';
 import SplashLoader from '@/components/SplashLoader';
 import VipMembershipModal from '@/components/VipMembershipModal';
-import { API_ENDPOINTS } from '@/config/api';
+import { API_ENDPOINTS, getMediaUrl } from '@/config/api';
 import { getViewerToken, getViewerUser, getCookie, clearViewerSession, removeCookie } from '@/utils/cookies';
 import {
     Home,
@@ -32,18 +32,7 @@ import {
     Info
 } from 'lucide-react';
 
-const CATEGORIES = [
-    'All',
-    'Gaming',
-    'News',
-    'Tech',
-    'Education',
-    'Comedy',
-    'Music',
-    'Business',
-    'Fitness',
-    'Entertainment'
-];
+
 
 function ViewerDashboardContent() {
     const searchParams = useSearchParams();
@@ -126,6 +115,31 @@ function ViewerDashboardContent() {
             }
         };
     }, []);
+
+    // Helper to safely extract YouTube Channel Info (channelId or channel handle) only if platform is YouTube
+    // Helper to safely extract YouTube Channel Info (channelId or channel handle)
+
+
+    // Trigger Google YouTube Subscribe button rendering when creators list loads
+    useEffect(() => {
+        const renderYtWidgets = () => {
+            if (typeof window !== 'undefined' && window.gapi && window.gapi.ytsubscribe) {
+                try {
+                    window.gapi.ytsubscribe.go();
+                } catch (err) {
+                    console.warn('gapi render error:', err);
+                }
+            }
+        };
+
+        renderYtWidgets();
+        const timer1 = setTimeout(renderYtWidgets, 300);
+        const timer2 = setTimeout(renderYtWidgets, 1000);
+        return () => {
+            clearTimeout(timer1);
+            clearTimeout(timer2);
+        };
+    }, [creators, loading]);
 
     // Fetch Dynamic Categories on Mount
     useEffect(() => {
@@ -338,7 +352,7 @@ function ViewerDashboardContent() {
                         >
                             {mobileMenuOpen ? <X className="h-5 w-5 text-[#00F5D4]" /> : <Menu className="h-5 w-5 text-[#00F5D4]" />}
                         </button>
-                        <div className="h-8 w-8 rounded-xl bg-brand-gradient flex items-center justify-center text-[#0A0A0F] font-black text-lg">
+                        <div className="h-8 w-8 rounded-xl bg-brand-gradient flex items-center justify-center text-white font-black text-lg">
                             a
                         </div>
                         <span className="font-heading font-black text-sm text-white">
@@ -434,7 +448,7 @@ function ViewerDashboardContent() {
                                         key={cat}
                                         onClick={() => setSelectedCategory(cat)}
                                         className={`px-3.5 py-1.5 rounded-full text-xs font-bold shrink-0 transition ${selectedCategory === cat
-                                            ? 'bg-[#00F5D4] text-[#0A0A0F] shadow-sm'
+                                            ? 'bg-[#00F5D4] text-white shadow-sm'
                                             : theme === 'light'
                                                 ? 'bg-white text-[#495057] border border-[#DEE2E6] hover:bg-[#F1F3F5]'
                                                 : 'bg-[#13131A] text-[#8B8B96] border border-[#1C1C26] hover:text-white'
@@ -469,7 +483,7 @@ function ViewerDashboardContent() {
                                             <p className="text-xs text-[#8B8B96]">There are currently no followed creators or active live streams. Follow creators to see them here!</p>
                                             <button
                                                 onClick={() => { setSelectedCategory('All'); setSearchQuery(''); }}
-                                                className="px-4 py-2 rounded-xl bg-[#00F5D4] text-[#0A0A0F] text-xs font-bold"
+                                                className="px-4 py-2 rounded-xl bg-[#00F5D4] text-white text-xs font-bold"
                                             >
                                                 Reset Category Filter
                                             </button>
@@ -478,7 +492,7 @@ function ViewerDashboardContent() {
                                 }
 
                                 return (
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                                         {feedCreators.map(creator => {
                                             const isFollowing = followedIds.has(String(creator.creatorId || creator.id));
 
@@ -508,29 +522,33 @@ function ViewerDashboardContent() {
                                                         </div>
 
                                                         <div className="flex items-center justify-between gap-3 border-b border-[#22222E] pb-3.5">
-                                                            {/* Avatar & Name Info */}
-                                                            <div className="flex items-center gap-3 min-w-0">
+                                                            {/* Avatar & Name Info (Clickable link to Creator Profile) */}
+                                                            <Link
+                                                                href={`/creator/${creator.cleanUsername}`}
+                                                                className="flex items-center gap-3 min-w-0 group hover:opacity-90 transition cursor-pointer"
+                                                                title={`View ${creator.fullName}'s Profile`}
+                                                            >
                                                                 <div className="relative shrink-0">
                                                                     <img
-                                                                        src={creator.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80'}
+                                                                        src={getMediaUrl(creator.avatar) || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80'}
                                                                         alt={creator.fullName}
-                                                                        className="h-12 w-12 rounded-full object-cover border border-[#2A2A3A]"
+                                                                        className="h-12 w-12 rounded-full object-cover border border-[#2A2A3A] group-hover:border-[#00F5D4] transition"
                                                                     />
                                                                     <span className="absolute -bottom-1 -right-1 h-4 w-4 rounded-full bg-[#FF5722] text-white text-[9px] font-bold flex items-center justify-center border border-[#13131A]" title="Verified Creator">
                                                                         ✓
                                                                     </span>
                                                                 </div>
                                                                 <div className="min-w-0">
-                                                                    <h4 className="font-heading font-black text-base text-white truncate leading-tight">
+                                                                    <h4 className="font-heading font-black text-base text-white truncate leading-tight group-hover:text-[#00F5D4] transition">
                                                                         {creator.fullName}
                                                                     </h4>
                                                                     <p className="text-xs text-[#8B8B96] font-mono truncate mt-0.5">
                                                                         {creator.username}
                                                                     </p>
                                                                 </div>
-                                                            </div>
+                                                            </Link>
 
-                                                            {/* Follow & Clickable Social Stream Icon */}
+                                                            {/* Follow Button */}
                                                             <div className="flex items-center gap-2 shrink-0">
                                                                 <button
                                                                     onClick={() => handleToggleFollow(creator.creatorId)}
@@ -542,17 +560,6 @@ function ViewerDashboardContent() {
                                                                     <Bell className="h-3.5 w-3.5" />
                                                                     {isFollowing ? 'Following' : '+ Follow'}
                                                                 </button>
-
-                                                                {/* Clickable Social Stream Platform Icon */}
-                                                                <a
-                                                                    href={creator.session?.streamUrl || creator.socialLinks?.[0]?.url || 'https://youtube.com'}
-                                                                    target="_blank"
-                                                                    rel="noopener noreferrer"
-                                                                    className="h-7 w-7 rounded-full bg-[#FF0000] text-white font-bold text-xs flex items-center justify-center shrink-0 hover:scale-110 transition shadow-md"
-                                                                    title={`Watch ${creator.session?.platform || 'YouTube'} Live Stream`}
-                                                                >
-                                                                    ▶
-                                                                </a>
                                                             </div>
                                                         </div>
 
@@ -589,29 +596,32 @@ function ViewerDashboardContent() {
                                                         </div>
                                                     </div>
 
-                                                    {/* 3. ACTION BUTTONS ROW 1 (Profile & Ask Question) */}
+                                                    {/* 3. ACTION BUTTONS ROW (YouTube Subscribe & Ask Question) */}
                                                     <div className="space-y-2.5 pt-2">
-                                                        <div className="grid grid-cols-2 gap-3">
-                                                            <Link
-                                                                href={`/creator/${creator.cleanUsername}`}
-                                                                className="py-3 px-4 rounded-full bg-[#202026] hover:bg-[#2A2A33] text-white font-extrabold text-xs transition flex items-center justify-center gap-1.5"
-                                                            >
-                                                                Profile ↗
-                                                            </Link>
-
+                                                        <div className="flex items-center justify-between gap-3">
+                                                            {/* Official Google YouTube Subscribe Button Widget (Only shown if creator platform is YouTube) */}
+                                                            {creator.socialLinks?.platform?.toLowerCase() === "youtube" && (
+                                                                <div
+                                                                    className="g-ytsubscribe"
+                                                                    data-channel={creator.socialLinks.url}
+                                                                    data-layout="default"
+                                                                    data-count="default"
+                                                                ></div>
+                                                            )}
+                                                            {/* Ask Question Button */}
                                                             {creator.session?.sessionCode ? (
                                                                 <Link
                                                                     href={`/pay/${creator.session.sessionCode}`}
-                                                                    className="py-3 px-4 rounded-full bg-gradient-to-r from-[#FF5722] to-[#FF7043] hover:from-[#E64A19] hover:to-[#FF5722] text-white font-black text-xs shadow-xl glow-pay transition flex items-center justify-center gap-2"
+                                                                    className="flex-1 py-2.5 px-4 rounded-full bg-gradient-to-r from-[#FF5722] to-[#FF7043] hover:from-[#E64A19] hover:to-[#FF5722] text-white font-black text-xs shadow-xl glow-pay transition flex items-center justify-center gap-2 text-center truncate"
                                                                 >
-                                                                    <MessageSquare className="h-4 w-4" /> Ask Question
+                                                                    <MessageSquare className="h-4 w-4 shrink-0" /> Ask Question
                                                                 </Link>
                                                             ) : (
                                                                 <Link
                                                                     href={`/creator/${creator.cleanUsername}`}
-                                                                    className="py-3 px-4 rounded-full bg-gradient-to-r from-[#FF5722] to-[#FF7043] text-white font-black text-xs shadow-xl flex items-center justify-center gap-2"
+                                                                    className="flex-1 py-2.5 px-4 rounded-full bg-gradient-to-r from-[#FF5722] to-[#FF7043] hover:from-[#E64A19] hover:to-[#FF5722] text-white font-black text-xs shadow-xl glow-pay transition flex items-center justify-center gap-2 text-center truncate"
                                                                 >
-                                                                    <MessageSquare className="h-4 w-4" /> Ask Question
+                                                                    <MessageSquare className="h-4 w-4 shrink-0" /> Ask Question
                                                                 </Link>
                                                             )}
                                                         </div>
@@ -664,7 +674,7 @@ function ViewerDashboardContent() {
                                             }`}
                                     >
                                         <div className="flex items-center gap-3 overflow-hidden">
-                                            <img src={creator.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80'} alt={creator.fullName} className="h-12 w-12 rounded-2xl object-cover border border-[#00F5D4]/30 shrink-0" />
+                                            <img src={getMediaUrl(creator.avatar) || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80'} alt={creator.fullName} className="h-12 w-12 rounded-2xl object-cover border border-[#00F5D4]/30 shrink-0" />
                                             <div className="overflow-hidden">
                                                 <h4 className={`font-heading font-extrabold text-sm truncate ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'}`}>
                                                     {creator.fullName}
@@ -676,7 +686,7 @@ function ViewerDashboardContent() {
 
                                         <Link
                                             href={`/creator/${creator.cleanUsername}`}
-                                            className="px-3.5 py-2 rounded-xl bg-[#00F5D4] text-[#0A0A0F] text-xs font-bold shrink-0"
+                                            className="px-3.5 py-2 rounded-xl bg-[#00F5D4] text-white text-xs font-bold shrink-0"
                                         >
                                             Profile →
                                         </Link>
@@ -709,7 +719,7 @@ function ViewerDashboardContent() {
                                         >
                                             <div className="flex items-center justify-between gap-3">
                                                 <div className="flex items-center gap-3">
-                                                    <img src={creator.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80'} alt={creator.fullName} className="h-10 w-10 rounded-2xl object-cover" />
+                                                    <img src={getMediaUrl(creator.avatar) || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80'} alt={creator.fullName} className="h-10 w-10 rounded-2xl object-cover" />
                                                     <div>
                                                         <h4 className="font-heading font-bold text-sm text-white">{creator.fullName}</h4>
                                                         <p className="text-xs text-[#00F5D4]">{creator.username}</p>

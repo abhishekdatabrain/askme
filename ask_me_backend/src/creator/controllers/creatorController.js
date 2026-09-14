@@ -9,6 +9,9 @@ const {
   registerCreatorService,
   loginCreatorService,
   googleAuthCreatorService,
+  sendWhatsAppOtpCreatorService,
+  verifyWhatsAppOtpCreatorService,
+  truecallerAuthCreatorService,
   getCreatorProfileService,
   updateCreatorProfileService,
   getCreatorBankAccountService,
@@ -749,6 +752,8 @@ const deleteCreatorMembershipPlan = async (req, res, next) => {
   }
 };
 
+const cashfreeVerificationService = require("../../services/cashfreeVerificationService");
+
 /**
  * Get Creator Active Subscribers
  */
@@ -772,10 +777,107 @@ const getCreatorSubscribers = async (req, res, next) => {
   }
 };
 
+const verifyPanController = async (req, res, next) => {
+  try {
+    const { panNumber, name } = req.body;
+    const result = (await cashfreeVerificationService.verifyPan({ panNumber, name })) || {
+      success: false,
+      message: "PAN verification service returned empty response.",
+    };
+    return res.status(result.success ? 200 : 400).json({
+      status: result.success ? "success" : "fail",
+      message: result.message || "PAN verification processed.",
+      data: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Verify Creator Bank Account via Cashfree Verification Suite (Penny Drop)
+ */
+const verifyBankController = async (req, res, next) => {
+  try {
+    const { accountNumber, ifscCode, name, phone } = req.body;
+    const result = (await cashfreeVerificationService.verifyBankAccount({ accountNumber, ifscCode, name, phone })) || {
+      success: false,
+      message: "Bank verification service returned empty response.",
+    };
+    return res.status(result.success ? 200 : 400).json({
+      status: result.success ? "success" : "fail",
+      message: result.message || "Bank account verification processed.",
+      data: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Send WhatsApp OTP Creator
+ */
+const sendWhatsAppOtpCreator = async (req, res, next) => {
+  try {
+    const result = await sendWhatsAppOtpCreatorService(req.body);
+    return res.status(200).json({
+      status: "success",
+      message: result.message || "OTP sent via WhatsApp!",
+      data: result,
+    });
+  } catch (error) {
+    if (error.statusCode) {
+      return res.status(error.statusCode).json({ status: "fail", message: error.message });
+    }
+    next(error);
+  }
+};
+
+/**
+ * Verify WhatsApp OTP Creator
+ */
+const verifyWhatsAppOtpCreator = async (req, res, next) => {
+  try {
+    const result = await verifyWhatsAppOtpCreatorService(req.body);
+    return res.status(200).json({
+      status: "success",
+      message: "Creator WhatsApp login successful!",
+      data: result,
+    });
+  } catch (error) {
+    if (error.statusCode) {
+      return res.status(error.statusCode).json({ status: "fail", message: error.message });
+    }
+    next(error);
+  }
+};
+
+/**
+ * Truecaller 1-Tap Auth Creator
+ */
+const truecallerAuthCreator = async (req, res, next) => {
+  try {
+    const result = await truecallerAuthCreatorService(req.body);
+    return res.status(200).json({
+      status: "success",
+      message: "Creator Truecaller login successful!",
+      data: result,
+    });
+  } catch (error) {
+    if (error.statusCode) {
+      return res.status(error.statusCode).json({ status: "fail", message: error.message });
+    }
+    next(error);
+  }
+};
+
 module.exports = {
   registerCreator,
   loginCreator,
   googleAuthCreator,
+  sendWhatsAppOtpCreator,
+  verifyWhatsAppOtpCreator,
+  truecallerAuthCreator,
   submitKyc,
   getKycStatus,
   getCreatorProfile,
@@ -808,4 +910,6 @@ module.exports = {
   updateCreatorMembershipPlan,
   deleteCreatorMembershipPlan,
   getCreatorSubscribers,
+  verifyPanController,
+  verifyBankController,
 };

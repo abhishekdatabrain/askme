@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { Sparkles, Radio } from 'lucide-react';
+import Logo from '@/components/Logo';
 
 export default function SplashLoader({ message = 'Loading AskMe Live Feed...' }) {
   return (
@@ -12,10 +13,8 @@ export default function SplashLoader({ message = 'Loading AskMe Live Feed...' })
 
       <div className="relative z-10 text-center space-y-6 max-w-sm mx-auto">
         {/* Glowing Logo Icon */}
-        <div className="relative inline-block">
-          <div className="h-20 w-20 rounded-3xl bg-brand-gradient flex items-center justify-center text-[#0A0A0F] font-black text-4xl shadow-2xl glow-teal animate-bounce">
-            a
-          </div>
+        <div className="relative inline-block animate-bounce">
+          <Logo size="2xl" />
           <div className="absolute -top-1.5 -right-1.5 h-6 w-6 rounded-full bg-[#FF3D71] border-2 border-[#0A0A0F] flex items-center justify-center animate-ping">
             <Radio className="h-3 w-3 text-white" />
           </div>

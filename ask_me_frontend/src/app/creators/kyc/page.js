@@ -117,6 +117,108 @@ export default function CreatorKycPage() {
         agreeTerms: false,
     });
 
+    // Cashfree Instant Verification States
+    const [isVerifyingPan, setIsVerifyingPan] = useState(false);
+    const [panVerificationData, setPanVerificationData] = useState(null);
+    const [isVerifyingBank, setIsVerifyingBank] = useState(false);
+    const [bankVerificationData, setBankVerificationData] = useState(null);
+
+    const handleVerifyPan = async () => {
+        if (!formData.panNumber || !formData.panNumber.trim()) {
+            toast.error('Please enter a PAN Card Number first.', 'PAN Required');
+            return;
+        }
+
+        const panRegex = /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/;
+        const cleanPan = formData.panNumber.trim().toUpperCase();
+        if (!panRegex.test(cleanPan)) {
+            toast.error('Invalid PAN Card format. E.g. ABCDE1234F', 'Invalid Format');
+            return;
+        }
+
+        try {
+            const res = await fetch(API_ENDPOINTS.CREATORS.VERIFY_PAN, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                },
+                body: JSON.stringify({
+                    panNumber: cleanPan,
+                    name: formData.fullName,
+                }),
+            });
+            const data = await res.json();
+            if (res.ok && data.status === 'success' && data.data?.verified) {
+                setPanVerificationData(data.data);
+                setIsVerifyingPan(true);
+
+                if (data.data.registeredName) {
+                    setFormData(prev => ({
+                        ...prev,
+                        fullName: data.data.registeredName,
+                        accountHolderName: prev.accountHolderName || data.data.registeredName,
+                    }));
+                }
+                toast.success(`PAN Card Verified! Registered Name: ${data.data.registeredName}`, 'Cashfree Verification');
+            } else {
+                toast.error(data.message || 'PAN Verification failed.', 'Cashfree Verification');
+            }
+        } catch (err) {
+            toast.error(err.message, 'Verification Error');
+        } finally {
+            setIsVerifyingPan(false);
+        }
+    };
+
+    const handleVerifyBank = async () => {
+        if (!formData.accountNumber || !formData.ifscCode) {
+            toast.error('Please enter both Account Number and IFSC Code.', 'Details Required');
+            return;
+        }
+
+        const cleanIfsc = formData.ifscCode.trim().toUpperCase();
+        const ifscRegex = /^[A-Z]{4}0[A-Z0-9]{6}$/;
+        if (!ifscRegex.test(cleanIfsc)) {
+            toast.error('Invalid IFSC Code format.', 'Invalid IFSC');
+            return;
+        }
+
+        try {
+            setIsVerifyingBank(true);
+            const res = await fetch(API_ENDPOINTS.CREATORS.VERIFY_BANK, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                },
+                body: JSON.stringify({
+                    accountNumber: formData.accountNumber.trim(),
+                    ifscCode: cleanIfsc,
+                    name: formData.accountHolderName || formData.fullName,
+                }),
+            });
+            const data = await res.json();
+            if (res.ok && data.status === 'success' && data.data?.verified) {
+                setBankVerificationData(data.data);
+                if (data.data.bankName) {
+                    setFormData(prev => ({
+                        ...prev,
+                        bankName: data.data.bankName,
+                        accountHolderName: data.data.accountHolderName || prev.accountHolderName,
+                    }));
+                }
+                toast.success(`Bank Account Verified via Cashfree! (${data.data.bankName})`, 'Cashfree Penny Drop');
+            } else {
+                toast.error(data.message || 'Bank Account verification failed.', 'Cashfree Penny Drop');
+            }
+        } catch (err) {
+            toast.error(err.message, 'Verification Error');
+        } finally {
+            setIsVerifyingBank(false);
+        }
+    };
+
     const [submittedKycResult, setSubmittedKycResult] = useState(null);
 
     useEffect(() => {
@@ -332,7 +434,7 @@ export default function CreatorKycPage() {
                 }`}>
                 <div className="flex items-center gap-3">
                     <Link href="/creators/dashboard" className="flex items-center gap-2.5 group">
-                        <div className="h-9 w-9 rounded-xl bg-brand-gradient flex items-center justify-center text-[#0A0A0F] font-black text-xl shadow-md glow-teal group-hover:scale-105 transition">
+                        <div className="h-9 w-9 rounded-xl bg-brand-gradient flex items-center justify-center text-white font-black text-xl shadow-md glow-teal group-hover:scale-105 transition">
                             a
                         </div>
                         <div>
@@ -425,7 +527,7 @@ export default function CreatorKycPage() {
                         <div className="pt-2">
                             <Link
                                 href="/creators/dashboard"
-                                className="px-6 py-3 rounded-xl bg-brand-gradient text-[#0A0A0F] font-bold text-xs shadow-md glow-teal hover:opacity-95 transition inline-flex items-center gap-2"
+                                className="px-6 py-3 rounded-xl bg-brand-gradient text-white font-bold text-xs shadow-md glow-teal hover:opacity-95 transition inline-flex items-center gap-2"
                             >
                                 <ShieldCheck className="h-4 w-4" /> Go to Creator Control Room Dashboard
                             </Link>
@@ -606,28 +708,28 @@ export default function CreatorKycPage() {
                         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                             <button
                                 onClick={() => setStep(1)}
-                                className={`py-2 px-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition ${step === 1 ? 'bg-brand-gradient text-[#0A0A0F] shadow-md' : theme === 'light' ? 'bg-[#F1F3F5] text-[#6C757D]' : 'bg-[#0A0A0F] text-[#8B8B96]'
+                                className={`py-2 px-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition ${step === 1 ? 'bg-brand-gradient text-white shadow-md' : theme === 'light' ? 'bg-[#F1F3F5] text-[#6C757D]' : 'bg-[#0A0A0F] text-[#8B8B96]'
                                     }`}
                             >
                                 <User className="h-3.5 w-3.5 shrink-0" /> 1. Personal Info
                             </button>
                             <button
                                 onClick={() => step > 1 && setStep(2)}
-                                className={`py-2 px-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition ${step === 2 ? 'bg-brand-gradient text-[#0A0A0F] shadow-md' : theme === 'light' ? 'bg-[#F1F3F5] text-[#6C757D]' : 'bg-[#0A0A0F] text-[#8B8B96]'
+                                className={`py-2 px-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition ${step === 2 ? 'bg-brand-gradient text-white shadow-md' : theme === 'light' ? 'bg-[#F1F3F5] text-[#6C757D]' : 'bg-[#0A0A0F] text-[#8B8B96]'
                                     }`}
                             >
                                 <FileText className="h-3.5 w-3.5 shrink-0" /> 2. Document Proof
                             </button>
                             <button
                                 onClick={() => step > 2 && setStep(3)}
-                                className={`py-2 px-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition ${step === 3 ? 'bg-brand-gradient text-[#0A0A0F] shadow-md' : theme === 'light' ? 'bg-[#F1F3F5] text-[#6C757D]' : 'bg-[#0A0A0F] text-[#8B8B96]'
+                                className={`py-2 px-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition ${step === 3 ? 'bg-brand-gradient text-white shadow-md' : theme === 'light' ? 'bg-[#F1F3F5] text-[#6C757D]' : 'bg-[#0A0A0F] text-[#8B8B96]'
                                     }`}
                             >
                                 <Building2 className="h-3.5 w-3.5 shrink-0" /> 3. Bank Details
                             </button>
                             <button
                                 onClick={() => step > 3 && setStep(4)}
-                                className={`py-2 px-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition ${step === 4 ? 'bg-brand-gradient text-[#0A0A0F] shadow-md' : theme === 'light' ? 'bg-[#F1F3F5] text-[#6C757D]' : 'bg-[#0A0A0F] text-[#8B8B96]'
+                                className={`py-2 px-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition ${step === 4 ? 'bg-brand-gradient text-white shadow-md' : theme === 'light' ? 'bg-[#F1F3F5] text-[#6C757D]' : 'bg-[#0A0A0F] text-[#8B8B96]'
                                     }`}
                             >
                                 <CheckCircle2 className="h-3.5 w-3.5 shrink-0" /> 4. Review & Submit
@@ -737,7 +839,7 @@ export default function CreatorKycPage() {
                                 <div className="pt-4 flex justify-end">
                                     <button
                                         type="submit"
-                                        className="px-6 py-2.5 rounded-xl bg-brand-gradient text-[#0A0A0F] font-bold text-xs shadow-md hover:opacity-90 transition flex items-center gap-1.5"
+                                        className="px-6 py-2.5 rounded-xl bg-brand-gradient text-white font-bold text-xs shadow-md hover:opacity-90 transition flex items-center gap-1.5"
                                     >
                                         Continue to Document Proof →
                                     </button>
@@ -770,18 +872,59 @@ export default function CreatorKycPage() {
                                     </div>
 
                                     <div>
-                                        <label className={`block text-xs font-bold mb-1 ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'}`}>
-                                            ID / Document Number *
-                                        </label>
-                                        <input
-                                            type="text"
-                                            required
-                                            value={formData.panNumber}
-                                            onChange={(e) => handleInputChange('panNumber', e.target.value.toUpperCase())}
-                                            placeholder="e.g. ABCDE1234F"
-                                            className={`w-full px-4 py-2.5 rounded-xl border text-xs focus:outline-none focus:border-[#00F5D4] font-mono uppercase ${theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6] text-[#1A1D20]' : 'bg-[#0A0A0F] border-[#1C1C26] text-white'
-                                                }`}
-                                        />
+                                        <div className="flex items-center justify-between mb-1">
+                                            <label className={`block text-xs font-bold ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'}`}>
+                                                ID / PAN Card Number *
+                                            </label>
+                                            {panVerificationData?.verified ? (
+                                                <span className="text-[10px] font-bold text-[#00E676] bg-[#00E676]/10 px-2 py-0.5 rounded-full border border-[#00E676]/30 flex items-center gap-1">
+                                                    <CheckCircle2 className="h-3 w-3" /> Cashfree Verified
+                                                </span>
+                                            ) : (
+                                                <button
+                                                    type="button"
+                                                    onClick={handleVerifyPan}
+                                                    disabled={isVerifyingPan}
+                                                    className="text-[11px] font-bold text-[#00F5D4] hover:underline flex items-center gap-1 disabled:opacity-50"
+                                                >
+                                                    {isVerifyingPan ? (
+                                                        <>
+                                                            <RefreshCw className="h-3 w-3 animate-spin" /> Verifying...
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <ShieldCheck className="h-3 w-3" /> Instant Pan Verify
+                                                        </>
+                                                    )}
+                                                </button>
+                                            )}
+                                        </div>
+                                        <div className="flex gap-2">
+                                            <input
+                                                type="text"
+                                                required
+                                                value={formData.panNumber}
+                                                onChange={(e) => handleInputChange('panNumber', e.target.value.toUpperCase())}
+                                                placeholder="e.g. ABCDE1234F"
+                                                className={`flex-1 px-4 py-2.5 rounded-xl border text-xs focus:outline-none focus:border-[#00F5D4] font-mono uppercase ${theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6] text-[#1A1D20]' : 'bg-[#0A0A0F] border-[#1C1C26] text-white'
+                                                    }`}
+                                            />
+                                            {!panVerificationData?.verified && (
+                                                <button
+                                                    type="button"
+                                                    onClick={handleVerifyPan}
+                                                    disabled={isVerifyingPan}
+                                                    className="px-3.5 py-2.5 rounded-xl bg-[#00F5D4]/10 text-[#00F5D4] border border-[#00F5D4]/30 hover:bg-[#00F5D4]/20 text-xs font-bold shrink-0 transition"
+                                                >
+                                                    Verify
+                                                </button>
+                                            )}
+                                        </div>
+                                        {panVerificationData?.registeredName && (
+                                            <p className="text-[11px] text-[#00E676] font-semibold mt-1 flex items-center gap-1">
+                                                <Check className="h-3 w-3" /> Name on PAN: <strong>{panVerificationData.registeredName}</strong>
+                                            </p>
+                                        )}
                                     </div>
                                 </div>
 
@@ -840,7 +983,7 @@ export default function CreatorKycPage() {
                                     </button>
                                     <button
                                         type="submit"
-                                        className="px-6 py-2.5 rounded-xl bg-brand-gradient text-[#0A0A0F] font-bold text-xs shadow-md hover:opacity-90 transition flex items-center gap-1.5"
+                                        className="px-6 py-2.5 rounded-xl bg-brand-gradient text-white font-bold text-xs shadow-md hover:opacity-90 transition flex items-center gap-1.5"
                                     >
                                         Continue to Bank Details →
                                     </button>
@@ -916,8 +1059,8 @@ export default function CreatorKycPage() {
                                             onChange={(e) => handleInputChange('confirmAccountNumber', e.target.value)}
                                             placeholder="Re-enter account number"
                                             className={`w-full px-4 py-2.5 rounded-xl border text-xs focus:outline-none focus:border-[#00F5D4] font-mono ${formData.confirmAccountNumber && formData.accountNumber !== formData.confirmAccountNumber
-                                                    ? 'border-[#FF3D71] bg-[#FF3D71]/10 text-[#FF3D71]'
-                                                    : theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6] text-[#1A1D20]' : 'bg-[#0A0A0F] border-[#1C1C26] text-white'
+                                                ? 'border-[#FF3D71] bg-[#FF3D71]/10 text-[#FF3D71]'
+                                                : theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6] text-[#1A1D20]' : 'bg-[#0A0A0F] border-[#1C1C26] text-white'
                                                 }`}
                                         />
                                         {formData.confirmAccountNumber && formData.accountNumber !== formData.confirmAccountNumber && (
@@ -928,20 +1071,61 @@ export default function CreatorKycPage() {
                                     </div>
 
                                     <div>
-                                        <label className={`block text-xs font-bold mb-1 ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'}`}>
-                                            IFSC Code *
-                                        </label>
-                                        <input
-                                            type="text"
-                                            maxLength={11}
-                                            pattern="[A-Za-z]{4}0[A-Za-z0-9]{6}"
-                                            required
-                                            value={formData.ifscCode}
-                                            onChange={(e) => handleInputChange('ifscCode', e.target.value)}
-                                            placeholder="e.g. SBIN0001234"
-                                            className={`w-full px-4 py-2.5 rounded-xl border text-xs focus:outline-none focus:border-[#00F5D4] font-mono uppercase ${theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6] text-[#1A1D20]' : 'bg-[#0A0A0F] border-[#1C1C26] text-white'
-                                                }`}
-                                        />
+                                        <div className="flex items-center justify-between mb-1">
+                                            <label className={`block text-xs font-bold ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'}`}>
+                                                IFSC Code *
+                                            </label>
+                                            {bankVerificationData?.verified ? (
+                                                <span className="text-[10px] font-bold text-[#00E676] bg-[#00E676]/10 px-2 py-0.5 rounded-full border border-[#00E676]/30 flex items-center gap-1">
+                                                    <CheckCircle2 className="h-3 w-3" /> Cashfree Verified
+                                                </span>
+                                            ) : (
+                                                <button
+                                                    type="button"
+                                                    onClick={handleVerifyBank}
+                                                    disabled={isVerifyingBank}
+                                                    className="text-[11px] font-bold text-[#00F5D4] hover:underline flex items-center gap-1 disabled:opacity-50"
+                                                >
+                                                    {isVerifyingBank ? (
+                                                        <>
+                                                            <RefreshCw className="h-3 w-3 animate-spin" /> Verifying...
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <ShieldCheck className="h-3 w-3" /> Instant Penny Drop
+                                                        </>
+                                                    )}
+                                                </button>
+                                            )}
+                                        </div>
+                                        <div className="flex gap-2">
+                                            <input
+                                                type="text"
+                                                maxLength={11}
+                                                pattern="[A-Za-z]{4}0[A-Za-z0-9]{6}"
+                                                required
+                                                value={formData.ifscCode}
+                                                onChange={(e) => handleInputChange('ifscCode', e.target.value)}
+                                                placeholder="e.g. SBIN0001234"
+                                                className={`flex-1 px-4 py-2.5 rounded-xl border text-xs focus:outline-none focus:border-[#00F5D4] font-mono uppercase ${theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6] text-[#1A1D20]' : 'bg-[#0A0A0F] border-[#1C1C26] text-white'
+                                                    }`}
+                                            />
+                                            {!bankVerificationData?.verified && (
+                                                <button
+                                                    type="button"
+                                                    onClick={handleVerifyBank}
+                                                    disabled={isVerifyingBank}
+                                                    className="px-3.5 py-2.5 rounded-xl bg-[#00F5D4]/10 text-[#00F5D4] border border-[#00F5D4]/30 hover:bg-[#00F5D4]/20 text-xs font-bold shrink-0 transition"
+                                                >
+                                                    Verify
+                                                </button>
+                                            )}
+                                        </div>
+                                        {bankVerificationData?.bankName && (
+                                            <p className="text-[11px] text-[#00E676] font-semibold mt-1 flex items-center gap-1">
+                                                <Check className="h-3 w-3" /> Bank: <strong>{bankVerificationData.bankName}</strong> ({bankVerificationData.accountHolderName})
+                                            </p>
+                                        )}
                                     </div>
                                 </div>
 
@@ -970,7 +1154,7 @@ export default function CreatorKycPage() {
                                     </button>
                                     <button
                                         type="submit"
-                                        className="px-6 py-2.5 rounded-xl bg-brand-gradient text-[#0A0A0F] font-bold text-xs shadow-md hover:opacity-90 transition flex items-center gap-1.5"
+                                        className="px-6 py-2.5 rounded-xl bg-brand-gradient text-white font-bold text-xs shadow-md hover:opacity-90 transition flex items-center gap-1.5"
                                     >
                                         Review & Final Submit →
                                     </button>
@@ -1045,7 +1229,7 @@ export default function CreatorKycPage() {
                                     <button
                                         type="submit"
                                         disabled={isSubmitting}
-                                        className="px-6 py-2.5 rounded-xl bg-brand-gradient text-[#0A0A0F] font-bold text-xs shadow-md glow-teal hover:opacity-95 transition disabled:opacity-50 flex items-center gap-2"
+                                        className="px-6 py-2.5 rounded-xl bg-brand-gradient text-white font-bold text-xs shadow-md glow-teal hover:opacity-95 transition disabled:opacity-50 flex items-center gap-2"
                                     >
                                         {isSubmitting ? (
                                             <>

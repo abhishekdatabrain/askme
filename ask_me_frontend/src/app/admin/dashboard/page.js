@@ -139,7 +139,7 @@ export default function AdminDashboardPage() {
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                     <div className="space-y-3">
                         <div className="flex items-center gap-2">
-                            <div className="h-7 w-7 rounded-lg bg-brand-gradient flex items-center justify-center text-[#0A0A0F] font-bold text-sm">
+                            <div className="h-7 w-7 rounded-lg bg-brand-gradient flex items-center justify-center text-white font-bold text-sm">
                                 a
                             </div>
                             <span className="font-heading font-bold text-base text-white">AskMe</span>

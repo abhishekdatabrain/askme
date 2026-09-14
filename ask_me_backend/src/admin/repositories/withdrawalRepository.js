@@ -86,6 +86,43 @@ class WithdrawalRepository {
       })) || 0
     );
   }
+
+  async sumWithdrawalsBetween(startDate, endDate, statuses = null) {
+    const whereClause = {};
+    if (statuses) whereClause.status = statuses;
+    if (startDate || endDate) {
+      whereClause.created_at = {};
+      if (startDate) whereClause.created_at[require('sequelize').Op.gte] = startDate;
+      if (endDate) whereClause.created_at[require('sequelize').Op.lt] = endDate;
+    }
+    return (await WithdrawalRequest.sum('amount', { where: whereClause })) || 0;
+  }
+
+  async countWithdrawalsBetween(startDate, endDate, statuses = null) {
+    const whereClause = {};
+    if (statuses) whereClause.status = statuses;
+    if (startDate || endDate) {
+      whereClause.created_at = {};
+      if (startDate) whereClause.created_at[require('sequelize').Op.gte] = startDate;
+      if (endDate) whereClause.created_at[require('sequelize').Op.lt] = endDate;
+    }
+    return (await WithdrawalRequest.count({ where: whereClause })) || 0;
+  }
+
+  async findRecentWithdrawalsBetween(startDate, endDate, limit = 10) {
+    const whereClause = {};
+    if (startDate || endDate) {
+      whereClause.created_at = {};
+      if (startDate) whereClause.created_at[require('sequelize').Op.gte] = startDate;
+      if (endDate) whereClause.created_at[require('sequelize').Op.lt] = endDate;
+    }
+    return await this.findAndCountAllWithdrawals({
+      where: whereClause,
+      limit,
+      offset: 0,
+      order: [['id', 'DESC']],
+    });
+  }
 }
 
 module.exports = new WithdrawalRepository();

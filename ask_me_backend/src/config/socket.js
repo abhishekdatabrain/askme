@@ -2,6 +2,12 @@ const { Server } = require('socket.io');
 const ChatMessageModel = require('../models/ChatMessageModel');
 
 let io = null;
+const activeBroadcastMap = {};
+
+const getActiveBroadcast = (creatorId) => {
+  if (!creatorId) return null;
+  return activeBroadcastMap[String(creatorId)] || null;
+};
 
 const initSocket = (server) => {
   io = new Server(server, {
@@ -134,6 +140,45 @@ const initSocket = (server) => {
       }
     });
 
+    // 5. JOIN CREATOR OVERLAY ROOM
+    socket.on('join_creator_room', ({ creatorId }) => {
+      if (!creatorId) return;
+      const roomName = `creator_room_${creatorId}`;
+      socket.join(roomName);
+      console.log(`[Socket.IO] Socket ${socket.id} joined creator room: ${roomName}`);
+    });
+
+    // 6. BROADCAST QUESTION TO STREAM OVERLAY (Without marking answered)
+    socket.on('show_overlay_alert', (alertData) => {
+      if (!alertData) return;
+      const creatorId = alertData.creatorId;
+      if (creatorId) {
+        activeBroadcastMap[String(creatorId)] = alertData;
+        const roomName = `creator_room_${creatorId}`;
+        io.to(roomName).emit('show_overlay_alert', alertData);
+        io.to(roomName).emit(`overlay_alert_${creatorId}`, alertData);
+      }
+      io.emit('show_overlay_alert', alertData);
+      console.log(`[Socket.IO] Broadcasted show_overlay_alert for creator ${creatorId}:`, alertData.viewerName);
+    });
+
+    // 7. CLEAR QUESTION FROM STREAM OVERLAY
+    socket.on('clear_overlay_alert', ({ creatorId }) => {
+      if (creatorId) {
+        activeBroadcastMap[String(creatorId)] = null;
+        const roomName = `creator_room_${creatorId}`;
+        io.to(roomName).emit('clear_overlay_alert');
+        io.to(roomName).emit(`clear_overlay_${creatorId}`);
+      }
+      io.emit('clear_overlay_alert');
+      console.log(`[Socket.IO] Broadcasted clear_overlay_alert for creator ${creatorId}`);
+    });
+
+    // 8. QUEUE ITEM COMPLETED (Answered or Cancelled)
+    socket.on('queue_item_completed', ({ donationId, status }) => {
+      io.emit('queue_item_updated', { donationId, status });
+    });
+
     socket.on('disconnect', () => {
       console.log(`[Socket.IO] Client disconnected: ${socket.id}`);
     });
@@ -152,4 +197,5 @@ const getIO = () => {
 module.exports = {
   initSocket,
   getIO,
+  getActiveBroadcast,
 };

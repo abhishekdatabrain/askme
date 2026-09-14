@@ -4,7 +4,7 @@ const ChatMessage = models.ChatMessage || require("../../models/ChatMessageModel
 const DonationSession = models.DonationSession || require("../../models/DonationSessionModels");
 const Donation = models.Donation || require("../../models/DonationModel");
 const CreatorsModel = models.CreatorsModel || models.Creator || require("../../models/CreatorsModel");
-const { getIO } = require("../../config/socket");
+const { getIO, getActiveBroadcast } = require("../../config/socket");
 
 /**
  * Get Chat History for a Live Session
@@ -171,7 +171,7 @@ const getOverlayAlertsService = async (creatorId, queryParams = {}) => {
     throw err;
   }
 
-  const { sessionId, filter } = queryParams;
+  const { sessionId, filter, search } = queryParams;
 
   let activeSession = null;
   if (sessionId) {
@@ -190,62 +190,80 @@ const getOverlayAlertsService = async (creatorId, queryParams = {}) => {
   let filterCounts = { all: 0, priority: 0, answered: 0, rejected: 0 };
   let latestReadAlert = null;
 
+  const donationWhere = {
+    creator_id: creatorId,
+    payment_status: "success",
+  };
   if (activeSession) {
-    const donations = await Donation.findAll({
-      where: {
-        creator_id: creatorId,
-        session_id: activeSession.id,
-        payment_status: "success",
-      },
-      order: [["created_at", "DESC"]],
+    donationWhere.session_id = activeSession.id;
+  }
+
+  const donations = await Donation.findAll({
+    where: donationWhere,
+    order: [["created_at", "DESC"]],
+  });
+
+  const formattedDonations = donations.map((d) => ({
+    id: d.id,
+    donationUuid: d.donation_uuid,
+    viewerName: d.anonymous ? "Anonymous Supporter" : d.viewer_name || "Supporter",
+    amount: parseFloat(d.amount || 0),
+    message: d.message || "",
+    paidAt: d.paid_at || d.createdAt,
+    isVip: !!d.is_vip,
+    status: d.status || "not_read",
+    sessionId: d.session_id,
+    isFlagged: !!(d.is_flagged || (d.message && /abuse|spam|hate|hack/i.test(d.message))),
+  }));
+
+  const unreadList = formattedDonations.filter((d) => d.status === "not_read" || !d.status);
+  const superchatList = unreadList.filter((d) => !d.isVip);
+  const membersList = unreadList.filter((d) => d.isVip);
+  const priorityList = formattedDonations.filter((d) => (d.isVip || d.amount >= 500) && (d.status === "not_read" || !d.status));
+  const answeredList = formattedDonations.filter((d) => d.status === "read" || d.status === "answered");
+  const rejectedList = formattedDonations.filter((d) => d.status === "cancelled" || d.status === "rejected");
+
+  filterCounts = {
+    all: unreadList.length,
+    superchat: superchatList.length,
+    members: membersList.length,
+    priority: priorityList.length,
+    answered: answeredList.length,
+    rejected: rejectedList.length,
+  };
+
+  const reqFilter = String(filter || "all").toLowerCase();
+  let filteredAlerts = unreadList;
+  if (reqFilter === "superchat") filteredAlerts = superchatList;
+  else if (reqFilter === "members" || reqFilter === "priority") filteredAlerts = membersList;
+  else if (reqFilter === "answered") filteredAlerts = answeredList;
+  else if (reqFilter === "rejected") filteredAlerts = rejectedList;
+
+  // Search filter by Viewer Name / Message / Amount
+  if (search && String(search).trim()) {
+    const q = String(search).trim().toLowerCase();
+    filteredAlerts = filteredAlerts.filter((d) => {
+      const viewerName = (d.viewerName || '').toLowerCase();
+      const message = (d.message || '').toLowerCase();
+      const amount = String(d.amount || '');
+      return viewerName.includes(q) || message.includes(q) || amount.includes(q);
     });
+  }
 
-    const formattedDonations = donations.map((d) => ({
-      id: d.id,
-      donationUuid: d.donation_uuid,
-      viewerName: d.anonymous ? "Anonymous Supporter" : d.viewer_name || "Supporter",
-      amount: parseFloat(d.amount || 0),
-      message: d.message || "",
-      paidAt: d.paid_at || d.createdAt,
-      isVip: !!d.is_vip,
-      status: d.status || "not_read",
-      sessionId: d.session_id,
-      isFlagged: !!(d.is_flagged || (d.message && /abuse|spam|hate|hack/i.test(d.message))),
-    }));
+  // VIP questions first at top of queue
+  filteredAlerts.sort((a, b) => {
+    const aVip = a.isVip ? 1 : 0;
+    const bVip = b.isVip ? 1 : 0;
+    if (bVip !== aVip) return bVip - aVip;
+    return new Date(a.paidAt || 0) - new Date(b.paidAt || 0);
+  });
 
-    const unreadList = formattedDonations.filter((d) => d.status === "not_read" || !d.status);
-    const superchatList = unreadList.filter((d) => !d.isVip);
-    const membersList = unreadList.filter((d) => d.isVip);
-    const priorityList = formattedDonations.filter((d) => (d.isVip || d.amount >= 500) && (d.status === "not_read" || !d.status));
-    const answeredList = formattedDonations.filter((d) => d.status === "read" || d.status === "answered");
-    const rejectedList = formattedDonations.filter((d) => d.status === "cancelled" || d.status === "rejected");
+  alerts = filteredAlerts;
 
-    filterCounts = {
-      all: unreadList.length,
-      superchat: superchatList.length,
-      members: membersList.length,
-      priority: priorityList.length,
-      answered: answeredList.length,
-      rejected: rejectedList.length,
-    };
-
-    const reqFilter = String(filter || "all").toLowerCase();
-    let filteredAlerts = unreadList;
-    if (reqFilter === "superchat") filteredAlerts = superchatList;
-    else if (reqFilter === "members" || reqFilter === "priority") filteredAlerts = membersList;
-    else if (reqFilter === "answered") filteredAlerts = answeredList;
-    else if (reqFilter === "rejected") filteredAlerts = rejectedList;
-
-    // VIP questions first at top of queue
-    filteredAlerts.sort((a, b) => {
-      const aVip = a.isVip ? 1 : 0;
-      const bVip = b.isVip ? 1 : 0;
-      if (bVip !== aVip) return bVip - aVip;
-      return new Date(a.paidAt || 0) - new Date(b.paidAt || 0);
-    });
-
-    alerts = filteredAlerts;
-
+  const activeBroadcast = getActiveBroadcast ? getActiveBroadcast(creatorId) : null;
+  if (activeBroadcast) {
+    latestReadAlert = activeBroadcast;
+  } else if (activeSession) {
     const latestRead = await Donation.findOne({
       where: {
         creator_id: creatorId,

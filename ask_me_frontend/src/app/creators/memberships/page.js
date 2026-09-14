@@ -70,7 +70,8 @@ export default function CreatorMembershipsPage() {
   const [planForm, setPlanForm] = useState({
     name: '',
     price: '',
-    interval: '',
+    interval: 'Monthly',
+    duration: '30 Days',
     perks: '',
     badgeColor: 'bg-[#FFD60A]',
     status: 'Active',
@@ -128,7 +129,8 @@ export default function CreatorMembershipsPage() {
     setPlanForm({
       name: '',
       price: '',
-      interval: '',
+      interval: 'Monthly',
+      duration: '30 Days',
       perks: '',
       badgeColor: 'bg-[#FFD60A]',
       status: 'Active',
@@ -142,6 +144,7 @@ export default function CreatorMembershipsPage() {
       name: plan.name || '',
       price: String(plan.price || 499),
       interval: plan.interval || 'Monthly',
+      duration: plan.duration || '30 Days',
       perks: Array.isArray(plan.perks) ? plan.perks.join(', ') : (plan.perks || ''),
       badgeColor: plan.badgeColor || 'bg-[#FFD60A]',
       status: plan.status || 'Active',
@@ -294,7 +297,7 @@ export default function CreatorMembershipsPage() {
 
             <button
               onClick={handleOpenCreatePlan}
-              className="px-5 py-3 rounded-2xl bg-brand-gradient text-[#0A0A0F] font-black text-xs shadow-lg glow-teal hover:scale-105 transition-all flex items-center gap-2 shrink-0"
+              className="px-5 py-3 rounded-2xl bg-brand-gradient text-white font-black text-xs shadow-lg glow-teal hover:scale-105 transition-all flex items-center gap-2 shrink-0"
             >
               <PlusCircle className="h-5 w-5 stroke-[2.5]" /> Create Membership Tier
             </button>
@@ -353,7 +356,7 @@ export default function CreatorMembershipsPage() {
                   >
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
-                        <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${plan.badgeColor || 'bg-[#FFD60A]'} text-[#0A0A0F]`}>
+                        <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${plan.badgeColor || 'bg-[#FFD60A]'} text-white`}>
                           {plan.name}
                         </span>
                         <span className="px-2.5 py-0.5 rounded-full bg-[#00E676]/10 text-[#00E676] border border-[#00E676]/30 text-[10px] font-bold">
@@ -365,7 +368,10 @@ export default function CreatorMembershipsPage() {
                         <div className={`font-heading font-black text-2xl ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'}`}>
                           ₹{plan.price.toLocaleString('en-IN')} <span className="text-xs font-semibold text-[#8B8B96]">/ {plan.interval || 'Month'}</span>
                         </div>
-                        <p className="text-xs text-[#8B8B96] mt-0.5">Public Fan Tier Perks:</p>
+                        <div className="text-xs font-bold text-[#00F5D4] mt-0.5 flex items-center gap-1">
+                          ⏱️ Duration: <span className={theme === 'light' ? 'text-[#1A1D20] font-medium' : 'text-white font-medium'}>{plan.duration || '30 Days'}</span>
+                        </div>
+                        <p className="text-xs text-[#8B8B96] mt-1">Public Fan Tier Perks:</p>
                       </div>
 
                       <ul className="space-y-2 text-xs">
@@ -381,7 +387,7 @@ export default function CreatorMembershipsPage() {
                     <div className="pt-4 border-t border-[#1C1C26] flex items-center justify-between gap-2">
                       <button
                         onClick={() => handleOpenEditPlan(plan)}
-                        className="flex-1 py-2 rounded-xl bg-[#1C1C26] text-white hover:bg-[#00F5D4] hover:text-[#0A0A0F] font-bold text-xs transition flex items-center justify-center gap-1.5"
+                        className="flex-1 py-2 rounded-xl bg-[#1C1C26] text-white hover:bg-[#00F5D4] hover:text-white font-bold text-xs transition flex items-center justify-center gap-1.5"
                       >
                         <Edit className="h-3.5 w-3.5" /> Edit Tier
                       </button>
@@ -486,9 +492,9 @@ export default function CreatorMembershipsPage() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-3 gap-3">
                 <div>
-                  <label className="block text-xs font-bold mb-1 text-[#8B8B96]">Monthly Price (₹)</label>
+                  <label className="block text-xs font-bold mb-1 text-[#8B8B96]">Price (₹)</label>
                   <input
                     type="number"
                     required
@@ -496,19 +502,36 @@ export default function CreatorMembershipsPage() {
                     placeholder="499"
                     value={planForm.price}
                     onChange={(e) => setPlanForm(prev => ({ ...prev, price: e.target.value }))}
-                    className="w-full rounded-xl bg-[#0A0A0F] border border-[#1C1C26] px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-[#00F5D4]"
+                    className="w-full rounded-xl bg-[#0A0A0F] border border-[#1C1C26] px-3 py-2.5 text-xs text-white focus:outline-none focus:border-[#00F5D4]"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold mb-1 text-[#8B8B96]">Billing Interval</label>
+                  <label className="block text-xs font-bold mb-1 text-[#8B8B96]">Interval</label>
                   <select
                     value={planForm.interval}
                     onChange={(e) => setPlanForm(prev => ({ ...prev, interval: e.target.value }))}
-                    className="w-full rounded-xl bg-[#0A0A0F] border border-[#1C1C26] px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-[#00F5D4]"
+                    className="w-full rounded-xl bg-[#0A0A0F] border border-[#1C1C26] px-2.5 py-2.5 text-xs text-white focus:outline-none focus:border-[#00F5D4]"
                   >
                     <option value="Monthly">Monthly</option>
                     <option value="Yearly">Yearly</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold mb-1 text-[#8B8B96]">Duration</label>
+                  <select
+                    value={planForm.duration}
+                    onChange={(e) => setPlanForm(prev => ({ ...prev, duration: e.target.value }))}
+                    className="w-full rounded-xl bg-[#0A0A0F] border border-[#1C1C26] px-2.5 py-2.5 text-xs text-white focus:outline-none focus:border-[#00F5D4]"
+                  >
+                    <option value="7 Days">7 Days</option>
+                    <option value="15 Days">15 Days</option>
+                    <option value="30 Days">30 Days</option>
+                    <option value="60 Days">60 Days</option>
+                    <option value="90 Days">90 Days</option>
+                    <option value="180 Days">180 Days</option>
+                    <option value="365 Days">365 Days</option>
                   </select>
                 </div>
               </div>
@@ -563,7 +586,7 @@ export default function CreatorMembershipsPage() {
                 <button
                   type="submit"
                   disabled={isSavingPlan}
-                  className="px-5 py-2.5 rounded-xl bg-brand-gradient text-[#0A0A0F] font-black text-xs shadow-md glow-teal flex items-center gap-1.5"
+                  className="px-5 py-2.5 rounded-xl bg-brand-gradient text-white font-black text-xs shadow-md glow-teal flex items-center gap-1.5"
                 >
                   {isSavingPlan ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
                   {editingPlan ? 'Save & Update Tier' : 'Publish Membership Tier'}

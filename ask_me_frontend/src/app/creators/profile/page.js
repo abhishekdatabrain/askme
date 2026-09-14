@@ -32,7 +32,8 @@ import {
   Moon,
   Bell
 } from 'lucide-react';
-import { API_ENDPOINTS } from '@/config/api';
+import { API_ENDPOINTS, getMediaUrl } from '@/config/api';
+import { uploadFile, getLocalFilePreview } from '@/utils/fileUpload';
 
 const YoutubeIcon = ({ className = "h-4 w-4 text-[#FF0000]" }) => (
   <svg className={className} viewBox="0 0 24 24" fill="currentColor">
@@ -312,12 +313,19 @@ export default function CreatorProfilePage() {
     fetchCreatorProfile();
   }, [fetchCreatorProfile]);
 
-  const handleImageChange = (e) => {
+  const handleImageChange = async (e) => {
     const file = e.target.files?.[0];
     if (file) {
-      const fakeUrl = URL.createObjectURL(file);
-      setProfile(prev => ({ ...prev, profileImage: fakeUrl }));
-      toast.success('Avatar preview updated!', 'Profile Picture');
+      const localPreview = getLocalFilePreview(file);
+      setProfile(prev => ({ ...prev, profileImage: localPreview }));
+      try {
+        toast.info('Uploading avatar to server...', 'Upload In Progress');
+        const uploadResult = await uploadFile(file, 'profile');
+        setProfile(prev => ({ ...prev, profileImage: uploadResult.path }));
+        toast.success('Avatar uploaded successfully!', 'Profile Picture');
+      } catch (err) {
+        toast.error(err?.message || 'Failed to upload avatar image.', 'Upload Error');
+      }
     }
   };
 
@@ -501,7 +509,7 @@ export default function CreatorProfilePage() {
                 <div className="relative group shrink-0">
                   {profile.profileImage ? (
                     <img
-                      src={profile.profileImage}
+                      src={getMediaUrl(profile.profileImage)}
                       alt={profile.fullName}
                       className="h-16 w-16 rounded-xl object-cover border border-[#00F5D4]/40 shadow-sm"
                     />
@@ -544,7 +552,7 @@ export default function CreatorProfilePage() {
                 <button
                   onClick={handleSaveProfile}
                   disabled={isSaving}
-                  className="px-4 py-2 rounded-xl bg-brand-gradient text-[#0A0A0F] font-bold text-xs shadow-md hover:opacity-95 transition-all flex items-center justify-center gap-2"
+                  className="px-4 py-2 rounded-xl bg-brand-gradient text-white font-bold text-xs shadow-md hover:opacity-95 transition-all flex items-center justify-center gap-2"
                 >
                   {isSaving ? (
                     <>
@@ -577,7 +585,7 @@ export default function CreatorProfilePage() {
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
                   className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === tab.id
-                    ? 'bg-brand-gradient text-[#0A0A0F] shadow-md font-black'
+                    ? 'bg-brand-gradient text-white shadow-md font-black'
                     : theme === 'light'
                       ? 'bg-white text-[#6C757D] hover:text-[#1A1D20] border border-[#E9ECEF]'
                       : 'bg-[#13131A] text-[#8B8B96] hover:text-white border border-[#1C1C26]'
@@ -834,7 +842,7 @@ export default function CreatorProfilePage() {
                     <button
                       type="button"
                       onClick={copyOverlayUrl}
-                      className="px-3 py-1 rounded-lg bg-[#00F5D4] text-[#0A0A0F] font-bold text-[11px] hover:opacity-90 transition flex items-center gap-1 shrink-0 ml-2"
+                      className="px-3 py-1 rounded-lg bg-[#00F5D4] text-white font-bold text-[11px] hover:opacity-90 transition flex items-center gap-1 shrink-0 ml-2"
                     >
                       {copiedOverlay ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
                       {copiedOverlay ? 'Copied!' : 'Copy URL'}
@@ -902,7 +910,7 @@ export default function CreatorProfilePage() {
                         disabled={isVerifyingUpi || isUpiVerified}
                         className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all shrink-0 flex items-center gap-1.5 ${isUpiVerified
                           ? 'bg-[#00F5D4]/20 text-[#00F5D4] border border-[#00F5D4]/40 cursor-default'
-                          : 'bg-[#00F5D4] text-[#0A0A0F] hover:bg-[#00F5D4]/90 shadow-md'
+                          : 'bg-[#00F5D4] text-white hover:bg-[#00F5D4]/90 shadow-md'
                           }`}
                       >
                         {isVerifyingUpi ? (

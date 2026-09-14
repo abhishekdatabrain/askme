@@ -343,7 +343,7 @@ export default function CreatorWithdrawalsPage() {
               }}
               className={`px-4 py-2 rounded-xl text-xs font-black shadow-md transition flex items-center gap-1.5 shrink-0 ${hasAlreadyWithdrawnInCycle
                 ? 'bg-[#1C1C26] text-[#8B8B96] border border-[#2A2A3A] cursor-not-allowed'
-                : 'bg-brand-gradient text-[#0A0A0F] glow-teal hover:opacity-95'
+                : 'bg-brand-gradient text-white glow-teal hover:opacity-95'
                 }`}
             >
               {hasAlreadyWithdrawnInCycle ? (
@@ -446,7 +446,7 @@ export default function CreatorWithdrawalsPage() {
                 <button
                   onClick={() => setActiveTab('history')}
                   className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${activeTab === 'history'
-                    ? 'bg-brand-gradient text-[#0A0A0F] shadow-md glow-teal'
+                    ? 'bg-brand-gradient text-white shadow-md glow-teal'
                     : theme === 'light' ? 'bg-[#F1F3F5] text-[#6C757D] hover:text-[#1A1D20]' : 'bg-[#0A0A0F] text-[#8B8B96] hover:text-white'
                     }`}
                 >
@@ -456,7 +456,7 @@ export default function CreatorWithdrawalsPage() {
                 <button
                   onClick={() => setActiveTab('bank')}
                   className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${activeTab === 'bank'
-                    ? 'bg-brand-gradient text-[#0A0A0F] shadow-md glow-teal'
+                    ? 'bg-brand-gradient text-white shadow-md glow-teal'
                     : theme === 'light' ? 'bg-[#F1F3F5] text-[#6C757D] hover:text-[#1A1D20]' : 'bg-[#0A0A0F] text-[#8B8B96] hover:text-white'
                     }`}
                 >
@@ -468,7 +468,7 @@ export default function CreatorWithdrawalsPage() {
                 <button
                   onClick={handleDownloadCSV}
                   title="Download Withdrawal History CSV"
-                  className="px-3.5 py-1.5 rounded-xl bg-brand-gradient text-[#0A0A0F] font-bold text-xs hover:opacity-90 transition flex items-center gap-1.5 shadow-sm"
+                  className="px-3.5 py-1.5 rounded-xl bg-brand-gradient text-white font-bold text-xs hover:opacity-90 transition flex items-center gap-1.5 shadow-sm"
                 >
                   <Download className="h-4 w-4" />
                   <span>Download CSV</span>
@@ -510,7 +510,7 @@ export default function CreatorWithdrawalsPage() {
                           setShowWithdrawModal(true);
                         }
                       }}
-                      className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-brand-gradient text-[#0A0A0F] font-bold text-xs shadow-md glow-teal"
+                      className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-brand-gradient text-white font-bold text-xs shadow-md glow-teal"
                     >
                       <ArrowUpRight className="h-4 w-4" /> Request Payout Now
                     </button>
@@ -671,7 +671,7 @@ export default function CreatorWithdrawalsPage() {
                   <button
                     type="submit"
                     disabled={isSavingBank}
-                    className="w-full py-3 rounded-xl bg-brand-gradient text-[#0A0A0F] font-black text-xs shadow-md glow-teal hover:opacity-95 transition flex items-center justify-center gap-2"
+                    className="w-full py-3 rounded-xl bg-brand-gradient text-white font-black text-xs shadow-md glow-teal hover:opacity-95 transition flex items-center justify-center gap-2"
                   >
                     {isSavingBank ? (
                       <>
@@ -773,7 +773,7 @@ export default function CreatorWithdrawalsPage() {
                 <button
                   type="submit"
                   disabled={isSubmittingWithdraw}
-                  className="px-5 py-2 rounded-xl bg-brand-gradient text-[#0A0A0F] text-xs font-extrabold shadow-md glow-teal hover:opacity-95 flex items-center gap-1.5"
+                  className="px-5 py-2 rounded-xl bg-brand-gradient text-white text-xs font-extrabold shadow-md glow-teal hover:opacity-95 flex items-center gap-1.5"
                 >
                   {isSubmittingWithdraw ? (
                     <>

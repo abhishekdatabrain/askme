@@ -1,3 +1,4 @@
+const { Op } = require("sequelize");
 const VipMembership = require("../models/VipMembershipModel");
 const Creator = require("../models/CreatorsModel");
 const VipPlan = require("../models/VipPlanModel");
@@ -12,11 +13,8 @@ const vipMemoryStore = new Map();
  */
 const createVipSubscription = async (req, res, next) => {
   try {
-    console.log("requser", req.use);
     const userId = String(req.user?.id || req.body.userId);
-    console.log("userId", userId);
-    const { creatorId, planName, amount, transactionId } = req.body;
-
+    const { creatorId, planName, amount, duration, interval, transactionId } = req.body;
     if (!creatorId) {
       return res.status(400).json({
         status: "fail",
@@ -25,14 +23,39 @@ const createVipSubscription = async (req, res, next) => {
     }
 
     const subAmount = parseFloat(amount || "");
-    const subPlanName = planName || "";
+    const subPlanName = planName;
+    const subDuration = duration;
+    const subInterval = interval;
     const subTxnId = transactionId || `pay_${Math.random().toString(36).substring(2, 11).toUpperCase()}`;
 
-    // Next billing date: 30 days from today
-    const nextBilling = new Date();
-    nextBilling.setMonth(nextBilling.getMonth() + 1);
-    const nextBillingStr = nextBilling.toISOString().split("T")[0];
-    console.log(nextBillingStr);
+    const getNextBillingDate = (duration) => {
+      const nextBilling = new Date();
+
+      const match = duration.match(/(\d+)\s*(Day|Days|Month|Months|Year|Years)/i);
+
+      if (!match) {
+        throw new Error("Invalid duration format");
+      }
+
+      const value = parseInt(match[1]);
+      const unit = match[2].toLowerCase();
+
+      if (unit.startsWith("day")) {
+        nextBilling.setDate(nextBilling.getDate() + value);
+      }
+      else if (unit.startsWith("month")) {
+        nextBilling.setMonth(nextBilling.getMonth() + value);
+      }
+      else if (unit.startsWith("year")) {
+        nextBilling.setFullYear(nextBilling.getFullYear() + value);
+      }
+
+      return nextBilling.toISOString().split("T")[0];
+    };
+
+    const nextBillingStr = getNextBillingDate(subDuration);
+
+
     let membership = null;
 
     try {
@@ -47,6 +70,8 @@ const createVipSubscription = async (req, res, next) => {
       if (existing) {
         existing.status = "active";
         existing.amount = subAmount;
+        existing.duration = subDuration;
+        existing.interval = subInterval;
         existing.transaction_id = subTxnId;
         existing.next_billing_date = nextBillingStr;
         await existing.save();
@@ -58,6 +83,8 @@ const createVipSubscription = async (req, res, next) => {
           plan_name: subPlanName,
           amount: subAmount,
           status: "active",
+          duration: subDuration,
+          interval: subInterval,
           transaction_id: subTxnId,
           next_billing_date: nextBillingStr,
         });
@@ -94,10 +121,23 @@ const getViewerMemberships = async (req, res, next) => {
     let memberships = [];
 
     try {
+      // Auto-expire active memberships whose next_billing_date has passed today
+      const todayStr = new Date().toISOString().split("T")[0];
+      await VipMembership.update(
+        { status: "expired" },
+        {
+          where: {
+            status: "active",
+            next_billing_date: {
+              [Op.lt]: todayStr,
+            },
+          },
+        }
+      ).catch((err) => console.warn("Auto-expire check notice:", err.message));
+
       const records = await VipMembership.findAll({
         where: {
           viewer_id: userId,
-          status: "active",
         },
         order: [["created_at", "DESC"]],
       });
@@ -105,7 +145,7 @@ const getViewerMemberships = async (req, res, next) => {
     } catch (dbErr) {
       console.warn("DB VipMembership read fallback to memory store:", dbErr.message);
       for (const [key, val] of vipMemoryStore.entries()) {
-        if (key.startsWith(`${userId}_`) && val.status === "active") {
+        if (key.startsWith(`${userId}_`)) {
           memberships.push(val);
         }
       }
@@ -130,10 +170,29 @@ const getViewerMemberships = async (req, res, next) => {
       const creatorObj = creatorMap.get(String(m.creator_id)) || {};
       const cleanUsername = String(creatorObj.username || "creator").replace(/^@+/, "");
       const planObj = (m.plan_id ? planMap.get(String(m.plan_id)) : null) || planMap.get(`creator_${m.creator_id}`) || {};
-      const perks = m.perks || planObj.perks || "Glowing VIP Badge in Live Chat, Priority Queue in Live Broadcast Q&A, Member Only Broadcast Streams, Early Access to Announcements";
+      const perks = m.perks || planObj.perks;
+
+      // Calculate remaining validity days until next_billing_date
+      let daysRemaining = 0;
+      if (m.next_billing_date) {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const billingDate = new Date(m.next_billing_date);
+        billingDate.setHours(0, 0, 0, 0);
+        const diffMs = billingDate.getTime() - today.getTime();
+        daysRemaining = Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
+      }
+
+      const isExpired = m.status === 'expired' || (daysRemaining <= 0 && m.next_billing_date && new Date(m.next_billing_date) < new Date());
+      const effectiveStatus = isExpired ? 'expired' : (m.status || 'active');
+      const durationText = m.duration || (daysRemaining > 0 ? `30 Days (${daysRemaining} Days Left)` : "30 Days");
 
       return {
         ...m,
+        status: effectiveStatus,
+        interval: m.interval || planObj.billing_cycle || planObj.interval || "Month",
+        duration: durationText,
+        daysRemaining: daysRemaining,
         creatorName: creatorObj.full_name || `Creator #${m.creator_id}`,
         creatorUsername: `@${cleanUsername}`,
         creatorAvatar: creatorObj.profile_image || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80",
@@ -236,6 +295,7 @@ const getPublicVipPlans = async (req, res, next) => {
           name: p.name,
           price: parseFloat(p.price || 0),
           interval: p.interval || '',
+          duration: p.duration || '30 Days',
           badgeColor: p.badge_color || '',
           perks: p.perks ? (Array.isArray(p.perks) ? p.perks : String(p.perks).split(',').map((s) => s.trim())) : [],
         }));

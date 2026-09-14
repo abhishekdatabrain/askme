@@ -185,7 +185,7 @@ export default function ViewerSessionQuestionsPage() {
                     <div className="flex items-center gap-2">
                       <span className="font-bold text-xs text-white">Question #{idx + 1}</span>
                       {q.isVip && (
-                        <span className="px-2.5 py-0.5 rounded-full bg-gradient-to-r from-[#FFD60A] to-[#FF9500] text-[#0A0A0F] text-[10px] font-black uppercase flex items-center gap-1 shadow-md">
+                        <span className="px-2.5 py-0.5 rounded-full bg-gradient-to-r from-[#FFD60A] to-[#FF9500] text-white text-[10px] font-black uppercase flex items-center gap-1 shadow-md">
                           ⚡ VIP PRIORITY
                         </span>
                       )}

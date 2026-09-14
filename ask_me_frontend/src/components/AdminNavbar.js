@@ -6,9 +6,10 @@ import {
   LogIn, Sun, Moon, Check, CheckCheck, Sparkles, UserCheck, DollarSign, 
   ExternalLink, X, Loader2, ArrowRight, FileText, ChevronRight
 } from 'lucide-react';
-import { API_ENDPOINTS } from '@/config/api';
+import { API_ENDPOINTS, getMediaUrl } from '@/config/api';
 import { getAdminToken } from '@/utils/cookies';
 import { getSocket } from '@/config/socket';
+import Logo from '@/components/Logo';
 
 export default function AdminNavbar({ activeView, setActiveView, onOpenAuthModal, isLoggedIn, onLogout, systemStatus = "OPERATIONAL", theme = 'dark', onToggleTheme }) {
   const router = useRouter();
@@ -186,13 +187,11 @@ export default function AdminNavbar({ activeView, setActiveView, onOpenAuthModal
         {/* Brand Logo & Signal Status */}
         <div className="flex items-center gap-6">
           <div className="flex items-center gap-3 cursor-pointer" onClick={() => handleNavigate('/admin/dashboard', 'overview')}>
-            <div className="h-9 w-9 rounded-xl bg-brand-gradient flex items-center justify-center text-[#0A0A0F] font-black text-xl shadow-lg glow-teal">
-              a
-            </div>
+            <Logo size="md" />
             <div className="flex flex-col">
               <div className="flex items-center gap-1.5">
                 <span className={`font-heading font-bold text-lg tracking-tight ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'}`}>AskMe</span>
-                <span className="px-1.5 py-0.2 text-[10px] font-extrabold tracking-widest uppercase rounded bg-brand-gradient text-[#0A0A0F]">
+                <span className="px-1.5 py-0.2 text-[10px] font-extrabold tracking-widest uppercase rounded bg-brand-gradient text-white shadow-sm">
                   PRO
                 </span>
               </div>
@@ -304,7 +303,7 @@ export default function AdminNavbar({ activeView, setActiveView, onOpenAuthModal
                         <div className="flex items-center gap-2.5 min-w-0">
                           <div className="h-7 w-7 rounded-full bg-gradient-to-tr from-[#7B2FFF] to-[#00F5D4] p-0.5 shrink-0">
                             {c.profile_image ? (
-                              <img src={c.profile_image} alt="" className="h-full w-full rounded-full object-cover" />
+                              <img src={getMediaUrl(c.profile_image)} alt="" className="h-full w-full rounded-full object-cover" />
                             ) : (
                               <div className="h-full w-full rounded-full bg-[#0A0A0F] flex items-center justify-center text-[10px] font-bold text-[#00F5D4]">
                                 {c.full_name?.[0] || 'C'}

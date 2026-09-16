@@ -5,42 +5,48 @@
     --bg-primary: #0A0A0F;
     --bg-card: #13131A;
     --bg-secondary: #1C1C26;
-    
+
     --brand-primary: #EB1000;
     --brand-hover: #CC0E00;
     --brand-active: #CC0E00;
     --brand-shadow: #B80D00;
     --brand-accent: #B80D00;
     --badge-light: #FEF2F2;
-    
+
     --accent-red: #EB1000;
     --accent-red-hover: #CC0E00;
     --accent-red-shadow: #B80D00;
-    
+
     --live-pink: #FF3D71;
     --pay-yellow: #FFD60A;
-    
+
     --text-primary: #F5F5F7;
     --text-muted: #8B8B96;
-    
+
     --semantic-success: #00E676;
     --semantic-error: #EB1000;
     --semantic-warning: #FFB300;
-    
-    --font-heading: var(--font-space-grotesk), sans-serif;
-    --font-body: var(--font-inter), sans-serif;
+
+    --font-heading: var(--font-plus-jakarta), "Plus Jakarta Sans", "Inter", sans-serif;
+    --font-body: var(--font-inter), "Inter", sans-serif;
   }
 }
 
 body {
   background-color: #0A0A0F;
   color: #F5F5F7;
-  font-family: var(--font-inter), sans-serif;
+  font-family: var(--font-inter), "Inter", sans-serif;
   overflow-x: hidden;
 }
 
-h1, h2, h3, h4, h5, h6, .font-heading {
-  font-family: var(--font-space-grotesk), sans-serif;
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+.font-heading {
+  font-family: var(--font-plus-jakarta), "Plus Jakarta Sans", "Inter", sans-serif;
 }
 
 /* Brand Color & Gradient Utilities */
@@ -87,7 +93,9 @@ h1, h2, h3, h4, h5, h6, .font-heading {
 }
 
 /* Glowing & Accent Shadow Effects */
-.glow-teal, .glow-red, .glow-brand {
+.glow-teal,
+.glow-red,
+.glow-brand {
   box-shadow: 0 4px 20px rgba(184, 13, 0, 0.4);
 }
 
@@ -101,11 +109,14 @@ h1, h2, h3, h4, h5, h6, .font-heading {
 
 /* Live Pulse Animation (1.5s loop, 0.6 to 1.0 opacity) */
 @keyframes livePulse {
-  0%, 100% {
+
+  0%,
+  100% {
     opacity: 1;
     transform: scale(1);
     box-shadow: 0 0 12px rgba(255, 61, 113, 0.6);
   }
+
   50% {
     opacity: 0.6;
     transform: scale(0.98);
@@ -119,10 +130,13 @@ h1, h2, h3, h4, h5, h6, .font-heading {
 
 /* Soft dot pulse for system status */
 @keyframes dotPulse {
-  0%, 100% {
+
+  0%,
+  100% {
     opacity: 1;
     transform: scale(1);
   }
+
   50% {
     opacity: 0.4;
     transform: scale(0.85);
@@ -138,6 +152,7 @@ h1, h2, h3, h4, h5, h6, .font-heading {
   0% {
     transform: translateX(0%);
   }
+
   100% {
     transform: translateX(-50%);
   }
@@ -147,6 +162,7 @@ h1, h2, h3, h4, h5, h6, .font-heading {
   0% {
     transform: translateX(-50%);
   }
+
   100% {
     transform: translateX(0%);
   }
@@ -171,6 +187,7 @@ h1, h2, h3, h4, h5, h6, .font-heading {
 
 /* Accessibility: Reduced Motion */
 @media (prefers-reduced-motion: reduce) {
+
   .animate-live-pulse,
   .animate-dot-pulse,
   .animate-marquee-left,
@@ -204,6 +221,7 @@ h1, h2, h3, h4, h5, h6, .font-heading {
     opacity: 0;
     transform: translateY(-16px) scale(0.96);
   }
+
   to {
     opacity: 1;
     transform: translateY(0) scale(1);

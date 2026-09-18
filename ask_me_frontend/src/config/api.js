@@ -85,6 +85,10 @@ export const API_ENDPOINTS = {
   UPLOAD: `${API_BASE_URL}/upload`,
   KYC: `${API_BASE_URL}/admin/kyc`,
   PAYOUTS: `${API_BASE_URL}/admin/withdrawals`,
+  TESTIMONIALS: {
+    PUBLIC: `${API_BASE_URL}/public/creator-testimonials`,
+    ADMIN: `${API_BASE_URL}/admin/creator-testimonials`,
+  },
 };
 
 /**

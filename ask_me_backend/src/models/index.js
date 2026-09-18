@@ -22,6 +22,7 @@ const ChatMessage = require("./ChatMessageModel");
 const QrCode = require("./QrCodeModel");
 const PaymentWebhook = require("./PaymentWebhookModel");
 const WalletSettlement = require("./WalletSettlementModel");
+const CreatorTestimonial = require("./CreatorTestimonialModel");
 
 // Admin & Refresh Token
 Admin.hasMany(AdminRefreshToken, { foreignKey: "admin_id", as: "refreshTokens" });
@@ -144,4 +145,5 @@ module.exports = {
   VipPlan,
   ChatMessage,
   QrCode,
+  CreatorTestimonial,
 };

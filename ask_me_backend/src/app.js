@@ -57,8 +57,14 @@ const path = require('path');
 const truecallerRoutes = require('./routes/truecallerRoutes');
 const uploadRoutes = require('./routes/uploadRoutes');
 
-// Serve static uploaded files (/uploads/profiles/..., /uploads/documents/...)
+// Serve static uploaded files (/uploads/profiles/..., /uploads/documents/..., /uploads/testimonials/...)
+app.use('/uploads/testimonials', express.static(path.join(__dirname, '../uploads/profiles')));
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+
+const { getPublicTestimonials } = require('./controllers/creatorTestimonialController');
+
+// Public Landing Page Testimonials API
+app.get('/api/public/creator-testimonials', getPublicTestimonials);
 
 // API Routes
 app.use('/api/upload', uploadRoutes);

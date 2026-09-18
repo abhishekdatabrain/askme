@@ -375,13 +375,6 @@ export default function ViewerFollowingPage() {
           <Link href="/" className="inline-flex items-center gap-2 text-xs font-bold text-[#8B8B96] hover:text-[#00F5D4] transition">
             <ArrowLeft className="h-4 w-4" /> Back to Public Live Feed
           </Link>
-
-          <div className="flex items-center gap-2">
-            <Heart className="h-5 w-5 text-[#FF3D71]" />
-            <h1 className="font-heading font-black text-sm text-white">
-              Followed Creators
-            </h1>
-          </div>
         </header>
 
         {/* MAIN BODY CONTAINER */}
@@ -533,8 +526,8 @@ export default function ViewerFollowingPage() {
                             {(creator.followersCount || 0) >= 1000000
                               ? `${((creator.followersCount || 0) / 1000000).toFixed(1)}M`
                               : (creator.followersCount || 0) >= 1000
-                              ? `${((creator.followersCount || 0) / 1000).toFixed(1)}K`
-                              : (creator.followersCount || 0)} Followers
+                                ? `${((creator.followersCount || 0) / 1000).toFixed(1)}K`
+                                : (creator.followersCount || 0)} Followers
                           </span>
                         </div>
                       </div>
@@ -628,11 +621,10 @@ export default function ViewerFollowingPage() {
                           key={pageNo}
                           onClick={() => handlePageChange(pageNo)}
                           disabled={loading}
-                          className={`h-8 min-w-[32px] px-2.5 rounded-xl text-xs font-black transition ${
-                            isCurrent
+                          className={`h-8 min-w-[32px] px-2.5 rounded-xl text-xs font-black transition ${isCurrent
                               ? 'bg-brand-gradient text-white shadow-sm glow-teal font-black scale-105'
                               : 'bg-[#0A0A0F] border border-[#1C1C26] text-[#8B8B96] hover:text-white hover:bg-[#1C1C26]'
-                          }`}
+                            }`}
                         >
                           {pageNo}
                         </button>

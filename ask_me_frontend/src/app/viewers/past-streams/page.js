@@ -176,9 +176,8 @@ export default function ViewerPastStreamsPage() {
     <>
       <div className="flex-1 flex flex-col min-w-0 overflow-y-auto" ref={topListRef}>
         {/* HEADER */}
-        <header className={`border-b sticky top-0 z-20 px-6 py-4 flex items-center justify-between transition-colors ${
-          theme === 'light' ? 'border-[#E9ECEF] bg-white/90 backdrop-blur-md' : 'border-[#1C1C26] bg-[#0A0A0F]/80 backdrop-blur-md'
-        }`}>
+        <header className={`border-b sticky top-0 z-20 px-6 py-4 flex items-center justify-between transition-colors ${theme === 'light' ? 'border-[#E9ECEF] bg-white/90 backdrop-blur-md' : 'border-[#1C1C26] bg-[#0A0A0F]/80 backdrop-blur-md'
+          }`}>
           <div>
             <h1 className={`font-heading font-black text-xl flex items-center gap-2 ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'}`}>
               <History className="h-5 w-5 text-[#00F5D4]" /> Watched Past Streams ({pagination.total ?? sessions.length})
@@ -193,20 +192,18 @@ export default function ViewerPastStreamsPage() {
               onClick={() => fetchPastStreams(currentPage, activeSearch)}
               disabled={isLoading}
               title="Refresh past streams"
-              className={`p-2 rounded-xl border text-xs font-bold transition flex items-center justify-center ${
-                theme === 'light'
+              className={`p-2 rounded-xl border text-xs font-bold transition flex items-center justify-center ${theme === 'light'
                   ? 'border-[#E9ECEF] hover:bg-[#F8F9FA] text-[#495057]'
                   : 'border-[#1C1C26] hover:bg-[#1C1C26] text-[#8B8B96] hover:text-white'
-              }`}
+                }`}
             >
               <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin text-[#00F5D4]' : ''}`} />
             </button>
 
             <button
               onClick={toggleTheme}
-              className={`px-3 py-1.5 rounded-xl border text-xs font-bold flex items-center gap-1.5 transition ${
-                theme === 'light' ? 'border-[#E9ECEF] bg-white text-[#1A1D20]' : 'border-[#1C1C26] bg-[#13131A] text-white'
-              }`}
+              className={`px-3 py-1.5 rounded-xl border text-xs font-bold flex items-center gap-1.5 transition ${theme === 'light' ? 'border-[#E9ECEF] bg-white text-[#1A1D20]' : 'border-[#1C1C26] bg-[#13131A] text-white'
+                }`}
             >
               {theme === 'dark' ? <Sun className="h-4 w-4 text-[#FFD60A]" /> : <Moon className="h-4 w-4 text-[#7B2FFF]" />}
               <span className="hidden sm:inline">{theme === 'dark' ? 'Light' : 'Dark'}</span>
@@ -217,9 +214,8 @@ export default function ViewerPastStreamsPage() {
         {/* MAIN CONTENT */}
         <main className="p-6 max-w-7xl w-full mx-auto space-y-6">
           {/* SEARCH BAR */}
-          <div className={`p-4 rounded-3xl border space-y-4 shadow-xl transition ${
-            theme === 'light' ? 'bg-white border-[#E9ECEF]' : 'bg-[#13131A] border-[#1C1C26]'
-          }`}>
+          <div className={`p-4 rounded-3xl border space-y-4 shadow-xl transition ${theme === 'light' ? 'bg-white border-[#E9ECEF]' : 'bg-[#13131A] border-[#1C1C26]'
+            }`}>
             <form onSubmit={handleSearchSubmit} className="relative w-full">
               <Search className="h-4 w-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#8B8B96]" />
               <input
@@ -227,11 +223,10 @@ export default function ViewerPastStreamsPage() {
                 placeholder="Search past streams by title or creator..."
                 value={searchQuery}
                 onChange={handleSearchChange}
-                className={`w-full pl-10 pr-10 py-2.5 rounded-2xl text-xs font-medium border outline-none transition ${
-                  theme === 'light'
+                className={`w-full pl-10 pr-10 py-2.5 rounded-2xl text-xs font-medium border outline-none transition ${theme === 'light'
                     ? 'bg-[#F8F9FA] border-[#E9ECEF] text-[#1A1D20] focus:border-[#00F5D4] focus:ring-1 focus:ring-[#00F5D4]'
                     : 'bg-[#0A0A0F] border-[#1C1C26] text-white focus:border-[#00F5D4] focus:ring-1 focus:ring-[#00F5D4]'
-                }`}
+                  }`}
               />
               {searchQuery && (
                 <button
@@ -252,9 +247,8 @@ export default function ViewerPastStreamsPage() {
               <p className="font-medium">Searching and loading past broadcast streams...</p>
             </div>
           ) : sessions.length === 0 ? (
-            <div className={`p-16 rounded-3xl border text-center space-y-3 ${
-              theme === 'light' ? 'bg-white border-[#E9ECEF]' : 'bg-[#13131A] border-[#1C1C26]'
-            }`}>
+            <div className={`p-16 rounded-3xl border text-center space-y-3 ${theme === 'light' ? 'bg-white border-[#E9ECEF]' : 'bg-[#13131A] border-[#1C1C26]'
+              }`}>
               <History className="h-12 w-12 mx-auto text-[#8B8B96] opacity-40" />
               <h3 className={`font-bold text-base ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'}`}>
                 {activeSearch ? 'No Matching Past Streams Found' : 'No Watched Past Streams Found'}
@@ -287,9 +281,8 @@ export default function ViewerPastStreamsPage() {
                 {sessions.map((s) => (
                   <div
                     key={s.id}
-                    className={`p-4 rounded-2xl border flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-md transition hover:border-[#00F5D4]/40 hover:shadow-lg ${
-                      theme === 'light' ? 'bg-white border-[#E9ECEF]' : 'bg-[#13131A] border-[#1C1C26]'
-                    }`}
+                    className={`p-4 rounded-2xl border flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-md transition hover:border-[#00F5D4]/40 hover:shadow-lg ${theme === 'light' ? 'bg-white border-[#E9ECEF]' : 'bg-[#13131A] border-[#1C1C26]'
+                      }`}
                   >
                     {/* Left side: Avatar + Creator + Title + Badges */}
                     <div className="flex items-center gap-3.5 min-w-0">
@@ -316,9 +309,8 @@ export default function ViewerPastStreamsPage() {
                           )}
                         </div>
 
-                        <h3 className={`font-heading font-black text-sm truncate ${
-                          theme === 'light' ? 'text-[#1A1D20]' : 'text-white'
-                        }`}>
+                        <h3 className={`font-heading font-black text-sm truncate ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'
+                          }`}>
                           {s.title}
                         </h3>
 
@@ -349,9 +341,8 @@ export default function ViewerPastStreamsPage() {
 
               {/* PAGINATION BAR */}
               {sessions.length > 0 && (
-                <div className={`p-4 rounded-2xl border flex flex-col sm:flex-row items-center justify-between gap-4 transition ${
-                  theme === 'light' ? 'bg-white border-[#E9ECEF]' : 'bg-[#13131A] border-[#1C1C26]'
-                }`}>
+                <div className={`p-4 rounded-2xl border flex flex-col sm:flex-row items-center justify-between gap-4 transition ${theme === 'light' ? 'bg-white border-[#E9ECEF]' : 'bg-[#13131A] border-[#1C1C26]'
+                  }`}>
                   {/* Stats */}
                   <p className={`text-xs font-medium ${theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'}`}>
                     Showing <span className="font-bold text-[#00F5D4]">{startRecord}</span> to{' '}
@@ -366,11 +357,10 @@ export default function ViewerPastStreamsPage() {
                       onClick={() => handlePageChange(1)}
                       disabled={!pagination.hasPrevPage || currentPage === 1 || isLoading}
                       title="First Page"
-                      className={`p-2 rounded-xl border text-xs font-bold transition disabled:opacity-30 disabled:cursor-not-allowed ${
-                        theme === 'light'
+                      className={`p-2 rounded-xl border text-xs font-bold transition disabled:opacity-30 disabled:cursor-not-allowed ${theme === 'light'
                           ? 'border-[#E9ECEF] hover:bg-[#F8F9FA] text-[#495057]'
                           : 'border-[#1C1C26] hover:bg-[#1C1C26] text-[#8B8B96] hover:text-white'
-                      }`}
+                        }`}
                     >
                       <ChevronsLeft className="h-4 w-4" />
                     </button>
@@ -380,11 +370,10 @@ export default function ViewerPastStreamsPage() {
                       onClick={() => handlePageChange(currentPage - 1)}
                       disabled={!pagination.hasPrevPage || currentPage === 1 || isLoading}
                       title="Previous Page"
-                      className={`p-2 rounded-xl border text-xs font-bold transition flex items-center gap-1 disabled:opacity-30 disabled:cursor-not-allowed ${
-                        theme === 'light'
+                      className={`p-2 rounded-xl border text-xs font-bold transition flex items-center gap-1 disabled:opacity-30 disabled:cursor-not-allowed ${theme === 'light'
                           ? 'border-[#E9ECEF] hover:bg-[#F8F9FA] text-[#495057]'
                           : 'border-[#1C1C26] hover:bg-[#1C1C26] text-[#8B8B96] hover:text-white'
-                      }`}
+                        }`}
                     >
                       <ChevronLeft className="h-4 w-4" />
                       <span className="hidden md:inline pr-1">Prev</span>
@@ -398,13 +387,12 @@ export default function ViewerPastStreamsPage() {
                           key={pageNo}
                           onClick={() => handlePageChange(pageNo)}
                           disabled={isLoading}
-                          className={`h-8 min-w-[32px] px-2.5 rounded-xl text-xs font-black transition ${
-                            isCurrent
+                          className={`h-8 min-w-[32px] px-2.5 rounded-xl text-xs font-black transition ${isCurrent
                               ? 'bg-brand-gradient text-white shadow-sm glow-teal font-black scale-105'
                               : theme === 'light'
                                 ? 'bg-[#F8F9FA] border border-[#E9ECEF] text-[#495057] hover:bg-[#E9ECEF]'
                                 : 'bg-[#0A0A0F] border border-[#1C1C26] text-[#8B8B96] hover:text-white hover:bg-[#1C1C26]'
-                          }`}
+                            }`}
                         >
                           {pageNo}
                         </button>
@@ -416,11 +404,10 @@ export default function ViewerPastStreamsPage() {
                       onClick={() => handlePageChange(currentPage + 1)}
                       disabled={!pagination.hasNextPage || currentPage >= pagination.totalPages || isLoading}
                       title="Next Page"
-                      className={`p-2 rounded-xl border text-xs font-bold transition flex items-center gap-1 disabled:opacity-30 disabled:cursor-not-allowed ${
-                        theme === 'light'
+                      className={`p-2 rounded-xl border text-xs font-bold transition flex items-center gap-1 disabled:opacity-30 disabled:cursor-not-allowed ${theme === 'light'
                           ? 'border-[#E9ECEF] hover:bg-[#F8F9FA] text-[#495057]'
                           : 'border-[#1C1C26] hover:bg-[#1C1C26] text-[#8B8B96] hover:text-white'
-                      }`}
+                        }`}
                     >
                       <span className="hidden md:inline pl-1">Next</span>
                       <ChevronRight className="h-4 w-4" />
@@ -431,11 +418,10 @@ export default function ViewerPastStreamsPage() {
                       onClick={() => handlePageChange(pagination.totalPages)}
                       disabled={!pagination.hasNextPage || currentPage >= pagination.totalPages || isLoading}
                       title="Last Page"
-                      className={`p-2 rounded-xl border text-xs font-bold transition disabled:opacity-30 disabled:cursor-not-allowed ${
-                        theme === 'light'
+                      className={`p-2 rounded-xl border text-xs font-bold transition disabled:opacity-30 disabled:cursor-not-allowed ${theme === 'light'
                           ? 'border-[#E9ECEF] hover:bg-[#F8F9FA] text-[#495057]'
                           : 'border-[#1C1C26] hover:bg-[#1C1C26] text-[#8B8B96] hover:text-white'
-                      }`}
+                        }`}
                     >
                       <ChevronsRight className="h-4 w-4" />
                     </button>

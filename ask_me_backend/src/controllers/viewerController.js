@@ -287,8 +287,11 @@ const getPublicLiveFeed = async (req, res, next) => {
   try {
     const { category, search, platform } = req.query;
 
-    // 1. Fetch All Creators, Profiles, Socials, Sessions, Follows & Donations
-    const creators = await CreatorsModel.findAll({ raw: true }).catch(() => []);
+    // 1. Fetch All Active Creators, Profiles, Socials, Sessions, Follows & Donations
+    const creators = await CreatorsModel.findAll({
+      where: { status: 'active' },
+      raw: true,
+    }).catch(() => []);
     const profiles = await CreatorProfileModel.findAll({ raw: true }).catch(() => []);
     const socialLinks = await CreatorSocialLinkModel.findAll({ raw: true }).catch(() => []);
     const sessions = await DonationSession.findAll({ raw: true }).catch(() => []);
@@ -309,10 +312,12 @@ const getPublicLiveFeed = async (req, res, next) => {
       const cid = String(d.creator_id);
       totalQuestionsMap.set(cid, (totalQuestionsMap.get(cid) || 0) + 1);
 
-      if (d.status === 'read' || d.status === 'completed') {
+      if (d.status === 'read' || d.status === 'completed' || d.status === 'answered') {
         answeredMap.set(cid, (answeredMap.get(cid) || 0) + 1);
       } else if (
-        (d.status === 'not_read')
+        (d.status === 'not_read' || d.status === 'pending' || d.status === 'unread' || !d.status) &&
+        (d.payment_status === 'success' || d.payment_status === 'paid' || d.payment_status === 'completed') &&
+        d.status !== 'rejected'
       ) {
         pendingQueueMap.set(cid, (pendingQueueMap.get(cid) || 0) + 1);
       }
@@ -409,10 +414,13 @@ const getPublicLiveFeed = async (req, res, next) => {
     if (search && search.trim()) {
       const q = search.toLowerCase().trim();
       feedItems = feedItems.filter(item =>
-        item.fullName.toLowerCase().includes(q) ||
-        item.username.toLowerCase().includes(q) ||
-        item.category.toLowerCase().includes(q) ||
-        (item.session && item.session.title.toLowerCase().includes(q))
+        (item.fullName && item.fullName.toLowerCase().includes(q)) ||
+        (item.username && item.username.toLowerCase().includes(q)) ||
+        (item.cleanUsername && item.cleanUsername.toLowerCase().includes(q)) ||
+        (item.category && item.category.toLowerCase().includes(q)) ||
+        (item.bio && item.bio.toLowerCase().includes(q)) ||
+        (item.session && item.session.title && item.session.title.toLowerCase().includes(q)) ||
+        (item.session && item.session.description && item.session.description.toLowerCase().includes(q))
       );
     }
 
@@ -555,10 +563,6 @@ const toggleFollowCreator = async (req, res, next) => {
     const userId = req.user?.id || req.body.userId || req.query.userId;
     const { creatorId } = req.body;
 
-    console.log("Authenticated User:", req.user);
-    console.log("Viewer ID:", userId);
-    console.log("Creator ID:", creatorId);
-
     if (!userId) {
       return res.status(401).json({
         status: "fail",
@@ -566,10 +570,10 @@ const toggleFollowCreator = async (req, res, next) => {
       });
     }
 
-    if (!creatorId) {
+    if (!creatorId || creatorId === 'undefined' || creatorId === 'null' || isNaN(Number(creatorId))) {
       return res.status(400).json({
         status: "fail",
-        message: "creatorId is required.",
+        message: "Valid numeric creatorId is required.",
       });
     }
 

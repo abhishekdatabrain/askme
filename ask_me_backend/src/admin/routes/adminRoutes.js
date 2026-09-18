@@ -127,4 +127,27 @@ router.put('/notifications/:id/read', markSingleNotificationRead);
 router.get('/operations', getPlatformSettings);
 router.put('/operations', validate(platformSettingsSchema, 'body'), updatePlatformSettings);
 
+// 12. Creator Testimonials Management
+const upload = require('../../middlewares/uploadMiddleware');
+const {
+  getAdminTestimonials,
+  getTestimonialById,
+  createTestimonial,
+  updateTestimonial,
+  deleteTestimonial,
+  toggleTestimonialStatus,
+  reorderTestimonials,
+} = require('../../controllers/creatorTestimonialController');
+
+router.get('/creator-testimonials', getAdminTestimonials);
+router.post('/creator-testimonials', upload.single('profile_image'), createTestimonial);
+router.patch('/creator-testimonials/order', reorderTestimonials);
+router.put('/creator-testimonials/order', reorderTestimonials);
+router.get('/creator-testimonials/:id', getTestimonialById);
+router.put('/creator-testimonials/:id', upload.single('profile_image'), updateTestimonial);
+router.patch('/creator-testimonials/:id', upload.single('profile_image'), updateTestimonial);
+router.delete('/creator-testimonials/:id', deleteTestimonial);
+router.patch('/creator-testimonials/:id/status', toggleTestimonialStatus);
+router.put('/creator-testimonials/:id/status', toggleTestimonialStatus);
+
 module.exports = router;

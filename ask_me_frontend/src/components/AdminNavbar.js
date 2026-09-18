@@ -646,7 +646,6 @@ export default function AdminNavbar({ activeView, setActiveView, onOpenAuthModal
             </div>
             <div className="hidden md:flex flex-col text-left">
               <span className="text-xs font-bold text-[#F5F5F7]">Super Admin</span>
-              <span className="text-[10px] text-[#00F5D4]">Futurepast Ventures</span>
             </div>
             <ChevronDown className="h-3.5 w-3.5 text-[#8B8B96]" />
           </div>

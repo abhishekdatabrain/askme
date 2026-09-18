@@ -259,9 +259,8 @@ export default function ViewerRegisterPage() {
                     {[1, 2, 3, 4, 5].map((level) => (
                       <div
                         key={level}
-                        className={`h-1.5 rounded-full transition-all duration-300 ${
-                          level <= passScore ? strengthInfo.color : 'bg-[#1C1C26]'
-                        }`}
+                        className={`h-1.5 rounded-full transition-all duration-300 ${level <= passScore ? strengthInfo.color : 'bg-[#1C1C26]'
+                          }`}
                       />
                     ))}
                   </div>

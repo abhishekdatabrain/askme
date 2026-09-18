@@ -29,7 +29,8 @@ import {
   RefreshCw,
   TrendingUp,
   Sun,
-  Moon
+  Moon,
+  MessageSquare
 } from 'lucide-react';
 
 import { API_ENDPOINTS } from '@/config/api';
@@ -193,6 +194,16 @@ export default function AdminSidebar({ activeTab: propsActiveTab, setActiveTab, 
         { id: 'reports_creator', label: 'Creator Report', path: '/admin/reports/creator' },
         { id: 'reports_payment', label: 'Payment Report', path: '/admin/reports/payment' },
         { id: 'reports_withdrawal', label: 'Withdrawal Report', path: '/admin/reports/withdrawal' },
+      ],
+    },
+    {
+      id: 'marketing',
+      label: 'Marketing',
+      subtitle: 'Landing Page & Testimonials',
+      icon: MessageSquare,
+      path: '/admin/marketing/testimonials',
+      children: [
+        { id: 'marketing_testimonials', label: 'Creator Testimonials', path: '/admin/marketing/testimonials' },
       ],
     },
     {
@@ -410,7 +421,7 @@ export default function AdminSidebar({ activeTab: propsActiveTab, setActiveTab, 
 
         <div className={`flex items-center gap-2 text-[11px] ${theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'}`}>
           <Lock className="h-3 w-3 text-[#00F5D4]" />
-          <span>Futurepast ventures LLP</span>
+          <span>AskMe Platform</span>
         </div>
         <span className={`text-[10px] ${theme === 'light' ? 'text-[#6C757D]/70' : 'text-[#8B8B96]/60'}`}>Lake View City, Pune 411047</span>
       </div>

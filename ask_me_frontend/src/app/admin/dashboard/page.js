@@ -148,7 +148,7 @@ export default function AdminDashboardPage() {
                             The Creator Discovery & Audience Engagement Platform. Sustainable Q&A infrastructure for creators across live streams, digital content, and asynchronous communication.
                         </p>
                         <div className="p-2 rounded-lg bg-[#13131A] border border-[#1C1C26] text-[10px]">
-                            <span className="font-bold text-white block">Futurepast ventures LLP</span>
+                            <span className="font-bold text-white block">AskMe Platform</span>
                             <span>Lake View City, Lohegaon, Pune 411047, MH, India</span>
                         </div>
                     </div>

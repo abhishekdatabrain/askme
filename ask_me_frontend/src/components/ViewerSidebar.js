@@ -228,9 +228,7 @@ function ViewerSidebarContent({ theme: propTheme, onToggleTheme, activeTab: curr
               <span className={`font-heading font-black text-lg block leading-none ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'}`}>
                 AskMe <span className="text-brand-gradient">VIEWER</span>
               </span>
-              <span className={`text-[10px] font-extrabold uppercase tracking-widest block mt-0.5 ${theme === 'light' ? 'text-[#6C757D]' : 'text-[#EB1000]'}`}>
-                Public Studio App
-              </span>
+
             </div>
           </Link>
           <button

@@ -20,18 +20,16 @@ export default function LandingNavbar() {
 
   return (
     <header
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        scrolled
-          ? 'bg-[#07070C]/95 backdrop-blur-xl border-b border-[#1E1E2D]/80 py-2 px-2 sm:px-4 lg:px-6 shadow-2xl'
-          : 'bg-transparent py-3 px-2 sm:px-4 lg:px-6'
-      }`}
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled
+        ? 'bg-[#07070C]/95 backdrop-blur-xl border-b border-[#1E1E2D]/80 py-2 px-2 sm:px-4 lg:px-6 shadow-2xl'
+        : 'bg-transparent py-3 px-2 sm:px-4 lg:px-6'
+        }`}
     >
       <div
-        className={`max-w-7xl mx-auto rounded-full transition-all duration-300 ${
-          scrolled
-            ? 'bg-[#0D0D14] border border-[#222234] shadow-2xl py-2 px-4 sm:px-6'
-            : 'bg-[#0F0F18]/90 backdrop-blur-md border border-[#202030] py-2 px-4 sm:px-6 shadow-xl'
-        }`}
+        className={`max-w-7xl mx-auto rounded-full transition-all duration-300 ${scrolled
+          ? 'bg-[#0D0D14] border border-[#222234] shadow-2xl py-2 px-4 sm:px-6'
+          : 'bg-[#0F0F18]/90 backdrop-blur-md border border-[#202030] py-2 px-4 sm:px-6 shadow-xl'
+          }`}
       >
         <div className="flex items-center justify-between gap-3">
           {/* Logo & Subtitle */}
@@ -49,14 +47,9 @@ export default function LandingNavbar() {
 
           {/* Desktop Navigation Links WITH VERTICAL SEPARATORS */}
           <nav className="hidden lg:flex items-center gap-3.5 text-[13px] font-semibold text-[#A0A0B2]">
-            <a href="#creators" className="hover:text-white transition-colors">
+            <Link href="/discover-creators" className="hover:text-white transition-colors">
               Discover
-            </a>
-            <span className="h-3.5 w-[1px] bg-[#222234]"></span>
-            
-            <a href="#categories" className="hover:text-white transition-colors">
-              categories
-            </a>
+            </Link>
             <span className="h-3.5 w-[1px] bg-[#222234]"></span>
 
             <a href="#how-it-works" className="hover:text-white transition-colors">
@@ -69,16 +62,16 @@ export default function LandingNavbar() {
             </a>
             <span className="h-3.5 w-[1px] bg-[#222234]"></span>
 
-            <a href="#live-matrix" className="hover:text-white transition-colors flex items-center gap-1.5 text-white font-bold">
+            <Link href="/live-streams" className="hover:text-white transition-colors flex items-center gap-1.5 text-white font-bold">
               <span className="h-2 w-2 rounded-full bg-[#EB1000] animate-pulse"></span>
               Live Streams
-            </a>
+            </Link>
             <span className="h-3.5 w-[1px] bg-[#222234]"></span>
           </nav>
 
           {/* Search Bar & Get Started Button */}
           <div className="hidden sm:flex items-center gap-3">
-            <div className="relative">
+            {/* <div className="relative">
               <input
                 type="text"
                 placeholder="Search creators,live stream"
@@ -86,9 +79,14 @@ export default function LandingNavbar() {
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-44 md:w-52 py-1.5 pl-3.5 pr-8 rounded-full bg-[#161622] border border-[#262638] text-[12px] text-white placeholder-[#6E6E80] focus:outline-none focus:border-[#EB1000] transition-all"
               />
-              <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[#6E6E80]" />
-            </div>
-
+              <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-3.5 w-2 text-[#6E6E80]" />
+            </div> */}
+            <Link
+              href="/creators/login"
+              className="px-5 py-2 rounded-full bg-gradient-to-r from-[#EB1000] to-[#CC0E00] text-white text-[13px] font-bold shadow-lg shadow-[#EB1000]/30 hover:opacity-90 transition-all shrink-0"
+            >
+              Sign in
+            </Link>
             <Link
               href="/creators/register"
               className="px-5 py-2 rounded-full bg-gradient-to-r from-[#EB1000] to-[#CC0E00] text-white text-[13px] font-bold shadow-lg shadow-[#EB1000]/30 hover:opacity-90 transition-all shrink-0"
@@ -118,9 +116,9 @@ export default function LandingNavbar() {
         {/* Mobile Dropdown */}
         {mobileMenuOpen && (
           <div className="lg:hidden mt-3 pt-3 pb-2 border-t border-[#222234] space-y-2 text-xs font-semibold text-[#A0A0B2]">
-            <a href="#creators" onClick={() => setMobileMenuOpen(false)} className="block py-1.5 hover:text-white">
+            <Link href="/discover-creators" onClick={() => setMobileMenuOpen(false)} className="block py-1.5 hover:text-white">
               Discover
-            </a>
+            </Link>
             <a href="#categories" onClick={() => setMobileMenuOpen(false)} className="block py-1.5 hover:text-white">
               Categories
             </a>
@@ -130,10 +128,10 @@ export default function LandingNavbar() {
             <a href="#for-creators" onClick={() => setMobileMenuOpen(false)} className="block py-1.5 hover:text-white">
               For Creators
             </a>
-            <a href="#live-matrix" onClick={() => setMobileMenuOpen(false)} className="block py-1.5 text-white font-bold flex items-center gap-1.5">
-              <span className="h-2 w-2 rounded-full bg-[#EB1000]"></span>
+            <Link href="/live-streams" onClick={() => setMobileMenuOpen(false)} className="block py-1.5 text-white font-bold flex items-center gap-1.5">
+              <span className="h-2 w-2 rounded-full bg-[#EB1000] animate-pulse"></span>
               Live Streams
-            </a>
+            </Link>
             <div className="pt-2 flex flex-col gap-2">
               <div className="relative">
                 <input

@@ -16,6 +16,7 @@ const {
   getPublicPastStreams,
   getPublicCategories,
 } = require('../../controllers/viewerController');
+const { getPublicTestimonials } = require('../../controllers/creatorTestimonialController');
 const {
   createVipSubscription,
   getViewerMemberships,
@@ -78,6 +79,7 @@ router.get('/profile', getViewerProfile);
  * @access  Public
  */
 router.get('/public/live-feed', getPublicLiveFeed);
+router.get('/public/creator-testimonials', getPublicTestimonials);
 
 /**
  * @route   GET /api/viewers/public/creators/:username

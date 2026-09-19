@@ -8,7 +8,7 @@ export default function ModerationQueue() {
     {
       id: 'MOD-9021',
       viewer: 'Alex_Gamer99',
-      creator: 'TechBurner Live',
+      creator: 'Prince Live',
       platform: 'youtube',
       amount: '₹200',
       question: 'Hey! What is your exact opinion on the new M4 Mac Mini vs custom PC build for 4K video rendering?',
@@ -94,15 +94,14 @@ export default function ModerationQueue() {
           return (
             <div
               key={item.id}
-              className={`p-4 rounded-xl border transition-all ${
-                isApproved
+              className={`p-4 rounded-xl border transition-all ${isApproved
                   ? 'bg-[#00E676]/5 border-[#00E676]/30'
                   : isRejected
-                  ? 'bg-[#FF5252]/5 border-[#FF5252]/30 opacity-60'
-                  : isHighRisk
-                  ? 'bg-[#FF3D71]/10 border-[#FF3D71]/40'
-                  : 'bg-[#0A0A0F] border-[#1C1C26] hover:border-[#00F5D4]/30'
-              }`}
+                    ? 'bg-[#FF5252]/5 border-[#FF5252]/30 opacity-60'
+                    : isHighRisk
+                      ? 'bg-[#FF3D71]/10 border-[#FF3D71]/40'
+                      : 'bg-[#0A0A0F] border-[#1C1C26] hover:border-[#00F5D4]/30'
+                }`}
             >
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
                 {/* Left Metadata */}
@@ -126,9 +125,8 @@ export default function ModerationQueue() {
                   <div className="flex items-center gap-2 text-[11px]">
                     <span className="text-[#8B8B96]">AI Risk Assessment:</span>
                     <span
-                      className={`font-semibold ${
-                        isHighRisk ? 'text-[#FF3D71]' : 'text-[#00E676]'
-                      }`}
+                      className={`font-semibold ${isHighRisk ? 'text-[#FF3D71]' : 'text-[#00E676]'
+                        }`}
                     >
                       {item.riskScore}
                     </span>

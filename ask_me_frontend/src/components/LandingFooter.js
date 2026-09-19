@@ -130,9 +130,9 @@ export default function LandingFooter() {
                   </a>
                 </li>
                 <li>
-                  <a href="#contact" className="hover:text-white transition-colors">
+                  <Link href="/contact" className="hover:text-white transition-colors">
                     Contact Us
-                  </a>
+                  </Link>
                 </li>
               </ul>
             </div>

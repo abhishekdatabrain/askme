@@ -89,6 +89,11 @@ export const API_ENDPOINTS = {
     PUBLIC: `${API_BASE_URL}/public/creator-testimonials`,
     ADMIN: `${API_BASE_URL}/admin/creator-testimonials`,
   },
+  CONTACT: {
+    SUBMIT: `${API_BASE_URL}/contact/submit`,
+    MESSAGES: `${API_BASE_URL}/contact/messages`,
+    UPDATE_STATUS: (id) => `${API_BASE_URL}/contact/messages/${id}/status`,
+  },
 };
 
 /**

@@ -218,7 +218,7 @@ export default function PublicLiveStreamsPage() {
           })
         );
       }
-      router.push('/viewers/login');
+      router.push('/');
       return;
     }
     setVipModalCreator(creator);
@@ -248,7 +248,7 @@ export default function PublicLiveStreamsPage() {
     if (payCode) {
       router.push(`/pay/${payCode}`);
     } else {
-      router.push('/viewers/login');
+      router.push('/');
     }
   };
 
@@ -291,44 +291,6 @@ export default function PublicLiveStreamsPage() {
 
       {/* Main Page Content */}
       <main className="pt-28 pb-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12 w-full flex-1">
-        {/* HERO BANNER SECTION */}
-        <section className="relative rounded-3xl bg-gradient-to-r from-[#0F0F1A] via-[#1A0A0D] to-[#0D0D14] border border-[#222234] p-6 sm:p-10 shadow-2xl overflow-hidden text-left">
-          <div className="absolute top-0 right-0 w-96 h-96 bg-[#EB1000]/15 blur-[120px] pointer-events-none rounded-full"></div>
-
-          <div className="relative z-10 space-y-4 max-w-3xl">
-            {/* Header Badge */}
-            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#1C0A0D] border border-[#EB1000]/40 text-[#EB1000] text-xs font-mono font-bold uppercase tracking-wider shadow-md">
-              <span className="h-2 w-2 rounded-full bg-[#EB1000] animate-pulse"></span>
-              <span>🔴 REAL-TIME LIVE STREAM </span>
-            </div>
-
-            {/* Title & Subtitle */}
-            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-heading font-black text-white tracking-tight leading-[1.1]">
-              Live Sessions &amp;{' '}
-              <span className="text-[#EB1000] relative inline-block">
-                Broadcasters
-                <span className="absolute -inset-1 bg-[#EB1000]/25 blur-lg -z-10 rounded-full"></span>
-              </span>
-            </h1>
-
-            <p className="text-sm sm:text-base text-[#9A9AB0] font-medium leading-relaxed">
-              Watch verified creators broadcasting live right now. Ask priority questions, view real-time Q&amp;A queues, and unlock VIP memberships.
-            </p>
-
-            {/* Metrics Row */}
-            <div className="flex flex-wrap items-center gap-4 pt-2 text-xs">
-              <div className="px-4 py-2 rounded-2xl bg-[#14141F] border border-[#262638] flex items-center gap-2">
-                <span className="h-2.5 w-2.5 rounded-full bg-[#EB1000] animate-pulse"></span>
-                <span className="text-white font-extrabold">{activeLiveCount}</span>
-                <span className="text-[#8E8E9F]">Creators Live Now</span>
-              </div>
-
-
-            </div>
-          </div>
-        </section>
-
-
 
         {/* SEARCH, CATEGORY & QUICK FILTERS SECTION */}
         <section className="space-y-6 text-left">

@@ -461,12 +461,30 @@ const getPublicLiveFeed = async (req, res, next) => {
       return timeB - timeA;
     });
 
+    const totalCount = feedItems.length;
+    const pageNum = req.query.page ? parseInt(req.query.page, 10) : null;
+    const limitNum = req.query.limit ? parseInt(req.query.limit, 10) : null;
+
+    let paginatedCreators = feedItems;
+    let hasMore = false;
+
+    if (pageNum && limitNum) {
+      const startIndex = (pageNum - 1) * limitNum;
+      const endIndex = pageNum * limitNum;
+      paginatedCreators = feedItems.slice(startIndex, endIndex);
+      hasMore = endIndex < totalCount;
+    }
+
     return res.status(200).json({
       status: 'success',
-      total: feedItems.length,
+      total: totalCount,
+      page: pageNum || 1,
+      limit: limitNum || totalCount,
+      hasMore,
       data: {
-        creators: feedItems,
-        // categories: dynamicCategories,
+        creators: paginatedCreators,
+        totalCreators: totalCount,
+        hasMore,
         activeLiveCount: feedItems.filter(i => i.isLive).length,
       },
     });

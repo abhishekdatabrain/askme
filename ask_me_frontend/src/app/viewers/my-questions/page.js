@@ -36,7 +36,7 @@ export default function ViewerMyQuestionsPage() {
     const token = getViewerToken();
     const u = getViewerUser();
     if (!token && !u) {
-      router.replace('/viewers/login');
+      router.replace('/');
     }
   }, [router]);
 

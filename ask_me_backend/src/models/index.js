@@ -23,6 +23,7 @@ const QrCode = require("./QrCodeModel");
 const PaymentWebhook = require("./PaymentWebhookModel");
 const WalletSettlement = require("./WalletSettlementModel");
 const CreatorTestimonial = require("./CreatorTestimonialModel");
+const ContactMessage = require("./ContactMessageModel");
 
 // Admin & Refresh Token
 Admin.hasMany(AdminRefreshToken, { foreignKey: "admin_id", as: "refreshTokens" });
@@ -146,4 +147,5 @@ module.exports = {
   ChatMessage,
   QrCode,
   CreatorTestimonial,
+  ContactMessage,
 };

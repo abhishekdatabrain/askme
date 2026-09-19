@@ -114,7 +114,7 @@ function CreatorSidebarContent({ theme: propTheme, onToggleTheme }) {
 
   const handleLogout = () => {
     clearCreatorSession();
-    window.location.href = '/creators/login';
+    window.location.href = '/';
   };
 
   const navItems = [
@@ -177,7 +177,7 @@ function CreatorSidebarContent({ theme: propTheme, onToggleTheme }) {
           <div>
             <span className={`font-heading font-black text-lg block leading-none ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'
               }`}>
-              AskMe <span className="text-brand-gradient">STUDIO</span>
+              AskMe
             </span>
             <span className={`text-[10px] font-bold uppercase tracking-wider block mt-1 ${theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'
               }`}>

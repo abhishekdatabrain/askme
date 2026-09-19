@@ -136,10 +136,6 @@ export default function CreatorCard({
           <div className="text-xs text-[#7A7A8E] font-medium">{handle}</div>
         </div>
 
-        {/* Bio Text */}
-        <p className="text-xs text-[#8E8E9F] font-medium line-clamp-2 my-2.5 leading-relaxed">
-          {bio}
-        </p>
 
         {/* Metrics Row */}
         {useLiveQueueMetrics ? (
@@ -164,7 +160,7 @@ export default function CreatorCard({
               </span>
 
               <span className="text-[11px] text-[#7A7A8E] ml-1">
-                Subs
+                followers
               </span>
             </div>
 

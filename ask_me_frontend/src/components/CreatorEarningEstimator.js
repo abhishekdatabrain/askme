@@ -169,7 +169,7 @@ export default function CreatorEarningEstimator() {
 
             {/* Call to Action Button */}
             <Link
-              href="/creators/register"
+              href="/"
               className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-[#EB1000] to-[#CC0E00] text-white font-bold text-sm text-center flex items-center justify-center gap-2 shadow-lg shadow-[#EB1000]/30 hover:opacity-95 transition-all group"
             >
               <Sparkles className="h-4 w-4 text-[#FFD60A]" />

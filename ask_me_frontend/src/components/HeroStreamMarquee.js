@@ -4,7 +4,7 @@ import PlatformIcon from './PlatformIcon';
 
 export default function HeroStreamMarquee() {
   const row1Creators = [
-    { name: 'TechBurner Live', platform: 'youtube', category: 'Technology', minFee: '₹100', subs: '3.4M', isLive: true, img: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80' },
+    { name: 'Prince Live', platform: 'youtube', category: 'Technology', minFee: '₹100', subs: '3.4M', isLive: true, img: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80' },
     { name: 'FinCal Strategy', platform: 'youtube', category: 'Finance', minFee: '₹200', subs: '1.8M', isLive: true, img: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=80' },
     { name: 'CodeWithAnish', platform: 'youtube', category: 'Education', minFee: '₹150', subs: '850K', isLive: true, img: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=400&q=80' },
     { name: 'GamerX Xtreme', platform: 'twitch', category: 'Gaming', minFee: '₹50', subs: '2.1M', isLive: false, img: 'https://images.unsplash.com/photo-1566492031773-4f4e44671857?auto=format&fit=crop&w=400&q=80' },

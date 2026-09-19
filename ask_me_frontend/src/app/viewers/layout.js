@@ -26,7 +26,7 @@ export default function ViewerLayout({ children }) {
       setIsAuthorized(false);
       setLoading(false);
       if (typeof window !== 'undefined') {
-        window.location.href = '/viewers/login';
+        window.location.href = '/';
       }
     } else {
       setIsAuthorized(true);

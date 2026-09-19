@@ -51,7 +51,7 @@ function ViewerDashboardContent() {
         const user = getViewerUser() || (typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('askme_viewer_user') || 'null') : null);
 
         if (!token || !user) {
-            window.location.href = '/viewers/login';
+            window.location.href = '/';
         } else {
             setIsAuthenticated(true);
             setCheckingAuth(false);
@@ -73,7 +73,7 @@ function ViewerDashboardContent() {
             localStorage.removeItem("askme_viewer_user");
         }
 
-        window.location.href = "/viewers/login";
+        window.location.href = "/";
     };
 
 
@@ -115,9 +115,6 @@ function ViewerDashboardContent() {
             }
         };
     }, []);
-
-    // Helper to safely extract YouTube Channel Info (channelId or channel handle) only if platform is YouTube
-    // Helper to safely extract YouTube Channel Info (channelId or channel handle)
 
 
     // Trigger Google YouTube Subscribe button rendering when creators list loads
@@ -360,7 +357,7 @@ function ViewerDashboardContent() {
                         </span>
                     </div>
 
-                    <div className="flex items-center gap-2">
+                    {/* <div className="flex items-center gap-2">
                         <button
                             onClick={handleLogout}
                             className="px-2.5 py-1.5 rounded-xl bg-[#FF3D71]/10 border border-[#FF3D71]/30 text-[#FF3D71] text-xs font-bold flex items-center gap-1"
@@ -368,7 +365,7 @@ function ViewerDashboardContent() {
                             <LogOut className="h-3.5 w-3.5" />
                             <span>Sign Out</span>
                         </button>
-                    </div>
+                    </div> */}
                 </header>
 
                 {/* MOBILE DRAWER */}
@@ -418,7 +415,7 @@ function ViewerDashboardContent() {
                         </div>
 
                         {/* Sign Out Button */}
-                        <button
+                        {/* <button
                             onClick={handleLogout}
                             className={`hidden sm:flex items-center gap-1.5 px-3.5 py-2 rounded-2xl border text-xs font-bold shrink-0 transition ${theme === 'light'
                                 ? 'bg-[#FFF5F5] border-[#FFE3E3] text-[#E03131] hover:bg-[#FFE3E3]'
@@ -428,7 +425,7 @@ function ViewerDashboardContent() {
                         >
                             <LogOut className="h-4 w-4" />
                             <span>Sign Out</span>
-                        </button>
+                        </button> */}
                     </div>
                 </div>
 

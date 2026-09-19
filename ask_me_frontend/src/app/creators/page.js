@@ -44,13 +44,18 @@ export default function AllCreatorsPage() {
   const router = useRouter();
   const { toast } = useToast();
 
-  // State Management - Fully Dynamic
+  // State Management - Fully Dynamic with Server-Side Search & 9 Items Pagination
   const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [filterType, setFilterType] = useState('all'); // 'all' | 'live' | 'top_rated' | 'vip'
 
   const [creatorsList, setCreatorsList] = useState([]);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
+  const [totalCreators, setTotalCreators] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [fetchError, setFetchError] = useState(null);
 
   const [followedCreators, setFollowedCreators] = useState({});
@@ -59,26 +64,43 @@ export default function AllCreatorsPage() {
   const [questionText, setQuestionText] = useState('');
   const [questionAmount, setQuestionAmount] = useState(100);
 
-  // Fetch backend creators dynamically with real-time polling
-  const fetchBackendCreators = async () => {
+  // Debounce search query input to trigger server-side search
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+    }, 350);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  // Fetch backend creators dynamically with server-side search & pagination
+  const fetchBackendCreators = async (pageNum = 1, append = false) => {
     try {
+      if (pageNum === 1) {
+        setLoading(true);
+      } else {
+        setLoadingMore(true);
+      }
+
       const baseUrl = API_ENDPOINTS?.VIEWERS?.PUBLIC_LIVE_FEED || 'http://localhost:5000/api/viewers/public/live-feed';
       const params = new URLSearchParams();
-      if (searchQuery && searchQuery.trim()) {
-        params.append('search', searchQuery.trim());
+      params.append('page', pageNum);
+      params.append('limit', 9);
+
+      if (debouncedSearch && debouncedSearch.trim()) {
+        params.append('search', debouncedSearch.trim());
       }
       if (selectedCategory && selectedCategory !== 'All') {
         params.append('category', selectedCategory);
       }
-      const queryString = params.toString();
-      const url = queryString ? `${baseUrl}?${queryString}` : baseUrl;
 
-      const res = await fetch(url);
+      const res = await fetch(`${baseUrl}?${params.toString()}`);
       if (!res.ok) {
         throw new Error(`Server returned status ${res.status}`);
       }
       const data = await res.json();
       const rawCreators = data?.data?.creators || data?.creators || data?.data || [];
+      const serverHasMore = !!(data?.hasMore ?? data?.data?.hasMore);
+      const serverTotal = data?.total || data?.data?.totalCreators || rawCreators.length;
 
       if (Array.isArray(rawCreators)) {
         const mappedCreators = rawCreators.map((item, idx) => {
@@ -115,7 +137,18 @@ export default function AllCreatorsPage() {
           };
         });
 
-        setCreatorsList(mappedCreators);
+        if (append) {
+          setCreatorsList((prev) => {
+            const existingIds = new Set(prev.map((c) => String(c.id)));
+            const uniqueNew = mappedCreators.filter((c) => !existingIds.has(String(c.id)));
+            return [...prev, ...uniqueNew];
+          });
+        } else {
+          setCreatorsList(mappedCreators);
+        }
+
+        setHasMore(serverHasMore);
+        setTotalCreators(serverTotal);
         setFetchError(null);
       }
     } catch (err) {
@@ -123,14 +156,21 @@ export default function AllCreatorsPage() {
       setFetchError(err.message);
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
   };
 
+  // Re-fetch on category or debounced search change
   useEffect(() => {
-    fetchBackendCreators();
-    const interval = setInterval(fetchBackendCreators, 4000);
-    return () => clearInterval(interval);
-  }, [searchQuery, selectedCategory]);
+    setPage(1);
+    fetchBackendCreators(1, false);
+  }, [debouncedSearch, selectedCategory]);
+
+  const handleLoadMore = () => {
+    const nextPage = page + 1;
+    setPage(nextPage);
+    fetchBackendCreators(nextPage, true);
+  };
 
   // Fetch following state for viewer
   useEffect(() => {
@@ -169,7 +209,7 @@ export default function AllCreatorsPage() {
       if (toast?.warning) {
         toast.warning('Please log in as a viewer to follow creators.', 'Authentication Required');
       }
-      setTimeout(() => { router.push('/viewers/login'); }, 1200);
+      setTimeout(() => { router.push('/'); }, 1200);
       return;
     }
 
@@ -232,34 +272,14 @@ export default function AllCreatorsPage() {
 
   // Filtered & Sorted Creators List
   const filteredCreators = useMemo(() => {
-    return creatorsList
-      .filter((creator) => {
-        // Category Filter
-        if (selectedCategory !== 'All' && creator.category.toLowerCase() !== selectedCategory.toLowerCase()) {
-          return false;
-        }
-
-        // Search Query Filter
-        if (searchQuery.trim()) {
-          const q = searchQuery.toLowerCase();
-          const matchesName = creator.name.toLowerCase().includes(q);
-          const matchesHandle = creator.handle.toLowerCase().includes(q);
-          const matchesCategory = creator.category.toLowerCase().includes(q);
-          const matchesBio = creator.bio.toLowerCase().includes(q);
-          if (!matchesName && !matchesHandle && !matchesCategory && !matchesBio) {
-            return false;
-          }
-        }
-
-        // Quick Filter Types
-        if (filterType === 'live' && !creator.isLive) return false;
-        if (filterType === 'top_rated' && creator.rating < 4.8) return false;
-        if (filterType === 'vip' && !creator.isVip) return false;
-
-        return true;
-      })
-
-  }, [creatorsList, selectedCategory, searchQuery, filterType]);
+    return creatorsList.filter((creator) => {
+      // Quick Filter Types
+      if (filterType === 'live' && !creator.isLive) return false;
+      if (filterType === 'top_rated' && creator.rating < 4.8) return false;
+      if (filterType === 'vip' && !creator.isVip) return false;
+      return true;
+    });
+  }, [creatorsList, filterType]);
 
   const liveCount = useMemo(() => creatorsList.filter((c) => c.isLive).length, [creatorsList]);
 
@@ -270,34 +290,6 @@ export default function AllCreatorsPage() {
 
       {/* 2. Main Page Content */}
       <main className="pt-28 pb-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10 w-full flex-1">
-
-        {/* HERO BANNER SECTION */}
-        <section className="relative rounded-3xl bg-gradient-to-r from-[#0F0F1A] via-[#140C12] to-[#0D0D14] border border-[#222234] p-6 sm:p-10 shadow-2xl overflow-hidden text-left">
-          {/* Ambient Glow background */}
-          <div className="absolute top-0 right-0 w-96 h-96 bg-[#EB1000]/15 blur-[120px] pointer-events-none rounded-full"></div>
-
-          <div className="relative z-10 space-y-4 max-w-3xl">
-            {/* Header Badge */}
-            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#1C0A0D] border border-[#EB1000]/40 text-[#EB1000] text-xs font-mono font-bold uppercase tracking-wider shadow-md">
-              <span className="h-2 w-2 rounded-full bg-[#EB1000] animate-pulse"></span>
-              <span>✦ DYNAMIC CREATOR DISCOVERY</span>
-            </div>
-
-            {/* Title & Subtitle */}
-            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-heading font-black text-white tracking-tight leading-[1.1]">
-              Explore All Live Creators &amp;{' '}
-              <span className="text-[#EB1000] relative inline-block">
-                Broadcasters
-                <span className="absolute -inset-1 bg-[#EB1000]/25 blur-lg -z-10 rounded-full"></span>
-              </span>
-            </h1>
-
-            <p className="text-sm sm:text-base text-[#9A9AB0] font-medium leading-relaxed">
-              Real-time database feed of verified creators, live sessions, and priority answer queues. Connect directly with your favorite creators.
-            </p>
-
-          </div>
-        </section>
 
         {/* SEARCH & FILTERS CONTROLS BAR */}
         <section className="space-y-5">
@@ -336,7 +328,7 @@ export default function AllCreatorsPage() {
                     : 'text-[#8E8E9F] hover:text-white'
                     }`}
                 >
-                  All ({creatorsList.length})
+                  All ({totalCreators || creatorsList.length})
                 </button>
                 <button
                   type="button"
@@ -349,9 +341,7 @@ export default function AllCreatorsPage() {
                   <span className="h-1.5 w-1.5 rounded-full bg-[#00E599] animate-pulse"></span>
                   Live ({liveCount})
                 </button>
-
               </div>
-
             </div>
           </div>
 
@@ -381,12 +371,12 @@ export default function AllCreatorsPage() {
           {/* Results Count Header */}
           <div className="flex items-center justify-between text-xs text-[#8E8E9F] font-semibold">
             <div>
-              Showing <span className="text-white font-bold">{filteredCreators.length}</span> creators
+              Showing <span className="text-white font-bold">{filteredCreators.length}</span> of <span className="text-white font-bold">{totalCreators || filteredCreators.length}</span> creators
               {selectedCategory !== 'All' && <span> in <strong className="text-[#EB1000]">{selectedCategory}</strong></span>}
             </div>
             <button
               type="button"
-              onClick={fetchBackendCreators}
+              onClick={() => fetchBackendCreators(1, false)}
               className="text-[#8E8E9F] hover:text-white flex items-center gap-1 cursor-pointer transition-colors"
             >
               <RefreshCw className="h-3.5 w-3.5" /> Refresh Database
@@ -396,7 +386,7 @@ export default function AllCreatorsPage() {
           {/* Loading Skeleton */}
           {loading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {[1, 2, 3, 4, 5, 6].map((idx) => (
+              {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((idx) => (
                 <div key={idx} className="rounded-3xl bg-[#0D0D14] border border-[#1E1E2C] p-5 space-y-4 animate-pulse">
                   <div className="h-36 w-full rounded-2xl bg-[#161622]"></div>
                   <div className="flex items-center gap-3">
@@ -411,20 +401,46 @@ export default function AllCreatorsPage() {
               ))}
             </div>
           ) : filteredCreators.length > 0 ? (
-            /* Dynamic Creators Grid */
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredCreators.map((creator) => (
-                <CreatorCard
-                  key={creator.id}
-                  creator={creator}
-                  isFollowing={!!followedCreators[String(creator.id || creator.creatorId)]}
-                  onToggleFollow={() => toggleFollow(creator)}
-                  onAskQuestion={() => handleAskQuestion(creator)}
-                  onSelectCreator={() => router.push(`/creator/${creator.cleanUsername}`)}
-                  onJoinVip={() => handleJoinVip(creator)}
-                />
-              ))}
-            </div>
+            <>
+              {/* Dynamic Creators Grid (9 Items per page) */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {filteredCreators.map((creator) => (
+                  <CreatorCard
+                    key={creator.id}
+                    creator={creator}
+                    isFollowing={!!followedCreators[String(creator.id || creator.creatorId)]}
+                    onToggleFollow={() => toggleFollow(creator)}
+                    onAskQuestion={() => handleAskQuestion(creator)}
+                    onSelectCreator={() => router.push(`/creator/${creator.cleanUsername}`)}
+                    onJoinVip={() => handleJoinVip(creator)}
+                  />
+                ))}
+              </div>
+
+              {/* LOAD MORE BUTTON */}
+              {hasMore && (
+                <div className="pt-8 text-center">
+                  <button
+                    type="button"
+                    onClick={handleLoadMore}
+                    disabled={loadingMore}
+                    className="px-8 py-3 rounded-full bg-[#161622] hover:bg-[#1E1E2E] border border-[#2A2A3E] text-white font-bold text-xs tracking-wider uppercase transition-all shadow-lg hover:border-[#EB1000]/60 hover:shadow-[#EB1000]/20 flex items-center gap-2 mx-auto cursor-pointer disabled:opacity-50"
+                  >
+                    {loadingMore ? (
+                      <>
+                        <RefreshCw className="h-4 w-4 animate-spin text-[#EB1000]" />
+                        <span>Loading More...</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>Load More Creators</span>
+                        <ArrowRight className="h-4 w-4 text-[#EB1000] rotate-90" />
+                      </>
+                    )}
+                  </button>
+                </div>
+              )}
+            </>
           ) : (
             /* Empty State */
             <div className="rounded-3xl bg-[#0D0D14] border border-[#222234] p-12 text-center space-y-4 max-w-lg mx-auto my-12">
@@ -543,7 +559,7 @@ export default function AllCreatorsPage() {
               {/* Notice */}
               <div className="p-3 rounded-xl bg-[#180A0C] border border-[#EB1000]/30 text-[11px] text-[#EB1000] flex items-center gap-2">
                 <ShieldCheck className="h-4 w-4 shrink-0" />
-                <span>100% Escrow Protection: Full refund if creator misses your question.</span>
+                <span>100% Protection: Full refund if creator misses your question.</span>
               </div>
 
               {/* Submit Buttons */}

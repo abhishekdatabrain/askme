@@ -344,7 +344,7 @@ export default function CreatorRegisterForm({ onClose, onComplete }) {
                         required
                         value={formData.email}
                         onChange={(e) => handleInputChange('email', e.target.value)}
-                        placeholder="creator@techburner.in"
+                        placeholder="creator@prince.in"
                         className="w-full rounded-xl bg-[#0A0A0F] border border-[#1C1C26] pl-9 pr-3 py-2 text-xs text-white placeholder-[#8B8B96] focus:border-[#00F5D4] focus:outline-none"
                       />
                     </div>
@@ -381,7 +381,7 @@ export default function CreatorRegisterForm({ onClose, onComplete }) {
                         required
                         value={formData.username}
                         onChange={(e) => handleInputChange('username', e.target.value)}
-                        placeholder="techburner"
+                        placeholder="prince"
                         className="w-full rounded-xl bg-[#0A0A0F] border border-[#1C1C26] pl-9 pr-3 py-2 text-xs text-white placeholder-[#8B8B96] focus:border-[#00F5D4] focus:outline-none font-mono"
                       />
                     </div>

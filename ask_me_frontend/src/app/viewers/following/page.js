@@ -53,7 +53,7 @@ export default function ViewerFollowingPage() {
     const token = getViewerToken() || getCookie('askme_viewer_token') || (typeof window !== 'undefined' ? localStorage.getItem('askme_viewer_token') : null);
     const user = getViewerUser();
     if (!token || !user) {
-      window.location.href = '/viewers/login';
+      window.location.href = '/';
     }
   }, [router]);
 
@@ -622,8 +622,8 @@ export default function ViewerFollowingPage() {
                           onClick={() => handlePageChange(pageNo)}
                           disabled={loading}
                           className={`h-8 min-w-[32px] px-2.5 rounded-xl text-xs font-black transition ${isCurrent
-                              ? 'bg-brand-gradient text-white shadow-sm glow-teal font-black scale-105'
-                              : 'bg-[#0A0A0F] border border-[#1C1C26] text-[#8B8B96] hover:text-white hover:bg-[#1C1C26]'
+                            ? 'bg-brand-gradient text-white shadow-sm glow-teal font-black scale-105'
+                            : 'bg-[#0A0A0F] border border-[#1C1C26] text-[#8B8B96] hover:text-white hover:bg-[#1C1C26]'
                             }`}
                         >
                           {pageNo}

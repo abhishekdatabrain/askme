@@ -30,7 +30,9 @@ import {
   TrendingUp,
   Sun,
   Moon,
-  MessageSquare
+  MessageSquare,
+  Mail,
+  Inbox
 } from 'lucide-react';
 
 import { API_ENDPOINTS } from '@/config/api';
@@ -205,6 +207,13 @@ export default function AdminSidebar({ activeTab: propsActiveTab, setActiveTab, 
       children: [
         { id: 'marketing_testimonials', label: 'Creator Testimonials', path: '/admin/marketing/testimonials' },
       ],
+    },
+    {
+      id: 'contact_inquiries',
+      label: 'Contact Inquiries',
+      subtitle: 'Form Submissions & Messages',
+      icon: Inbox,
+      path: '/admin/contact-inquiries',
     },
     {
       id: 'notifications',

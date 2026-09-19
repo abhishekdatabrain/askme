@@ -60,7 +60,7 @@ function ViewerSidebarContent({ theme: propTheme, onToggleTheme, activeTab: curr
       localStorage.removeItem("askme_viewer_user");
     }
 
-    window.location.href = "/viewers/login";
+    window.location.href = "/";
   };
 
   // Sync theme

@@ -8,12 +8,12 @@ export default function AskMePayTable() {
     {
       id: 'PAY-8801',
       type: 'Paid AskMail',
-      creator: 'TechBurner Live',
+      creator: 'Prince Live',
       viewer: 'Rahul_M',
       grossAmount: '₹500',
       creatorShare: '₹425 (85%)',
       platformCut: '₹75 (15%)',
-      status: 'Escrow Released',
+      status: 'Released',
       platform: 'youtube',
       timestamp: '10 mins ago',
     },
@@ -25,7 +25,7 @@ export default function AskMePayTable() {
       grossAmount: '₹1,000',
       creatorShare: '₹850 (85%)',
       platformCut: '₹150 (15%)',
-      status: 'Escrow Released',
+      status: 'Released',
       platform: 'youtube',
       timestamp: '25 mins ago',
     },
@@ -49,7 +49,7 @@ export default function AskMePayTable() {
       grossAmount: '₹2,500',
       creatorShare: '₹2,125 (85%)',
       platformCut: '₹375 (15%)',
-      status: 'In Escrow (24h Hold)',
+      status: 'In (24h Hold)',
       platform: 'linkedin',
       timestamp: '2 hours ago',
     },
@@ -109,7 +109,7 @@ export default function AskMePayTable() {
               <th className="py-3 px-3">Gross Amount</th>
               <th className="py-3 px-3 text-[#00E676]">Creator (85%)</th>
               <th className="py-3 px-3 text-[#00F5D4]">AskMe Cut (15%)</th>
-              <th className="py-3 px-3">Escrow Status</th>
+              <th className="py-3 px-3">Status</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-[#1C1C26]">
@@ -139,7 +139,7 @@ export default function AskMePayTable() {
                     </span>
                   ) : (
                     <span className="inline-flex items-center gap-1 text-[11px] font-bold text-[#FFD60A]">
-                      <Clock className="h-3.5 w-3.5" /> In Escrow
+                      <Clock className="h-3.5 w-3.5" /> In
                     </span>
                   )}
                 </td>

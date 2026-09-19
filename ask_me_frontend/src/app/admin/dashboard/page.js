@@ -169,7 +169,7 @@ export default function AdminDashboardPage() {
                             <li><a href="#" className="hover:text-[#00F5D4] transition-colors">Keep 85% Net Revenue Share</a></li>
                             <li><a href="#" className="hover:text-[#00F5D4] transition-colors">OBS Live Stream Overlay</a></li>
                             <li><a href="#" className="hover:text-[#00F5D4] transition-colors">Instant KYC Payout Settlement</a></li>
-                            <li><a href="#" className="hover:text-[#00F5D4] transition-colors">Escrow Payment Protection</a></li>
+                            <li><a href="#" className="hover:text-[#00F5D4] transition-colors">Payment Protection</a></li>
                         </ul>
                     </div>
 

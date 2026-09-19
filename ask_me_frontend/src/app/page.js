@@ -11,6 +11,9 @@ import VipMembershipModal from '@/components/VipMembershipModal';
 import { API_ENDPOINTS, getMediaUrl } from '@/config/api';
 import { getViewerToken, getCookie, getViewerUser } from '@/utils/cookies';
 import { useToast } from '@/context/ToastContext';
+import AuthModal from '@/components/AuthModal';
+import OriginalScannerImage from '@/components/OriginalScannerImage';
+
 import {
   Sparkles,
   Search,
@@ -67,6 +70,28 @@ export default function Home() {
   const [searchQuery, setSearchQuery] = useState('');
   const [creatorPageIndex, setCreatorPageIndex] = useState(0);
   const [vipModalCreator, setVipModalCreator] = useState(null);
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [authModalRole, setAuthModalRole] = useState('viewer');
+  const [authModalMode, setAuthModalMode] = useState('login');
+
+  const openAuthModal = (role = 'viewer', mode = 'login') => {
+    setAuthModalRole(role);
+    setAuthModalMode(mode);
+    setAuthModalOpen(true);
+  };
+
+  useEffect(() => {
+    const handleOpenAuthEvent = (e) => {
+      const { role = 'viewer', mode = 'login' } = e.detail || {};
+      setAuthModalRole(role);
+      setAuthModalMode(mode);
+      setAuthModalOpen(true);
+    };
+    window.addEventListener('open_askme_auth_modal', handleOpenAuthEvent);
+    return () => {
+      window.removeEventListener('open_askme_auth_modal', handleOpenAuthEvent);
+    };
+  }, []);
   const [selectedComparisonTab, setSelectedComparisonTab] = useState('All Highlights');
   const [scootPhilosophyTab, setScootPhilosophyTab] = useState(1);
   const [activeStepIndex, setActiveStepIndex] = useState(3); // Default Step 04 (KEEP WATCHING) as shown in reference
@@ -145,24 +170,9 @@ export default function Home() {
     // Check viewer authentication ONLY (do not accept creator askme_token for viewer VIP actions)
     const token = getViewerToken() || getCookie('askme_viewer_token');
 
-    // IF NOT LOGGED IN AS VIEWER -> DISPLAY TOAST WARNING, DO NOT OPEN MODAL, AND REDIRECT TO LOGIN
+    // IF NOT LOGGED IN AS VIEWER -> OPEN POPUP AUTH MODAL ON LANDING PAGE
     if (!token) {
-      if (toast?.warning) {
-        toast.warning('Please log in as a viewer to join VIP Membership.', 'Authentication Required');
-      } else if (typeof window !== 'undefined') {
-        window.dispatchEvent(
-          new CustomEvent('askme_toast', {
-            detail: {
-              message: 'Please log in as a viewer to join VIP Membership.',
-              type: 'warning',
-              title: 'Authentication Required',
-            },
-          })
-        );
-      }
-      setTimeout(() => {
-        router.push('/viewers/login');
-      }, 1200);
+      openAuthModal('viewer', 'login');
       return;
     }
 
@@ -180,26 +190,25 @@ export default function Home() {
   const initialLiveStreams = [
     {
       id: 'live-1',
-      creatorName: 'Sarah Chen',
-      username: '@sarahchen_ai',
+      creatorName: 'Riya',
+      username: '@riya',
       category: 'TECH & AI SYSTEMS',
       subscribers: '420K',
       avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=800&q=80',
-      title: 'Sarah Chen is Live',
+      title: 'Riya is Live',
       streamTitle: '"AI Coding, Autonomous Agents & Next-Gen Developer Stack Q&A Session"',
       broadcastingTo: 'YouTube & Twitch',
       watchingCount: '14,280',
       latency: '0.4s',
       queueCount: 4,
       minFee: '$10',
-      sessionCode: 'sarah-live-01',
+      sessionCode: 'prince-live-01',
       isLive: true,
     },
 
   ];
 
   const [liveStreams, setLiveStreams] = useState(initialLiveStreams);
-  console.log('liveStreams', liveStreams);
   const [currentLiveIndex, setCurrentLiveIndex] = useState(0);
   const [followedCreators, setFollowedCreators] = useState({});
   const [isAutoRotating, setIsAutoRotating] = useState(true);
@@ -370,7 +379,7 @@ export default function Home() {
         );
       }
       setTimeout(() => {
-        router.push(`/viewers/login?redirect=follow`);
+        router.push(`/`);
       }, 1200);
       return;
     }
@@ -444,9 +453,9 @@ export default function Home() {
     {
       id: '1',
       creatorId: '1',
-      name: 'TechBurner Live',
-      handle: '@techburner',
-      cleanUsername: 'techburner',
+      name: 'Prince Live',
+      handle: '@prince_raj',
+      cleanUsername: 'prince_raj',
       avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80',
       banner: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80',
       category: 'Technology',
@@ -561,8 +570,7 @@ export default function Home() {
     {
       id: 'r7',
       category: 'Revenue & Payouts',
-      feature: 'Escrow & Refund Protection',
-      askme: '100% Escrow Protection if Unanswered',
+      askme: '100% Protection if Unanswered',
       yt: 'No automatic refund policy',
       twitch: 'Non-refundable digital tokens',
     },
@@ -622,7 +630,7 @@ export default function Home() {
       categoryTag: 'FOR VIEWERS',
       question: 'What happens if the stream ends before my question is answered?',
       answer:
-        'If a creator ends their broadcast without answering your queued question, our automated escrow system immediately triggers a 100% full refund back to your original payment method.',
+        'If a creator ends their broadcast without answering your queued question, our automated system immediately triggers a 100% full refund back to your original payment method.',
     },
     {
       id: 'q5',
@@ -734,22 +742,24 @@ export default function Home() {
 
               {/* 3 CTA Buttons */}
               <div className="flex flex-col sm:flex-row items-center justify-center gap-3.5 pt-2">
-                <Link
-                  href="/creators/login"
-                  className="w-full sm:w-auto px-8 py-4 rounded-full bg-gradient-to-r from-[#EB1000] to-[#CC0E00] text-white text-[16px] font-bold shadow-xl shadow-[#EB1000]/35 hover:scale-[1.02] transition-all flex items-center justify-center gap-2 group"
+                <button
+                  type="button"
+                  onClick={() => openAuthModal('creator', 'login')}
+                  className="w-full sm:w-auto px-8 py-4 rounded-full bg-gradient-to-r from-[#EB1000] to-[#CC0E00] text-white text-[16px] font-bold shadow-xl shadow-[#EB1000]/35 hover:scale-[1.02] transition-all flex items-center justify-center gap-2 group cursor-pointer"
                 >
                   <span className="text-[#FFD60A]">★</span>
                   <span>Become a Creator</span>
                   <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
-                </Link>
+                </button>
 
-                <Link
-                  href="/viewers/login"
-                  className="w-full sm:w-auto px-8 py-4 rounded-full bg-[#161622] border border-[#27273A] text-white text-[16px] font-semibold hover:bg-[#1E1E2E] hover:border-[#383850] transition-all flex items-center justify-center gap-2"
+                <button
+                  type="button"
+                  onClick={() => openAuthModal('viewer', 'login')}
+                  className="w-full sm:w-auto px-8 py-4 rounded-full bg-[#161622] border border-[#27273A] text-white text-[16px] font-semibold hover:bg-[#1E1E2E] hover:border-[#383850] transition-all flex items-center justify-center gap-2 cursor-pointer"
                 >
                   <User className="h-4 w-4 text-[#A0A0B2]" />
                   <span>Join as a Viewer</span>
-                </Link>
+                </button>
 
                 <a
                   href="/live-streams"
@@ -771,7 +781,7 @@ export default function Home() {
                       <span className="h-3 w-3 rounded-full bg-[#FFBD2E]"></span>
                       <span className="h-3 w-3 rounded-full bg-[#27C93F]"></span>
                       <div className="ml-3 px-4 py-1 rounded-md bg-[#161622] border border-[#27273A] text-[13px] font-mono text-[#8B8B9E] hidden sm:inline-block">
-                        askme.live/sarah-khan
+                        askme.live
                       </div>
                     </div>
 
@@ -823,12 +833,12 @@ export default function Home() {
                       {/* Streamer Bar */}
                       <div className="absolute bottom-3 left-3 right-3 p-2.5 rounded-xl bg-black/75 backdrop-blur-md border border-white/10 flex items-center justify-between gap-3">
                         <div className="flex items-center gap-2.5">
-                          <div className="h-8 w-8 rounded-lg bg-[#EB1000] text-white font-bold text-[13px] flex items-center justify-center">
+                          {/* <div className="h-8 w-8 rounded-lg bg-[#EB1000] text-white font-bold text-[13px] flex items-center justify-center">
                             SK
-                          </div>
+                          </div> */}
                           <div>
                             <div className="text-[13px] font-bold text-white flex items-center gap-1">
-                              Sarah Khan <span className="text-[#00F5D4] text-[11px]">✔</span>
+                              AskMe Live <span className="text-[#00F5D4] text-[11px]">✔</span>
                             </div>
                             <div className="text-[11px] text-[#A0A0B2]">
                               Acoustic Sessions &amp; Songwriting AMA
@@ -902,21 +912,23 @@ export default function Home() {
 
                   {/* CTA Buttons */}
                   <div className="flex flex-wrap items-center gap-4 pt-2">
-                    <Link
-                      href="/creators/login"
-                      className="px-7 py-3.5 rounded-full bg-[#EB1000] hover:bg-[#c90e00] text-white font-extrabold text-sm sm:text-base flex items-center gap-2 shadow-xl shadow-[#EB1000]/30 transition-all hover:scale-105"
+                    <button
+                      type="button"
+                      onClick={() => openAuthModal('viewer', 'login')}
+                      className="px-7 py-3.5 rounded-full bg-[#EB1000] hover:bg-[#c90e00] text-white font-extrabold text-sm sm:text-base flex items-center gap-2 shadow-xl shadow-[#EB1000]/30 transition-all hover:scale-105 cursor-pointer"
                     >
                       <MessageCircle className="h-4 w-4" />
                       <span>ASK A CREATOR</span>
                       <ArrowRight className="h-4 w-4" />
-                    </Link>
-                    <Link
-                      href="/creators/login"
-                      className="px-7 py-3.5 rounded-full bg-white hover:bg-gray-100 text-black font-extrabold text-sm sm:text-base flex items-center gap-2 shadow-lg transition-all hover:scale-105"
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => openAuthModal('creator', 'login')}
+                      className="px-7 py-3.5 rounded-full bg-white hover:bg-gray-100 text-black font-extrabold text-sm sm:text-base flex items-center gap-2 shadow-lg transition-all hover:scale-105 cursor-pointer"
                     >
                       <Users className="h-4 w-4" />
                       <span>FOR CREATORS</span>
-                    </Link>
+                    </button>
                   </div>
 
                   {/* Trust Row */}
@@ -942,7 +954,7 @@ export default function Home() {
                       <div className="relative aspect-video sm:aspect-[16/10] rounded-2xl overflow-hidden border border-[#222234] bg-[#12121B] shadow-inner group">
                         <img
                           src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=1000&q=80"
-                          alt="Sarah Lin Live"
+                          alt="Prince Live"
                           className="w-full h-full object-cover opacity-85"
                         />
 
@@ -974,7 +986,7 @@ export default function Home() {
                         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-11/12 max-w-sm p-4 rounded-2xl bg-[#140608]/90 border border-[#EB1000] backdrop-blur-md space-y-2 text-left shadow-2xl">
                           <div className="flex items-center gap-2 text-[#EB1000] font-black text-xs uppercase tracking-wider">
                             <Bell className="h-4 w-4 animate-bounce shrink-0" />
-                            <span>SARAH LIN IS READING &amp; ANSWERING YOUR QUESTION ON AIR!</span>
+                            <span>ASKME IS READING &amp; ANSWERING YOUR QUESTION ON AIR!</span>
                           </div>
                           <div className="text-white text-xs font-semibold italic">
                             &quot;What camera do you use?&quot;
@@ -986,12 +998,12 @@ export default function Home() {
                           <div className="flex items-center gap-2.5">
                             <img
                               src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=100&auto=format&fit=crop&q=80"
-                              alt="Sarah Lin"
+                              alt="Prince Lin"
                               className="w-8 h-8 rounded-full object-cover border border-[#EB1000]"
                             />
                             <div>
                               <div className="text-xs font-extrabold text-white flex items-center gap-1">
-                                Sarah Lin <span className="text-[#00F5D4] text-[10px]">✔</span>
+                                Askme <span className="text-[#00F5D4] text-[10px]">✔</span>
                               </div>
                               <div className="text-[10px] text-[#A0A0B2]">
                                 Streaming on YouTube &amp; Twitch
@@ -1000,11 +1012,11 @@ export default function Home() {
                           </div>
 
                           <Link
-                            href="/viewers/login"
+                            href="/"
                             className="px-3.5 py-1.5 rounded-full bg-[#200A0C] border border-[#EB1000]/60 text-white hover:bg-[#EB1000] text-xs font-bold transition-all flex items-center gap-1.5 shrink-0"
                           >
                             <MessageCircle className="h-3.5 w-3.5 text-[#EB1000] group-hover:text-white" />
-                            <span>Ask Sarah</span>
+                            <span>Askme</span>
                           </Link>
                         </div>
                       </div>
@@ -1196,8 +1208,8 @@ export default function Home() {
 
                   {/* QR & Scanner Box Grid */}
                   <div className="grid grid-cols-2 gap-2.5 items-center">
-                    <div className="bg-white p-2 rounded-xl flex items-center justify-center h-24 shadow-inner">
-                      <QrCode className="w-16 h-16 text-black" />
+                    <div className="bg-white p-1.5 rounded-xl flex items-center justify-center h-24 shadow-inner overflow-hidden">
+                      <OriginalScannerImage className="w-18 h-auto" />
                     </div>
                     <div className="h-24 rounded-xl bg-[#1A090C] border border-[#EB1000]/60 p-2 flex flex-col items-center justify-center text-center space-y-1">
                       <div className="w-5 h-5 rounded bg-[#EB1000]/20 border border-[#EB1000] flex items-center justify-center text-[#EB1000]">
@@ -1423,7 +1435,7 @@ export default function Home() {
                     </span>
 
                     <span className="px-3.5 py-1 rounded-full bg-[#121420]/80 backdrop-blur-md border border-white/10 text-white text-xs font-bold shadow-md">
-                      Tech Burner Live
+                      AskMe Live
                     </span>
                   </div>
 
@@ -1569,7 +1581,7 @@ export default function Home() {
                 </div>
                 <div className="space-y-1 pt-1">
                   <div className="font-semibold text-white text-xs">"Your question has been answered."</div>
-                  <div className="text-[11px] text-[#7A7A8E]">Sarah Lin • Live Q&A session</div>
+                  <div className="text-[11px] text-[#7A7A8E]">Prince • Live Q&A session</div>
                 </div>
               </div>
             </div>
@@ -1607,7 +1619,7 @@ export default function Home() {
                 </div>
                 <div className="p-3 rounded-xl bg-[#0D1F17] border border-[#153D2A] space-y-1 mt-1">
                   <div className="text-xs font-extrabold text-[#25D366] flex items-center gap-1.5">
-                    🔔 TechBurner answered your question!
+                    🔔 Askme answered your question!
                   </div>
                   <div className="text-[11px] text-[#A0C0AA] leading-snug">
                     "I'm using the Sony FX3 paired with 24-70 GM II..."
@@ -1898,19 +1910,14 @@ export default function Home() {
             </p>
           </div>
 
-          {/* ORBITAL NETWORK RADAR GRAPHIC */}
-          <div className="relative max-w-3xl mx-auto my-8 h-[360px] sm:h-[460px] flex items-center justify-center overflow-hidden">
-            {/* Outer Dashed Orbit Circle */}
-            <div className="absolute w-[320px] h-[320px] sm:w-[420px] sm:h-[420px] rounded-full border border-[#EB1000]/20 border-dashed animate-[spin_60s_linear_infinite]"></div>
+          {/* ORBITAL DYNAMIC ANIMATION SHOWCASE */}
+          <div className="relative max-w-4xl mx-auto my-10 h-[460px] sm:h-[580px] flex items-center justify-center overflow-hidden rounded-3xl bg-[#07070F]/60 border border-[#1C1C2A] p-4 group/orbitContainer">
 
-            {/* Middle Orbit Circle */}
-            <div className="absolute w-[230px] h-[230px] sm:w-[300px] sm:h-[300px] rounded-full border border-[#EB1000]/30 border-dashed animate-[spin_40s_linear_infinite_reverse]"></div>
+            {/* Ambient Background Radial Glow */}
+            <div className="absolute w-[280px] h-[280px] sm:w-[380px] sm:h-[380px] rounded-full bg-[#EB1000]/15 blur-[100px] pointer-events-none"></div>
 
-            {/* Inner Orbit Circle */}
-            <div className="absolute w-[130px] h-[130px] sm:w-[180px] sm:h-[180px] rounded-full border border-[#EB1000]/40"></div>
-
-            {/* Radial Dotted Spoke Lines */}
-            <div className="absolute w-full h-full flex items-center justify-center opacity-20 pointer-events-none">
+            {/* Spoke Radial Grid Lines */}
+            <div className="absolute inset-0 flex items-center justify-center opacity-15 pointer-events-none">
               <div className="w-[1px] h-full bg-gradient-to-b from-transparent via-[#EB1000] to-transparent"></div>
               <div className="h-[1px] w-full bg-gradient-to-r from-transparent via-[#EB1000] to-transparent"></div>
               <div className="w-[1px] h-full bg-gradient-to-b from-transparent via-[#EB1000] to-transparent rotate-45"></div>
@@ -1918,84 +1925,122 @@ export default function Home() {
             </div>
 
             {/* CENTER CORE: ASKME GLOWING RED NODE */}
-            <div className="relative z-20 flex flex-col items-center justify-center">
-              <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-gradient-to-br from-[#FF2A1A] to-[#D00C00] text-white flex flex-col items-center justify-center shadow-[0_0_60px_rgba(235,16,0,0.85)] border-2 border-white/30 transition-transform duration-300 hover:scale-110">
-                {/* <span className="text-2xl sm:text-3xl font-black leading-none tracking-tighter">{{Logo}}</span> */}
-                <span className="text-2xl sm:text-3xl font-black leading-none tracking-tighter"><Logo size="sm" />
-                </span>
-                <span className="text-[9px] sm:text-[10px] font-extrabold tracking-widest uppercase mt-0.5">ASKME</span>
+            <div className="relative z-30 flex flex-col items-center justify-center">
+              <div className="w-20 h-20 sm:w-28 sm:h-28 rounded-full bg-gradient-to-br from-[#FF2A1A] via-[#EB1000] to-[#900600] text-white flex flex-col items-center justify-center shadow-[0_0_70px_rgba(235,16,0,0.9)] border-2 border-white/40 transition-transform duration-300 hover:scale-110 cursor-pointer">
+                <Logo size="sm" />
+                <span className="text-[10px] sm:text-[12px] font-black tracking-widest uppercase mt-1">ASKME</span>
               </div>
             </div>
 
-            {/* 1. Twitch (Top-Center) */}
-            <div className="absolute top-2 sm:top-5 left-1/2 -translate-x-1/2 z-10">
-              <div className="relative group">
-                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-[#1A1028] border-2 border-[#9146FF] shadow-[0_0_25px_rgba(145,70,255,0.7)] flex items-center justify-center text-white transition-all hover:scale-110">
-                  <Tv className="h-5 w-5 text-[#9146FF]" />
+            {/* ==================== TRACK 1: INNER ORBIT (22s Clockwise) ==================== */}
+            <div className="absolute w-[200px] h-[200px] sm:w-[270px] sm:h-[270px] rounded-full border border-[#EB1000]/30 border-dashed animate-[spin_22s_linear_infinite] group-hover/orbitContainer:[animation-play-state:paused] pointer-events-none z-10">
+              {/* WhatsApp (Top 0deg) */}
+              <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-auto">
+                <div className="animate-[spin_22s_linear_infinite_reverse] group-hover/orbitContainer:[animation-play-state:paused]">
+                  <div className="bg-[#12121E]/95 backdrop-blur-md border border-white/20 hover:border-[#25D366] text-white px-3.5 py-1.5 rounded-full font-extrabold text-xs flex items-center gap-2 shadow-[0_0_15px_rgba(0,0,0,0.8)] hover:scale-110 transition-all cursor-pointer">
+                    <span className="w-2.5 h-2.5 rounded-full bg-[#25D366] shadow-[0_0_8px_#25D366] animate-pulse"></span>
+                    <MessageCircle className="h-3.5 w-3.5 text-[#25D366]" />
+                    <span>WhatsApp</span>
+                  </div>
                 </div>
-                <span className="absolute -bottom-1 -right-1 h-2.5 w-2.5 rounded-full bg-[#9146FF] border border-black animate-pulse"></span>
+              </div>
+
+              {/* OBS Studio (Bottom Right 120deg) */}
+              <div className="absolute top-[75%] left-[86.6%] -translate-x-1/2 -translate-y-1/2 pointer-events-auto">
+                <div className="animate-[spin_22s_linear_infinite_reverse] group-hover/orbitContainer:[animation-play-state:paused]">
+                  <div className="bg-[#12121E]/95 backdrop-blur-md border border-white/20 hover:border-[#00F5D4] text-white px-3.5 py-1.5 rounded-full font-extrabold text-xs flex items-center gap-2 shadow-[0_0_15px_rgba(0,0,0,0.8)] hover:scale-110 transition-all cursor-pointer">
+                    <span className="w-2.5 h-2.5 rounded-full bg-[#00F5D4] shadow-[0_0_8px_#00F5D4] animate-pulse"></span>
+                    <Video className="h-3.5 w-3.5 text-[#00F5D4]" />
+                    <span>OBS Studio</span>
+                  </div>
+                </div>
+              </div>
+
+
+            </div>
+
+            {/* ==================== TRACK 2: MIDDLE ORBIT (32s Counter-Clockwise) ==================== */}
+            <div className="absolute w-[330px] h-[330px] sm:w-[440px] sm:h-[440px] rounded-full border border-[#EB1000]/25 border-dashed animate-[spin_32s_linear_infinite_reverse] group-hover/orbitContainer:[animation-play-state:paused] pointer-events-none z-20">
+              {/* YouTube (Top Right 45deg) - FEATURED HIGHLIGHTED WHITE BADGE */}
+              <div className="absolute top-[14.6%] left-[85.4%] -translate-x-1/2 -translate-y-1/2 pointer-events-auto">
+                <div className="animate-[spin_32s_linear_infinite] group-hover/orbitContainer:[animation-play-state:paused]">
+                  <div className="text-white px-4 py-2 sm:px-5 sm:py-2.5 rounded-full font-black text-xs sm:text-sm flex items-center gap-2 border-2 border-white hover:scale-110 transition-all cursor-pointer">
+                    <span className="w-3 h-3 rounded-full bg-[#FF0000] shadow-[0_0_10px_#FF0000] animate-pulse"></span>
+                    <Video className="h-4 w-4 text-[#FF0000]" />
+                    <span>YouTube</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Instagram (Top Left 315deg) */}
+              <div className="absolute top-[14.6%] left-[14.6%] -translate-x-1/2 -translate-y-1/2 pointer-events-auto">
+                <div className="animate-[spin_32s_linear_infinite] group-hover/orbitContainer:[animation-play-state:paused]">
+                  <div className="bg-[#12121E]/95 backdrop-blur-md border border-white/20 hover:border-[#E1306C] text-white px-4 py-2 rounded-full font-extrabold text-xs sm:text-sm flex items-center gap-2 shadow-[0_0_18px_rgba(0,0,0,0.8)] hover:scale-110 transition-all cursor-pointer">
+                    <span className="w-2.5 h-2.5 rounded-full bg-[#E1306C] shadow-[0_0_8px_#E1306C] animate-pulse"></span>
+                    <Smartphone className="h-3.5 w-3.5 text-[#E1306C]" />
+                    <span>Instagram</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Twitch (Bottom Left 225deg) */}
+              <div className="absolute top-[85.4%] left-[14.6%] -translate-x-1/2 -translate-y-1/2 pointer-events-auto">
+                <div className="animate-[spin_32s_linear_infinite] group-hover/orbitContainer:[animation-play-state:paused]">
+                  <div className="bg-[#12121E]/95 backdrop-blur-md border border-white/20 hover:border-[#9146FF] text-white px-4 py-2 rounded-full font-extrabold text-xs sm:text-sm flex items-center gap-2 shadow-[0_0_18px_rgba(0,0,0,0.8)] hover:scale-110 transition-all cursor-pointer">
+                    <span className="w-2.5 h-2.5 rounded-full bg-[#9146FF] shadow-[0_0_8px_#9146FF] animate-pulse"></span>
+                    <Tv className="h-3.5 w-3.5 text-[#9146FF]" />
+                    <span>Twitch</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* X / Twitter (Bottom Right 135deg) */}
+              <div className="absolute top-[85.4%] left-[85.4%] -translate-x-1/2 -translate-y-1/2 pointer-events-auto">
+                <div className="animate-[spin_32s_linear_infinite] group-hover/orbitContainer:[animation-play-state:paused]">
+                  <div className="bg-[#12121E]/95 backdrop-blur-md border border-white/20 hover:border-white text-white px-4 py-2 rounded-full font-extrabold text-xs sm:text-sm flex items-center gap-2 shadow-[0_0_18px_rgba(0,0,0,0.8)] hover:scale-110 transition-all cursor-pointer">
+                    <span className="w-2.5 h-2.5 rounded-full bg-white shadow-[0_0_8px_#FFFFFF] animate-pulse"></span>
+                    <span className="font-mono font-black text-xs">X</span>
+                    <span>X</span>
+                  </div>
+                </div>
               </div>
             </div>
 
-            {/* 2. YouTube (Top-Right) */}
-            <div className="absolute top-12 sm:top-16 right-16 sm:right-28 z-10">
-              <div className="relative group">
-                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-[#280F12] border-2 border-[#FF0000] shadow-[0_0_25px_rgba(255,0,0,0.7)] flex items-center justify-center text-white transition-all hover:scale-110">
-                  <Video className="h-5 w-5 text-[#FF0000]" />
+            {/* ==================== TRACK 3: OUTER ORBIT (45s Clockwise) ==================== */}
+            <div className="absolute w-[460px] h-[460px] sm:w-[580px] sm:h-[580px] rounded-full border border-[#EB1000]/15 border-dashed animate-[spin_45s_linear_infinite] group-hover/orbitContainer:[animation-play-state:paused] pointer-events-none z-10">
+              {/* LinkedIn (Top Center 0deg) */}
+              <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-auto">
+                <div className="animate-[spin_45s_linear_infinite_reverse] group-hover/orbitContainer:[animation-play-state:paused]">
+                  <div className="bg-[#12121E]/95 backdrop-blur-md border border-white/20 hover:border-[#0A66C2] text-white px-4 py-2 rounded-full font-extrabold text-xs sm:text-sm flex items-center gap-2 shadow-[0_0_18px_rgba(0,0,0,0.8)] hover:scale-110 transition-all cursor-pointer">
+                    <span className="w-2.5 h-2.5 rounded-full bg-[#0A66C2] shadow-[0_0_8px_#0A66C2] animate-pulse"></span>
+                    <span className="font-black text-xs text-[#0A66C2]">in</span>
+                    <span>LinkedIn</span>
+                  </div>
                 </div>
-                <span className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-[#FF0000] border border-black animate-pulse"></span>
+              </div>
+
+              {/* Facebook (Bottom Right 120deg) */}
+              <div className="absolute top-[75%] left-[86.6%] -translate-x-1/2 -translate-y-1/2 pointer-events-auto">
+                <div className="animate-[spin_45s_linear_infinite_reverse] group-hover/orbitContainer:[animation-play-state:paused]">
+                  <div className="bg-[#12121E]/95 backdrop-blur-md border border-white/20 hover:border-[#1877F2] text-white px-4 py-2 rounded-full font-extrabold text-xs sm:text-sm flex items-center gap-2 shadow-[0_0_18px_rgba(0,0,0,0.8)] hover:scale-110 transition-all cursor-pointer">
+                    <span className="w-2.5 h-2.5 rounded-full bg-[#1877F2] shadow-[0_0_8px_#1877F2] animate-pulse"></span>
+                    <span className="font-black text-xs text-[#1877F2]">f</span>
+                    <span>Facebook</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* More (Bottom Left 240deg) */}
+              <div className="absolute top-[75%] left-[13.4%] -translate-x-1/2 -translate-y-1/2 pointer-events-auto">
+                <div className="animate-[spin_45s_linear_infinite_reverse] group-hover/orbitContainer:[animation-play-state:paused]">
+                  <div className="bg-[#12121E]/95 backdrop-blur-md border border-white/20 hover:border-[#EB1000] text-white px-4 py-2 rounded-full font-extrabold text-xs sm:text-sm flex items-center gap-2 shadow-[0_0_18px_rgba(0,0,0,0.8)] hover:scale-110 transition-all cursor-pointer">
+                    <span className="w-2.5 h-2.5 rounded-full bg-[#EB1000] shadow-[0_0_8px_#EB1000] animate-pulse"></span>
+                    <span>More</span>
+                  </div>
+                </div>
               </div>
             </div>
 
-            {/* 3. LinkedIn (Right-Middle) */}
-            <div className="absolute top-24 sm:top-28 right-2 sm:right-10 z-10">
-              <div className="relative group">
-                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-[#0B1E2D] border-2 border-[#0A66C2] shadow-[0_0_25px_rgba(10,102,194,0.7)] flex items-center justify-center text-white transition-all hover:scale-110">
-                  <span className="font-extrabold text-sm text-[#0A66C2]">in</span>
-                </div>
-                <span className="absolute -bottom-1 -left-1 h-2.5 w-2.5 rounded-full bg-[#0A66C2] border border-black animate-pulse"></span>
-              </div>
-            </div>
-
-            {/* 4. Instagram (Left-Middle) */}
-            <div className="absolute top-1/2 -translate-y-1/2 left-4 sm:left-12 z-10">
-              <div className="relative group">
-                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-[#26101E] border-2 border-[#E1306C] shadow-[0_0_25px_rgba(225,48,108,0.7)] flex items-center justify-center text-white transition-all hover:scale-110">
-                  <Smartphone className="h-5 w-5 text-[#E1306C]" />
-                </div>
-                <span className="absolute -bottom-1 -left-1 h-2.5 w-2.5 rounded-full bg-[#E1306C] border border-black animate-pulse"></span>
-              </div>
-            </div>
-
-            {/* 5. Facebook (Bottom-Left) */}
-            <div className="absolute bottom-12 sm:bottom-16 left-12 sm:left-24 z-10">
-              <div className="relative group">
-                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-[#0C1B2B] border-2 border-[#1877F2] shadow-[0_0_25px_rgba(24,119,242,0.7)] flex items-center justify-center text-white transition-all hover:scale-110">
-                  <span className="font-black text-base text-[#1877F2]">f</span>
-                </div>
-                <span className="absolute -bottom-1 -right-1 h-2.5 w-2.5 rounded-full bg-[#1877F2] border border-black animate-pulse"></span>
-              </div>
-            </div>
-
-            {/* 6. TikTok (Bottom-Center) */}
-            <div className="absolute bottom-2 sm:bottom-6 left-1/2 -translate-x-1/2 z-10">
-              <div className="relative group">
-                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-[#0D2423] border-2 border-[#00F5D4] shadow-[0_0_25px_rgba(0,245,212,0.7)] flex items-center justify-center text-white transition-all hover:scale-110">
-                  <Radio className="h-5 w-5 text-[#00F5D4]" />
-                </div>
-                <span className="absolute -bottom-1 -left-1 h-2.5 w-2.5 rounded-full bg-[#00F5D4] border border-black animate-pulse"></span>
-              </div>
-            </div>
-
-            {/* 7. X / Twitter (Bottom-Right) */}
-            <div className="absolute bottom-12 sm:bottom-16 right-16 sm:right-28 z-10">
-              <div className="relative group">
-                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-[#181822] border-2 border-white/50 shadow-[0_0_25px_rgba(255,255,255,0.4)] flex items-center justify-center text-white transition-all hover:scale-110">
-                  <span className="font-black text-sm text-white">X</span>
-                </div>
-                <span className="absolute -top-1 -left-1 h-2.5 w-2.5 rounded-full bg-white border border-black animate-pulse"></span>
-              </div>
-            </div>
           </div>
 
           {/* BOTTOM CONNECTED STREAMS BAR */}
@@ -2011,7 +2056,7 @@ export default function Home() {
                 <span className="h-1.5 w-1.5 rounded-full bg-[#9146FF]"></span> Twitch
               </span>
               <span className="px-3 py-1 rounded-full bg-[#0D2423] border border-[#00F5D4]/40 text-[#00F5D4] text-[11px] sm:text-xs font-semibold flex items-center gap-1.5">
-                <span className="h-1.5 w-1.5 rounded-full bg-[#00F5D4]"></span> TikTok
+                <span className="h-1.5 w-1.5 rounded-full bg-[#00F5D4]"></span> Kick
               </span>
               <span className="px-3 py-1 rounded-full bg-[#26101E] border border-[#E1306C]/40 text-[#FF65A5] text-[11px] sm:text-xs font-semibold flex items-center gap-1.5">
                 <span className="h-1.5 w-1.5 rounded-full bg-[#E1306C]"></span> Instagram
@@ -2237,14 +2282,11 @@ export default function Home() {
 
                 {/* White QR Code Display Container */}
                 <div className="p-5 rounded-2xl bg-[#08080E] border border-[#202030] flex flex-col items-center justify-center space-y-3">
-                  <div className="bg-white p-3 rounded-2xl shadow-2xl flex flex-col items-center justify-center">
-                    <QrCode className="w-32 h-32 text-black" />
-                    <span className="text-[9px] font-black font-mono text-[#EB1000] tracking-wider uppercase mt-1">
-                      SCAN TO ASK LIVE ➔
-                    </span>
+                  <div className="bg-white p-4 rounded-2xl shadow-2xl flex flex-col items-center justify-center">
+                    <OriginalScannerImage className="w-44 sm:w-48 h-auto" />
                   </div>
-                  <div className="text-[11px] font-mono text-[#EB1000] font-bold">
-                    askme.live/@samaylive ✓
+                  <div className="text-[12px] sm:text-[13px] font-mono text-[#EB1000] font-bold tracking-tight">
+                    askme.live/@samaylive <span className="text-[#EB1000] font-bold">✓</span>
                   </div>
                   <p className="text-[10px] text-[#7A7A8E] text-center max-w-xs leading-relaxed font-medium">
                     Paste once into OBS Browser Source (1080x1920) or pin in YouTube Live chat.
@@ -2420,7 +2462,7 @@ export default function Home() {
                   </span>
                 </div>
 
-                {/* 2. AMBER DONATION CARD (Sarah) */}
+                {/* 2. AMBER DONATION CARD (Prince) */}
                 <div className="p-3.5 rounded-2xl bg-[#23150A] border border-[#FF9500]/40 text-xs text-white flex items-center justify-between shadow-lg shadow-[#FF9500]/5 backdrop-blur-md">
                   <div className="flex items-center gap-3">
                     {/* Crown Icon Circle */}
@@ -2429,7 +2471,7 @@ export default function Home() {
                     </div>
                     <div className="text-left">
                       <div className="font-extrabold text-white text-sm tracking-tight">
-                        Sarah sent <span className="text-[#FFB703] font-black">₹2,000 SuperAsk</span>
+                        Price sent <span className="text-[#FFB703] font-black">₹2,000 SuperAsk</span>
                       </div>
                       <div className="text-xs text-[#E8C09D] font-medium mt-0.5">
                         Loved the career advice!
@@ -2624,28 +2666,18 @@ export default function Home() {
                   </div>
                 </div>
               </div>
-
-              {/* Big Red Action Button */}
-              <Link
-                href="/creators/register"
-                className="w-full py-4 rounded-2xl bg-[#EB1000] hover:bg-[#c90e00] text-white font-black text-sm text-center block shadow-xl shadow-[#EB1000]/30 transition-all mt-2"
-              >
-                Start Earning Today ➔
-                <span className="block text-[10px] font-normal text-white/90 mt-0.5">
-                  Direct Web & QR instant automated payouts
-                </span>
-              </Link>
             </div>
           </div>
 
           {/* BOTTOM ACTION BUTTONS: GET STARTED & VIEW FULL PAYOUT POLICY */}
           <div className="flex flex-wrap items-center justify-center gap-4 pt-6">
-            <Link
-              href="/creators/register"
-              className="px-8 py-3.5 rounded-full bg-[#EB1000] text-white text-sm sm:text-base font-extrabold shadow-xl shadow-[#EB1000]/40 flex items-center gap-2 hover:opacity-90 hover:scale-105 transition-all"
+            <button
+              type="button"
+              onClick={() => openAuthModal('creator', 'login')}
+              className="px-8 py-3.5 rounded-full bg-[#EB1000] text-white text-sm sm:text-base font-extrabold shadow-xl shadow-[#EB1000]/40 flex items-center gap-2 hover:opacity-90 hover:scale-105 transition-all cursor-pointer"
             >
               Get Started <ArrowRight className="h-4 w-4 stroke-[3]" />
-            </Link>
+            </button>
             <Link
               href="/admin/kyc/user-agreement"
               className="px-8 py-3.5 rounded-full bg-black/40 border border-white/30 text-white text-sm sm:text-base font-bold flex items-center gap-2 hover:bg-white/10 hover:border-white transition-all shadow-md"
@@ -2704,9 +2736,9 @@ export default function Home() {
 
               <Link
                 href="/discover-creators"
-                className="flex items-center justify-center gap-2 px-4 py-2 rounded-full bg-[#0F0F18] border border-[#26263A] text-xs text-[#A0A0B5] font-semibold hover:text-white hover:border-[#383850] transition-colors shrink-0"
+                className="flex items-center justify-center gap-2 px-5 py-2 rounded-full bg-[#EB1000] text-white text-xs font-bold shadow-lg shadow-[#EB1000]/30 hover:bg-[#CC0E00] transition-all shrink-0 cursor-pointer"
               >
-                View All Creators <ArrowRight className="h-3.5 w-3.5 rotate-90 text-[#7A7A8E]" />
+                View All Creators <ArrowRight className="h-3.5 w-3.5 text-white" />
               </Link>
             </div>
           </div>
@@ -2759,7 +2791,7 @@ export default function Home() {
                       if (payCode) {
                         router.push(`/pay/${payCode}`);
                       } else {
-                        router.push('/viewers/login');
+                        router.push('/');
                       }
                     }}
                     onSelectCreator={() => {
@@ -2767,7 +2799,7 @@ export default function Home() {
                       if (handleClean) {
                         router.push(`/creator/${handleClean}`);
                       } else {
-                        router.push('/viewers/login');
+                        router.push('/');
                       }
                     }}
                   />
@@ -2994,18 +3026,19 @@ export default function Home() {
                   <div className="w-4 h-4 rounded-full bg-[#EB1000]/20 text-[#EB1000] flex items-center justify-center text-[10px] shrink-0 font-black border border-[#EB1000]/30 mt-0.5">
                     ✓
                   </div>
-                  <span>100% Escrow security & automatic refund if missed</span>
+                  <span>100% security & automatic refund if missed</span>
                 </div>
               </div>
 
               {/* Button & Link */}
               <div className="pt-2 space-y-2">
-                <Link
-                  href="/creators/register"
-                  className="w-full py-3.5 rounded-full bg-[#EB1000] text-white text-xs font-extrabold tracking-wider uppercase shadow-xl shadow-[#EB1000]/40 flex items-center justify-center gap-2 hover:opacity-95 hover:scale-[1.02] transition-all block text-center"
+                <button
+                  type="button"
+                  onClick={() => openAuthModal('creator', 'login')}
+                  className="w-full py-3.5 rounded-full bg-[#EB1000] text-white text-xs font-extrabold tracking-wider uppercase shadow-xl shadow-[#EB1000]/40 flex items-center justify-center gap-2 hover:opacity-95 hover:scale-[1.02] transition-all text-center cursor-pointer"
                 >
                   LAUNCH CREATOR STUDIO ➔
-                </Link>
+                </button>
                 <a
                   href="#calculator"
                   className="block text-center text-[11px] text-[#7A7A8E] hover:text-white transition-colors font-medium"
@@ -3127,7 +3160,7 @@ export default function Home() {
                           <Heart className="h-4 w-4" />
                         </div>
                         <span className="px-3 py-1 rounded-full bg-[#14141E] border border-[#2B2B3D] text-[#D0D0E0] text-[10px] font-bold font-mono tracking-wider uppercase">
-                          100% ESCROW
+                          100%
                         </span>
                       </div>
 
@@ -3629,13 +3662,13 @@ export default function Home() {
                   Direct Monetization
                 </h3>
                 <p className="text-xs text-[#8E8E9F] font-medium leading-relaxed">
-                  Transparent 15% platform fee with creators retaining 85% of net revenues, backed by secure automated escrow payouts.
+                  Transparent 15% platform fee with creators retaining 85% of net revenues, backed by secure automated payouts.
                 </p>
               </div>
 
               <div className="pt-3 border-t border-[#1C1C2A] flex items-center gap-1.5 text-[11px] text-[#10B981] font-medium">
                 <span className="h-1.5 w-1.5 rounded-full bg-[#10B981]"></span>
-                <span>Automated escrow payouts</span>
+                <span>Automated payouts</span>
               </div>
             </div>
 
@@ -3673,7 +3706,7 @@ export default function Home() {
                     <ShieldCheck className="h-5 w-5" />
                   </div>
                   <span className="px-3 py-1 rounded-lg bg-[#14141E] border border-[#26263A] text-[#8E8E9F] text-[10px] font-semibold">
-                    Escrow Safe
+                    Safe
                   </span>
                 </div>
 
@@ -3805,12 +3838,13 @@ export default function Home() {
               </p>
 
               <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3.5">
-                <Link
-                  href="/creators/register"
-                  className="w-full sm:w-auto px-8 py-3.5 rounded-full bg-white text-[#0A0A0F] font-black text-sm hover:bg-[#EB1000] hover:text-white transition-all shadow-xl"
+                <button
+                  type="button"
+                  onClick={() => openAuthModal('creator', 'login')}
+                  className="w-full sm:w-auto px-8 py-3.5 rounded-full bg-white text-[#0A0A0F] font-black text-sm hover:bg-[#EB1000] hover:text-white transition-all shadow-xl cursor-pointer"
                 >
                   Get Started
-                </Link>
+                </button>
                 <a
                   href="#creators"
                   className="w-full sm:w-auto px-8 py-3.5 rounded-full bg-[#18080A]/80 border border-[#EB1000]/60 text-white font-bold text-sm hover:bg-[#EB1000]/20 transition-all shadow-md"
@@ -3835,6 +3869,14 @@ export default function Home() {
         onSuccess={() => {
           if (toast?.success) toast.success(`Successfully joined ${vipModalCreator?.name}'s VIP Membership!`, 'VIP Unlocked');
         }}
+      />
+
+      {/* Dynamic Popup Auth Modal */}
+      <AuthModal
+        isOpen={authModalOpen}
+        onClose={() => setAuthModalOpen(false)}
+        initialRole={authModalRole}
+        initialMode={authModalMode}
       />
     </div>
   );

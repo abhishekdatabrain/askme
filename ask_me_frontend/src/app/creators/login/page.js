@@ -7,6 +7,7 @@ import { API_ENDPOINTS } from '@/config/api';
 import { useToast } from '@/context/ToastContext';
 import { setCreatorSession } from '@/utils/cookies';
 import GoogleAuthProvider from '@/components/GoogleAuthProvider';
+import Logo from '@/components/Logo';
 import { useGoogleLogin } from '@react-oauth/google';
 import TruecallerAuthButton from '@/components/TruecallerAuthButton';
 
@@ -307,10 +308,8 @@ function CreatorLoginContent() {
           {/* Header Branding */}
           <div className="text-center space-y-2">
             <div className="inline-flex items-center gap-2">
-              <div className="h-9 w-9 rounded-xl bg-brand-gradient flex items-center justify-center text-white font-black text-xl shadow-md glow-teal">
-                a
-              </div>
-              <span className="font-heading font-black text-2xl text-white">AskMe <span className="text-brand-gradient">STUDIO</span></span>
+              <Logo size="md" />
+              <span className="font-heading font-black text-2xl text-white">AskMe <span className="text-[#EB1000]">STUDIO</span></span>
             </div>
             <h2 className="font-heading font-bold text-lg text-white">Creator Sign In</h2>
           </div>
@@ -345,7 +344,7 @@ function CreatorLoginContent() {
                       required
                       value={loginIdentifier}
                       onChange={(e) => setLoginIdentifier(e.target.value)}
-                      placeholder="creator@techburner.in or @techburner"
+                      placeholder="creator@prince.in or @prince"
                       className="w-full rounded-xl bg-[#0A0A0F] border border-[#1C1C26] pl-9 pr-3 py-2 text-xs text-white placeholder-[#8B8B96] focus:border-[#00F5D4] focus:outline-none"
                     />
                   </div>

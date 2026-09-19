@@ -3,7 +3,9 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import LandingNavbar from '@/components/LandingNavbar';
 import CreatorNotificationDropdown from '@/components/CreatorNotificationDropdown';
+import Logo from '@/components/Logo';
 import { useToast } from '@/context/ToastContext';
 import {
     ShieldCheck,
@@ -61,20 +63,12 @@ export default function CreatorKycPage() {
         };
     }, []);
 
-    const toggleTheme = () => {
-        const nextTheme = theme === 'dark' ? 'light' : 'dark';
-        setTheme(nextTheme);
-        if (typeof window !== 'undefined') {
-            localStorage.setItem('askme_creator_theme', nextTheme);
-            window.dispatchEvent(new Event('creator-theme-changed'));
-        }
-    };
 
     const handleLogout = () => {
         clearCreatorSession();
         toast.info('Logged out successfully from Creator Studio.', 'Logged Out');
         setTimeout(() => {
-            window.location.href = '/creators/login';
+            window.location.href = '/';
         }, 400);
     };
 
@@ -226,7 +220,7 @@ export default function CreatorKycPage() {
         const user = getCreatorUser();
 
         if (!savedToken || !user || !user.id) {
-            window.location.href = '/creators/login';
+            window.location.href = '/';
             return;
         }
 
@@ -429,74 +423,35 @@ export default function CreatorKycPage() {
         <div className={`min-h-screen font-sans flex flex-col transition-colors duration-200 ${theme === 'light' ? 'bg-[#F4F5F7] text-[#1A1D20] selection:bg-[#00F5D4] selection:text-[#0A0A0F]' : 'bg-[#0A0A0F] text-[#F5F5F7] selection:bg-[#00F5D4] selection:text-[#0A0A0F]'
             }`}>
 
-            {/* Standalone Header */}
-            <header className={`border-b sticky top-0 z-20 px-6 py-4 flex items-center justify-between shadow-xl transition-colors duration-200 ${theme === 'light' ? 'border-[#E9ECEF] bg-white' : 'border-[#1C1C26] bg-[#13131A]'
-                }`}>
-                <div className="flex items-center gap-3">
-                    <Link href="/creators/dashboard" className="flex items-center gap-2.5 group">
-                        <div className="h-9 w-9 rounded-xl bg-brand-gradient flex items-center justify-center text-white font-black text-xl shadow-md glow-teal group-hover:scale-105 transition">
-                            a
-                        </div>
-                        <div>
-                            <span className={`font-heading font-black text-lg block leading-none ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'
-                                }`}>
-                                AskMe <span className="text-brand-gradient">STUDIO</span>
+            {/* Minimal Creator KYC Fixed Navbar */}
+            <header className="fixed top-0 left-0 right-0 z-50 py-3 px-3 sm:px-4 lg:px-6">
+                <div className="max-w-7xl mx-auto rounded-full bg-[#0F0F18]/95 backdrop-blur-md border border-[#202030] py-2.5 px-4 sm:px-6 shadow-2xl flex items-center justify-between">
+                    {/* Logo & Branding */}
+                    <Link href="#" className="flex items-center gap-2.5 shrink-0 group">
+                        <Logo size="sm" />
+                        <div className="flex flex-col leading-none">
+                            <span className="font-heading font-black text-white text-[15px] tracking-tight">
+                                AskMe
                             </span>
-                            <span className={`text-[10px] font-bold uppercase tracking-wider block mt-1 ${theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'
-                                }`}>
-                                Standalone KYC Portal
+                            <span className="text-[8px] font-bold text-[#6E6E80] tracking-wider uppercase mt-0.5">
+                                DISCOVER • GROW • ENGAGE
                             </span>
                         </div>
                     </Link>
-                    <div className={`h-6 w-px hidden sm:block mx-1 ${theme === 'light' ? 'bg-[#E9ECEF]' : 'bg-[#1C1C26]'
-                        }`} />
-                    <div className="hidden sm:block">
-                        <h1 className={`font-heading font-bold text-sm ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'
-                            }`}>KYC & Identity Verification</h1>
-                        <p className={`text-[11px] ${theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'
-                            }`}>Tax compliance, identity proof, & bank account payout verification</p>
-                    </div>
-                </div>
 
-                <div className="flex items-center gap-3">
-                    {/* Notification Bell Icon Popup Dropdown */}
-                    <CreatorNotificationDropdown theme={theme} />
-
-                    {/* Header Theme Switcher Button */}
+                    {/* Sign Out Button */}
                     <button
-                        onClick={toggleTheme}
-                        className={`px-3 py-1.5 rounded-xl border text-xs font-bold transition-all flex items-center gap-1.5 ${theme === 'light'
-                            ? 'bg-[#F1F3F5] text-[#212529] border-[#E9ECEF] hover:bg-[#E9ECEF]'
-                            : 'bg-[#1C1C26] text-white border-[#1C1C26] hover:border-[#00F5D4]/40'
-                            }`}
-                        title={theme === 'dark' ? 'Switch to Light Theme' : 'Switch to Dark Theme'}
-                    >
-                        {theme === 'dark' ? (
-                            <>
-                                <Sun className="h-4 w-4 text-[#FFD60A]" />
-                                <span className="hidden sm:inline">Light Theme</span>
-                            </>
-                        ) : (
-                            <>
-                                <Moon className="h-4 w-4 text-[#7B2FFF]" />
-                                <span className="hidden sm:inline">Dark Theme</span>
-                            </>
-                        )}
-                    </button>
-
-                    <button
+                        type="button"
                         onClick={handleLogout}
-                        className={`px-4 py-2 rounded-xl text-xs font-bold transition-all border flex items-center gap-1.5 shadow-md ${theme === 'light'
-                            ? 'bg-[#E9ECEF] border-[#DEE2E6] text-[#495057] hover:text-[#FF3D71] hover:bg-[#FF3D71]/10'
-                            : 'bg-[#1C1C26] border-[#1C1C26] text-[#8B8B96] hover:text-[#FF3D71] hover:bg-[#FF3D71]/10'
-                            }`}
+                        className="px-5 py-2 rounded-full bg-gradient-to-r from-[#EB1000] to-[#CC0E00] text-white text-[13px] font-bold shadow-lg shadow-[#EB1000]/30 hover:opacity-90 transition-all shrink-0 flex items-center gap-1.5 cursor-pointer"
                     >
-                        <LogOut className="h-4 w-4" /> Logout Studio
+                        <LogOut className="h-4 w-4" />
+                        <span>Sign Out</span>
                     </button>
                 </div>
             </header>
 
-            <main className="flex-1 p-4 sm:p-6 md:p-8 max-w-4xl w-full mx-auto space-y-6">
+            <main className="flex-1 p-4 sm:p-6 md:p-8 max-w-4xl w-full mx-auto space-y-6 pt-24 sm:pt-28">
 
                 {isLoadingStatus ? (
                     <div className="p-12 text-center space-y-3">

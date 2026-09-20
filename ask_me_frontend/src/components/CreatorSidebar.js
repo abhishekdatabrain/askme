@@ -181,8 +181,7 @@ function CreatorSidebarContent({ theme: propTheme, onToggleTheme }) {
             </span>
             <span className={`text-[10px] font-bold uppercase tracking-wider block mt-1 ${theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'
               }`}>
-              Creator Control Room
-            </span>
+              Creator            </span>
           </div>
         </Link>
       </div>

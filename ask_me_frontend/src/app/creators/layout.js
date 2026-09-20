@@ -21,14 +21,14 @@ export default function CreatorLayout({ children }) {
   }
 
   return (
-    <div className="min-h-screen bg-[#0A0A0F] text-[#F5F5F7] font-sans selection:bg-[#00F5D4] selection:text-[#0A0A0F] flex">
+    <div className="h-screen w-full bg-[#0A0A0F] text-[#F5F5F7] font-sans selection:bg-[#EB1000] selection:text-white flex overflow-hidden">
       {/* 1. FIXED DESKTOP CREATOR SIDEBAR - STAYS MOUNTED ACCROSS ALL PAGES */}
-      <div className="hidden md:block sticky top-0 h-screen overflow-y-auto shrink-0 z-30 border-r border-[#1C1C26]/60">
+      <div className="hidden md:block h-screen overflow-y-auto shrink-0 z-40 border-r border-[#1C1C26]/60">
         <CreatorSidebar />
       </div>
 
-      {/* 2. DYNAMIC MAIN VIEWPORT */}
-      <div className="flex-1 flex flex-col min-w-0 min-h-screen">
+      {/* 2. DYNAMIC MAIN VIEWPORT WITH STICKY HEADER SCROLL SUPPORT */}
+      <div className="flex-1 flex flex-col min-w-0 h-screen overflow-y-auto relative">
         {children}
       </div>
     </div>

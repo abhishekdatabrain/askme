@@ -423,14 +423,18 @@ export default function CreatorKycPage() {
         <div className={`min-h-screen font-sans flex flex-col transition-colors duration-200 ${theme === 'light' ? 'bg-[#F4F5F7] text-[#1A1D20] selection:bg-[#00F5D4] selection:text-[#0A0A0F]' : 'bg-[#0A0A0F] text-[#F5F5F7] selection:bg-[#00F5D4] selection:text-[#0A0A0F]'
             }`}>
 
-            {/* Minimal Creator KYC Fixed Navbar */}
-            <header className="fixed top-0 left-0 right-0 z-50 py-3 px-3 sm:px-4 lg:px-6">
-                <div className="max-w-7xl mx-auto rounded-full bg-[#0F0F18]/95 backdrop-blur-md border border-[#202030] py-2.5 px-4 sm:px-6 shadow-2xl flex items-center justify-between">
-                    {/* Logo & Branding */}
-                    <Link href="#" className="flex items-center gap-2.5 shrink-0 group">
+            {/* Landing Page Style Floating Capsule Header */}
+            <header className="fixed top-0 left-0 right-0 z-50 py-3 px-2 sm:px-4 lg:px-6">
+                <div className={`max-w-7xl mx-auto rounded-full backdrop-blur-md border py-2 px-4 sm:px-6 shadow-2xl flex items-center justify-between gap-3 transition-colors ${theme === 'light'
+                    ? 'bg-white/90 border-[#DEE2E6] text-[#1A1D20]'
+                    : 'bg-[#0F0F18]/90 border-[#202030] text-white'
+                    }`}>
+                    {/* Logo & Subtitle */}
+                    <Link href="/" className="flex items-center gap-2.5 shrink-0 group">
                         <Logo size="sm" />
                         <div className="flex flex-col leading-none">
-                            <span className="font-heading font-black text-white text-[15px] tracking-tight">
+                            <span className={`font-heading font-black text-[15px] tracking-tight ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'
+                                }`}>
                                 AskMe
                             </span>
                             <span className="text-[8px] font-bold text-[#6E6E80] tracking-wider uppercase mt-0.5">
@@ -443,7 +447,7 @@ export default function CreatorKycPage() {
                     <button
                         type="button"
                         onClick={handleLogout}
-                        className="px-5 py-2 rounded-full bg-gradient-to-r from-[#EB1000] to-[#CC0E00] text-white text-[13px] font-bold shadow-lg shadow-[#EB1000]/30 hover:opacity-90 transition-all shrink-0 flex items-center gap-1.5 cursor-pointer"
+                        className="px-5 py-2 rounded-full bg-gradient-to-r from-[#EB1000] to-[#CC0E00] text-white text-[13px] font-bold shadow-lg shadow-[#EB1000]/30 hover:opacity-90 transition-all shrink-0 cursor-pointer flex items-center gap-1.5"
                     >
                         <LogOut className="h-4 w-4" />
                         <span>Sign Out</span>
@@ -451,7 +455,7 @@ export default function CreatorKycPage() {
                 </div>
             </header>
 
-            <main className="flex-1 p-4 sm:p-6 md:p-8 max-w-4xl w-full mx-auto space-y-6 pt-24 sm:pt-28">
+            <main className="flex-1 p-4 sm:p-6 md:p-8 max-w-4xl w-full mx-auto space-y-6 pt-25 sm:pt-20 lg:pt-25 pb-12">
 
                 {isLoadingStatus ? (
                     <div className="p-12 text-center space-y-3">
@@ -642,65 +646,95 @@ export default function CreatorKycPage() {
                     </div>
                 ) : (
                     /* --- 3. FORM INPUT STEPPER --- */
-                    <div className={`p-6 sm:p-8 rounded-3xl border shadow-2xl space-y-6 transition-colors duration-200 ${theme === 'light' ? 'bg-white border-[#E9ECEF]' : 'bg-[#13131A] border-[#1C1C26]'
+                    <div className={`p-6 sm:p-8 md:p-10 rounded-3xl border shadow-2xl space-y-6 sm:space-y-8 relative overflow-hidden transition-all duration-300 ${theme === 'light'
+                        ? 'bg-white border-[#E2E8F0] shadow-slate-200/60'
+                        : 'bg-[#12121C]/95 backdrop-blur-xl border-[#222236] shadow-black/80'
                         }`}>
-                        <div className={`flex items-center justify-between border-b pb-4 ${theme === 'light' ? 'border-[#E9ECEF]' : 'border-[#1C1C26]'
+                        {/* Gradient Top Accent Bar */}
+                        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#EB1000] via-[#FF5500] to-[#00F5D4]" />
+
+                        {/* Card Top Title & Step Badge */}
+                        <div className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b pb-5 ${theme === 'light' ? 'border-[#E2E8F0]' : 'border-[#222236]'
                             }`}>
                             <div>
-                                <h2 className={`font-heading font-black text-xl ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'}`}>
+                                <h2 className={`font-heading font-black text-xl sm:text-2xl tracking-tight ${theme === 'light' ? 'text-[#0F172A]' : 'text-white'
+                                    }`}>
                                     Submit KYC Verification Details
                                 </h2>
-                                <p className={`text-xs ${theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'}`}>
+                                <p className={`text-xs mt-1 font-medium ${theme === 'light' ? 'text-[#64748B]' : 'text-[#A0A0B2]'
+                                    }`}>
                                     Provide legally accurate personal info, government ID proof, & bank account details.
                                 </p>
                             </div>
-                            <span className="px-3 py-1 rounded-full bg-[#00F5D4]/10 text-[#00F5D4] border border-[#00F5D4]/30 text-xs font-bold">
+                            <span className="self-start sm:self-auto px-3.5 py-1.5 rounded-full bg-[#EB1000]/10 text-[#EB1000] border border-[#EB1000]/30 text-xs font-black shrink-0 flex items-center gap-1.5 shadow-sm">
+                                <span className="h-2 w-2 rounded-full bg-[#EB1000] animate-pulse" />
                                 Step {step} of 4
                             </span>
                         </div>
 
-                        {/* Stepper Tabs */}
-                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                        {/* Stepper Navigation Tabs */}
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
                             <button
                                 onClick={() => setStep(1)}
-                                className={`py-2 px-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition ${step === 1 ? 'bg-brand-gradient text-white shadow-md' : theme === 'light' ? 'bg-[#F1F3F5] text-[#6C757D]' : 'bg-[#0A0A0F] text-[#8B8B96]'
+                                className={`py-2.5 px-3 rounded-xl text-xs font-extrabold flex items-center justify-center gap-2 transition-all duration-200 ${step === 1
+                                    ? 'bg-gradient-to-r from-[#EB1000] to-[#CC0E00] text-white shadow-lg shadow-[#EB1000]/30 scale-[1.02]'
+                                    : theme === 'light'
+                                        ? 'bg-[#F8FAFC] text-[#64748B] border border-[#E2E8F0] hover:bg-[#F1F5F9] hover:text-[#0F172A]'
+                                        : 'bg-[#181826] text-[#A0A0B2] border border-[#2A2A3E] hover:bg-[#202030] hover:text-white'
                                     }`}
                             >
-                                <User className="h-3.5 w-3.5 shrink-0" /> 1. Personal Info
+                                <User className="h-4 w-4 shrink-0" /> 1. Personal Info
                             </button>
                             <button
                                 onClick={() => step > 1 && setStep(2)}
-                                className={`py-2 px-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition ${step === 2 ? 'bg-brand-gradient text-white shadow-md' : theme === 'light' ? 'bg-[#F1F3F5] text-[#6C757D]' : 'bg-[#0A0A0F] text-[#8B8B96]'
+                                className={`py-2.5 px-3 rounded-xl text-xs font-extrabold flex items-center justify-center gap-2 transition-all duration-200 ${step === 2
+                                    ? 'bg-gradient-to-r from-[#EB1000] to-[#CC0E00] text-white shadow-lg shadow-[#EB1000]/30 scale-[1.02]'
+                                    : theme === 'light'
+                                        ? 'bg-[#F8FAFC] text-[#64748B] border border-[#E2E8F0] hover:bg-[#F1F5F9] hover:text-[#0F172A]'
+                                        : 'bg-[#181826] text-[#A0A0B2] border border-[#2A2A3E] hover:bg-[#202030] hover:text-white'
                                     }`}
                             >
-                                <FileText className="h-3.5 w-3.5 shrink-0" /> 2. Document Proof
+                                <FileText className="h-4 w-4 shrink-0" /> 2. Document Proof
                             </button>
                             <button
                                 onClick={() => step > 2 && setStep(3)}
-                                className={`py-2 px-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition ${step === 3 ? 'bg-brand-gradient text-white shadow-md' : theme === 'light' ? 'bg-[#F1F3F5] text-[#6C757D]' : 'bg-[#0A0A0F] text-[#8B8B96]'
+                                className={`py-2.5 px-3 rounded-xl text-xs font-extrabold flex items-center justify-center gap-2 transition-all duration-200 ${step === 3
+                                    ? 'bg-gradient-to-r from-[#EB1000] to-[#CC0E00] text-white shadow-lg shadow-[#EB1000]/30 scale-[1.02]'
+                                    : theme === 'light'
+                                        ? 'bg-[#F8FAFC] text-[#64748B] border border-[#E2E8F0] hover:bg-[#F1F5F9] hover:text-[#0F172A]'
+                                        : 'bg-[#181826] text-[#A0A0B2] border border-[#2A2A3E] hover:bg-[#202030] hover:text-white'
                                     }`}
                             >
-                                <Building2 className="h-3.5 w-3.5 shrink-0" /> 3. Bank Details
+                                <Building2 className="h-4 w-4 shrink-0" /> 3. Bank Details
                             </button>
                             <button
                                 onClick={() => step > 3 && setStep(4)}
-                                className={`py-2 px-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition ${step === 4 ? 'bg-brand-gradient text-white shadow-md' : theme === 'light' ? 'bg-[#F1F3F5] text-[#6C757D]' : 'bg-[#0A0A0F] text-[#8B8B96]'
+                                className={`py-2.5 px-3 rounded-xl text-xs font-extrabold flex items-center justify-center gap-2 transition-all duration-200 ${step === 4
+                                    ? 'bg-gradient-to-r from-[#EB1000] to-[#CC0E00] text-white shadow-lg shadow-[#EB1000]/30 scale-[1.02]'
+                                    : theme === 'light'
+                                        ? 'bg-[#F8FAFC] text-[#64748B] border border-[#E2E8F0] hover:bg-[#F1F5F9] hover:text-[#0F172A]'
+                                        : 'bg-[#181826] text-[#A0A0B2] border border-[#2A2A3E] hover:bg-[#202030] hover:text-white'
                                     }`}
                             >
-                                <CheckCircle2 className="h-3.5 w-3.5 shrink-0" /> 4. Review & Submit
+                                <CheckCircle2 className="h-4 w-4 shrink-0" /> 4. Review & Submit
                             </button>
                         </div>
 
                         {/* STEP 1: Personal & Address Details */}
                         {step === 1 && (
-                            <form onSubmit={handleNextStep} className="space-y-4">
-                                <h3 className={`font-bold text-sm flex items-center gap-2 ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'}`}>
-                                    <User className="h-4 w-4 text-[#00F5D4]" /> Personal Information & Residential Address
-                                </h3>
+                            <form onSubmit={handleNextStep} className="space-y-5">
+                                <div className="flex items-center gap-2.5">
+                                    <span className="p-2 rounded-xl bg-[#00F5D4]/10 text-[#00F5D4] border border-[#00F5D4]/20 shrink-0">
+                                        <User className="h-4 w-4" />
+                                    </span>
+                                    <h3 className={`font-extrabold text-sm ${theme === 'light' ? 'text-[#0F172A]' : 'text-white'}`}>
+                                        Personal Information & Residential Address
+                                    </h3>
+                                </div>
 
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div>
-                                        <label className={`block text-xs font-bold mb-1 ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'}`}>
+                                        <label className={`block text-xs font-extrabold mb-1.5 ${theme === 'light' ? 'text-[#0F172A]' : 'text-[#E2E8F0]'}`}>
                                             Legal Full Name (Matching PAN/ID) *
                                         </label>
                                         <input
@@ -709,13 +743,15 @@ export default function CreatorKycPage() {
                                             value={formData.fullName}
                                             onChange={(e) => handleInputChange('fullName', e.target.value)}
                                             placeholder="e.g. Abhishek Kumar"
-                                            className={`w-full px-4 py-2.5 rounded-xl border text-xs focus:outline-none focus:border-[#00F5D4] ${theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6] text-[#1A1D20]' : 'bg-[#0A0A0F] border-[#1C1C26] text-white'
+                                            className={`w-full px-4 py-3 rounded-xl border text-xs outline-none font-medium transition-all duration-200 ${theme === 'light'
+                                                ? 'bg-[#F8FAFC] border-[#E2E8F0] text-[#0F172A] placeholder-[#94A3B8] focus:border-[#EB1000] focus:ring-1 focus:ring-[#EB1000]'
+                                                : 'bg-[#181826] border-[#2A2A3E] text-white placeholder-[#6E6E82] focus:border-[#EB1000] focus:ring-1 focus:ring-[#EB1000]'
                                                 }`}
                                         />
                                     </div>
 
                                     <div>
-                                        <label className={`block text-xs font-bold mb-1 ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'}`}>
+                                        <label className={`block text-xs font-extrabold mb-1.5 ${theme === 'light' ? 'text-[#0F172A]' : 'text-[#E2E8F0]'}`}>
                                             Date of Birth *
                                         </label>
                                         <input
@@ -723,14 +759,16 @@ export default function CreatorKycPage() {
                                             required
                                             value={formData.dateOfBirth || ''}
                                             onChange={(e) => handleInputChange('dateOfBirth', e.target.value)}
-                                            className={`w-full px-4 py-2.5 rounded-xl border text-xs focus:outline-none focus:border-[#00F5D4] ${theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6] text-[#1A1D20]' : 'bg-[#0A0A0F] border-[#1C1C26] text-white'
+                                            className={`w-full px-4 py-3 rounded-xl border text-xs outline-none font-medium transition-all duration-200 ${theme === 'light'
+                                                ? 'bg-[#F8FAFC] border-[#E2E8F0] text-[#0F172A] focus:border-[#EB1000] focus:ring-1 focus:ring-[#EB1000]'
+                                                : 'bg-[#181826] border-[#2A2A3E] text-white focus:border-[#EB1000] focus:ring-1 focus:ring-[#EB1000]'
                                                 }`}
                                         />
                                     </div>
                                 </div>
 
                                 <div>
-                                    <label className={`block text-xs font-bold mb-1 ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'}`}>
+                                    <label className={`block text-xs font-extrabold mb-1.5 ${theme === 'light' ? 'text-[#0F172A]' : 'text-[#E2E8F0]'}`}>
                                         Residential Address *
                                     </label>
                                     <input
@@ -739,14 +777,16 @@ export default function CreatorKycPage() {
                                         value={formData.address || ''}
                                         onChange={(e) => handleInputChange('address', e.target.value)}
                                         placeholder="Flat / House No. / Street Address / Area"
-                                        className={`w-full px-4 py-2.5 rounded-xl border text-xs focus:outline-none focus:border-[#00F5D4] ${theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6] text-[#1A1D20]' : 'bg-[#0A0A0F] border-[#1C1C26] text-white'
+                                        className={`w-full px-4 py-3 rounded-xl border text-xs outline-none font-medium transition-all duration-200 ${theme === 'light'
+                                            ? 'bg-[#F8FAFC] border-[#E2E8F0] text-[#0F172A] placeholder-[#94A3B8] focus:border-[#EB1000] focus:ring-1 focus:ring-[#EB1000]'
+                                            : 'bg-[#181826] border-[#2A2A3E] text-white placeholder-[#6E6E82] focus:border-[#EB1000] focus:ring-1 focus:ring-[#EB1000]'
                                             }`}
                                     />
                                 </div>
 
                                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                                     <div>
-                                        <label className={`block text-xs font-bold mb-1 ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'}`}>
+                                        <label className={`block text-xs font-extrabold mb-1.5 ${theme === 'light' ? 'text-[#0F172A]' : 'text-[#E2E8F0]'}`}>
                                             Country *
                                         </label>
                                         <input
@@ -755,13 +795,15 @@ export default function CreatorKycPage() {
                                             value={formData.country || ''}
                                             onChange={(e) => handleInputChange('country', e.target.value)}
                                             placeholder="e.g. India"
-                                            className={`w-full px-4 py-2.5 rounded-xl border text-xs focus:outline-none focus:border-[#00F5D4] ${theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6] text-[#1A1D20]' : 'bg-[#0A0A0F] border-[#1C1C26] text-white'
+                                            className={`w-full px-4 py-3 rounded-xl border text-xs outline-none font-medium transition-all duration-200 ${theme === 'light'
+                                                ? 'bg-[#F8FAFC] border-[#E2E8F0] text-[#0F172A] placeholder-[#94A3B8] focus:border-[#EB1000] focus:ring-1 focus:ring-[#EB1000]'
+                                                : 'bg-[#181826] border-[#2A2A3E] text-white placeholder-[#6E6E82] focus:border-[#EB1000] focus:ring-1 focus:ring-[#EB1000]'
                                                 }`}
                                         />
                                     </div>
 
                                     <div>
-                                        <label className={`block text-xs font-bold mb-1 ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'}`}>
+                                        <label className={`block text-xs font-extrabold mb-1.5 ${theme === 'light' ? 'text-[#0F172A]' : 'text-[#E2E8F0]'}`}>
                                             State *
                                         </label>
                                         <input
@@ -770,13 +812,15 @@ export default function CreatorKycPage() {
                                             value={formData.state || ''}
                                             onChange={(e) => handleInputChange('state', e.target.value)}
                                             placeholder="e.g. Delhi / Maharashtra"
-                                            className={`w-full px-4 py-2.5 rounded-xl border text-xs focus:outline-none focus:border-[#00F5D4] ${theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6] text-[#1A1D20]' : 'bg-[#0A0A0F] border-[#1C1C26] text-white'
+                                            className={`w-full px-4 py-3 rounded-xl border text-xs outline-none font-medium transition-all duration-200 ${theme === 'light'
+                                                ? 'bg-[#F8FAFC] border-[#E2E8F0] text-[#0F172A] placeholder-[#94A3B8] focus:border-[#EB1000] focus:ring-1 focus:ring-[#EB1000]'
+                                                : 'bg-[#181826] border-[#2A2A3E] text-white placeholder-[#6E6E82] focus:border-[#EB1000] focus:ring-1 focus:ring-[#EB1000]'
                                                 }`}
                                         />
                                     </div>
 
                                     <div>
-                                        <label className={`block text-xs font-bold mb-1 ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'}`}>
+                                        <label className={`block text-xs font-extrabold mb-1.5 ${theme === 'light' ? 'text-[#0F172A]' : 'text-[#E2E8F0]'}`}>
                                             City *
                                         </label>
                                         <input
@@ -785,7 +829,9 @@ export default function CreatorKycPage() {
                                             value={formData.city || ''}
                                             onChange={(e) => handleInputChange('city', e.target.value)}
                                             placeholder="e.g. New Delhi / Mumbai"
-                                            className={`w-full px-4 py-2.5 rounded-xl border text-xs focus:outline-none focus:border-[#00F5D4] ${theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6] text-[#1A1D20]' : 'bg-[#0A0A0F] border-[#1C1C26] text-white'
+                                            className={`w-full px-4 py-3 rounded-xl border text-xs outline-none font-medium transition-all duration-200 ${theme === 'light'
+                                                ? 'bg-[#F8FAFC] border-[#E2E8F0] text-[#0F172A] placeholder-[#94A3B8] focus:border-[#EB1000] focus:ring-1 focus:ring-[#EB1000]'
+                                                : 'bg-[#181826] border-[#2A2A3E] text-white placeholder-[#6E6E82] focus:border-[#EB1000] focus:ring-1 focus:ring-[#EB1000]'
                                                 }`}
                                         />
                                     </div>
@@ -794,9 +840,10 @@ export default function CreatorKycPage() {
                                 <div className="pt-4 flex justify-end">
                                     <button
                                         type="submit"
-                                        className="px-6 py-2.5 rounded-xl bg-brand-gradient text-white font-bold text-xs shadow-md hover:opacity-90 transition flex items-center gap-1.5"
+                                        className="px-7 py-3 rounded-xl bg-gradient-to-r from-[#EB1000] to-[#CC0E00] hover:from-[#CC0E00] hover:to-[#B30C00] text-white font-black text-xs shadow-xl shadow-[#EB1000]/30 hover:scale-[1.02] transition-all flex items-center gap-2 cursor-pointer"
                                     >
-                                        Continue to Document Proof →
+                                        <span>Continue to Document Proof</span>
+                                        <ArrowRight className="h-4 w-4" />
                                     </button>
                                 </div>
                             </form>
@@ -804,35 +851,42 @@ export default function CreatorKycPage() {
 
                         {/* STEP 2: Document Proof Details */}
                         {step === 2 && (
-                            <form onSubmit={handleNextStep} className="space-y-4">
-                                <h3 className={`font-bold text-sm flex items-center gap-2 ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'}`}>
-                                    <FileText className="h-4 w-4 text-[#00F5D4]" /> Government Identity Document Proof
-                                </h3>
+                            <form onSubmit={handleNextStep} className="space-y-5">
+                                <div className="flex items-center gap-2.5">
+                                    <span className="p-2 rounded-xl bg-[#EB1000]/10 text-[#EB1000] border border-[#EB1000]/20 shrink-0">
+                                        <FileText className="h-4 w-4" />
+                                    </span>
+                                    <h3 className={`font-extrabold text-sm ${theme === 'light' ? 'text-[#0F172A]' : 'text-white'}`}>
+                                        Government Identity Document Proof
+                                    </h3>
+                                </div>
 
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div>
-                                        <label className={`block text-xs font-bold mb-1 ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'}`}>
+                                        <label className={`block text-xs font-extrabold mb-1.5 ${theme === 'light' ? 'text-[#0F172A]' : 'text-[#E2E8F0]'}`}>
                                             Document Type *
                                         </label>
                                         <select
                                             value={formData.documentType}
                                             onChange={(e) => handleInputChange('documentType', e.target.value)}
-                                            className={`w-full px-4 py-2.5 rounded-xl border text-xs focus:outline-none focus:border-[#00F5D4] ${theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6] text-[#1A1D20]' : 'bg-[#0A0A0F] border-[#1C1C26] text-white'
+                                            className={`w-full px-4 py-3 rounded-xl border text-xs outline-none font-medium transition-all duration-200 ${theme === 'light'
+                                                ? 'bg-[#F8FAFC] border-[#E2E8F0] text-[#0F172A] focus:border-[#EB1000] focus:ring-1 focus:ring-[#EB1000]'
+                                                : 'bg-[#181826] border-[#2A2A3E] text-white focus:border-[#EB1000] focus:ring-1 focus:ring-[#EB1000]'
                                                 }`}
                                         >
-                                            <option value="pan_card">PAN Card (India)</option>
-                                            <option value="aadhaar_card">Aadhaar Card</option>
-                                            <option value="passport">Passport</option>
+                                            <option value="pan_card" className={theme === 'light' ? 'bg-white text-black' : 'bg-[#181826] text-white'}>PAN Card (India)</option>
+                                            <option value="aadhaar_card" className={theme === 'light' ? 'bg-white text-black' : 'bg-[#181826] text-white'}>Aadhaar Card</option>
+                                            <option value="passport" className={theme === 'light' ? 'bg-white text-black' : 'bg-[#181826] text-white'}>Passport</option>
                                         </select>
                                     </div>
 
                                     <div>
-                                        <div className="flex items-center justify-between mb-1">
-                                            <label className={`block text-xs font-bold ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'}`}>
+                                        <div className="flex items-center justify-between mb-1.5">
+                                            <label className={`block text-xs font-extrabold ${theme === 'light' ? 'text-[#0F172A]' : 'text-[#E2E8F0]'}`}>
                                                 ID / PAN Card Number *
                                             </label>
                                             {panVerificationData?.verified ? (
-                                                <span className="text-[10px] font-bold text-[#00E676] bg-[#00E676]/10 px-2 py-0.5 rounded-full border border-[#00E676]/30 flex items-center gap-1">
+                                                <span className="text-[10px] font-extrabold text-[#00E676] bg-[#00E676]/10 px-2.5 py-0.5 rounded-full border border-[#00E676]/30 flex items-center gap-1">
                                                     <CheckCircle2 className="h-3 w-3" /> Cashfree Verified
                                                 </span>
                                             ) : (
@@ -840,7 +894,7 @@ export default function CreatorKycPage() {
                                                     type="button"
                                                     onClick={handleVerifyPan}
                                                     disabled={isVerifyingPan}
-                                                    className="text-[11px] font-bold text-[#00F5D4] hover:underline flex items-center gap-1 disabled:opacity-50"
+                                                    className="text-[11px] font-extrabold text-[#EB1000] hover:underline flex items-center gap-1 disabled:opacity-50 cursor-pointer"
                                                 >
                                                     {isVerifyingPan ? (
                                                         <>
@@ -848,7 +902,7 @@ export default function CreatorKycPage() {
                                                         </>
                                                     ) : (
                                                         <>
-                                                            <ShieldCheck className="h-3 w-3" /> Instant Pan Verify
+                                                            <ShieldCheck className="h-3 w-3" /> Instant PAN Verify
                                                         </>
                                                     )}
                                                 </button>
@@ -861,7 +915,9 @@ export default function CreatorKycPage() {
                                                 value={formData.panNumber}
                                                 onChange={(e) => handleInputChange('panNumber', e.target.value.toUpperCase())}
                                                 placeholder="e.g. ABCDE1234F"
-                                                className={`flex-1 px-4 py-2.5 rounded-xl border text-xs focus:outline-none focus:border-[#00F5D4] font-mono uppercase ${theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6] text-[#1A1D20]' : 'bg-[#0A0A0F] border-[#1C1C26] text-white'
+                                                className={`flex-1 px-4 py-3 rounded-xl border text-xs outline-none font-mono uppercase transition-all duration-200 ${theme === 'light'
+                                                    ? 'bg-[#F8FAFC] border-[#E2E8F0] text-[#0F172A] placeholder-[#94A3B8] focus:border-[#EB1000] focus:ring-1 focus:ring-[#EB1000]'
+                                                    : 'bg-[#181826] border-[#2A2A3E] text-white placeholder-[#6E6E82] focus:border-[#EB1000] focus:ring-1 focus:ring-[#EB1000]'
                                                     }`}
                                             />
                                             {!panVerificationData?.verified && (
@@ -869,22 +925,22 @@ export default function CreatorKycPage() {
                                                     type="button"
                                                     onClick={handleVerifyPan}
                                                     disabled={isVerifyingPan}
-                                                    className="px-3.5 py-2.5 rounded-xl bg-[#00F5D4]/10 text-[#00F5D4] border border-[#00F5D4]/30 hover:bg-[#00F5D4]/20 text-xs font-bold shrink-0 transition"
+                                                    className="px-4 py-3 rounded-xl bg-[#EB1000]/10 text-[#EB1000] border border-[#EB1000]/30 hover:bg-[#EB1000]/20 text-xs font-black shrink-0 transition cursor-pointer"
                                                 >
                                                     Verify
                                                 </button>
                                             )}
                                         </div>
                                         {panVerificationData?.registeredName && (
-                                            <p className="text-[11px] text-[#00E676] font-semibold mt-1 flex items-center gap-1">
-                                                <Check className="h-3 w-3" /> Name on PAN: <strong>{panVerificationData.registeredName}</strong>
+                                            <p className="text-[11px] text-[#00E676] font-bold mt-1.5 flex items-center gap-1">
+                                                <Check className="h-3.5 w-3.5" /> Name on PAN: <strong>{panVerificationData.registeredName}</strong>
                                             </p>
                                         )}
                                     </div>
                                 </div>
 
                                 <div>
-                                    <label className={`block text-xs font-bold mb-1 ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'}`}>
+                                    <label className={`block text-xs font-extrabold mb-1.5 ${theme === 'light' ? 'text-[#0F172A]' : 'text-[#E2E8F0]'}`}>
                                         Upload Identity Document Image *
                                     </label>
                                     <div className="flex flex-col sm:flex-row gap-3">
@@ -893,12 +949,13 @@ export default function CreatorKycPage() {
                                             value={formData.documentPreview}
                                             onChange={(e) => handleInputChange('documentPreview', e.target.value)}
                                             placeholder="Document image URL or click upload button"
-                                            className={`flex-1 px-4 py-2.5 rounded-xl border text-xs focus:outline-none focus:border-[#00F5D4] font-mono ${theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6] text-[#1A1D20]' : 'bg-[#0A0A0F] border-[#1C1C26] text-white'
+                                            className={`flex-1 px-4 py-3 rounded-xl border text-xs outline-none font-mono transition-all duration-200 ${theme === 'light'
+                                                ? 'bg-[#F8FAFC] border-[#E2E8F0] text-[#0F172A] placeholder-[#94A3B8] focus:border-[#EB1000] focus:ring-1 focus:ring-[#EB1000]'
+                                                : 'bg-[#181826] border-[#2A2A3E] text-white placeholder-[#6E6E82] focus:border-[#EB1000] focus:ring-1 focus:ring-[#EB1000]'
                                                 }`}
                                         />
-                                        <label className={`px-5 py-2.5 rounded-xl text-xs font-bold cursor-pointer flex items-center justify-center gap-2 shrink-0 ${theme === 'light' ? 'bg-[#00F5D4]/10 text-[#007A6B] border border-[#00F5D4]/40 hover:bg-[#00F5D4]/20' : 'bg-[#00F5D4]/20 text-[#00F5D4] border border-[#00F5D4]/30 hover:bg-[#00F5D4]/30'
-                                            }`}>
-                                            <Upload className="h-4 w-4 text-[#00F5D4]" /> Pick Image File
+                                        <label className="px-5 py-3 rounded-xl bg-[#EB1000]/10 text-[#EB1000] border border-[#EB1000]/30 hover:bg-[#EB1000]/20 text-xs font-black cursor-pointer flex items-center justify-center gap-2 shrink-0 transition">
+                                            <Upload className="h-4 w-4 text-[#EB1000]" /> Pick Image File
                                             <input type="file" accept="image/*" className="hidden" onChange={handleFileUpload} />
                                         </label>
                                     </div>
@@ -906,41 +963,46 @@ export default function CreatorKycPage() {
 
                                 {/* Live Document Preview Thumbnail Card */}
                                 {formData.documentPreview && (
-                                    <div className={`p-3 rounded-2xl border flex items-center gap-3 ${theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6]' : 'bg-[#0A0A0F] border-[#1C1C26]'
+                                    <div className={`p-4 rounded-2xl border flex items-center gap-3 transition-all ${theme === 'light' ? 'bg-[#F8FAFC] border-[#E2E8F0]' : 'bg-[#181826] border-[#2A2A3E]'
                                         }`}>
                                         <img
                                             src={formData.documentPreview}
                                             alt="Document Preview"
-                                            className="h-16 w-24 object-cover rounded-lg border border-current/20 shadow-sm"
+                                            className="h-16 w-24 object-cover rounded-xl border border-current/20 shadow-md"
                                             onError={(e) => {
                                                 e.target.onerror = null;
                                                 e.target.src = 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&w=400&q=80';
                                             }}
                                         />
                                         <div>
-                                            <span className="text-[10px] font-bold text-[#00F5D4] uppercase tracking-wider block">Document Image Active</span>
-                                            <span className={`text-xs font-semibold block ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'}`}>
+                                            <span className="text-[10px] font-black text-[#EB1000] uppercase tracking-wider block">Document Image Active</span>
+                                            <span className={`text-xs font-bold block mt-0.5 ${theme === 'light' ? 'text-[#0F172A]' : 'text-white'}`}>
                                                 {formData.documentType === 'pan_card' ? 'PAN Card' : formData.documentType === 'aadhaar_card' ? 'Aadhaar Card' : 'Passport'} Image Loaded
                                             </span>
-                                            <span className="text-[11px] text-[#8B8B96]">ID #: {formData.panNumber || 'ABCDE1234F'}</span>
+                                            <span className={`text-[11px] font-medium block mt-0.5 ${theme === 'light' ? 'text-[#64748B]' : 'text-[#A0A0B2]'}`}>
+                                                ID #: {formData.panNumber || 'ABCDE1234F'}
+                                            </span>
                                         </div>
                                     </div>
                                 )}
 
-                                <div className="pt-4 flex justify-between">
+                                <div className="pt-4 flex flex-col-reverse sm:flex-row justify-between items-center gap-3">
                                     <button
                                         type="button"
                                         onClick={() => setStep(1)}
-                                        className={`px-4 py-2.5 rounded-xl text-xs font-bold ${theme === 'light' ? 'bg-[#E9ECEF] text-[#1A1D20] hover:bg-[#DEE2E6]' : 'bg-[#1C1C26] text-white hover:bg-[#252533]'
+                                        className={`w-full sm:w-auto px-5 py-3 rounded-xl text-xs font-extrabold transition-all flex items-center justify-center gap-2 cursor-pointer ${theme === 'light'
+                                            ? 'bg-[#F1F5F9] text-[#475569] border border-[#E2E8F0] hover:bg-[#E2E8F0] hover:text-[#0F172A]'
+                                            : 'bg-[#181826] text-[#A0A0B2] border border-[#2A2A3E] hover:bg-[#202030] hover:text-white'
                                             }`}
                                     >
-                                        ← Back to Personal Info
+                                        <ArrowLeft className="h-4 w-4" /> Back to Personal Info
                                     </button>
                                     <button
                                         type="submit"
-                                        className="px-6 py-2.5 rounded-xl bg-brand-gradient text-white font-bold text-xs shadow-md hover:opacity-90 transition flex items-center gap-1.5"
+                                        className="w-full sm:w-auto px-7 py-3 rounded-xl bg-gradient-to-r from-[#EB1000] to-[#CC0E00] hover:from-[#CC0E00] hover:to-[#B30C00] text-white font-black text-xs shadow-xl shadow-[#EB1000]/30 hover:scale-[1.02] transition-all flex items-center justify-center gap-2 cursor-pointer"
                                     >
-                                        Continue to Bank Details →
+                                        <span>Continue to Bank Details</span>
+                                        <ArrowRight className="h-4 w-4" />
                                     </button>
                                 </div>
                             </form>
@@ -948,13 +1010,18 @@ export default function CreatorKycPage() {
 
                         {/* STEP 3: Bank & Payout Details */}
                         {step === 3 && (
-                            <form onSubmit={handleNextStep} className="space-y-4">
-                                <h3 className={`font-bold text-sm flex items-center gap-2 ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'}`}>
-                                    <Building2 className="h-4 w-4 text-[#00F5D4]" /> Direct Bank Payout & UPI Destination Details
-                                </h3>
+                            <form onSubmit={handleNextStep} className="space-y-5">
+                                <div className="flex items-center gap-2.5">
+                                    <span className="p-2 rounded-xl bg-[#EB1000]/10 text-[#EB1000] border border-[#EB1000]/20 shrink-0">
+                                        <Building2 className="h-4 w-4" />
+                                    </span>
+                                    <h3 className={`font-extrabold text-sm ${theme === 'light' ? 'text-[#0F172A]' : 'text-white'}`}>
+                                        Direct Bank Payout & UPI Destination Details
+                                    </h3>
+                                </div>
 
                                 <div>
-                                    <label className={`block text-xs font-bold mb-1 ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'}`}>
+                                    <label className={`block text-xs font-extrabold mb-1.5 ${theme === 'light' ? 'text-[#0F172A]' : 'text-[#E2E8F0]'}`}>
                                         Bank Account Holder Name *
                                     </label>
                                     <input
@@ -963,14 +1030,16 @@ export default function CreatorKycPage() {
                                         value={formData.accountHolderName}
                                         onChange={(e) => handleInputChange('accountHolderName', e.target.value)}
                                         placeholder="e.g. Abhishek Kumar"
-                                        className={`w-full px-4 py-2.5 rounded-xl border text-xs focus:outline-none focus:border-[#00F5D4] ${theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6] text-[#1A1D20]' : 'bg-[#0A0A0F] border-[#1C1C26] text-white'
+                                        className={`w-full px-4 py-3 rounded-xl border text-xs outline-none font-medium transition-all duration-200 ${theme === 'light'
+                                            ? 'bg-[#F8FAFC] border-[#E2E8F0] text-[#0F172A] placeholder-[#94A3B8] focus:border-[#EB1000] focus:ring-1 focus:ring-[#EB1000]'
+                                            : 'bg-[#181826] border-[#2A2A3E] text-white placeholder-[#6E6E82] focus:border-[#EB1000] focus:ring-1 focus:ring-[#EB1000]'
                                             }`}
                                     />
                                 </div>
 
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div>
-                                        <label className={`block text-xs font-bold mb-1 ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'}`}>
+                                        <label className={`block text-xs font-extrabold mb-1.5 ${theme === 'light' ? 'text-[#0F172A]' : 'text-[#E2E8F0]'}`}>
                                             Bank Name *
                                         </label>
                                         <input
@@ -979,13 +1048,15 @@ export default function CreatorKycPage() {
                                             value={formData.bankName}
                                             onChange={(e) => handleInputChange('bankName', e.target.value)}
                                             placeholder="e.g. HDFC Bank / ICICI Bank"
-                                            className={`w-full px-4 py-2.5 rounded-xl border text-xs focus:outline-none focus:border-[#00F5D4] ${theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6] text-[#1A1D20]' : 'bg-[#0A0A0F] border-[#1C1C26] text-white'
+                                            className={`w-full px-4 py-3 rounded-xl border text-xs outline-none font-medium transition-all duration-200 ${theme === 'light'
+                                                ? 'bg-[#F8FAFC] border-[#E2E8F0] text-[#0F172A] placeholder-[#94A3B8] focus:border-[#EB1000] focus:ring-1 focus:ring-[#EB1000]'
+                                                : 'bg-[#181826] border-[#2A2A3E] text-white placeholder-[#6E6E82] focus:border-[#EB1000] focus:ring-1 focus:ring-[#EB1000]'
                                                 }`}
                                         />
                                     </div>
 
                                     <div>
-                                        <label className={`block text-xs font-bold mb-1 ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'}`}>
+                                        <label className={`block text-xs font-extrabold mb-1.5 ${theme === 'light' ? 'text-[#0F172A]' : 'text-[#E2E8F0]'}`}>
                                             Account Number *
                                         </label>
                                         <input
@@ -996,13 +1067,15 @@ export default function CreatorKycPage() {
                                             value={formData.accountNumber}
                                             onChange={(e) => handleInputChange('accountNumber', e.target.value)}
                                             placeholder="e.g. 50100298410294"
-                                            className={`w-full px-4 py-2.5 rounded-xl border text-xs focus:outline-none focus:border-[#00F5D4] font-mono ${theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6] text-[#1A1D20]' : 'bg-[#0A0A0F] border-[#1C1C26] text-white'
+                                            className={`w-full px-4 py-3 rounded-xl border text-xs outline-none font-mono transition-all duration-200 ${theme === 'light'
+                                                ? 'bg-[#F8FAFC] border-[#E2E8F0] text-[#0F172A] placeholder-[#94A3B8] focus:border-[#EB1000] focus:ring-1 focus:ring-[#EB1000]'
+                                                : 'bg-[#181826] border-[#2A2A3E] text-white placeholder-[#6E6E82] focus:border-[#EB1000] focus:ring-1 focus:ring-[#EB1000]'
                                                 }`}
                                         />
                                     </div>
 
                                     <div>
-                                        <label className={`block text-xs font-bold mb-1 ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'}`}>
+                                        <label className={`block text-xs font-extrabold mb-1.5 ${theme === 'light' ? 'text-[#0F172A]' : 'text-[#E2E8F0]'}`}>
                                             Confirmation Account Number *
                                         </label>
                                         <input
@@ -1013,25 +1086,27 @@ export default function CreatorKycPage() {
                                             value={formData.confirmAccountNumber || ''}
                                             onChange={(e) => handleInputChange('confirmAccountNumber', e.target.value)}
                                             placeholder="Re-enter account number"
-                                            className={`w-full px-4 py-2.5 rounded-xl border text-xs focus:outline-none focus:border-[#00F5D4] font-mono ${formData.confirmAccountNumber && formData.accountNumber !== formData.confirmAccountNumber
+                                            className={`w-full px-4 py-3 rounded-xl border text-xs outline-none font-mono transition-all duration-200 ${formData.confirmAccountNumber && formData.accountNumber !== formData.confirmAccountNumber
                                                 ? 'border-[#FF3D71] bg-[#FF3D71]/10 text-[#FF3D71]'
-                                                : theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6] text-[#1A1D20]' : 'bg-[#0A0A0F] border-[#1C1C26] text-white'
+                                                : theme === 'light'
+                                                    ? 'bg-[#F8FAFC] border-[#E2E8F0] text-[#0F172A] placeholder-[#94A3B8] focus:border-[#EB1000] focus:ring-1 focus:ring-[#EB1000]'
+                                                    : 'bg-[#181826] border-[#2A2A3E] text-white placeholder-[#6E6E82] focus:border-[#EB1000] focus:ring-1 focus:ring-[#EB1000]'
                                                 }`}
                                         />
                                         {formData.confirmAccountNumber && formData.accountNumber !== formData.confirmAccountNumber && (
-                                            <span className="text-[10px] text-[#FF3D71] block mt-1 font-semibold">
+                                            <span className="text-[10px] text-[#FF3D71] block mt-1.5 font-bold">
                                                 Account Number and Confirmation Account Number do not match.
                                             </span>
                                         )}
                                     </div>
 
                                     <div>
-                                        <div className="flex items-center justify-between mb-1">
-                                            <label className={`block text-xs font-bold ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'}`}>
+                                        <div className="flex items-center justify-between mb-1.5">
+                                            <label className={`block text-xs font-extrabold ${theme === 'light' ? 'text-[#0F172A]' : 'text-[#E2E8F0]'}`}>
                                                 IFSC Code *
                                             </label>
                                             {bankVerificationData?.verified ? (
-                                                <span className="text-[10px] font-bold text-[#00E676] bg-[#00E676]/10 px-2 py-0.5 rounded-full border border-[#00E676]/30 flex items-center gap-1">
+                                                <span className="text-[10px] font-extrabold text-[#00E676] bg-[#00E676]/10 px-2.5 py-0.5 rounded-full border border-[#00E676]/30 flex items-center gap-1">
                                                     <CheckCircle2 className="h-3 w-3" /> Cashfree Verified
                                                 </span>
                                             ) : (
@@ -1039,7 +1114,7 @@ export default function CreatorKycPage() {
                                                     type="button"
                                                     onClick={handleVerifyBank}
                                                     disabled={isVerifyingBank}
-                                                    className="text-[11px] font-bold text-[#00F5D4] hover:underline flex items-center gap-1 disabled:opacity-50"
+                                                    className="text-[11px] font-extrabold text-[#EB1000] hover:underline flex items-center gap-1 disabled:opacity-50 cursor-pointer"
                                                 >
                                                     {isVerifyingBank ? (
                                                         <>
@@ -1062,7 +1137,9 @@ export default function CreatorKycPage() {
                                                 value={formData.ifscCode}
                                                 onChange={(e) => handleInputChange('ifscCode', e.target.value)}
                                                 placeholder="e.g. SBIN0001234"
-                                                className={`flex-1 px-4 py-2.5 rounded-xl border text-xs focus:outline-none focus:border-[#00F5D4] font-mono uppercase ${theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6] text-[#1A1D20]' : 'bg-[#0A0A0F] border-[#1C1C26] text-white'
+                                                className={`flex-1 px-4 py-3 rounded-xl border text-xs outline-none font-mono uppercase transition-all duration-200 ${theme === 'light'
+                                                    ? 'bg-[#F8FAFC] border-[#E2E8F0] text-[#0F172A] placeholder-[#94A3B8] focus:border-[#EB1000] focus:ring-1 focus:ring-[#EB1000]'
+                                                    : 'bg-[#181826] border-[#2A2A3E] text-white placeholder-[#6E6E82] focus:border-[#EB1000] focus:ring-1 focus:ring-[#EB1000]'
                                                     }`}
                                             />
                                             {!bankVerificationData?.verified && (
@@ -1070,22 +1147,22 @@ export default function CreatorKycPage() {
                                                     type="button"
                                                     onClick={handleVerifyBank}
                                                     disabled={isVerifyingBank}
-                                                    className="px-3.5 py-2.5 rounded-xl bg-[#00F5D4]/10 text-[#00F5D4] border border-[#00F5D4]/30 hover:bg-[#00F5D4]/20 text-xs font-bold shrink-0 transition"
+                                                    className="px-4 py-3 rounded-xl bg-[#EB1000]/10 text-[#EB1000] border border-[#EB1000]/30 hover:bg-[#EB1000]/20 text-xs font-black shrink-0 transition cursor-pointer"
                                                 >
                                                     Verify
                                                 </button>
                                             )}
                                         </div>
                                         {bankVerificationData?.bankName && (
-                                            <p className="text-[11px] text-[#00E676] font-semibold mt-1 flex items-center gap-1">
-                                                <Check className="h-3 w-3" /> Bank: <strong>{bankVerificationData.bankName}</strong> ({bankVerificationData.accountHolderName})
+                                            <p className="text-[11px] text-[#00E676] font-bold mt-1.5 flex items-center gap-1">
+                                                <Check className="h-3.5 w-3.5" /> Bank: <strong>{bankVerificationData.bankName}</strong> ({bankVerificationData.accountHolderName})
                                             </p>
                                         )}
                                     </div>
                                 </div>
 
                                 <div>
-                                    <label className={`block text-xs font-bold mb-1 ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'}`}>
+                                    <label className={`block text-xs font-extrabold mb-1.5 ${theme === 'light' ? 'text-[#0F172A]' : 'text-[#E2E8F0]'}`}>
                                         UPI ID (Optional Payout VPA)
                                     </label>
                                     <input
@@ -1093,25 +1170,30 @@ export default function CreatorKycPage() {
                                         value={formData.upiId}
                                         onChange={(e) => handleInputChange('upiId', e.target.value)}
                                         placeholder="e.g. creator@upi or carryminati@okicici"
-                                        className={`w-full px-4 py-2.5 rounded-xl border text-xs text-[#00F5D4] font-mono focus:outline-none focus:border-[#00F5D4] ${theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6]' : 'bg-[#0A0A0F] border-[#1C1C26]'
+                                        className={`w-full px-4 py-3 rounded-xl border text-xs outline-none font-mono transition-all duration-200 ${theme === 'light'
+                                            ? 'bg-[#F8FAFC] border-[#E2E8F0] text-[#0F172A] placeholder-[#94A3B8] focus:border-[#EB1000] focus:ring-1 focus:ring-[#EB1000]'
+                                            : 'bg-[#181826] border-[#2A2A3E] text-white placeholder-[#6E6E82] focus:border-[#EB1000] focus:ring-1 focus:ring-[#EB1000]'
                                             }`}
                                     />
                                 </div>
 
-                                <div className="pt-4 flex justify-between">
+                                <div className="pt-4 flex flex-col-reverse sm:flex-row justify-between items-center gap-3">
                                     <button
                                         type="button"
                                         onClick={() => setStep(2)}
-                                        className={`px-4 py-2.5 rounded-xl text-xs font-bold ${theme === 'light' ? 'bg-[#E9ECEF] text-[#1A1D20] hover:bg-[#DEE2E6]' : 'bg-[#1C1C26] text-white hover:bg-[#252533]'
+                                        className={`w-full sm:w-auto px-5 py-3 rounded-xl text-xs font-extrabold transition-all flex items-center justify-center gap-2 cursor-pointer ${theme === 'light'
+                                            ? 'bg-[#F1F5F9] text-[#475569] border border-[#E2E8F0] hover:bg-[#E2E8F0] hover:text-[#0F172A]'
+                                            : 'bg-[#181826] text-[#A0A0B2] border border-[#2A2A3E] hover:bg-[#202030] hover:text-white'
                                             }`}
                                     >
-                                        ← Back to Document Proof
+                                        <ArrowLeft className="h-4 w-4" /> Back to Document Proof
                                     </button>
                                     <button
                                         type="submit"
-                                        className="px-6 py-2.5 rounded-xl bg-brand-gradient text-white font-bold text-xs shadow-md hover:opacity-90 transition flex items-center gap-1.5"
+                                        className="w-full sm:w-auto px-7 py-3 rounded-xl bg-gradient-to-r from-[#EB1000] to-[#CC0E00] hover:from-[#CC0E00] hover:to-[#B30C00] text-white font-black text-xs shadow-xl shadow-[#EB1000]/30 hover:scale-[1.02] transition-all flex items-center justify-center gap-2 cursor-pointer"
                                     >
-                                        Review & Final Submit →
+                                        <span>Review & Final Submit</span>
+                                        <ArrowRight className="h-4 w-4" />
                                     </button>
                                 </div>
                             </form>
@@ -1120,78 +1202,112 @@ export default function CreatorKycPage() {
                         {/* STEP 4: Review & Legal Submit */}
                         {step === 4 && (
                             <form onSubmit={handleSubmitKyc} className="space-y-5">
-                                <h3 className={`font-bold text-sm flex items-center gap-2 ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'}`}>
-                                    <CheckCircle2 className="h-4 w-4 text-[#00F5D4]" /> Final Review & Legal Submission Declaration
-                                </h3>
+                                <div className="flex items-center gap-2.5">
+                                    <span className="p-2 rounded-xl bg-[#EB1000]/10 text-[#EB1000] border border-[#EB1000]/20 shrink-0">
+                                        <CheckCircle2 className="h-4 w-4" />
+                                    </span>
+                                    <h3 className={`font-extrabold text-sm ${theme === 'light' ? 'text-[#0F172A]' : 'text-white'}`}>
+                                        Final Review & Legal Submission Declaration
+                                    </h3>
+                                </div>
 
-                                <div className={`p-4 rounded-2xl border space-y-3 text-xs ${theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6]' : 'bg-[#0A0A0F] border-[#1C1C26]'
+                                <div className={`p-5 rounded-2xl border space-y-4 text-xs transition-all ${theme === 'light' ? 'bg-[#F8FAFC] border-[#E2E8F0]' : 'bg-[#181826] border-[#2A2A3E]'
                                     }`}>
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pb-3 border-b border-current/10">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pb-4 border-b border-current/10">
                                         <div>
-                                            <span className="text-[10px] text-[#8B8B96] block uppercase font-bold">Legal Full Name</span>
-                                            <span className={`font-bold ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'}`}>{formData.fullName}</span>
+                                            <span className={`text-[10px] uppercase font-black tracking-wider block ${theme === 'light' ? 'text-[#64748B]' : 'text-[#A0A0B2]'}`}>
+                                                Legal Full Name
+                                            </span>
+                                            <span className={`font-extrabold text-sm block mt-0.5 ${theme === 'light' ? 'text-[#0F172A]' : 'text-white'}`}>
+                                                {formData.fullName}
+                                            </span>
                                         </div>
                                         <div>
-                                            <span className="text-[10px] text-[#8B8B96] block uppercase font-bold">Date of Birth</span>
-                                            <span className={`font-bold ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'}`}>{formData.dateOfBirth || 'N/A'}</span>
+                                            <span className={`text-[10px] uppercase font-black tracking-wider block ${theme === 'light' ? 'text-[#64748B]' : 'text-[#A0A0B2]'}`}>
+                                                Date of Birth
+                                            </span>
+                                            <span className={`font-extrabold text-sm block mt-0.5 ${theme === 'light' ? 'text-[#0F172A]' : 'text-white'}`}>
+                                                {formData.dateOfBirth || 'N/A'}
+                                            </span>
                                         </div>
                                         <div>
-                                            <span className="text-[10px] text-[#8B8B96] block uppercase font-bold">Address & Location</span>
-                                            <span className={`font-bold ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'}`}>
+                                            <span className={`text-[10px] uppercase font-black tracking-wider block ${theme === 'light' ? 'text-[#64748B]' : 'text-[#A0A0B2]'}`}>
+                                                Address & Location
+                                            </span>
+                                            <span className={`font-bold block mt-0.5 ${theme === 'light' ? 'text-[#0F172A]' : 'text-white'}`}>
                                                 {formData.address}, {formData.city}, {formData.state}, {formData.country}
                                             </span>
                                         </div>
                                         <div>
-                                            <span className="text-[10px] text-[#8B8B96] block uppercase font-bold">Document Number</span>
-                                            <span className="font-mono font-bold text-[#00F5D4] uppercase">{formData.panNumber} ({formData.documentType})</span>
+                                            <span className={`text-[10px] uppercase font-black tracking-wider block ${theme === 'light' ? 'text-[#64748B]' : 'text-[#A0A0B2]'}`}>
+                                                Document Number
+                                            </span>
+                                            <span className="font-mono font-black text-[#EB1000] uppercase block mt-0.5">
+                                                {formData.panNumber} ({formData.documentType})
+                                            </span>
                                         </div>
                                     </div>
 
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                         <div>
-                                            <span className="text-[10px] text-[#8B8B96] block uppercase font-bold">Payout Bank Account</span>
-                                            <span className={`font-bold ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'}`}>
+                                            <span className={`text-[10px] uppercase font-black tracking-wider block ${theme === 'light' ? 'text-[#64748B]' : 'text-[#A0A0B2]'}`}>
+                                                Payout Bank Account
+                                            </span>
+                                            <span className={`font-bold block mt-0.5 ${theme === 'light' ? 'text-[#0F172A]' : 'text-white'}`}>
                                                 {formData.bankName} - A/C #{formData.accountNumber} ({formData.ifscCode})
                                             </span>
                                         </div>
                                         <div>
-                                            <span className="text-[10px] text-[#8B8B96] block uppercase font-bold">Payout UPI VPA</span>
-                                            <span className="font-mono font-bold text-[#00F5D4]">{formData.upiId || 'Not specified'}</span>
+                                            <span className={`text-[10px] uppercase font-black tracking-wider block ${theme === 'light' ? 'text-[#64748B]' : 'text-[#A0A0B2]'}`}>
+                                                Payout UPI VPA
+                                            </span>
+                                            <span className="font-mono font-bold text-[#EB1000] block mt-0.5">
+                                                {formData.upiId || 'Not specified'}
+                                            </span>
                                         </div>
                                     </div>
                                 </div>
 
-                                <label className={`flex items-start gap-2.5 text-xs cursor-pointer p-3 rounded-xl border ${theme === 'light' ? 'bg-white border-[#DEE2E6] text-[#1A1D20]' : 'bg-[#14141E] border-[#222230] text-white'
+                                <label className={`flex items-start gap-3 text-xs cursor-pointer p-4 rounded-xl border transition-all ${theme === 'light'
+                                    ? 'bg-[#F8FAFC] border-[#E2E8F0] text-[#0F172A]'
+                                    : 'bg-[#181826] border-[#2A2A3E] text-white'
                                     }`}>
                                     <input
                                         type="checkbox"
                                         checked={formData.agreeTerms}
                                         onChange={(e) => handleInputChange('agreeTerms', e.target.checked)}
-                                        className="mt-0.5 rounded accent-[#00F5D4]"
+                                        className="mt-0.5 h-4 w-4 rounded accent-[#EB1000] cursor-pointer"
                                     />
-                                    <span>I declare under penalty of perjury that all provided identity documents and bank payout details are legally accurate and belong to me.</span>
+                                    <span className="font-medium leading-relaxed">
+                                        I declare under penalty of perjury that all provided identity documents and bank payout details are legally accurate and belong to me.
+                                    </span>
                                 </label>
 
-                                <div className="pt-4 flex justify-between">
+                                <div className="pt-4 flex flex-col-reverse sm:flex-row justify-between items-center gap-3">
                                     <button
                                         type="button"
                                         onClick={() => setStep(3)}
-                                        className={`px-4 py-2.5 rounded-xl text-xs font-bold ${theme === 'light' ? 'bg-[#E9ECEF] text-[#1A1D20] hover:bg-[#DEE2E6]' : 'bg-[#1C1C26] text-white hover:bg-[#252533]'
+                                        className={`w-full sm:w-auto px-5 py-3 rounded-xl text-xs font-extrabold transition-all flex items-center justify-center gap-2 cursor-pointer ${theme === 'light'
+                                            ? 'bg-[#F1F5F9] text-[#475569] border border-[#E2E8F0] hover:bg-[#E2E8F0] hover:text-[#0F172A]'
+                                            : 'bg-[#181826] text-[#A0A0B2] border border-[#2A2A3E] hover:bg-[#202030] hover:text-white'
                                             }`}
                                     >
-                                        ← Back to Bank Details
+                                        <ArrowLeft className="h-4 w-4" /> Back to Bank Details
                                     </button>
                                     <button
                                         type="submit"
                                         disabled={isSubmitting}
-                                        className="px-6 py-2.5 rounded-xl bg-brand-gradient text-white font-bold text-xs shadow-md glow-teal hover:opacity-95 transition disabled:opacity-50 flex items-center gap-2"
+                                        className="w-full sm:w-auto px-7 py-3 rounded-xl bg-gradient-to-r from-[#EB1000] to-[#CC0E00] hover:from-[#CC0E00] hover:to-[#B30C00] text-white font-black text-xs shadow-xl shadow-[#EB1000]/30 hover:scale-[1.02] transition-all disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
                                     >
                                         {isSubmitting ? (
                                             <>
-                                                <RefreshCw className="h-3.5 w-3.5 animate-spin" /> Submitting KYC...
+                                                <RefreshCw className="h-4 w-4 animate-spin" /> Submitting KYC...
                                             </>
                                         ) : (
-                                            'Submit KYC for Super Admin Audit'
+                                            <>
+                                                <span>Submit KYC for Super Admin Audit</span>
+                                                <ShieldCheck className="h-4 w-4" />
+                                            </>
                                         )}
                                     </button>
                                 </div>

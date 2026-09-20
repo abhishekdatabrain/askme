@@ -136,7 +136,7 @@ const getOverlayDataService = async (identifier) => {
   const origin = process.env.FRONTEND_URL || "http://localhost:3000";
   const sessionCode = activeSession?.session_code || "live";
   const paymentLink = `${origin}/pay/${sessionCode}?creatorId=${creator.id}&sessionId=${activeSession?.id || 1}`;
-  const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=350x350&data=${encodeURIComponent(paymentLink)}`;
+  const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&ecc=H&margin=2&data=${encodeURIComponent(paymentLink)}`;
 
   return {
     creator: {

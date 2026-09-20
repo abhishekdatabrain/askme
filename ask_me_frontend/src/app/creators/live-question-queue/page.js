@@ -255,46 +255,19 @@ export default function CreatorNotificationsPage() {
 
   return (
     <>
-      <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
-        <header className={`border-b sticky top-0 z-20 px-6 py-4 flex items-center justify-between transition-colors duration-200 ${theme === 'light' ? 'border-[#E9ECEF] bg-white/90 backdrop-blur-md' : 'border-[#1C1C26] bg-[#0A0A0F]/80 backdrop-blur-md'
+      <div className="flex-1 flex flex-col min-w-0">
+        <header className={`border-b sticky top-0 z-30 shrink-0 px-6 py-4 flex items-center justify-between transition-colors duration-200 ${theme === 'light' ? 'border-[#E9ECEF] bg-white/95 backdrop-blur-md shadow-sm' : 'border-[#1C1C26] bg-[#0A0A0F]/95 backdrop-blur-md shadow-sm'
           }`}>
           <div>
             <h1 className={`font-heading font-black text-xl flex items-center gap-2 ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'
               }`}>
-              <Bell className="h-5 w-5 text-[#00F5D4]" /> Real-Time Live Question Queue
+              <Bell className="h-5 w-5 text-[#EB1000]" /> Real-Time Live Question Queue
             </h1>
             <p className={`text-xs ${theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'
               }`}>Strict FIFO Queue: Creator can only approve or reject the current turn (#1 in queue).</p>
           </div>
 
-          <div className="flex items-center gap-3">
-            {/* Header Theme Switcher Button */}
-            <button
-              onClick={toggleTheme}
-              className={`px-3 py-1.5 rounded-xl border text-xs font-bold transition-all flex items-center gap-1.5 ${theme === 'light'
-                ? 'bg-[#F1F3F5] text-[#212529] border-[#E9ECEF] hover:bg-[#E9ECEF]'
-                : 'bg-[#1C1C26] text-white border-[#1C1C26] hover:border-[#00F5D4]/40'
-                }`}
-              title={theme === 'dark' ? 'Switch to Light Theme' : 'Switch to Dark Theme'}
-            >
-              {theme === 'dark' ? (
-                <>
-                  <Sun className="h-4 w-4 text-[#FFD60A]" />
-                  <span className="hidden sm:inline">Light Theme</span>
-                </>
-              ) : (
-                <>
-                  <Moon className="h-4 w-4 text-[#7B2FFF]" />
-                  <span className="hidden sm:inline">Dark Theme</span>
-                </>
-              )}
-            </button>
 
-            <Link href="/creators/dashboard" className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 ${theme === 'light' ? 'bg-[#E9ECEF] text-[#1A1D20] hover:bg-[#DEE2E6]' : 'bg-[#1C1C26] text-white hover:bg-[#1C1C26]/80'
-              }`}>
-              <ArrowLeft className="h-3.5 w-3.5" /> Back to Dashboard
-            </Link>
-          </div>
         </header>
 
         <main className="p-6 max-w-6xl w-full mx-auto space-y-6">
@@ -304,7 +277,7 @@ export default function CreatorNotificationsPage() {
             <div className={`p-4 rounded-2xl border flex items-center justify-between gap-4 ${theme === 'light' ? 'bg-white border-[#E9ECEF]' : 'bg-[#13131A] border-[#1C1C26]'
               }`}>
               <div className="flex items-center gap-3">
-                <div className={`p-2 rounded-xl border ${activeSession ? 'bg-[#00E676]/10 border-[#00E676]/40 text-[#00E676]' : 'bg-[#FF3D71]/10 border-[#FF3D71]/40 text-[#FF3D71]'}`}>
+                <div className="p-2 rounded-xl border bg-[#EB1000]/10 border-[#EB1000]/30 text-[#EB1000]">
                   <Radio className="h-5 w-5 animate-pulse" />
                 </div>
                 <div>
@@ -315,17 +288,16 @@ export default function CreatorNotificationsPage() {
                     {activeSession ? (
                       <>
                         <span>{activeSession.title}</span>
-
                       </>
                     ) : (
-                      <span className="text-[#FF3D71]">No Active Broadcast Session Currently Running</span>
+                      <span className="text-[#8B8B96]">No Active Broadcast Session Currently Running</span>
                     )}
                   </h3>
                 </div>
               </div>
 
               <div className="flex items-center gap-2">
-                <span className="px-3 py-1.5 rounded-xl bg-[#00F5D4]/10 border border-[#00F5D4]/30 text-[#00F5D4] text-xs font-black">
+                <span className="px-3 py-1.5 rounded-xl bg-[#EB1000]/10 border border-[#EB1000]/30 text-[#EB1000] text-xs font-black">
                   {notifications.length} Active Queue Item(s)
                 </span>
               </div>
@@ -348,8 +320,8 @@ export default function CreatorNotificationsPage() {
                       key={tab.id}
                       type="button"
                       onClick={() => setActiveFilter(tab.id)}
-                      className={`px-3.5 py-1.5 rounded-xl text-xs font-extrabold shrink-0 transition flex items-center gap-1.5 ${isActive
-                        ? 'bg-[#FF5722] text-white shadow-md glow-orange'
+                      className={`px-3.5 py-1.5 rounded-xl text-xs font-extrabold shrink-0 transition flex items-center gap-1.5 cursor-pointer ${isActive
+                        ? 'bg-gradient-to-r from-[#EB1000] to-[#CC0E00] text-white shadow-md shadow-[#EB1000]/30'
                         : theme === 'light'
                           ? 'bg-[#F8F9FA] text-[#495057] border border-[#DEE2E6] hover:bg-[#E9ECEF]'
                           : 'bg-[#1C1C26] text-[#8B8B96] border border-[#2A2A3A] hover:text-white'
@@ -357,7 +329,7 @@ export default function CreatorNotificationsPage() {
                     >
                       {tab.icon && <span>{tab.icon}</span>}
                       <span>{tab.label}</span>
-                      <span className={`px-1.5 py-0.5 rounded-full text-[10px] ${isActive ? 'bg-black/30 text-white' : 'bg-black/40 text-[#00F5D4]'
+                      <span className={`px-1.5 py-0.5 rounded-full text-[10px] ${isActive ? 'bg-black/30 text-white' : 'bg-black/40 text-white/80'
                         }`}>
                         ({count})
                       </span>
@@ -375,9 +347,9 @@ export default function CreatorNotificationsPage() {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className={`w-full pl-10 pr-9 py-2 rounded-2xl text-xs font-semibold focus:outline-none transition border ${theme === 'light'
-                    ? 'bg-white border-[#E9ECEF] text-[#1A1D20] placeholder-[#6C757D] focus:border-[#00F5D4]'
-                    : 'bg-[#13131A] border-[#1C1C26] text-white placeholder-[#8B8B96] focus:border-[#00F5D4]'
-                  }`}
+                    ? 'bg-white border-[#E9ECEF] text-[#1A1D20] placeholder-[#6C757D] focus:border-[#EB1000]'
+                    : 'bg-[#13131A] border-[#1C1C26] text-white placeholder-[#8B8B96] focus:border-[#EB1000]'
+                    }`}
                 />
                 {searchQuery && (
                   <button
@@ -394,12 +366,12 @@ export default function CreatorNotificationsPage() {
 
             <h3 className={`font-heading font-bold text-base flex items-center gap-2 ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'
               }`}>
-              <Heart className="h-4 w-4 text-[#00E676]" /> Recent Viewer Paid & Questions
+              <Heart className="h-4 w-4 text-[#EB1000]" /> Recent Viewer Paid & Questions
             </h3>
 
             {isLoading ? (
               <div className="p-12 text-center text-xs text-[#8B8B96] space-y-2">
-                <div className="h-8 w-8 border-2 border-[#00F5D4] border-t-transparent rounded-full animate-spin mx-auto" />
+                <div className="h-8 w-8 border-2 border-[#EB1000] border-t-transparent rounded-full animate-spin mx-auto" />
                 <p>Fetching live notifications...</p>
               </div>
             ) : notifications.length === 0 ? (
@@ -415,14 +387,14 @@ export default function CreatorNotificationsPage() {
                   <button
                     type="button"
                     onClick={() => setSearchQuery('')}
-                    className="px-3.5 py-1.5 rounded-xl bg-[#00F5D4]/10 border border-[#00F5D4]/30 text-[#00F5D4] text-xs font-bold hover:bg-[#00F5D4]/20 transition"
+                    className="px-3.5 py-1.5 rounded-xl bg-[#EB1000]/10 border border-[#EB1000]/30 text-[#EB1000] text-xs font-bold hover:bg-[#EB1000]/20 transition"
                   >
                     Clear Search Filter
                   </button>
                 </div>
               ) : (
                 <div className={`p-8 rounded-2xl border text-center space-y-2 ${theme === 'light' ? 'bg-white border-[#E9ECEF]' : 'bg-[#13131A] border-[#1C1C26]'}`}>
-                  <Sparkles className="h-10 w-10 text-[#00F5D4] mx-auto stroke-1" />
+                  <Sparkles className="h-10 w-10 text-[#EB1000] mx-auto stroke-1" />
                   <h4 className={`font-bold text-sm ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'}`}>
                     All Queue Questions Answered! 🎉
                   </h4>
@@ -450,11 +422,11 @@ export default function CreatorNotificationsPage() {
                     <div
                       key={itemKey}
                       className={`p-4 rounded-2xl border space-y-3 shadow-md transition-all ${isVipQuestion
-                        ? 'bg-[#1C1805] border-2 border-[#FFD60A]/80 shadow-xl glow-gold'
+                        ? 'bg-[#1C1805] border-2 border-[#FFD60A]/80 shadow-xl'
                         : isCurrentTurn
                           ? theme === 'light'
-                            ? 'bg-[#F0FDF4] border-2 border-[#00E676]/60 shadow-lg glow-teal'
-                            : 'bg-[#0E1A16] border-2 border-[#00E676]/60 shadow-lg glow-teal'
+                            ? 'bg-[#FFF5F5] border-2 border-[#EB1000]/60 shadow-lg shadow-[#EB1000]/10'
+                            : 'bg-[#1A0B0D] border-2 border-[#EB1000]/60 shadow-lg shadow-[#EB1000]/20'
                           : theme === 'light'
                             ? 'bg-white border-[#E9ECEF]'
                             : 'bg-[#13131A] border-[#1C1C26]'
@@ -465,22 +437,20 @@ export default function CreatorNotificationsPage() {
                         <div className="flex items-center gap-2.5 flex-wrap">
                           {/* Queue Position Badge */}
                           <span className={`px-2.5 py-1 rounded-xl text-xs font-black flex items-center gap-1 ${isCurrentTurn
-                            ? 'bg-[#00E676] text-white glow-teal'
-                            : 'bg-[#00F5D4]/10 text-[#00F5D4] border border-[#00F5D4]/30'
+                            ? 'bg-gradient-to-r from-[#EB1000] to-[#CC0E00] text-white shadow-md shadow-[#EB1000]/30'
+                            : 'bg-[#EB1000]/10 text-[#EB1000] border border-[#EB1000]/30'
                             }`}>
                             #{queuePos} {isCurrentTurn ? 'CURRENT TURN' : ''}
                           </span>
 
-                          <div className="p-2 rounded-xl bg-[#00E676]/10 text-[#00E676] border border-[#00E676]/30">
+                          <div className="p-2 rounded-xl bg-[#EB1000]/10 text-[#EB1000] border border-[#EB1000]/30">
                             <Heart className="h-4 w-4 fill-current" />
                           </div>
                           <div>
                             <h4 className={`font-bold text-xs ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'
                               }`}>
-                              <strong className="text-[#00F5D4]">{n.viewerName}</strong> paid <span className="text-[#00E676] font-black text-sm">₹{n.amount?.toFixed(2)}</span>
+                              <strong className={theme === 'light' ? 'text-[#1A1D20]' : 'text-white'}>{n.viewerName}</strong> paid <span className="text-[#EB1000] font-black text-sm">₹{n.amount?.toFixed(2)}</span>
                             </h4>
-                            {/* <span className={`text-[10px] ${theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'
-                              }`}>ID: {n.donationUuid}</span> */}
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
@@ -492,7 +462,7 @@ export default function CreatorNotificationsPage() {
 
                           {/* VIP Member Priority Question Badge */}
                           {isVipQuestion && (
-                            <span className="px-2.5 py-1 rounded-xl bg-gradient-to-r from-[#FFD60A] to-[#FF9500] text-white text-xs font-black flex items-center gap-1 shadow-md animate-pulse">
+                            <span className="px-2.5 py-1 rounded-xl bg-gradient-to-r from-[#FFD60A] to-[#FF9500] text-black text-xs font-black flex items-center gap-1 shadow-md animate-pulse">
                               👑 VIP Question
                             </span>
                           )}
@@ -515,15 +485,15 @@ export default function CreatorNotificationsPage() {
                           <span className={`text-[10px] font-extrabold block mb-0.5 ${theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'
                             }`}>Viewer Question / Message:</span>
                           <p className={`p-2.5 rounded-xl text-xs italic border ${theme === 'light'
-                            ? 'bg-[#F8F9FA] border-[#E9ECEF] text-[#00B49F]'
-                            : 'bg-[#0A0A0F] text-[#00F5D4] border-[#1C1C26]'
+                            ? 'bg-[#F8F9FA] border-[#E9ECEF] text-[#1A1D20]'
+                            : 'bg-[#0A0A0F] text-[#E4E4E7] border-[#1C1C26]'
                             }`}>
                             "{n.message}"
                           </p>
                         </div>
                       )}
 
-                      {/* ACTION BUTTONS BAR: Broadcast to Stream | Skip Question (Inappropriate) | Answer Question (Auto-Broadcast) */}
+                      {/* ACTION BUTTONS BAR */}
                       {isCurrentTurn && (
                         <div className="pt-3 border-t border-[#1C1C26]/80 flex flex-wrap items-center justify-end gap-2.5">
                           {/* 1. Broadcast to Stream Button */}
@@ -531,13 +501,13 @@ export default function CreatorNotificationsPage() {
                             type="button"
                             onClick={() => handleToggleBroadcast(n, broadcastingId !== itemKey)}
                             className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all shadow-md flex items-center gap-2 border ${broadcastingId === itemKey
-                              ? 'bg-[#FF3D71] text-white border-[#FF3D71] animate-pulse'
+                              ? 'bg-gradient-to-r from-[#EB1000] to-[#CC0E00] text-white border-[#EB1000] shadow-[#EB1000]/30 animate-pulse'
                               : theme === 'light'
                                 ? 'bg-[#F1F3F5] text-[#212529] border-[#DEE2E6] hover:bg-[#E9ECEF]'
                                 : 'bg-[#1C1C26] text-white border-[#2A2A3A] hover:bg-[#252533]'
                               }`}
                           >
-                            <Tv className="h-4 w-4 text-[#00F5D4]" />
+                            <Tv className="h-4 w-4 text-[#EB1000]" />
                             <span>{broadcastingId === itemKey ? 'Live on Stream (Stop)' : 'Broadcast to Stream'}</span>
                           </button>
 
@@ -545,9 +515,9 @@ export default function CreatorNotificationsPage() {
                           <button
                             type="button"
                             onClick={() => handleRejectAndRemoveRow(itemKey, queuePos)}
-                            className="px-3.5 py-2 rounded-xl text-xs font-bold transition-all shadow-md flex items-center gap-2 border bg-[#FF3D71] text-white border-[#FF3D71] hover:bg-[#E03563]"
+                            className="px-3.5 py-2 rounded-xl text-xs font-bold transition-all shadow-md flex items-center gap-2 border bg-[#DC2626]/10 text-[#DC2626] border-[#DC2626]/30 hover:bg-[#DC2626] hover:text-white cursor-pointer"
                           >
-                            <ShieldAlert className="h-4 w-4 text-white" />
+                            <ShieldAlert className="h-4 w-4" />
                             <span>Skip Question (Inappropriate)</span>
                           </button>
 
@@ -555,7 +525,7 @@ export default function CreatorNotificationsPage() {
                           <button
                             type="button"
                             onClick={() => handleMarkAnsweredAndRemoveRow(itemKey, queuePos)}
-                            className="px-4 py-2 rounded-xl bg-[#00E676] hover:bg-[#00C853] text-white text-xs font-black transition-all shadow-lg glow-teal flex items-center gap-2"
+                            className="px-4 py-2 rounded-xl bg-gradient-to-r from-[#EB1000] to-[#CC0E00] hover:opacity-95 text-white text-xs font-black transition-all shadow-lg shadow-[#EB1000]/30 flex items-center gap-2 cursor-pointer"
                           >
                             <Volume2 className="h-4 w-4 text-white" />
                             <span>Answer Question (Auto-Broadcast)</span>
@@ -566,7 +536,7 @@ export default function CreatorNotificationsPage() {
                       {/* Accepted / Answered badge */}
                       {(n.status === 'read' || n.status === 'answered' || activeFilter === 'answered') && (
                         <div className="pt-2.5 border-t border-[#1C1C26]/60 flex justify-end">
-                          <span className="px-3 py-1.5 rounded-full bg-[#00E676]/15 text-[#00E676] border border-[#00E676]/30 text-xs font-bold flex items-center gap-1.5">
+                          <span className="px-3 py-1.5 rounded-full bg-[#10B981]/15 text-[#10B981] border border-[#10B981]/30 text-xs font-bold flex items-center gap-1.5">
                             <CheckCircle2 className="h-4 w-4" /> Accepted & Answered
                           </span>
                         </div>
@@ -575,7 +545,7 @@ export default function CreatorNotificationsPage() {
                       {/* Skipped / Rejected badge */}
                       {(n.status === 'cancelled' || n.status === 'rejected' || activeFilter === 'rejected') && (
                         <div className="pt-2.5 border-t border-[#1C1C26]/60 flex justify-end">
-                          <span className="px-3 py-1.5 rounded-full bg-[#FF3D71]/15 text-[#FF3D71] border border-[#FF3D71]/30 text-xs font-bold flex items-center gap-1.5">
+                          <span className="px-3 py-1.5 rounded-full bg-[#EF4444]/15 text-[#EF4444] border border-[#EF4444]/30 text-xs font-bold flex items-center gap-1.5">
                             <XCircle className="h-4 w-4" /> Skipped / Rejected (Inappropriate)
                           </span>
                         </div>

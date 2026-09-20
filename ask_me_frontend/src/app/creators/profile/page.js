@@ -61,6 +61,12 @@ const TwitchIcon = ({ className = "h-4 w-4 text-[#9146FF]" }) => (
   </svg>
 );
 
+const LinkedinIcon = ({ className = "h-4 w-4 text-[#0A66C2]" }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="currentColor">
+    <path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.28 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.75M6.88 8.56a1.68 1.68 0 0 0 1.68-1.68c0-.93-.75-1.69-1.68-1.69a1.69 1.69 0 0 0-1.69 1.69c0 .93.76 1.68 1.69 1.68m1.39 9.94v-8.37H5.5v8.37h2.77z" />
+  </svg>
+);
+
 export default function CreatorProfilePage() {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('bio'); // 'bio' | 'social' | 'streaming' | 'payment'
@@ -116,6 +122,7 @@ export default function CreatorProfilePage() {
     youtube: '',
     instagram: '',
     twitter: '',
+    linkedin: '',
     twitch: '',
     discord: '',
   });
@@ -248,6 +255,7 @@ export default function CreatorProfilePage() {
           youtube: '',
           instagram: '',
           twitter: '',
+          linkedin: '',
           twitch: '',
           discord: '',
         };
@@ -448,7 +456,7 @@ export default function CreatorProfilePage() {
     return (
       <div className={`min-h-screen flex flex-col items-center justify-center space-y-3 font-sans ${theme === 'light' ? 'bg-[#F4F5F7] text-[#1A1D20]' : 'bg-[#0A0A0F] text-white'
         }`}>
-        <div className="h-10 w-10 border-4 border-[#00F5D4] border-t-transparent rounded-full animate-spin" />
+        <div className="h-10 w-10 border-4 border-[#EB1000] border-t-transparent rounded-full animate-spin" />
         <p className="text-xs font-bold text-[#8B8B96]">Loading Creator Profile Management...</p>
       </div>
     );
@@ -457,42 +465,15 @@ export default function CreatorProfilePage() {
   return (
     <>
       {/* 2. Main Profile Content Area */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
+      <div className="flex-1 flex flex-col min-w-0">
         {/* Header Bar */}
-        <header className={`border-b sticky top-0 z-20 px-6 py-4 flex items-center justify-between transition-colors duration-200 ${theme === 'light' ? 'border-[#E9ECEF] bg-white/90 backdrop-blur-md' : 'border-[#1C1C26] bg-[#0A0A0F]/80 backdrop-blur-md'
+        <header className={`border-b sticky top-0 z-30 shrink-0 px-6 py-4 flex items-center justify-between transition-colors duration-200 ${theme === 'light' ? 'border-[#E9ECEF] bg-white/95 backdrop-blur-md shadow-sm' : 'border-[#1C1C26] bg-[#0A0A0F]/95 backdrop-blur-md shadow-sm'
           }`}>
           <div>
             <h1 className={`font-heading font-black text-xl ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'
               }`}>Creator Profile & Channel Settings</h1>
             <p className={`text-xs ${theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'
               }`}>Manage your avatar, channel bio, social media handles, stream parameters & payout destination</p>
-          </div>
-
-          <div className="flex items-center gap-3">
-            {/* Header Theme Switcher Button */}
-            <button
-              onClick={toggleTheme}
-              className={`px-3 py-1.5 rounded-xl border text-xs font-bold transition-all flex items-center gap-1.5 ${theme === 'light'
-                ? 'bg-[#F1F3F5] text-[#212529] border-[#E9ECEF] hover:bg-[#E9ECEF]'
-                : 'bg-[#1C1C26] text-white border-[#1C1C26] hover:border-[#00F5D4]/40'
-                }`}
-              title={theme === 'dark' ? 'Switch to Light Theme' : 'Switch to Dark Theme'}
-            >
-              {theme === 'dark' ? (
-                <>
-                  <Sun className="h-4 w-4 text-[#FFD60A]" />
-                  <span className="hidden sm:inline">Light Theme</span>
-                </>
-              ) : (
-                <>
-                  <Moon className="h-4 w-4 text-[#7B2FFF]" />
-                  <span className="hidden sm:inline">Dark Theme</span>
-                </>
-              )}
-            </button>
-
-            {/* Notification Bell Icon Popup Dropdown */}
-            <CreatorNotificationDropdown theme={theme} />
           </div>
         </header>
 
@@ -511,15 +492,15 @@ export default function CreatorProfilePage() {
                     <img
                       src={getMediaUrl(profile.profileImage)}
                       alt={profile.fullName}
-                      className="h-16 w-16 rounded-xl object-cover border border-[#00F5D4]/40 shadow-sm"
+                      className="h-16 w-16 rounded-xl object-cover border border-[#EB1000]/40 shadow-sm"
                     />
                   ) : (
-                    <div className={`h-16 w-16 rounded-xl border border-[#00F5D4]/30 flex items-center justify-center font-bold text-xl ${theme === 'light' ? 'bg-[#F8F9FA] text-[#00F5D4]' : 'bg-[#181824] text-[#00F5D4]'
+                    <div className={`h-16 w-16 rounded-xl border border-[#EB1000]/30 flex items-center justify-center font-bold text-xl ${theme === 'light' ? 'bg-[#F8F9FA] text-[#EB1000]' : 'bg-[#181824] text-[#EB1000]'
                       }`}>
                       {(profile.fullName || 'C').charAt(0).toUpperCase()}
                     </div>
                   )}
-                  <label className="absolute -bottom-1 -right-1 p-1.5 rounded-lg bg-[#00F5D4] text-[#0A0A0F] hover:scale-105 cursor-pointer shadow-sm transition-all" title="Change Profile Picture">
+                  <label className="absolute -bottom-1 -right-1 p-1.5 rounded-lg bg-gradient-to-r from-[#EB1000] to-[#CC0E00] text-white hover:scale-105 cursor-pointer shadow-md shadow-[#EB1000]/30 transition-all" title="Change Profile Picture">
                     <Camera className="h-3 w-3 stroke-[2.5]" />
                     <input type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
                   </label>
@@ -531,12 +512,12 @@ export default function CreatorProfilePage() {
                       }`}>
                       {profile.fullName || 'Creator Host'}
                     </h2>
-                    <span className="px-2 py-0.5 rounded-full bg-[#00F5D4]/10 text-[#00F5D4] border border-[#00F5D4]/30 text-[10px] font-bold">
+                    <span className="px-2.5 py-0.5 rounded-full bg-[#EB1000]/10 text-[#EB1000] border border-[#EB1000]/30 text-[10px] font-extrabold uppercase tracking-wider">
                       VERIFIED CREATOR
                     </span>
                   </div>
 
-                  <p className="text-xs text-[#00F5D4] font-mono font-medium">{profile.username || '@creator'}</p>
+                  <p className="text-xs text-[#EB1000] font-mono font-bold">{profile.username || '@creator'}</p>
 
                   {profile.bio && (
                     <p className={`text-xs max-w-md line-clamp-1 ${theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'
@@ -552,7 +533,7 @@ export default function CreatorProfilePage() {
                 <button
                   onClick={handleSaveProfile}
                   disabled={isSaving}
-                  className="px-4 py-2 rounded-xl bg-brand-gradient text-white font-bold text-xs shadow-md hover:opacity-95 transition-all flex items-center justify-center gap-2"
+                  className="px-4 py-2 rounded-xl bg-gradient-to-r from-[#EB1000] to-[#CC0E00] text-white font-bold text-xs shadow-md shadow-[#EB1000]/30 hover:opacity-95 transition-all flex items-center justify-center gap-2 cursor-pointer"
                 >
                   {isSaving ? (
                     <>
@@ -584,8 +565,8 @@ export default function CreatorProfilePage() {
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === tab.id
-                    ? 'bg-brand-gradient text-white shadow-md font-black'
+                  className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap cursor-pointer ${activeTab === tab.id
+                    ? 'bg-gradient-to-r from-[#EB1000] to-[#CC0E00] text-white shadow-md shadow-[#EB1000]/30 font-black'
                     : theme === 'light'
                       ? 'bg-white text-[#6C757D] hover:text-[#1A1D20] border border-[#E9ECEF]'
                       : 'bg-[#13131A] text-[#8B8B96] hover:text-white border border-[#1C1C26]'
@@ -607,7 +588,7 @@ export default function CreatorProfilePage() {
                   }`}>
                   <h3 className={`font-heading font-bold text-base flex items-center gap-2 ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'
                     }`}>
-                    <User className="h-5 w-5 text-[#00F5D4]" /> Profile Image & Personal Bio
+                    <User className="h-5 w-5 text-[#EB1000]" /> Profile Image & Personal Bio
                   </h3>
                   <p className={`text-xs mt-0.5 ${theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'
                     }`}>
@@ -624,7 +605,7 @@ export default function CreatorProfilePage() {
                       value={profile.fullName || ''}
                       onChange={(e) => setProfile(prev => ({ ...prev, fullName: e.target.value }))}
                       placeholder="e.g. CarryMinati / Technological"
-                      className={`w-full rounded-xl border px-3.5 py-2.5 text-xs focus:outline-none focus:border-[#00F5D4] transition-colors ${theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6] text-[#1A1D20] placeholder-[#A0A0A0]' : 'bg-[#0A0A0F] border-[#1C1C26] text-white placeholder-[#8B8B96]'
+                      className={`w-full rounded-xl border px-3.5 py-2.5 text-xs focus:outline-none focus:border-[#EB1000] transition-colors ${theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6] text-[#1A1D20] placeholder-[#A0A0A0]' : 'bg-[#0A0A0F] border-[#1C1C26] text-white placeholder-[#8B8B96]'
                         }`}
                       required
                     />
@@ -661,13 +642,13 @@ export default function CreatorProfilePage() {
                       type="text"
                       value={profile.country || ''}
                       onChange={(e) => setProfile(prev => ({ ...prev, country: e.target.value }))}
-                      className={`w-full rounded-xl border px-3.5 py-2.5 text-xs focus:outline-none focus:border-[#00F5D4] transition-colors ${theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6] text-[#1A1D20]' : 'bg-[#0A0A0F] border-[#1C1C26] text-white'
+                      className={`w-full rounded-xl border px-3.5 py-2.5 text-xs focus:outline-none focus:border-[#EB1000] transition-colors ${theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6] text-[#1A1D20]' : 'bg-[#0A0A0F] border-[#1C1C26] text-white'
                         }`}
                     />
                   </div>
                 </div>
 
-                <div>
+                {/* <div>
                   <label className={`block text-xs font-bold mb-1.5 ${theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'
                     }`}>Profile Image URL (Or Upload Above)</label>
                   <div className="flex gap-2">
@@ -676,16 +657,16 @@ export default function CreatorProfilePage() {
                       value={profile.profileImage || ''}
                       onChange={(e) => setProfile(prev => ({ ...prev, profileImage: e.target.value }))}
                       placeholder="https://images.unsplash.com/photo-1534528741775-53994a69daeb"
-                      className={`flex-1 rounded-xl border px-3.5 py-2.5 text-xs focus:outline-none focus:border-[#00F5D4] ${theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6] text-[#1A1D20] placeholder-[#A0A0A0]' : 'bg-[#0A0A0F] border-[#1C1C26] text-white placeholder-[#8B8B96]'
+                      className={`flex-1 rounded-xl border px-3.5 py-2.5 text-xs focus:outline-none focus:border-[#EB1000] ${theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6] text-[#1A1D20] placeholder-[#A0A0A0]' : 'bg-[#0A0A0F] border-[#1C1C26] text-white placeholder-[#8B8B96]'
                         }`}
                     />
                     <label className={`px-4 py-2.5 rounded-xl text-xs font-bold cursor-pointer flex items-center gap-1.5 shrink-0 transition ${theme === 'light' ? 'bg-[#E9ECEF] text-[#1A1D20] hover:bg-[#DEE2E6]' : 'bg-[#1C1C26] text-white hover:bg-[#252533]'
                       }`}>
-                      <Upload className="h-4 w-4 text-[#00F5D4]" /> Upload
+                      <Upload className="h-4 w-4 text-[#EB1000]" /> Upload
                       <input type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
                     </label>
                   </div>
-                </div>
+                </div> */}
 
                 <div>
                   <label className={`block text-xs font-bold mb-1.5 ${theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'
@@ -695,7 +676,7 @@ export default function CreatorProfilePage() {
                     value={profile.bio || ''}
                     onChange={(e) => setProfile(prev => ({ ...prev, bio: e.target.value }))}
                     placeholder="Tell your audience about your live broadcasts, stream schedule, topics, and paid Q&A guidelines..."
-                    className={`w-full rounded-xl border p-3.5 text-xs focus:outline-none focus:border-[#00F5D4] transition-colors ${theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6] text-[#1A1D20] placeholder-[#A0A0A0]' : 'bg-[#0A0A0F] border-[#1C1C26] text-white placeholder-[#8B8B96]'
+                    className={`w-full rounded-xl border p-3.5 text-xs focus:outline-none focus:border-[#EB1000] transition-colors ${theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6] text-[#1A1D20] placeholder-[#A0A0A0]' : 'bg-[#0A0A0F] border-[#1C1C26] text-white placeholder-[#8B8B96]'
                       }`}
                   />
                   <p className={`text-[11px] mt-1 ${theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'
@@ -712,11 +693,11 @@ export default function CreatorProfilePage() {
                   }`}>
                   <h3 className={`font-heading font-bold text-base flex items-center gap-2 ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'
                     }`}>
-                    <Globe className="h-5 w-5 text-[#00F5D4]" /> Social Media Links & Community Handles
+                    <Globe className="h-5 w-5 text-[#EB1000]" /> Social Media Links
                   </h3>
                   <p className={`text-xs mt-0.5 ${theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'
                     }`}>
-                    Connect your YouTube, Instagram, X/Twitter, Twitch, and Discord community handles.
+                    Connect your YouTube, Instagram, LinkedIn, X/Twitter, Twitch, and Discord community handles.
                   </p>
                 </div>
 
@@ -731,7 +712,7 @@ export default function CreatorProfilePage() {
                       value={socialLinks.youtube || ''}
                       onChange={(e) => setSocialLinks(prev => ({ ...prev, youtube: e.target.value }))}
                       placeholder="https://youtube.com/@yourchannel"
-                      className={`w-full rounded-xl border px-3.5 py-2.5 text-xs focus:outline-none focus:border-[#00F5D4] ${theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6] text-[#1A1D20] placeholder-[#A0A0A0]' : 'bg-[#0A0A0F] border-[#1C1C26] text-white placeholder-[#8B8B96]'
+                      className={`w-full rounded-xl border px-3.5 py-2.5 text-xs focus:outline-none focus:border-[#EB1000] ${theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6] text-[#1A1D20] placeholder-[#A0A0A0]' : 'bg-[#0A0A0F] border-[#1C1C26] text-white placeholder-[#8B8B96]'
                         }`}
                     />
                   </div>
@@ -746,7 +727,22 @@ export default function CreatorProfilePage() {
                       value={socialLinks.instagram || ''}
                       onChange={(e) => setSocialLinks(prev => ({ ...prev, instagram: e.target.value }))}
                       placeholder="https://instagram.com/yourhandle"
-                      className={`w-full rounded-xl border px-3.5 py-2.5 text-xs focus:outline-none focus:border-[#00F5D4] ${theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6] text-[#1A1D20] placeholder-[#A0A0A0]' : 'bg-[#0A0A0F] border-[#1C1C26] text-white placeholder-[#8B8B96]'
+                      className={`w-full rounded-xl border px-3.5 py-2.5 text-xs focus:outline-none focus:border-[#EB1000] ${theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6] text-[#1A1D20] placeholder-[#A0A0A0]' : 'bg-[#0A0A0F] border-[#1C1C26] text-white placeholder-[#8B8B96]'
+                        }`}
+                    />
+                  </div>
+
+                  <div>
+                    <label className={`block text-xs font-bold mb-1.5 flex items-center gap-2 ${theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'
+                      }`}>
+                      <LinkedinIcon className="h-4 w-4 text-[#0A66C2]" /> LinkedIn Profile Link
+                    </label>
+                    <input
+                      type="url"
+                      value={socialLinks.linkedin || ''}
+                      onChange={(e) => setSocialLinks(prev => ({ ...prev, linkedin: e.target.value }))}
+                      placeholder="https://linkedin.com/in/yourhandle"
+                      className={`w-full rounded-xl border px-3.5 py-2.5 text-xs focus:outline-none focus:border-[#EB1000] ${theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6] text-[#1A1D20] placeholder-[#A0A0A0]' : 'bg-[#0A0A0F] border-[#1C1C26] text-white placeholder-[#8B8B96]'
                         }`}
                     />
                   </div>
@@ -761,7 +757,7 @@ export default function CreatorProfilePage() {
                       value={socialLinks.twitter || ''}
                       onChange={(e) => setSocialLinks(prev => ({ ...prev, twitter: e.target.value }))}
                       placeholder="https://twitter.com/yourhandle"
-                      className={`w-full rounded-xl border px-3.5 py-2.5 text-xs focus:outline-none focus:border-[#00F5D4] ${theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6] text-[#1A1D20] placeholder-[#A0A0A0]' : 'bg-[#0A0A0F] border-[#1C1C26] text-white placeholder-[#8B8B96]'
+                      className={`w-full rounded-xl border px-3.5 py-2.5 text-xs focus:outline-none focus:border-[#EB1000] ${theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6] text-[#1A1D20] placeholder-[#A0A0A0]' : 'bg-[#0A0A0F] border-[#1C1C26] text-white placeholder-[#8B8B96]'
                         }`}
                     />
                   </div>
@@ -776,7 +772,7 @@ export default function CreatorProfilePage() {
                       value={socialLinks.twitch || ''}
                       onChange={(e) => setSocialLinks(prev => ({ ...prev, twitch: e.target.value }))}
                       placeholder="https://twitch.tv/yourchannel"
-                      className={`w-full rounded-xl border px-3.5 py-2.5 text-xs focus:outline-none focus:border-[#00F5D4] ${theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6] text-[#1A1D20] placeholder-[#A0A0A0]' : 'bg-[#0A0A0F] border-[#1C1C26] text-white placeholder-[#8B8B96]'
+                      className={`w-full rounded-xl border px-3.5 py-2.5 text-xs focus:outline-none focus:border-[#EB1000] ${theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6] text-[#1A1D20] placeholder-[#A0A0A0]' : 'bg-[#0A0A0F] border-[#1C1C26] text-white placeholder-[#8B8B96]'
                         }`}
                     />
                   </div>
@@ -792,7 +788,7 @@ export default function CreatorProfilePage() {
                   }`}>
                   <h3 className={`font-heading font-bold text-base flex items-center gap-2 ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'
                     }`}>
-                    <Radio className="h-5 w-5 text-[#00F5D4]" /> Live Streaming Platform Parameters
+                    <Radio className="h-5 w-5 text-[#EB1000]" /> Live Streaming Platform Parameters
                   </h3>
                   <p className={`text-xs mt-0.5 ${theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'
                     }`}>
@@ -807,7 +803,7 @@ export default function CreatorProfilePage() {
                     <select
                       value={streamingChannels.platform || 'YouTube Live'}
                       onChange={(e) => setStreamingChannels(prev => ({ ...prev, platform: e.target.value }))}
-                      className={`w-full rounded-xl border px-3.5 py-2.5 text-xs focus:outline-none focus:border-[#00F5D4] ${theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6] text-[#1A1D20]' : 'bg-[#0A0A0F] border-[#1C1C26] text-white'
+                      className={`w-full rounded-xl border px-3.5 py-2.5 text-xs focus:outline-none focus:border-[#EB1000] ${theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6] text-[#1A1D20]' : 'bg-[#0A0A0F] border-[#1C1C26] text-white'
                         }`}
                     >
                       <option value="YouTube Live">YouTube Live</option>
@@ -825,7 +821,7 @@ export default function CreatorProfilePage() {
                       value={streamingChannels.streamUrl || ''}
                       onChange={(e) => setStreamingChannels(prev => ({ ...prev, streamUrl: e.target.value }))}
                       placeholder="https://youtube.com/live/your-stream-id"
-                      className={`w-full rounded-xl border px-3.5 py-2.5 text-xs focus:outline-none focus:border-[#00F5D4] ${theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6] text-[#1A1D20] placeholder-[#A0A0A0]' : 'bg-[#0A0A0F] border-[#1C1C26] text-white placeholder-[#8B8B96]'
+                      className={`w-full rounded-xl border px-3.5 py-2.5 text-xs focus:outline-none focus:border-[#EB1000] ${theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6] text-[#1A1D20] placeholder-[#A0A0A0]' : 'bg-[#0A0A0F] border-[#1C1C26] text-white placeholder-[#8B8B96]'
                         }`}
                     />
                   </div>
@@ -836,13 +832,13 @@ export default function CreatorProfilePage() {
                   }`}>
                   <label className={`block text-xs font-bold ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'
                     }`}>Your Personal OBS Browser Source Overlay URL</label>
-                  <div className={`p-3 rounded-xl border font-mono text-xs text-[#00F5D4] flex items-center justify-between overflow-x-auto ${theme === 'light' ? 'bg-white border-[#DEE2E6]' : 'bg-[#13131A] border-[#1C1C26]'
+                  <div className={`p-3 rounded-xl border font-mono text-xs text-[#EB1000] flex items-center justify-between overflow-x-auto ${theme === 'light' ? 'bg-white border-[#DEE2E6]' : 'bg-[#13131A] border-[#1C1C26]'
                     }`}>
                     <span>{overlayUrl}</span>
                     <button
                       type="button"
                       onClick={copyOverlayUrl}
-                      className="px-3 py-1 rounded-lg bg-[#00F5D4] text-white font-bold text-[11px] hover:opacity-90 transition flex items-center gap-1 shrink-0 ml-2"
+                      className="px-3 py-1 rounded-lg bg-gradient-to-r from-[#EB1000] to-[#CC0E00] text-white font-bold text-[11px] shadow-sm shadow-[#EB1000]/20 hover:opacity-90 transition flex items-center gap-1 shrink-0 ml-2 cursor-pointer"
                     >
                       {copiedOverlay ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
                       {copiedOverlay ? 'Copied!' : 'Copy URL'}
@@ -860,7 +856,7 @@ export default function CreatorProfilePage() {
                   }`}>
                   <h3 className={`font-heading font-bold text-base flex items-center gap-2 ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'
                     }`}>
-                    <CreditCard className="h-5 w-5 text-[#00F5D4]" /> Bank Payout & UPI Destination Settings
+                    <CreditCard className="h-5 w-5 text-[#EB1000]" /> Bank Payout & UPI Destination Settings
                   </h3>
                   <p className={`text-xs mt-0.5 ${theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'
                     }`}>
@@ -875,8 +871,8 @@ export default function CreatorProfilePage() {
                         UPI ID (Instant Payout VPA) *
                       </label>
                       {isUpiVerified ? (
-                        <span className="px-2 py-0.5 rounded-full bg-[#00F5D4]/10 text-[#00F5D4] border border-[#00F5D4]/30 text-[10px] font-bold flex items-center gap-1">
-                          <CheckCircle2 className="h-3 w-3 text-[#00F5D4]" /> UPI ID Verified
+                        <span className="px-2.5 py-0.5 rounded-full bg-[#EB1000]/10 text-[#EB1000] border border-[#EB1000]/30 text-[10px] font-bold flex items-center gap-1">
+                          <CheckCircle2 className="h-3 w-3 text-[#EB1000]" /> UPI ID Verified
                         </span>
                       ) : (
                         <span className="text-[10px] text-[#FF3D71] font-semibold">
@@ -897,8 +893,8 @@ export default function CreatorProfilePage() {
                             setIsUpiVerified(false);
                           }}
                           placeholder="e.g. username@upi or carryminati@okicici"
-                          className={`w-full rounded-xl border px-3.5 py-2.5 text-xs focus:outline-none focus:border-[#00F5D4] font-mono ${isUpiVerified
-                            ? 'border-[#00F5D4] bg-[#00F5D4]/5 text-[#00F5D4] font-bold'
+                          className={`w-full rounded-xl border px-3.5 py-2.5 text-xs focus:outline-none focus:border-[#EB1000] font-mono ${isUpiVerified
+                            ? 'border-[#EB1000] bg-[#EB1000]/5 text-[#EB1000] font-bold'
                             : theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6] text-[#1A1D20] placeholder-[#A0A0A0]' : 'bg-[#0A0A0F] border-[#1C1C26] text-white placeholder-[#8B8B96]'
                             }`}
                         />
@@ -909,8 +905,8 @@ export default function CreatorProfilePage() {
                         onClick={() => handleVerifyUpi(bankAccount.upiId)}
                         disabled={isVerifyingUpi || isUpiVerified}
                         className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all shrink-0 flex items-center gap-1.5 ${isUpiVerified
-                          ? 'bg-[#00F5D4]/20 text-[#00F5D4] border border-[#00F5D4]/40 cursor-default'
-                          : 'bg-[#00F5D4] text-white hover:bg-[#00F5D4]/90 shadow-md'
+                          ? 'bg-[#EB1000]/15 text-[#EB1000] border border-[#EB1000]/40 cursor-default'
+                          : 'bg-gradient-to-r from-[#EB1000] to-[#CC0E00] text-white hover:opacity-90 shadow-md shadow-[#EB1000]/20 cursor-pointer'
                           }`}
                       >
                         {isVerifyingUpi ? (
@@ -941,7 +937,7 @@ export default function CreatorProfilePage() {
                         value={bankAccount.accountHolderName || ''}
                         onChange={(e) => setBankAccount(prev => ({ ...prev, accountHolderName: e.target.value }))}
                         placeholder="e.g. Abhishek Kumar"
-                        className={`w-full rounded-xl border px-3.5 py-2.5 text-xs focus:outline-none focus:border-[#00F5D4] ${theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6] text-[#1A1D20] placeholder-[#A0A0A0]' : 'bg-[#0A0A0F] border-[#1C1C26] text-white placeholder-[#8B8B96]'
+                        className={`w-full rounded-xl border px-3.5 py-2.5 text-xs focus:outline-none focus:border-[#EB1000] ${theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6] text-[#1A1D20] placeholder-[#A0A0A0]' : 'bg-[#0A0A0F] border-[#1C1C26] text-white placeholder-[#8B8B96]'
                           }`}
                       />
                     </div>
@@ -954,7 +950,7 @@ export default function CreatorProfilePage() {
                         value={bankAccount.bankName || ''}
                         onChange={(e) => setBankAccount(prev => ({ ...prev, bankName: e.target.value }))}
                         placeholder="e.g. HDFC Bank / ICICI Bank"
-                        className={`w-full rounded-xl border px-3.5 py-2.5 text-xs focus:outline-none focus:border-[#00F5D4] ${theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6] text-[#1A1D20] placeholder-[#A0A0A0]' : 'bg-[#0A0A0F] border-[#1C1C26] text-white placeholder-[#8B8B96]'
+                        className={`w-full rounded-xl border px-3.5 py-2.5 text-xs focus:outline-none focus:border-[#EB1000] ${theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6] text-[#1A1D20] placeholder-[#A0A0A0]' : 'bg-[#0A0A0F] border-[#1C1C26] text-white placeholder-[#8B8B96]'
                           }`}
                       />
                     </div>
@@ -974,7 +970,7 @@ export default function CreatorProfilePage() {
                           setBankAccount(prev => ({ ...prev, accountNumber: digitsOnly }));
                         }}
                         placeholder="e.g. 50100298410294"
-                        className={`w-full rounded-xl border px-3.5 py-2.5 text-xs focus:outline-none focus:border-[#00F5D4] font-mono ${theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6] text-[#1A1D20] placeholder-[#A0A0A0]' : 'bg-[#0A0A0F] border-[#1C1C26] text-white placeholder-[#8B8B96]'
+                        className={`w-full rounded-xl border px-3.5 py-2.5 text-xs focus:outline-none focus:border-[#EB1000] font-mono ${theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6] text-[#1A1D20] placeholder-[#A0A0A0]' : 'bg-[#0A0A0F] border-[#1C1C26] text-white placeholder-[#8B8B96]'
                           }`}
                       />
                     </div>
@@ -992,7 +988,7 @@ export default function CreatorProfilePage() {
                           setBankAccount(prev => ({ ...prev, confirmAccountNumber: digitsOnly }));
                         }}
                         placeholder="Re-enter account number"
-                        className={`w-full rounded-xl border px-3.5 py-2.5 text-xs focus:outline-none focus:border-[#00F5D4] font-mono ${bankAccount.confirmAccountNumber && bankAccount.accountNumber !== bankAccount.confirmAccountNumber
+                        className={`w-full rounded-xl border px-3.5 py-2.5 text-xs focus:outline-none focus:border-[#EB1000] font-mono ${bankAccount.confirmAccountNumber && bankAccount.accountNumber !== bankAccount.confirmAccountNumber
                           ? 'border-[#FF3D71] bg-[#FF3D71]/10 text-[#FF3D71]'
                           : theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6] text-[#1A1D20] placeholder-[#A0A0A0]' : 'bg-[#0A0A0F] border-[#1C1C26] text-white placeholder-[#8B8B96]'
                           }`}
@@ -1015,7 +1011,7 @@ export default function CreatorProfilePage() {
                       value={bankAccount.ifscCode || ''}
                       onChange={(e) => setBankAccount(prev => ({ ...prev, ifscCode: e.target.value.toUpperCase().slice(0, 11) }))}
                       placeholder="e.g. SBIN0001234"
-                      className={`w-full rounded-xl border px-3.5 py-2.5 text-xs focus:outline-none focus:border-[#00F5D4] font-mono uppercase ${bankAccount.ifscCode && !/^[A-Z]{4}0[A-Z0-9]{6}$/.test(bankAccount.ifscCode.trim().toUpperCase())
+                      className={`w-full rounded-xl border px-3.5 py-2.5 text-xs focus:outline-none focus:border-[#EB1000] font-mono uppercase ${bankAccount.ifscCode && !/^[A-Z]{4}0[A-Z0-9]{6}$/.test(bankAccount.ifscCode.trim().toUpperCase())
                         ? 'border-[#FF3D71] bg-[#FF3D71]/10 text-[#FF3D71]'
                         : theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6] text-[#1A1D20] placeholder-[#A0A0A0]' : 'bg-[#0A0A0F] border-[#1C1C26] text-white placeholder-[#8B8B96]'
                         }`}

@@ -127,18 +127,18 @@ export default function ViewerRegisterPage() {
         <Link href="/" className="inline-flex items-center gap-2.5">
           <Logo size="lg" />
           <span className="font-heading font-black text-2xl text-white">
-            AskMe <span className="text-brand-gradient">Viewer</span>
+            AskMe <span className="text-[#EB1000]">Viewer</span>
           </span>
         </Link>
       </div>
 
       {/* Main Registration Card */}
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md px-4">
-        <div className="bg-[#13131A] border border-[#1C1C26] rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6 glow-teal">
+        <div className="bg-[#12121C] border border-[#1F1F30] rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6">
 
           {/* Status Notifications */}
           {errorMessage && (
-            <div className="p-4 rounded-2xl bg-[#FF3D71]/10 border border-[#FF3D71]/30 text-[#FF3D71] text-xs font-bold flex items-center gap-2.5 animate-shake">
+            <div className="p-4 rounded-2xl bg-[#EB1000]/10 border border-[#EB1000]/30 text-[#EB1000] text-xs font-bold flex items-center gap-2.5 animate-shake">
               <AlertCircle className="h-4 w-4 shrink-0" />
               <span>{errorMessage}</span>
             </div>
@@ -156,7 +156,7 @@ export default function ViewerRegisterPage() {
             {/* Full Name */}
             <div>
               <label className="block text-xs font-bold text-white mb-1">
-                Full Name <span className="text-[#FF3D71]">*</span>
+                Full Name <span className="text-[#EB1000]">*</span>
               </label>
               <div className="relative">
                 <User className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[#8B8B96]" />
@@ -167,7 +167,7 @@ export default function ViewerRegisterPage() {
                   placeholder="e.g. Rahul Sharma"
                   value={formData.name}
                   onChange={handleChange}
-                  className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[#0A0A0F] border border-[#1C1C26] text-xs text-white placeholder-[#8B8B96] focus:outline-none focus:border-[#00F5D4] transition"
+                  className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[#0D0D14] border border-[#1F1F30] text-xs text-white placeholder-[#8B8B96] focus:outline-none focus:border-[#EB1000] transition"
                 />
               </div>
             </div>
@@ -175,7 +175,7 @@ export default function ViewerRegisterPage() {
             {/* Email Address */}
             <div>
               <label className="block text-xs font-bold text-white mb-1">
-                Email Address <span className="text-[#FF3D71]">*</span>
+                Email Address <span className="text-[#EB1000]">*</span>
               </label>
               <div className="relative">
                 <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[#8B8B96]" />
@@ -186,7 +186,7 @@ export default function ViewerRegisterPage() {
                   placeholder="rahul@example.com"
                   value={formData.email}
                   onChange={handleChange}
-                  className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[#0A0A0F] border border-[#1C1C26] text-xs text-white placeholder-[#8B8B96] focus:outline-none focus:border-[#00F5D4] transition"
+                  className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[#0D0D14] border border-[#1F1F30] text-xs text-white placeholder-[#8B8B96] focus:outline-none focus:border-[#EB1000] transition"
                 />
               </div>
             </div>
@@ -194,7 +194,7 @@ export default function ViewerRegisterPage() {
             {/* Mobile Number */}
             <div>
               <label className="block text-xs font-bold text-white mb-1">
-                Mobile Number <span className="text-[#FF3D71]">*</span>
+                Mobile Number <span className="text-[#EB1000]">*</span>
               </label>
               <div className="relative">
                 <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[#8B8B96]" />
@@ -210,7 +210,7 @@ export default function ViewerRegisterPage() {
                     setErrorMessage('');
                   }}
                   required
-                  className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[#0A0A0F] border border-[#1C1C26] text-xs text-white placeholder-[#8B8B96] focus:outline-none focus:border-[#00F5D4] transition font-mono"
+                  className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[#0D0D14] border border-[#1F1F30] text-xs text-white placeholder-[#8B8B96] focus:outline-none focus:border-[#EB1000] transition font-mono"
                 />
               </div>
             </div>
@@ -219,7 +219,7 @@ export default function ViewerRegisterPage() {
             <div>
               <div className="flex items-center justify-between mb-1">
                 <label className="block text-xs font-bold text-white">
-                  Password <span className="text-[#FF3D71]">*</span>
+                  Password <span className="text-[#EB1000]">*</span>
                 </label>
                 {pass && (
                   <span className={`text-[11px] font-bold ${strengthInfo.text}`}>
@@ -236,7 +236,7 @@ export default function ViewerRegisterPage() {
                   placeholder="e.g. StrongPass@123"
                   value={formData.password}
                   onChange={handleChange}
-                  className="w-full pl-10 pr-10 py-2.5 rounded-xl bg-[#0A0A0F] border border-[#1C1C26] text-xs text-white placeholder-[#8B8B96] focus:outline-none focus:border-[#00F5D4] transition"
+                  className="w-full pl-10 pr-10 py-2.5 rounded-xl bg-[#0D0D14] border border-[#1F1F30] text-xs text-white placeholder-[#8B8B96] focus:outline-none focus:border-[#EB1000] transition"
                 />
                 <button
                   type="button"
@@ -266,7 +266,7 @@ export default function ViewerRegisterPage() {
                   </div>
 
                   {/* Criteria Checklist */}
-                  <div className="p-3 bg-[#0A0A0F] border border-[#1C1C26] rounded-xl text-[11px] space-y-1 mt-2">
+                  <div className="p-3 bg-[#0D0D14] border border-[#1F1F30] rounded-xl text-[11px] space-y-1 mt-2">
                     <p className="font-bold text-gray-300 text-[10px] uppercase tracking-wider mb-1">Strong Password Requirements:</p>
                     <div className="grid grid-cols-2 gap-1 text-[#8B8B96]">
                       <span className={`flex items-center gap-1.5 ${passCriteria.length ? 'text-[#00E676] font-bold' : ''}`}>
@@ -299,7 +299,7 @@ export default function ViewerRegisterPage() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full py-3 rounded-xl bg-brand-gradient text-white font-black text-xs shadow-lg glow-teal hover:opacity-95 transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+              className="w-full py-3 rounded-xl bg-[#EB1000] hover:bg-[#CC0E00] text-white font-black text-xs shadow-lg transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
             >
               {isLoading ? (
                 <>

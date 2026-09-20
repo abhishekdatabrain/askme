@@ -75,7 +75,7 @@ export function ToastProvider({ children }) {
                   ? 'bg-[#2A0C14]/90 border-[#FF3D71]/40 text-[#F5F5F7] shadow-[#FF3D71]/10'
                   : isWarning
                   ? 'bg-[#2A2307]/90 border-[#FFD60A]/40 text-[#F5F5F7] shadow-[#FFD60A]/10'
-                  : 'bg-[#13131A]/95 border-[#00F5D4]/40 text-[#F5F5F7] shadow-[#00F5D4]/10'
+                  : 'bg-[#13131A]/95 border-[#EB1000]/40 text-[#F5F5F7] shadow-[#EB1000]/10'
               }`}
             >
               <div className="shrink-0 mt-0.5">
@@ -83,7 +83,7 @@ export function ToastProvider({ children }) {
                 {isError && <AlertCircle className="h-5 w-5 text-[#FF3D71]" />}
                 {isWarning && <AlertTriangle className="h-5 w-5 text-[#FFD60A]" />}
                 {!isSuccess && !isError && !isWarning && (
-                  <Info className="h-5 w-5 text-[#00F5D4]" />
+                  <Info className="h-5 w-5 text-[#EB1000]" />
                 )}
               </div>
 
@@ -97,7 +97,7 @@ export function ToastProvider({ children }) {
                         ? 'text-[#FF3D71]'
                         : isWarning
                         ? 'text-[#FFD60A]'
-                        : 'text-[#00F5D4]'
+                        : 'text-[#EB1000]'
                     }`}
                   >
                     {t.title}

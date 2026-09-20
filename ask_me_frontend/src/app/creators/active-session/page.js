@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import { API_ENDPOINTS } from '@/config/api';
 import BrandedQrCode from '@/components/BrandedQrCode';
+import { downloadBrandedQrCard } from '@/utils/downloadBrandedQrCard';
 
 export default function CreatorActiveSessionPage() {
   const { toast } = useToast();
@@ -33,40 +34,20 @@ export default function CreatorActiveSessionPage() {
   const [timeRemaining, setTimeRemaining] = useState('');
   const [theme, setTheme] = useState('dark');
 
-  const downloadQrCode = async (qrUrl, filename = 'askme_payment_qr.png') => {
-    if (!qrUrl) return;
-    try {
-      if (qrUrl.startsWith('data:')) {
-        const link = document.createElement('a');
-        link.href = qrUrl;
-        link.download = filename;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        toast.success('QR Code downloaded successfully!', 'Downloaded');
-        return;
-      }
-
-      const response = await fetch(qrUrl);
-      const blob = await response.blob();
-      const blobUrl = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = blobUrl;
-      link.download = filename;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(blobUrl);
-      toast.success('QR Code downloaded successfully!', 'Downloaded');
-    } catch (err) {
-      const link = document.createElement('a');
-      link.href = qrUrl;
-      link.target = '_blank';
-      link.download = filename;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      toast.success('QR Code download initiated!', 'Downloaded');
+  const downloadQrCode = async () => {
+    if (!activeSession) return;
+    const cName = creator?.fullName || creator?.full_name || creator?.username || activeSession.title || 'Creator';
+    const success = await downloadBrandedQrCard({
+      qrUrl: activeSession.qrCodeUrl,
+      creatorName: cName,
+      title: activeSession.title,
+      sessionCode: activeSession.sessionCode || 'askme',
+      filename: `askme_live_qr_${activeSession.sessionCode || 'code'}.png`,
+    });
+    if (success) {
+      toast.success('Branded Live QR Card downloaded successfully!', 'Downloaded');
+    } else {
+      toast.error('Failed to download QR Card.', 'Download Error');
     }
   };
 
@@ -99,7 +80,7 @@ export default function CreatorActiveSessionPage() {
           setActiveSession({
             ...active,
             paymentLink: active.paymentLink || `${origin}/pay/${active.sessionCode}?creatorId=${uId}&sessionId=${active.id}`,
-            qrCodeUrl: active.qrCodeUrl || `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(active.paymentLink || `${origin}/pay/${active.sessionCode}`)}`,
+            qrCodeUrl: active.qrCodeUrl || `https://api.qrserver.com/v1/create-qr-code/?size=400x400&ecc=H&margin=2&data=${encodeURIComponent(active.paymentLink || `${origin}/pay/${active.sessionCode}`)}`,
             overlayUrl: active.overlayUrl || `${origin}/overlay/${creator?.username || uId}?sessionCode=${active.sessionCode}`,
           });
         } else {
@@ -177,101 +158,123 @@ export default function CreatorActiveSessionPage() {
 
   return (
     <>
-      <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
-        <header className={`border-b sticky top-0 z-20 px-6 py-4 flex items-center justify-between transition-colors ${
-          theme === 'light' ? 'border-[#E9ECEF] bg-white/90 backdrop-blur-md' : 'border-[#1C1C26] bg-[#0A0A0F]/80 backdrop-blur-md'
-        }`}>
+      <div className="flex-1 flex flex-col min-w-0">
+        <header className={`border-b sticky top-0 z-30 shrink-0 px-6 py-4 flex items-center justify-between transition-colors ${theme === 'light' ? 'border-[#E2E8F0] bg-white/95 backdrop-blur-md text-[#0F172A] shadow-sm' : 'border-[#222236] bg-[#0A0A0F]/95 backdrop-blur-md text-white shadow-sm'
+          }`}>
           <div>
-            <h1 className={`font-heading font-black text-xl flex items-center gap-2 ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'}`}>
-              <Radio className="h-5 w-5 text-[#00F5D4]" /> Active Broadcast Session
+            <h1 className={`font-heading font-black text-xl flex items-center gap-2.5 ${theme === 'light' ? 'text-[#0F172A]' : 'text-white'}`}>
+              <Radio className="h-5 w-5 text-[#EB1000]" /> Active Broadcast Session
             </h1>
-            <p className={`text-xs ${theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'}`}>
+            <p className={`text-xs mt-0.5 font-medium ${theme === 'light' ? 'text-[#64748B]' : 'text-[#A0A0B2]'}`}>
               Monitor your current live stream session, UPI QR code & OBS overlay URLs.
             </p>
           </div>
-          <div className="flex items-center gap-3">
-            <button onClick={toggleTheme} className="px-3 py-1.5 rounded-xl border text-xs font-bold flex items-center gap-1.5">
-              {theme === 'dark' ? <Sun className="h-4 w-4 text-[#FFD60A]" /> : <Moon className="h-4 w-4 text-[#7B2FFF]" />}
-              <span className="hidden sm:inline">{theme === 'dark' ? 'Light' : 'Dark'}</span>
-            </button>
-            <CreatorNotificationDropdown theme={theme} />
-          </div>
+
         </header>
 
         <main className="p-6 max-w-5xl w-full mx-auto space-y-6">
           {isLoading ? (
             <div className="p-12 text-center flex flex-col items-center justify-center space-y-3">
-              <RefreshCw className="h-8 w-8 text-[#00F5D4] animate-spin" />
-              <p className="text-xs text-[#8B8B96]">Loading active live session...</p>
+              <RefreshCw className="h-8 w-8 text-[#EB1000] animate-spin" />
+              <p className="text-xs text-[#A0A0B2] font-semibold">Loading active live session...</p>
             </div>
           ) : activeSession ? (
-            <div className={`p-6 rounded-3xl border space-y-6 shadow-2xl glow-teal animate-fade-in ${
-              theme === 'light' ? 'bg-white border-[#00F5D4]/60' : 'bg-[#13131A] border-[#00F5D4]/40'
-            }`}>
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b pb-4 border-[#1C1C26]">
-                <div className="flex items-center gap-3">
-                  <div className="p-3.5 rounded-2xl bg-[#00F5D4]/10 text-[#00F5D4] border border-[#00F5D4]/30 animate-pulse">
-                    <Radio className="h-7 w-7" />
+            <div className={`p-6 sm:p-8 rounded-3xl border space-y-6 shadow-2xl relative overflow-hidden transition-all duration-300 ${theme === 'light' ? 'bg-white border-[#E2E8F0] shadow-slate-200/60' : 'bg-[#12121C]/95 backdrop-blur-xl border-[#222236] shadow-black/80'
+              }`}>
+              {/* Gradient Top Accent Bar */}
+              <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#EB1000] via-[#FF5500] to-[#EB1000]" />
+
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b pb-5 border-current/10">
+                <div className="flex items-center gap-3.5">
+                  <div className="p-3.5 rounded-2xl bg-[#EB1000]/10 text-[#EB1000] border border-[#EB1000]/30 shrink-0">
+                    <Radio className="h-7 w-7 animate-pulse" />
                   </div>
                   <div>
-                    <div className="flex items-center gap-2">
-                      <span className="px-2.5 py-0.5 rounded-full bg-[#00E676]/10 text-[#00E676] border border-[#00E676]/30 text-[10px] font-black uppercase tracking-wider animate-pulse">
-                        ● CURRENTLY BROADCASTING LIVE
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="px-3 py-1 rounded-full bg-[#00E676]/10 text-[#00E676] border border-[#00E676]/30 text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 shadow-sm">
+                        <span className="h-2 w-2 rounded-full bg-[#00E676] animate-pulse" />
+                        CURRENTLY BROADCASTING LIVE
                       </span>
                       {timeRemaining && (
-                        <span className="px-2.5 py-0.5 rounded-full bg-[#FFD60A]/10 text-[#FFD60A] text-[10px] font-bold flex items-center gap-1">
+                        <span className="px-3 py-1 rounded-full bg-[#FFD60A]/10 text-[#FFD60A] border border-[#FFD60A]/30 text-[10px] font-bold flex items-center gap-1.5">
                           <Clock className="h-3 w-3 animate-spin" /> Timer: {timeRemaining}
                         </span>
                       )}
                     </div>
-                    <h3 className={`font-heading font-black text-2xl mt-1 ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'}`}>
+                    <h3 className={`font-heading font-black text-2xl sm:text-3xl tracking-tight mt-1.5 ${theme === 'light' ? 'text-[#0F172A]' : 'text-white'}`}>
                       {activeSession.title}
                     </h3>
                   </div>
                 </div>
 
-                <button onClick={handleEndSession} className="px-5 py-2.5 rounded-xl bg-[#FF3D71] text-white border border-[#FF3D71] hover:bg-[#E03563] font-bold text-xs flex items-center gap-1.5 shrink-0 transition shadow-md">
-                  <StopCircle className="h-4 w-4 text-white" /> End Live Session
+                <button
+                  onClick={handleEndSession}
+                  className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#EB1000] to-[#CC0E00] text-white font-black text-xs shadow-lg shadow-[#EB1000]/30 hover:opacity-95 transition-all flex items-center gap-2 shrink-0 cursor-pointer"
+                >
+                  <StopCircle className="h-4 w-4" /> End Live Session
                 </button>
               </div>
 
               {/* Generated Outputs Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* QR & Payment Link */}
-                <div className={`p-4 rounded-2xl border flex items-center gap-4 ${theme === 'light' ? 'bg-[#F8F9FA] border-[#E9ECEF]' : 'bg-[#0A0A0F] border-[#1C1C26]'}`}>
-                  <BrandedQrCode qrUrl={activeSession.qrCodeUrl} size="sm" showBrandHeader={false} />
-                  <div className="space-y-1.5 min-w-0 flex-1">
-                    <span className="text-[10px] font-bold text-[#00F5D4] uppercase tracking-wider">Instant UPI Payment Link & QR</span>
-                    <p className="text-xs font-mono truncate">{activeSession.paymentLink}</p>
-                    <div className="flex flex-wrap gap-2 pt-1">
-                      <button onClick={() => copyText(activeSession.paymentLink, 'Payment Link')} className="px-3.5 py-1.5 rounded-lg bg-[#00F5D4] text-white font-bold text-[11px] shadow-sm hover:scale-105 transition flex items-center gap-1">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                {/* QR & Payment Link Card */}
+                <div className={`p-5 rounded-2xl border flex flex-col sm:flex-row items-center sm:items-start gap-4 transition-all ${theme === 'light' ? 'bg-[#F8FAFC] border-[#E2E8F0]' : 'bg-[#181826] border-[#2A2A3E]'}`}>
+                  <BrandedQrCode qrUrl={activeSession.qrCodeUrl} size="md" showBrandHeader={false} />
+                  <div className="space-y-2 min-w-0 flex-1 w-full text-center sm:text-left">
+                    <span className="text-[10px] font-black text-[#EB1000] uppercase tracking-wider block">Instant UPI Payment Link & QR</span>
+                    <p className={`text-xs font-mono truncate px-3 py-2 rounded-xl border ${theme === 'light' ? 'bg-white border-[#E2E8F0] text-[#0F172A]' : 'bg-[#12121C] border-[#222236] text-white'}`}>
+                      {activeSession.paymentLink}
+                    </p>
+                    <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 pt-1">
+                      <button
+                        onClick={() => copyText(activeSession.paymentLink, 'Payment Link')}
+                        className="px-4 py-2 rounded-xl bg-gradient-to-r from-[#EB1000] to-[#CC0E00] text-white font-black text-xs shadow-md shadow-[#EB1000]/20 hover:opacity-90 transition flex items-center gap-1.5 cursor-pointer"
+                      >
                         <Copy className="h-3.5 w-3.5" /> Copy Link
                       </button>
-                      <button onClick={() => downloadQrCode(activeSession.qrCodeUrl, `askme_qr_${activeSession.sessionCode || 'code'}.png`)} className="px-3.5 py-1.5 rounded-lg bg-[#1C1C26] text-[#00F5D4] text-[11px] font-bold border border-[#00F5D4]/40 hover:bg-[#00F5D4]/10 transition flex items-center gap-1">
+                      <button
+                        onClick={downloadQrCode}
+                        className={`px-4 py-2 rounded-xl text-xs font-extrabold border transition flex items-center gap-1.5 cursor-pointer ${theme === 'light' ? 'bg-white text-[#EB1000] border-[#EB1000]/40 hover:bg-[#EB1000]/10' : 'bg-[#12121C] text-[#EB1000] border-[#EB1000]/40 hover:bg-[#EB1000]/20'}`}
+                      >
                         <Download className="h-3.5 w-3.5" /> Download QR
                       </button>
-                      <a href={activeSession.paymentLink} target="_blank" rel="noopener noreferrer" className="px-3.5 py-1.5 rounded-lg bg-[#1C1C26] text-white text-[11px] border border-[#252533] hover:border-[#00F5D4] transition flex items-center gap-1">
-                        Test Link <ExternalLink className="h-3.5 w-3.5 text-[#00F5D4]" />
+                      <a
+                        href={activeSession.paymentLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={`px-3.5 py-2 rounded-xl text-xs font-bold border transition flex items-center gap-1 ${theme === 'light' ? 'bg-white text-[#64748B] border-[#E2E8F0] hover:text-[#0F172A]' : 'bg-[#12121C] text-[#A0A0B2] border-[#222236] hover:text-white'}`}
+                      >
+                        Test Link <ExternalLink className="h-3.5 w-3.5 text-[#EB1000]" />
                       </a>
                     </div>
                   </div>
                 </div>
 
-                {/* OBS Overlay */}
-                <div className={`p-4 rounded-2xl border flex items-center gap-4 ${theme === 'light' ? 'bg-[#F8F9FA] border-[#E9ECEF]' : 'bg-[#0A0A0F] border-[#1C1C26]'}`}>
-                  <div className="h-28 w-28 rounded-xl bg-[#7B2FFF]/10 border border-[#7B2FFF]/30 flex flex-col items-center justify-center text-[#7B2FFF] shrink-0">
+                {/* OBS Overlay Card */}
+                <div className={`p-5 rounded-2xl border flex flex-col sm:flex-row items-center sm:items-start gap-4 transition-all ${theme === 'light' ? 'bg-[#F8FAFC] border-[#E2E8F0]' : 'bg-[#181826] border-[#2A2A3E]'}`}>
+                  <div className="h-32 w-32 rounded-2xl bg-[#EB1000]/10 border border-[#EB1000]/30 flex flex-col items-center justify-center text-[#EB1000] shrink-0 shadow-sm">
                     <Monitor className="h-8 w-8" />
-                    <span className="text-[9px] font-black mt-1 uppercase">OBS Source</span>
+                    <span className="text-[9px] font-black mt-1.5 uppercase tracking-wider">OBS Source</span>
                   </div>
-                  <div className="space-y-1.5 min-w-0 flex-1">
-                    <span className="text-[10px] font-bold text-[#7B2FFF] uppercase tracking-wider">OBS Overlay Browser Source URL</span>
-                    <p className="text-xs font-mono truncate text-[#7B2FFF]">{activeSession.overlayUrl}</p>
-                    <div className="flex gap-2 pt-1">
-                      <button onClick={() => copyText(activeSession.overlayUrl, 'OBS Overlay URL')} className="px-3.5 py-1.5 rounded-lg bg-[#7B2FFF] text-white font-bold text-[11px] shadow-sm hover:scale-105 transition">
-                        <Copy className="h-3.5 w-3.5 inline mr-1" /> Copy Overlay
+                  <div className="space-y-2 min-w-0 flex-1 w-full text-center sm:text-left">
+                    <span className="text-[10px] font-black text-[#EB1000] uppercase tracking-wider block">OBS Overlay Browser Source URL</span>
+                    <p className={`text-xs font-mono truncate px-3 py-2 rounded-xl border ${theme === 'light' ? 'bg-white border-[#E2E8F0] text-[#0F172A]' : 'bg-[#12121C] border-[#222236] text-white'}`}>
+                      {activeSession.overlayUrl}
+                    </p>
+                    <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 pt-1">
+                      <button
+                        onClick={() => copyText(activeSession.overlayUrl, 'OBS Overlay URL')}
+                        className="px-4 py-2 rounded-xl bg-gradient-to-r from-[#EB1000] to-[#CC0E00] text-white font-black text-xs shadow-md shadow-[#EB1000]/20 hover:opacity-90 transition flex items-center gap-1.5 cursor-pointer"
+                      >
+                        <Copy className="h-3.5 w-3.5" /> Copy Overlay
                       </button>
-                      <a href={activeSession.overlayUrl} target="_blank" rel="noopener noreferrer" className="px-3.5 py-1.5 rounded-lg bg-[#1C1C26] text-white text-[11px] border border-[#252533] hover:border-[#7B2FFF] transition">
-                        Preview <ExternalLink className="h-3.5 w-3.5 inline text-[#7B2FFF]" />
+                      <a
+                        href={activeSession.overlayUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={`px-4 py-2 rounded-xl text-xs font-bold border transition flex items-center gap-1.5 ${theme === 'light' ? 'bg-white text-[#64748B] border-[#E2E8F0] hover:text-[#0F172A]' : 'bg-[#12121C] text-[#A0A0B2] border-[#222236] hover:text-white'}`}
+                      >
+                        Preview <ExternalLink className="h-3.5 w-3.5 text-[#EB1000]" />
                       </a>
                     </div>
                   </div>
@@ -279,23 +282,22 @@ export default function CreatorActiveSessionPage() {
               </div>
             </div>
           ) : (
-            <div className={`p-12 rounded-3xl border text-center space-y-4 shadow-xl ${
-              theme === 'light' ? 'bg-white border-[#E9ECEF]' : 'bg-[#13131A] border-[#1C1C26]'
-            }`}>
-              <div className="h-16 w-16 mx-auto rounded-2xl bg-[#00F5D4]/10 text-[#00F5D4] flex items-center justify-center border border-[#00F5D4]/30">
+            <div className={`p-12 rounded-3xl border text-center space-y-4 shadow-xl ${theme === 'light' ? 'bg-white border-[#E2E8F0]' : 'bg-[#12121C] border-[#222236]'
+              }`}>
+              <div className="h-16 w-16 mx-auto rounded-2xl bg-[#EB1000]/10 text-[#EB1000] flex items-center justify-center border border-[#EB1000]/30">
                 <Radio className="h-8 w-8" />
               </div>
               <div className="max-w-md mx-auto space-y-1">
-                <h3 className={`font-heading font-black text-xl ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'}`}>
+                <h3 className={`font-heading font-black text-xl ${theme === 'light' ? 'text-[#0F172A]' : 'text-white'}`}>
                   No Active Broadcast Session
                 </h3>
-                <p className="text-xs text-[#8B8B96]">
+                <p className={`text-xs ${theme === 'light' ? 'text-[#64748B]' : 'text-[#A0A0B2]'}`}>
                   You currently have no active live session running. Click below to launch a new broadcast session.
                 </p>
               </div>
               <Link
                 href="/creators/start-live"
-                className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-brand-gradient text-white font-black text-xs shadow-lg glow-teal hover:scale-105 transition"
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-gradient-to-r from-[#EB1000] to-[#CC0E00] text-white font-black text-xs shadow-xl shadow-[#EB1000]/30 hover:scale-[1.02] transition-all"
               >
                 <Radio className="h-4 w-4" /> Start New Live Broadcast
               </Link>

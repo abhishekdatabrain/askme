@@ -229,11 +229,11 @@ export default function WalletManagement({ activeSubTab }) {
     <div className="space-y-6 animate-fade-in font-sans">
 
       {/* 1. System Earnings Overview Header (Requirement 19: Earnings Report) */}
-      <div className="p-6 rounded-3xl bg-gradient-to-r from-[#13131A] via-[#1A1A26] to-[#13131A] border border-[#1C1C26] shadow-xl space-y-4">
+      <div className="p-6 rounded-3xl bg-[#13131A] border border-[#1C1C26] shadow-xl space-y-4">
         <div className="border-b border-[#1C1C26] pb-4">
           <div>
             <h2 className="text-xl font-heading font-black text-white flex items-center gap-2">
-              <Wallet className="h-6 w-6 text-[#00F5D4]" /> System Earnings & Revenue Settlement Report
+              <Wallet className="h-6 w-6 text-[#EB1000]" /> System Earnings & Revenue Settlement Report
             </h2>
             <p className="text-xs text-[#8B8B96] mt-0.5">
               Live tracking of viewer donations, 15% platform cut, 85% creator payouts, & wallet balance settlements.

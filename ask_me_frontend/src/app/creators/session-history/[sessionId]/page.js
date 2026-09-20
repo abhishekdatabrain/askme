@@ -159,29 +159,21 @@ export default function DedicatedSessionQuestionsPage() {
 
   return (
     <>
-      <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
+      <div className="flex-1 flex flex-col min-w-0">
         {/* HEADER */}
-        <header className={`border-b sticky top-0 z-20 px-6 py-4 flex items-center justify-between transition-colors ${theme === 'light' ? 'border-[#E9ECEF] bg-white/90 backdrop-blur-md' : 'border-[#1C1C26] bg-[#0A0A0F]/80 backdrop-blur-md'
+        <header className={`border-b sticky top-0 z-30 shrink-0 px-6 py-4 flex items-center justify-between transition-colors ${theme === 'light' ? 'border-[#E2E8F0] bg-white/95 backdrop-blur-md text-[#0F172A] shadow-sm' : 'border-[#222236] bg-[#0A0A0F]/95 backdrop-blur-md text-white shadow-sm'
           }`}>
           <div className="flex items-center gap-3">
             <Link
               href="/creators/session-history"
-              className={`p-2 rounded-xl border transition flex items-center gap-1.5 text-xs font-bold ${theme === 'light'
-                ? 'bg-[#F1F3F5] border-[#E9ECEF] text-[#1A1D20] hover:bg-[#E9ECEF]'
-                : 'bg-[#13131A] border-[#1C1C26] text-white hover:border-[#00F5D4]/40'
+              className={`px-4 py-2 rounded-xl border transition-all flex items-center gap-2 text-xs font-black cursor-pointer ${theme === 'light'
+                ? 'bg-[#F8FAFC] border-[#E2E8F0] text-[#0F172A] hover:bg-[#F1F5F9]'
+                : 'bg-[#181826] border-[#2A2A3E] text-white hover:border-[#EB1000]'
                 }`}
             >
-              <ArrowLeft className="h-4 w-4 text-[#00F5D4]" />
+              <ArrowLeft className="h-4 w-4 text-[#EB1000]" />
               <span>Back to Session History</span>
             </Link>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <button onClick={toggleTheme} className="px-3 py-1.5 rounded-xl border text-xs font-bold flex items-center gap-1.5">
-              {theme === 'dark' ? <Sun className="h-4 w-4 text-[#FFD60A]" /> : <Moon className="h-4 w-4 text-[#7B2FFF]" />}
-              <span className="hidden sm:inline">{theme === 'dark' ? 'Light' : 'Dark'}</span>
-            </button>
-            <CreatorNotificationDropdown theme={theme} />
           </div>
         </header>
 
@@ -189,20 +181,23 @@ export default function DedicatedSessionQuestionsPage() {
         <main className="p-6 max-w-5xl w-full mx-auto space-y-6">
 
           {/* SESSION DETAILS BANNER */}
-          <div className={`p-6 rounded-3xl border space-y-5 shadow-xl ${theme === 'light' ? 'bg-white border-[#E9ECEF]' : 'bg-[#13131A] border-[#1C1C26]'
+          <div className={`p-6 sm:p-8 rounded-3xl border space-y-6 shadow-2xl relative overflow-hidden transition-all duration-300 ${theme === 'light' ? 'bg-white border-[#E2E8F0] shadow-slate-200/60' : 'bg-[#12121C]/95 backdrop-blur-xl border-[#222236] shadow-black/80'
             }`}>
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b pb-4 border-[#1C1C26]">
-              <div className="space-y-1">
+            {/* Gradient Top Accent Bar */}
+            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#EB1000] via-[#FF5500] to-[#EB1000]" />
+
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b pb-5 border-current/10">
+              <div className="space-y-1.5">
                 <div className="flex items-center gap-2">
-                  <span className="px-2.5 py-0.5 rounded-full bg-[#00F5D4]/10 text-[#00F5D4] border border-[#00F5D4]/30 text-[10px] font-black uppercase">
+                  <span className="px-3 py-1 rounded-full bg-[#EB1000]/10 text-[#EB1000] border border-[#EB1000]/30 text-[10px] font-black uppercase tracking-wider">
                     SESSION QUESTIONS RECORD
                   </span>
                 </div>
-                <h2 className={`font-heading font-black text-xl ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'}`}>
+                <h2 className={`font-heading font-black text-xl sm:text-2xl tracking-tight ${theme === 'light' ? 'text-[#0F172A]' : 'text-white'}`}>
                   {sessionInfo?.title || `Session #${sessionId} Questions`}
                 </h2>
-                <p className="text-xs text-[#8B8B96] flex items-center gap-2">
-                  <strong className="text-[#00F5D4]">{sessionInfo?.category || 'General'}</strong>
+                <p className={`text-xs font-medium flex items-center gap-2 ${theme === 'light' ? 'text-[#64748B]' : 'text-[#A0A0B2]'}`}>
+                  <strong className="text-[#EB1000]">{sessionInfo?.category || 'General'}</strong>
                   <span>•</span>
                   <span>Platform: {sessionInfo?.streamingPlatform || 'YouTube Live'}</span>
                 </p>
@@ -210,53 +205,50 @@ export default function DedicatedSessionQuestionsPage() {
 
               {/* STATS SUMMARY BAR */}
               <div className="flex items-center gap-3">
-                <div className={`p-3 rounded-2xl border text-center ${theme === 'light' ? 'bg-[#F8F9FA] border-[#E9ECEF]' : 'bg-[#0A0A0F] border-[#1C1C26]'
+                <div className={`p-3.5 px-4 rounded-2xl border text-center ${theme === 'light' ? 'bg-[#F8FAFC] border-[#E2E8F0]' : 'bg-[#181826] border-[#2A2A3E]'
                   }`}>
-                  <span className="text-[10px] font-black text-[#8B8B96] uppercase tracking-wider block">Questions</span>
-                  <span className="font-heading font-black text-base text-[#00F5D4]">{questions.length}</span>
+                  <span className="text-[10px] font-black text-[#A0A0B2] uppercase tracking-wider block">Questions</span>
+                  <span className="font-heading font-black text-lg text-[#EB1000]">{questions.length}</span>
                 </div>
 
-                <div className={`p-3 rounded-2xl border text-center ${theme === 'light' ? 'bg-[#F8F9FA] border-[#E9ECEF]' : 'bg-[#0A0A0F] border-[#1C1C26]'
+                <div className={`p-3.5 px-4 rounded-2xl border text-center ${theme === 'light' ? 'bg-[#F8FAFC] border-[#E2E8F0]' : 'bg-[#181826] border-[#2A2A3E]'
                   }`}>
-                  <span className="text-[10px] font-black text-[#8B8B96] uppercase tracking-wider block">Raised</span>
-                  <span className="font-heading font-black text-base text-[#00E676]">₹{totalAmount.toFixed(2)}</span>
+                  <span className="text-[10px] font-black text-[#A0A0B2] uppercase tracking-wider block">Raised</span>
+                  <span className="font-heading font-black text-lg text-[#00E676]">₹{totalAmount.toFixed(2)}</span>
                 </div>
 
                 {vipCount > 0 && (
-                  <div className="p-3 rounded-2xl bg-[#1C1805] border border-[#FFD60A]/50 text-center">
+                  <div className="p-3.5 px-4 rounded-2xl bg-[#FFD60A]/10 border border-[#FFD60A]/40 text-center">
                     <span className="text-[10px] font-black text-[#FFD60A] uppercase tracking-wider block">VIP</span>
-                    <span className="font-heading font-black text-base text-[#FFD60A]">{vipCount}</span>
+                    <span className="font-heading font-black text-lg text-[#FFD60A]">{vipCount}</span>
                   </div>
                 )}
               </div>
             </div>
 
             {/* SEARCH & DATE FILTERS BAR */}
-            <div className={`p-4 rounded-2xl border ${
-              theme === 'light' ? 'bg-[#F8F9FA] border-[#E9ECEF]' : 'bg-[#0A0A0F] border-[#1C1C26]'
-            }`}>
+            <div className={`p-4 rounded-2xl border transition-all ${theme === 'light' ? 'bg-[#F8FAFC] border-[#E2E8F0]' : 'bg-[#181826] border-[#2A2A3E]'
+              }`}>
               <form onSubmit={handleSearchSubmit} className="flex flex-col md:flex-row md:items-center justify-between gap-3 flex-wrap">
                 {/* Search Box */}
                 <div className="relative flex-1 min-w-[200px]">
-                  <Search className={`absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 ${
-                    theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'
-                  }`} />
+                  <Search className={`absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 ${theme === 'light' ? 'text-[#64748B]' : 'text-[#EB1000]'
+                    }`} />
                   <input
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Search by viewer name or question message..."
-                    className={`w-full pl-10 pr-9 py-2 rounded-xl text-xs border transition focus:outline-none focus:border-[#00F5D4] ${
-                      theme === 'light'
-                        ? 'bg-white border-[#DEE2E6] text-[#1A1D20] placeholder-[#959EAD]'
-                        : 'bg-[#13131A] border-[#1C1C26] text-white placeholder-[#8B8B96]'
-                    }`}
+                    className={`w-full pl-10 pr-9 py-2.5 rounded-xl text-xs border outline-none font-medium transition-all duration-200 ${theme === 'light'
+                        ? 'bg-white border-[#E2E8F0] text-[#0F172A] placeholder-[#94A3B8] focus:border-[#EB1000] focus:ring-1 focus:ring-[#EB1000]'
+                        : 'bg-[#12121C] border-[#222236] text-white placeholder-[#6E6E82] focus:border-[#EB1000] focus:ring-1 focus:ring-[#EB1000]'
+                      }`}
                   />
                   {searchQuery && (
                     <button
                       type="button"
                       onClick={() => setSearchQuery('')}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-[#8B8B96] hover:text-white p-0.5"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-[#A0A0B2] hover:text-white p-0.5 cursor-pointer"
                     >
                       <X className="h-3.5 w-3.5" />
                     </button>
@@ -266,32 +258,30 @@ export default function DedicatedSessionQuestionsPage() {
                 {/* Date Inputs */}
                 <div className="flex items-center gap-2.5 flex-wrap">
                   <div className="flex items-center gap-1.5">
-                    <span className="text-[11px] font-bold text-[#8B8B96] flex items-center gap-1">
-                      <Calendar className="h-3.5 w-3.5 text-[#00F5D4]" /> From:
+                    <span className={`text-[11px] font-bold flex items-center gap-1 ${theme === 'light' ? 'text-[#64748B]' : 'text-[#A0A0B2]'}`}>
+                      <Calendar className="h-3.5 w-3.5 text-[#EB1000]" /> From:
                     </span>
                     <input
                       type="date"
                       value={startDate}
                       onChange={(e) => setStartDate(e.target.value)}
-                      className={`px-2.5 py-1.5 rounded-xl text-xs border focus:outline-none focus:border-[#00F5D4] ${
-                        theme === 'light'
-                          ? 'bg-white border-[#DEE2E6] text-[#1A1D20]'
-                          : 'bg-[#13131A] border-[#1C1C26] text-white'
-                      }`}
+                      className={`px-3 py-2 rounded-xl text-xs border outline-none font-medium transition-all duration-200 ${theme === 'light'
+                          ? 'bg-white border-[#E2E8F0] text-[#0F172A] focus:border-[#EB1000]'
+                          : 'bg-[#12121C] border-[#222236] text-white focus:border-[#EB1000]'
+                        }`}
                     />
                   </div>
 
                   <div className="flex items-center gap-1.5">
-                    <span className="text-[11px] font-bold text-[#8B8B96]">To:</span>
+                    <span className={`text-[11px] font-bold ${theme === 'light' ? 'text-[#64748B]' : 'text-[#A0A0B2]'}`}>To:</span>
                     <input
                       type="date"
                       value={endDate}
                       onChange={(e) => setEndDate(e.target.value)}
-                      className={`px-2.5 py-1.5 rounded-xl text-xs border focus:outline-none focus:border-[#00F5D4] ${
-                        theme === 'light'
-                          ? 'bg-white border-[#DEE2E6] text-[#1A1D20]'
-                          : 'bg-[#13131A] border-[#1C1C26] text-white'
-                      }`}
+                      className={`px-3 py-2 rounded-xl text-xs border outline-none font-medium transition-all duration-200 ${theme === 'light'
+                          ? 'bg-white border-[#E2E8F0] text-[#0F172A] focus:border-[#EB1000]'
+                          : 'bg-[#12121C] border-[#222236] text-white focus:border-[#EB1000]'
+                        }`}
                     />
                   </div>
                 </div>
@@ -300,7 +290,7 @@ export default function DedicatedSessionQuestionsPage() {
                 <div className="flex items-center gap-2 shrink-0">
                   <button
                     type="submit"
-                    className="px-4 py-2 rounded-xl bg-brand-gradient text-white font-bold text-xs shadow-md glow-teal hover:scale-105 transition flex items-center gap-1.5"
+                    className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#EB1000] to-[#CC0E00] text-white font-black text-xs shadow-md shadow-[#EB1000]/20 hover:opacity-90 transition flex items-center gap-1.5 cursor-pointer"
                   >
                     <Search className="h-3.5 w-3.5" /> Search
                   </button>
@@ -309,7 +299,7 @@ export default function DedicatedSessionQuestionsPage() {
                     <button
                       type="button"
                       onClick={handleResetFilters}
-                      className="px-3 py-2 rounded-xl text-xs font-bold text-[#FF5252] bg-[#FF5252]/10 border border-[#FF5252]/20 hover:bg-[#FF5252]/20 transition flex items-center gap-1"
+                      className="px-3.5 py-2.5 rounded-xl text-xs font-black text-[#FF3D71] bg-[#FF3D71]/10 border border-[#FF3D71]/30 hover:bg-[#FF3D71]/20 transition flex items-center gap-1 cursor-pointer"
                     >
                       <RotateCcw className="h-3.5 w-3.5" /> Reset
                     </button>
@@ -320,30 +310,30 @@ export default function DedicatedSessionQuestionsPage() {
 
             {/* QUESTIONS LIST */}
             <div className="pt-2 space-y-4">
-              <h3 className={`font-heading font-extrabold text-base flex items-center gap-2 ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'}`}>
-                <MessageSquare className="h-5 w-5 text-[#00F5D4]" />
+              <h3 className={`font-heading font-extrabold text-base flex items-center gap-2 ${theme === 'light' ? 'text-[#0F172A]' : 'text-white'}`}>
+                <MessageSquare className="h-5 w-5 text-[#EB1000]" />
                 Viewer Questions ({questions.length})
               </h3>
 
               {isLoading ? (
-                <div className="p-12 text-center text-xs text-[#8B8B96] space-y-2">
-                  <RefreshCw className="h-8 w-8 border-2 border-[#00F5D4] border-t-transparent rounded-full animate-spin mx-auto text-[#00F5D4]" />
-                  <p>Loading session questions...</p>
+                <div className="p-12 text-center text-xs text-[#A0A0B2] space-y-2">
+                  <RefreshCw className="h-8 w-8 text-[#EB1000] animate-spin mx-auto" />
+                  <p className="font-semibold">Loading session questions...</p>
                 </div>
               ) : questions.length === 0 ? (
-                <div className={`p-12 rounded-2xl border text-center space-y-3 ${theme === 'light' ? 'bg-[#F8F9FA] border-[#E9ECEF]' : 'bg-[#0A0A0F] border-[#1C1C26]'
+                <div className={`p-12 rounded-2xl border text-center space-y-3 ${theme === 'light' ? 'bg-[#F8FAFC] border-[#E2E8F0]' : 'bg-[#181826] border-[#2A2A3E]'
                   }`}>
-                  <MessageSquare className="h-10 w-10 mx-auto text-[#8B8B96] opacity-40" />
-                  <h4 className="font-bold text-white text-sm">
+                  <MessageSquare className="h-10 w-10 mx-auto text-[#EB1000] opacity-40" />
+                  <h4 className={`font-extrabold text-sm ${theme === 'light' ? 'text-[#0F172A]' : 'text-white'}`}>
                     {isFiltered ? 'No Questions Match Filters' : 'No Questions Recorded'}
                   </h4>
-                  <p className="text-xs text-[#8B8B96]">
+                  <p className="text-xs text-[#A0A0B2]">
                     {isFiltered ? 'Try clearing your search query or date range.' : 'No viewer questions were recorded for this session.'}
                   </p>
                   {isFiltered && (
                     <button
                       onClick={handleResetFilters}
-                      className="px-4 py-2 rounded-xl bg-[#00F5D4]/10 border border-[#00F5D4]/30 text-[#00F5D4] font-bold text-xs hover:bg-[#00F5D4]/20 transition inline-flex items-center gap-1.5"
+                      className="px-4 py-2 rounded-xl bg-[#EB1000]/10 border border-[#EB1000]/30 text-[#EB1000] font-black text-xs hover:bg-[#EB1000]/20 transition inline-flex items-center gap-1.5 cursor-pointer"
                     >
                       <RotateCcw className="h-3.5 w-3.5" /> Clear Filters
                     </button>
@@ -353,21 +343,21 @@ export default function DedicatedSessionQuestionsPage() {
                 questions.map((q, idx) => (
                   <div
                     key={q.id || idx}
-                    className={`p-5 rounded-2xl border space-y-3 shadow-md ${q.isVip
-                      ? 'bg-[#1C1805] border-2 border-[#FFD60A]/80 shadow-xl glow-gold'
+                    className={`p-5 rounded-2xl border space-y-3 shadow-md transition-all ${q.isVip
+                      ? 'bg-[#FFD60A]/10 border-2 border-[#FFD60A]/80 shadow-xl'
                       : theme === 'light'
-                        ? 'bg-[#F8F9FA] border-[#E9ECEF]'
-                        : 'bg-[#0A0A0F] border-[#1C1C26]'
+                        ? 'bg-[#F8FAFC] border-[#E2E8F0]'
+                        : 'bg-[#181826] border-[#2A2A3E]'
                       }`}
                   >
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b pb-3 border-[#1C1C26]">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b pb-3 border-current/10">
                       <div className="flex items-center gap-2.5 flex-wrap">
-                        <div className="p-2 rounded-xl bg-[#00E676]/10 text-[#00E676]">
+                        <div className="p-2 rounded-xl bg-[#EB1000]/10 text-[#EB1000]">
                           <Heart className="h-4 w-4 fill-current" />
                         </div>
                         <div>
-                          <h4 className="font-bold text-sm">
-                            <strong className="text-[#00F5D4]">{q.viewerName}</strong>
+                          <h4 className="font-extrabold text-sm">
+                            <strong className="text-[#EB1000]">{q.viewerName}</strong>
                           </h4>
                         </div>
 
@@ -382,7 +372,7 @@ export default function DedicatedSessionQuestionsPage() {
                         <span className="font-heading font-black text-base text-[#00E676] bg-[#00E676]/10 px-3 py-1 rounded-xl border border-[#00E676]/30">
                           ₹{parseFloat(q.amount || 0).toFixed(2)}
                         </span>
-                        <span className="text-xs font-mono text-[#8B8B96]">
+                        <span className="text-xs font-mono text-[#A0A0B2]">
                           {q.paidAt && !isNaN(new Date(q.paidAt).getTime())
                             ? new Date(q.paidAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true })
                             : ''}
@@ -392,14 +382,14 @@ export default function DedicatedSessionQuestionsPage() {
 
                     {q.message && (
                       <div className="pt-1">
-                        <span className="text-xs font-extrabold text-[#8B8B96] block mb-1">
+                        <span className={`text-xs font-extrabold block mb-1 ${theme === 'light' ? 'text-[#64748B]' : 'text-[#A0A0B2]'}`}>
                           Viewer Question / Message:
                         </span>
-                        <p className={`p-3 rounded-2xl text-xs italic border font-medium ${q.isVip
-                          ? 'bg-[#0A0A0F] text-[#FFD60A] border-[#FFD60A]/40'
+                        <p className={`p-3.5 rounded-2xl text-xs italic border font-medium ${q.isVip
+                          ? 'bg-[#12121C] text-[#FFD60A] border-[#FFD60A]/40'
                           : theme === 'light'
-                            ? 'bg-white border-[#E9ECEF] text-[#00B49F]'
-                            : 'bg-[#13131A] text-[#00F5D4] border-[#1C1C26]'
+                            ? 'bg-white border-[#E2E8F0] text-[#0F172A]'
+                            : 'bg-[#12121C] text-white border-[#222236]'
                           }`}>
                           "{q.isVip ? '⚡ VIP FAST-TRACK: ' : ''}{q.message}"
                         </p>
@@ -407,7 +397,7 @@ export default function DedicatedSessionQuestionsPage() {
                     )}
 
                     <div className="flex items-center justify-between pt-1 text-xs">
-                      <span className={`px-3 py-1 rounded-full font-bold text-[10px] uppercase ${q.status === 'read'
+                      <span className={`px-3 py-1 rounded-full font-black text-[10px] uppercase ${q.status === 'read'
                         ? 'bg-[#00E676]/15 text-[#00E676] border border-[#00E676]/30'
                         : q.status === 'cancelled'
                           ? 'bg-[#FF3D71]/15 text-[#FF3D71] border border-[#FF3D71]/30'

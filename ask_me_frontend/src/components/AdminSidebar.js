@@ -293,8 +293,8 @@ export default function AdminSidebar({ activeTab: propsActiveTab, setActiveTab, 
                     onClick={() => handleParentClick(item)}
                     className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-left transition-all ${isParentActive
                       ? theme === 'light'
-                        ? 'bg-[#F1F3F5] text-[#1A1D20] border border-[#00F5D4] font-bold shadow-sm'
-                        : 'bg-[#13131A] text-white border border-[#00F5D4]/40 glow-teal shadow-sm shadow-[#00F5D4]/10'
+                        ? 'bg-[#FEF2F2] text-[#EB1000] border border-[#EB1000]/40 font-bold shadow-sm'
+                        : 'bg-[#13131A] text-white border border-[#EB1000]/50 shadow-sm shadow-[#EB1000]/10'
                       : theme === 'light'
                         ? 'text-[#495057] hover:bg-[#F8F9FA] hover:text-[#1A1D20] border border-transparent'
                         : 'text-[#8B8B96] hover:bg-[#13131A]/60 hover:text-white border border-transparent'
@@ -303,14 +303,14 @@ export default function AdminSidebar({ activeTab: propsActiveTab, setActiveTab, 
                     <div className="flex items-center gap-2.5 min-w-0">
                       <div
                         className={`p-1.5 rounded-lg shrink-0 ${isParentActive
-                          ? 'bg-[#00F5D4]/10 text-[#00F5D4]'
+                          ? 'bg-[#EB1000] text-white'
                           : theme === 'light' ? 'bg-[#E9ECEF] text-[#495057]' : 'bg-[#1C1C26] text-[#8B8B96]'
                           }`}
                       >
                         <Icon className="h-4 w-4" />
                       </div>
                       <div className="flex flex-col truncate">
-                        <span className={`text-xs font-semibold truncate ${isParentActive ? (theme === 'light' ? 'text-[#1A1D20] font-bold' : 'text-white font-bold') : ''
+                        <span className={`text-xs font-semibold truncate ${isParentActive ? (theme === 'light' ? 'text-[#EB1000] font-bold' : 'text-white font-bold') : ''
                           }`}>
                           {item.label}
                         </span>
@@ -325,7 +325,7 @@ export default function AdminSidebar({ activeTab: propsActiveTab, setActiveTab, 
                       )}
 
                       {item.count && (
-                        <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${theme === 'light' ? 'bg-[#E9ECEF] text-[#00F5D4]' : 'bg-[#1C1C26] text-[#00F5D4]'
+                        <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${theme === 'light' ? 'bg-[#E9ECEF] text-[#EB1000]' : 'bg-[#1C1C26] text-[#EB1000]'
                           }`}>
                           {item.count}
                         </span>
@@ -340,7 +340,7 @@ export default function AdminSidebar({ activeTab: propsActiveTab, setActiveTab, 
                           className={`p-1 rounded transition ${theme === 'light' ? 'text-[#6C757D] hover:text-[#1A1D20]' : 'text-[#8B8B96] hover:text-white'}`}
                         >
                           {isExpanded ? (
-                            <ChevronDown className="h-3.5 w-3.5 text-[#00F5D4]" />
+                            <ChevronDown className="h-3.5 w-3.5 text-[#EB1000]" />
                           ) : (
                             <ChevronRight className="h-3.5 w-3.5" />
                           )}
@@ -360,7 +360,7 @@ export default function AdminSidebar({ activeTab: propsActiveTab, setActiveTab, 
                             key={child.id}
                             onClick={(e) => handleChildClick(item.id, child, e)}
                             className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-left text-xs transition-all ${isChildActive
-                              ? 'bg-[#00F5D4]/15 text-[#00F5D4] font-bold border-l-2 border-[#00F5D4]'
+                              ? 'bg-[#EB1000]/15 text-[#EB1000] font-bold border-l-2 border-[#EB1000]'
                               : theme === 'light'
                                 ? 'text-[#6C757D] hover:text-[#1A1D20] hover:bg-[#F1F3F5]'
                                 : 'text-[#8B8B96] hover:text-white hover:bg-[#13131A]/40'
@@ -383,7 +383,7 @@ export default function AdminSidebar({ activeTab: propsActiveTab, setActiveTab, 
           }`}>
           <div className="flex items-center justify-between">
             <span className={`text-xs font-bold flex items-center gap-1.5 ${theme === 'light' ? 'text-[#212529]' : 'text-white'}`}>
-              <Sparkles className="h-3.5 w-3.5 text-[#00F5D4]" />
+              <Sparkles className="h-3.5 w-3.5 text-[#EB1000]" />
               Platform Cut
             </span>
             <span className="text-xs font-extrabold text-[#FFD60A]">15% Net</span>
@@ -392,7 +392,7 @@ export default function AdminSidebar({ activeTab: propsActiveTab, setActiveTab, 
             Creators keep <span className="text-[#00E676] font-bold">85%</span> of guaranteed paid questions and askMail interactions.
           </p>
           <div className={`w-full h-1.5 rounded-full overflow-hidden ${theme === 'light' ? 'bg-[#E9ECEF]' : 'bg-[#1C1C26]'}`}>
-            <div className="bg-brand-gradient h-full w-[85%] rounded-full"></div>
+            <div className="bg-[#EB1000] h-full w-[85%] rounded-full"></div>
           </div>
         </div>
       </div>
@@ -406,7 +406,7 @@ export default function AdminSidebar({ activeTab: propsActiveTab, setActiveTab, 
             onClick={onToggleTheme}
             className={`w-full px-3 py-2 rounded-xl border text-xs font-bold transition-all flex items-center justify-between ${theme === 'light'
               ? 'bg-[#F1F3F5] text-[#212529] border-[#E9ECEF] hover:bg-[#E9ECEF]'
-              : 'bg-[#13131A] text-[#F5F5F7] border-[#1C1C26] hover:border-[#00F5D4]/40'
+              : 'bg-[#13131A] text-[#F5F5F7] border-[#1C1C26] hover:border-[#EB1000]/40'
               }`}
           >
             <div className="flex items-center gap-2">
@@ -417,12 +417,12 @@ export default function AdminSidebar({ activeTab: propsActiveTab, setActiveTab, 
                 </>
               ) : (
                 <>
-                  <Moon className="h-4 w-4 text-[#7B2FFF]" />
+                  <Moon className="h-4 w-4 text-[#EB1000]" />
                   <span>Dark Mode Theme</span>
                 </>
               )}
             </div>
-            <span className="text-[10px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-brand-gradient text-white">
+            <span className="text-[10px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-[#EB1000] text-white">
               TOGGLE
             </span>
           </button>

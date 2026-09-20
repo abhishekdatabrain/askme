@@ -297,41 +297,21 @@ export default function CreatorWithdrawalsPage() {
 
   return (
     <>
-      <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
-        <header className={`border-b sticky top-0 z-20 px-6 py-4 flex items-center justify-between transition-colors duration-200 ${theme === 'light' ? 'border-[#E9ECEF] bg-white/90 backdrop-blur-md' : 'border-[#1C1C26] bg-[#0A0A0F]/80 backdrop-blur-md'
+      <div className="flex-1 flex flex-col min-w-0">
+        <header className={`border-b sticky top-0 z-30 shrink-0 px-6 py-4 flex items-center justify-between transition-colors duration-200 ${theme === 'light' ? 'border-[#E9ECEF] bg-white/95 backdrop-blur-md shadow-sm' : 'border-[#1C1C26] bg-[#0A0A0F]/95 backdrop-blur-md shadow-sm'
           }`}>
           <div>
             <h1 className={`font-heading font-black text-xl flex items-center gap-2 ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'
               }`}>
-              <ArrowUpRight className="h-5 w-5 text-[#00F5D4]" /> Creator Withdrawal Module
+              <ArrowUpRight className="h-5 w-5 text-[#EB1000]" /> Creator Withdrawal Module
             </h1>
             <p className={`text-xs ${theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'
               }`}>Request payout settlements, track request statuses, & manage bank accounts</p>
           </div>
 
           <div className="flex items-center gap-3">
-            <CreatorNotificationDropdown theme={theme} />
 
-            <button
-              onClick={toggleTheme}
-              className={`px-3 py-1.5 rounded-xl border text-xs font-bold transition-all flex items-center gap-1.5 ${theme === 'light'
-                ? 'bg-[#F1F3F5] text-[#212529] border-[#E9ECEF] hover:bg-[#E9ECEF]'
-                : 'bg-[#1C1C26] text-white border-[#1C1C26] hover:border-[#00F5D4]/40'
-                }`}
-              title={theme === 'dark' ? 'Switch to Light Theme' : 'Switch to Dark Theme'}
-            >
-              {theme === 'dark' ? (
-                <>
-                  <Sun className="h-4 w-4 text-[#FFD60A]" />
-                  <span className="hidden sm:inline">Light Theme</span>
-                </>
-              ) : (
-                <>
-                  <Moon className="h-4 w-4 text-[#7B2FFF]" />
-                  <span className="hidden sm:inline">Dark Theme</span>
-                </>
-              )}
-            </button>
+
 
             <button
               onClick={() => {
@@ -341,9 +321,9 @@ export default function CreatorWithdrawalsPage() {
                   setShowWithdrawModal(true);
                 }
               }}
-              className={`px-4 py-2 rounded-xl text-xs font-black shadow-md transition flex items-center gap-1.5 shrink-0 ${hasAlreadyWithdrawnInCycle
+              className={`px-4 py-2 rounded-xl text-xs font-black shadow-md transition flex items-center gap-1.5 shrink-0 cursor-pointer ${hasAlreadyWithdrawnInCycle
                 ? 'bg-[#1C1C26] text-[#8B8B96] border border-[#2A2A3A] cursor-not-allowed'
-                : 'bg-brand-gradient text-white glow-teal hover:opacity-95'
+                : 'bg-gradient-to-r from-[#EB1000] to-[#CC0E00] text-white shadow-md shadow-[#EB1000]/30 hover:opacity-95'
                 }`}
             >
               {hasAlreadyWithdrawnInCycle ? (
@@ -365,14 +345,14 @@ export default function CreatorWithdrawalsPage() {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
 
             {/* Available Balance */}
-            <div className={`p-5 rounded-3xl border-2 space-y-2 shadow-xl glow-teal ${theme === 'light'
-              ? 'bg-gradient-to-br from-white via-[#F8F9FA] to-white border-[#00F5D4]/60'
-              : 'bg-gradient-to-br from-[#13131A] via-[#1A1A26] to-[#13131A] border-[#00F5D4]/40'
+            <div className={`p-5 rounded-3xl border-2 space-y-2 shadow-xl shadow-[#EB1000]/10 ${theme === 'light'
+              ? 'bg-gradient-to-br from-white via-[#F8F9FA] to-white border-[#EB1000]/60'
+              : 'bg-gradient-to-br from-[#13131A] via-[#1A1A26] to-[#13131A] border-[#EB1000]/40'
               }`}>
-              <span className="text-xs font-bold text-[#00F5D4] flex items-center gap-1.5">
-                <Wallet className="h-4 w-4 text-[#00F5D4]" /> Available for Withdrawal
+              <span className="text-xs font-bold text-[#EB1000] flex items-center gap-1.5">
+                <Wallet className="h-4 w-4 text-[#EB1000]" /> Available for Withdrawal
               </span>
-              <div className="font-heading font-black text-2xl text-[#00F5D4]">
+              <div className="font-heading font-black text-2xl text-[#EB1000]">
                 ₹{walletData.availableBalance.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
               </div>
               <span className={`text-[11px] ${theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'
@@ -398,33 +378,31 @@ export default function CreatorWithdrawalsPage() {
               }`}>
               <span className={`text-xs font-bold flex items-center gap-1.5 ${theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'
                 }`}>
-                <CheckCircle2 className="h-4 w-4 text-[#00E676]" /> Settled Bank Payouts
+                <CheckCircle2 className="h-4 w-4 text-[#00E676]" /> Total Withdrawn
               </span>
-              <div className={`font-heading font-black text-2xl ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'
-                }`}>
+              <div className="font-heading font-black text-2xl text-[#00E676]">
                 ₹{walletData.withdrawnAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
               </div>
-              <span className="text-[11px] text-[#00E676] font-semibold">Completed Transfers</span>
+              <span className={`text-[11px] ${theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'
+                }`}>Disbursed to Bank/UPI</span>
             </div>
           </div>
 
-          {/* SINGLE WITHDRAWAL POLICY NOTICE BANNER */}
+          {/* 1 WITHDRAWAL PER CYCLE NOTICE */}
           {hasAlreadyWithdrawnInCycle ? (
-            <div className="p-4 rounded-2xl border bg-[#FF3D71]/10 border-[#FF3D71]/30 text-white flex items-start gap-3 text-xs">
-              <Lock className="h-5 w-5 text-[#FF3D71] shrink-0 mt-0.5" />
+            <div className="p-4 rounded-2xl bg-[#EB1000]/10 border border-[#EB1000]/30 text-[#EB1000] text-xs flex items-start gap-3">
+              <Lock className="h-5 w-5 shrink-0 mt-0.5" />
               <div className="space-y-1">
-                <strong className="text-[#FF3D71] text-sm flex items-center gap-1.5">
-                  Cycle Withdrawal Already Executed ({currentSettlement?.settlementMonth || 'Current Cycle'})
-                </strong>
-                <p className="text-[#E0E0E0] leading-relaxed">
+                <strong className="font-extrabold text-sm block">1 Withdrawal Limit Reached For Current Settlement Cycle</strong>
+                <p className="text-[11px] opacity-90">
                   You have already submitted <strong>ONE withdrawal request</strong> for this settlement cycle. As per platform policy, only 1 withdrawal is permitted per monthly settlement. Your remaining balance (₹{(currentSettlement?.remainingAmount || walletData.availableBalance).toFixed(2)}) will automatically carry forward to your next monthly settlement.
                 </p>
               </div>
             </div>
           ) : (
-            <div className={`p-4 rounded-2xl border flex items-start gap-3 text-xs ${theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6] text-[#495057]' : 'bg-[#13131A] border-[#1C1C26] text-[#A0A0B0]'
+            <div className={`p-4 rounded-2xl border flex items-start gap-3 text-xs ${theme === 'light' ? 'bg-[#F8FAFC] border-[#DEE2E6] text-[#495057]' : 'bg-[#13131A] border-[#1C1C26] text-[#A0A0B0]'
               }`}>
-              <Info className="h-5 w-5 text-[#00F5D4] shrink-0 mt-0.5" />
+              <Info className="h-5 w-5 text-[#EB1000] shrink-0 mt-0.5" />
               <div className="space-y-1">
                 <strong className={theme === 'light' ? 'text-[#1A1D20]' : 'text-white'}>
                   1 Withdrawal Per Monthly Settlement Policy:
@@ -442,25 +420,29 @@ export default function CreatorWithdrawalsPage() {
 
             <div className={`flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b pb-4 ${theme === 'light' ? 'border-[#E9ECEF]' : 'border-[#1C1C26]'
               }`}>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 overflow-x-auto max-w-full pb-1 sm:pb-0 shrink-0">
                 <button
+                  type="button"
                   onClick={() => setActiveTab('history')}
-                  className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${activeTab === 'history'
-                    ? 'bg-brand-gradient text-white shadow-md glow-teal'
-                    : theme === 'light' ? 'bg-[#F1F3F5] text-[#6C757D] hover:text-[#1A1D20]' : 'bg-[#0A0A0F] text-[#8B8B96] hover:text-white'
+                  className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap cursor-pointer shrink-0 ${activeTab === 'history'
+                    ? 'bg-gradient-to-r from-[#EB1000] to-[#CC0E00] text-white shadow-md shadow-[#EB1000]/30 font-black'
+                    : theme === 'light' ? 'bg-[#F8FAFC] text-[#6C757D] hover:text-[#1A1D20] border border-[#E2E8F0]' : 'bg-[#0A0A0F] text-[#8B8B96] hover:text-white border border-[#1C1C26]'
                     }`}
                 >
-                  <FileText className="h-4 w-4" /> Withdrawal Requests History ({withdrawals.length})
+                  <FileText className="h-4 w-4 shrink-0" />
+                  <span className="whitespace-nowrap">Withdrawal Requests History ({withdrawals.length})</span>
                 </button>
 
                 <button
+                  type="button"
                   onClick={() => setActiveTab('bank')}
-                  className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${activeTab === 'bank'
-                    ? 'bg-brand-gradient text-white shadow-md glow-teal'
-                    : theme === 'light' ? 'bg-[#F1F3F5] text-[#6C757D] hover:text-[#1A1D20]' : 'bg-[#0A0A0F] text-[#8B8B96] hover:text-white'
+                  className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap cursor-pointer shrink-0 ${activeTab === 'bank'
+                    ? 'bg-gradient-to-r from-[#EB1000] to-[#CC0E00] text-white shadow-md shadow-[#EB1000]/30 font-black'
+                    : theme === 'light' ? 'bg-[#F8FAFC] text-[#6C757D] hover:text-[#1A1D20] border border-[#E2E8F0]' : 'bg-[#0A0A0F] text-[#8B8B96] hover:text-white border border-[#1C1C26]'
                     }`}
                 >
-                  <Building2 className="h-4 w-4" /> Saved Bank Account Details
+                  <Building2 className="h-4 w-4 shrink-0" />
+                  <span className="whitespace-nowrap">Saved Bank Account Details</span>
                 </button>
               </div>
 
@@ -468,7 +450,7 @@ export default function CreatorWithdrawalsPage() {
                 <button
                   onClick={handleDownloadCSV}
                   title="Download Withdrawal History CSV"
-                  className="px-3.5 py-1.5 rounded-xl bg-brand-gradient text-white font-bold text-xs hover:opacity-90 transition flex items-center gap-1.5 shadow-sm"
+                  className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-[#EB1000] to-[#CC0E00] text-white font-bold text-xs hover:opacity-90 transition flex items-center gap-1.5 shadow-sm cursor-pointer"
                 >
                   <Download className="h-4 w-4" />
                   <span>Download CSV</span>
@@ -476,10 +458,10 @@ export default function CreatorWithdrawalsPage() {
 
                 <button
                   onClick={fetchWithdrawalData}
-                  className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${theme === 'light' ? 'bg-[#E9ECEF] text-[#1A1D20] hover:bg-[#DEE2E6]' : 'bg-[#0A0A0F] border border-[#1C1C26] text-white hover:bg-[#1C1C26]'
+                  className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${theme === 'light' ? 'bg-[#E9ECEF] text-[#1A1D20] hover:bg-[#DEE2E6]' : 'bg-[#0A0A0F] border border-[#1C1C26] text-white hover:bg-[#1C1C26]'
                     }`}
                 >
-                  <RefreshCw className="h-3.5 w-3.5 text-[#00F5D4]" /> Refresh Statuses
+                  <RefreshCw className="h-3.5 w-3.5 text-[#EB1000]" /> Refresh Statuses
                 </button>
               </div>
             </div>
@@ -489,7 +471,7 @@ export default function CreatorWithdrawalsPage() {
               <div>
                 {isLoading ? (
                   <div className="p-12 text-center text-xs text-[#8B8B96] space-y-2">
-                    <div className="h-8 w-8 border-2 border-[#00F5D4] border-t-transparent rounded-full animate-spin mx-auto" />
+                    <div className="h-8 w-8 border-2 border-[#EB1000] border-t-transparent rounded-full animate-spin mx-auto" />
                     <p>Loading withdrawal history...</p>
                   </div>
                 ) : withdrawals.length === 0 ? (
@@ -510,7 +492,7 @@ export default function CreatorWithdrawalsPage() {
                           setShowWithdrawModal(true);
                         }
                       }}
-                      className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-brand-gradient text-white font-bold text-xs shadow-md glow-teal"
+                      className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-[#EB1000] to-[#CC0E00] text-white font-bold text-xs shadow-md shadow-[#EB1000]/30 cursor-pointer"
                     >
                       <ArrowUpRight className="h-4 w-4" /> Request Payout Now
                     </button>
@@ -549,7 +531,7 @@ export default function CreatorWithdrawalsPage() {
                               })()}
                             </td>
 
-                            <td className="py-3.5 px-3 font-bold text-[#00F5D4] whitespace-nowrap">
+                            <td className="py-3.5 px-3 font-bold text-[#EB1000] whitespace-nowrap">
                               {w.settlementMonth || 'Current'}
                             </td>
 
@@ -599,7 +581,7 @@ export default function CreatorWithdrawalsPage() {
                       placeholder="e.g. Abhishek Kumar"
                       value={bankForm.accountHolderName}
                       onChange={(e) => setBankForm({ ...bankForm, accountHolderName: e.target.value })}
-                      className={`w-full px-4 py-2.5 rounded-xl border text-xs focus:outline-none focus:border-[#00F5D4] ${theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6] text-[#1A1D20] placeholder-[#A0A0A0]' : 'bg-[#0A0A0F] border-[#1C1C26] text-white placeholder-[#8B8B96]'
+                      className={`w-full px-4 py-2.5 rounded-xl border text-xs focus:outline-none focus:border-[#EB1000] ${theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6] text-[#1A1D20] placeholder-[#A0A0A0]' : 'bg-[#0A0A0F] border-[#1C1C26] text-white placeholder-[#8B8B96]'
                         }`}
                     />
                   </div>
@@ -615,7 +597,7 @@ export default function CreatorWithdrawalsPage() {
                         placeholder="e.g. HDFC Bank / ICICI Bank"
                         value={bankForm.bankName}
                         onChange={(e) => setBankForm({ ...bankForm, bankName: e.target.value })}
-                        className={`w-full px-4 py-2.5 rounded-xl border text-xs focus:outline-none focus:border-[#00F5D4] ${theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6] text-[#1A1D20] placeholder-[#A0A0A0]' : 'bg-[#0A0A0F] border-[#1C1C26] text-white placeholder-[#8B8B96]'
+                        className={`w-full px-4 py-2.5 rounded-xl border text-xs focus:outline-none focus:border-[#EB1000] ${theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6] text-[#1A1D20] placeholder-[#A0A0A0]' : 'bg-[#0A0A0F] border-[#1C1C26] text-white placeholder-[#8B8B96]'
                           }`}
                       />
                     </div>
@@ -630,7 +612,7 @@ export default function CreatorWithdrawalsPage() {
                         placeholder="e.g. 50100298410294"
                         value={bankForm.accountNumber}
                         onChange={(e) => setBankForm({ ...bankForm, accountNumber: e.target.value })}
-                        className={`w-full px-4 py-2.5 rounded-xl border text-xs focus:outline-none focus:border-[#00F5D4] ${theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6] text-[#1A1D20] placeholder-[#A0A0A0]' : 'bg-[#0A0A0F] border-[#1C1C26] text-white placeholder-[#8B8B96]'
+                        className={`w-full px-4 py-2.5 rounded-xl border text-xs focus:outline-none focus:border-[#EB1000] ${theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6] text-[#1A1D20] placeholder-[#A0A0A0]' : 'bg-[#0A0A0F] border-[#1C1C26] text-white placeholder-[#8B8B96]'
                           }`}
                       />
                     </div>
@@ -647,7 +629,7 @@ export default function CreatorWithdrawalsPage() {
                         placeholder="e.g. HDFC0000240"
                         value={bankForm.ifscCode}
                         onChange={(e) => setBankForm({ ...bankForm, ifscCode: e.target.value })}
-                        className={`w-full px-4 py-2.5 rounded-xl border text-xs focus:outline-none focus:border-[#00F5D4] ${theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6] text-[#1A1D20] placeholder-[#A0A0A0]' : 'bg-[#0A0A0F] border-[#1C1C26] text-white placeholder-[#8B8B96]'
+                        className={`w-full px-4 py-2.5 rounded-xl border text-xs focus:outline-none focus:border-[#EB1000] ${theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6] text-[#1A1D20] placeholder-[#A0A0A0]' : 'bg-[#0A0A0F] border-[#1C1C26] text-white placeholder-[#8B8B96]'
                           }`}
                       />
                     </div>
@@ -662,7 +644,7 @@ export default function CreatorWithdrawalsPage() {
                         placeholder="e.g. creator@upi"
                         value={bankForm.upiId}
                         onChange={(e) => setBankForm({ ...bankForm, upiId: e.target.value })}
-                        className={`w-full px-4 py-2.5 rounded-xl border text-xs text-[#00F5D4] focus:outline-none focus:border-[#00F5D4] ${theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6] placeholder-[#A0A0A0]' : 'bg-[#0A0A0F] border-[#1C1C26] placeholder-[#8B8B96]'
+                        className={`w-full px-4 py-2.5 rounded-xl border text-xs text-[#EB1000] focus:outline-none focus:border-[#EB1000] ${theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6] placeholder-[#A0A0A0]' : 'bg-[#0A0A0F] border-[#1C1C26] placeholder-[#8B8B96]'
                           }`}
                       />
                     </div>
@@ -671,7 +653,7 @@ export default function CreatorWithdrawalsPage() {
                   <button
                     type="submit"
                     disabled={isSavingBank}
-                    className="w-full py-3 rounded-xl bg-brand-gradient text-white font-black text-xs shadow-md glow-teal hover:opacity-95 transition flex items-center justify-center gap-2"
+                    className="w-full py-3 rounded-xl bg-gradient-to-r from-[#EB1000] to-[#CC0E00] text-white font-black text-xs shadow-md shadow-[#EB1000]/30 hover:opacity-95 transition flex items-center justify-center gap-2 cursor-pointer"
                   >
                     {isSavingBank ? (
                       <>
@@ -700,7 +682,7 @@ export default function CreatorWithdrawalsPage() {
               <div>
                 <h3 className={`font-heading font-black text-lg flex items-center gap-2 ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'
                   }`}>
-                  <ArrowUpRight className="h-5 w-5 text-[#00F5D4]" /> Request Payout Withdrawal
+                  <ArrowUpRight className="h-5 w-5 text-[#EB1000]" /> Request Payout Withdrawal
                 </h3>
                 <p className={`text-xs mt-0.5 ${theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'
                   }`}>
@@ -722,7 +704,7 @@ export default function CreatorWithdrawalsPage() {
                 }`}>
                 <span className={`text-xs font-bold ${theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'
                   }`}>Available for Withdrawal:</span>
-                <span className="font-heading font-black text-base text-[#00F5D4]">
+                <span className="font-heading font-black text-base text-[#EB1000]">
                   ₹{walletData.availableBalance.toFixed(2)}
                 </span>
               </div>
@@ -737,7 +719,7 @@ export default function CreatorWithdrawalsPage() {
                   placeholder="Minimum ₹500"
                   value={withdrawAmount}
                   onChange={(e) => setWithdrawAmount(e.target.value)}
-                  className={`w-full px-4 py-2.5 rounded-xl border text-sm font-bold focus:outline-none focus:border-[#00F5D4] ${theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6] text-[#1A1D20]' : 'bg-[#0A0A0F] border-[#1C1C26] text-white'
+                  className={`w-full px-4 py-2.5 rounded-xl border text-sm font-bold focus:outline-none focus:border-[#EB1000] ${theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6] text-[#1A1D20]' : 'bg-[#0A0A0F] border-[#1C1C26] text-white'
                     }`}
                   required
                 />
@@ -755,7 +737,7 @@ export default function CreatorWithdrawalsPage() {
                   placeholder="e.g. HDFC Bank A/C ****4321 / UPI: creator@upi"
                   value={bankInfo}
                   onChange={(e) => setBankInfo(e.target.value)}
-                  className={`w-full px-4 py-2.5 rounded-xl border text-xs font-semibold focus:outline-none focus:border-[#00F5D4] ${theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6] text-[#1A1D20]' : 'bg-[#0A0A0F] border-[#1C1C26] text-white'
+                  className={`w-full px-4 py-2.5 rounded-xl border text-xs font-semibold focus:outline-none focus:border-[#EB1000] ${theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6] text-[#1A1D20]' : 'bg-[#0A0A0F] border-[#1C1C26] text-white'
                     }`}
                 />
               </div>
@@ -773,7 +755,7 @@ export default function CreatorWithdrawalsPage() {
                 <button
                   type="submit"
                   disabled={isSubmittingWithdraw}
-                  className="px-5 py-2 rounded-xl bg-brand-gradient text-white text-xs font-extrabold shadow-md glow-teal hover:opacity-95 flex items-center gap-1.5"
+                  className="px-5 py-2 rounded-xl bg-gradient-to-r from-[#EB1000] to-[#CC0E00] text-white text-xs font-extrabold shadow-md shadow-[#EB1000]/30 hover:opacity-95 flex items-center gap-1.5 cursor-pointer"
                 >
                   {isSubmittingWithdraw ? (
                     <>

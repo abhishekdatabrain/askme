@@ -360,8 +360,9 @@ export default function CreatorPublicProfilePage({ params: paramsPromise }) {
                   {social.platform?.toLowerCase().includes('youtube') ? <Video className="h-3.5 w-3.5 text-[#FF0000]" /> :
                     social.platform?.toLowerCase().includes('twitch') ? <Tv className="h-3.5 w-3.5 text-[#9146FF]" /> :
                       social.platform?.toLowerCase().includes('instagram') ? <Globe className="h-3.5 w-3.5 text-[#E1306C]" /> :
-                        social.platform?.toLowerCase().includes('twitter') || social.platform?.toLowerCase().includes('x') ? <Share2 className="h-3.5 w-3.5 text-[#1DA1F2]" /> :
-                          <Globe className="h-3.5 w-3.5 text-[#00F5D4]" />}
+                        social.platform?.toLowerCase().includes('linkedin') ? <Globe className="h-3.5 w-3.5 text-[#0A66C2]" /> :
+                          social.platform?.toLowerCase().includes('twitter') || social.platform?.toLowerCase().includes('x') ? <Share2 className="h-3.5 w-3.5 text-[#1DA1F2]" /> :
+                            <Globe className="h-3.5 w-3.5 text-[#00F5D4]" />}
                   <span>{social.platform || 'Social Link'}</span>
                   <ExternalLink className="h-3 w-3 opacity-60" />
                 </a>

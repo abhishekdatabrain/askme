@@ -140,70 +140,66 @@ export default function CreatorSessionHistoryPage() {
 
   return (
     <>
-      <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
-        <header className={`border-b sticky top-0 z-20 px-6 py-4 flex items-center justify-between transition-colors ${theme === 'light' ? 'border-[#E9ECEF] bg-white/90 backdrop-blur-md' : 'border-[#1C1C26] bg-[#0A0A0F]/80 backdrop-blur-md'
+      <div className="flex-1 flex flex-col min-w-0">
+        <header className={`border-b sticky top-0 z-30 shrink-0 px-6 py-4 flex items-center justify-between transition-colors ${theme === 'light' ? 'border-[#E2E8F0] bg-white/95 backdrop-blur-md text-[#0F172A] shadow-sm' : 'border-[#222236] bg-[#0A0A0F]/95 backdrop-blur-md text-white shadow-sm'
           }`}>
           <div>
-            <h1 className={`font-heading font-black text-xl flex items-center gap-2 ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'}`}>
-              <History className="h-5 w-5 text-[#00F5D4]" /> Session History
+            <h1 className={`font-heading font-black text-xl flex items-center gap-2.5 ${theme === 'light' ? 'text-[#0F172A]' : 'text-white'}`}>
+              <History className="h-5 w-5 text-[#EB1000]" /> Session History
             </h1>
-            <p className={`text-xs ${theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'}`}>
+            <p className={`text-xs mt-0.5 font-medium ${theme === 'light' ? 'text-[#64748B]' : 'text-[#A0A0B2]'}`}>
               View past live broadcast sessions and duration records.
             </p>
           </div>
-          <div className="flex items-center gap-3">
-            <button onClick={toggleTheme} className="px-3 py-1.5 rounded-xl border text-xs font-bold flex items-center gap-1.5">
-              {theme === 'dark' ? <Sun className="h-4 w-4 text-[#FFD60A]" /> : <Moon className="h-4 w-4 text-[#7B2FFF]" />}
-              <span className="hidden sm:inline">{theme === 'dark' ? 'Light' : 'Dark'}</span>
-            </button>
-            <CreatorNotificationDropdown theme={theme} />
-          </div>
+
         </header>
 
         <main className="p-6 max-w-5xl w-full mx-auto space-y-6">
-          <div className={`p-6 rounded-3xl border space-y-5 shadow-xl ${theme === 'light' ? 'bg-white border-[#E9ECEF]' : 'bg-[#13131A] border-[#1C1C26]'
+          <div className={`p-6 sm:p-8 rounded-3xl border space-y-6 shadow-2xl relative overflow-hidden transition-all duration-300 ${theme === 'light' ? 'bg-white border-[#E2E8F0] shadow-slate-200/60' : 'bg-[#12121C]/95 backdrop-blur-xl border-[#222236] shadow-black/80'
             }`}>
-            <div className="flex items-center justify-between border-b pb-4 border-[#1C1C26]">
+            {/* Gradient Top Accent Bar */}
+            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#EB1000] via-[#FF5500] to-[#EB1000]" />
+
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b pb-5 border-current/10">
               <div>
-                <h3 className={`font-heading font-black text-lg ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'}`}>
+                <h3 className={`font-heading font-black text-xl sm:text-2xl tracking-tight ${theme === 'light' ? 'text-[#0F172A]' : 'text-white'}`}>
                   Past Live Broadcast Sessions
                 </h3>
-                <p className="text-xs text-[#8B8B96]">History of launched sessions and duration records.</p>
+                <p className={`text-xs mt-1 font-medium ${theme === 'light' ? 'text-[#64748B]' : 'text-[#A0A0B2]'}`}>
+                  History of launched sessions and duration records.
+                </p>
               </div>
               <Link
                 href="/creators/start-live"
-                className="px-4 py-2 rounded-xl bg-brand-gradient text-white font-bold text-xs shadow-md glow-teal hover:scale-105 transition"
+                className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#EB1000] to-[#CC0E00] hover:from-[#CC0E00] hover:to-[#B30C00] text-white font-black text-xs shadow-xl shadow-[#EB1000]/30 hover:scale-[1.02] transition-all flex items-center justify-center gap-1.5 shrink-0"
               >
                 + Start Live Broadcast
               </Link>
             </div>
 
             {/* SEARCH & DATE FILTERS BAR */}
-            <div className={`p-4 rounded-2xl border ${
-              theme === 'light' ? 'bg-[#F8F9FA] border-[#E9ECEF]' : 'bg-[#0A0A0F] border-[#1C1C26]'
-            }`}>
+            <div className={`p-4 rounded-2xl border transition-all ${theme === 'light' ? 'bg-[#F8FAFC] border-[#E2E8F0]' : 'bg-[#181826] border-[#2A2A3E]'
+              }`}>
               <form onSubmit={handleSearchSubmit} className="flex flex-col md:flex-row md:items-center justify-between gap-3 flex-wrap">
                 {/* Search Box */}
                 <div className="relative flex-1 min-w-[200px]">
-                  <Search className={`absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 ${
-                    theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'
-                  }`} />
+                  <Search className={`absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 ${theme === 'light' ? 'text-[#64748B]' : 'text-[#EB1000]'
+                    }`} />
                   <input
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Search by title, category, code..."
-                    className={`w-full pl-10 pr-9 py-2 rounded-xl text-xs border transition focus:outline-none focus:border-[#00F5D4] ${
-                      theme === 'light'
-                        ? 'bg-white border-[#DEE2E6] text-[#1A1D20] placeholder-[#959EAD]'
-                        : 'bg-[#13131A] border-[#1C1C26] text-white placeholder-[#8B8B96]'
-                    }`}
+                    className={`w-full pl-10 pr-9 py-2.5 rounded-xl text-xs border outline-none font-medium transition-all duration-200 ${theme === 'light'
+                        ? 'bg-white border-[#E2E8F0] text-[#0F172A] placeholder-[#94A3B8] focus:border-[#EB1000] focus:ring-1 focus:ring-[#EB1000]'
+                        : 'bg-[#12121C] border-[#222236] text-white placeholder-[#6E6E82] focus:border-[#EB1000] focus:ring-1 focus:ring-[#EB1000]'
+                      }`}
                   />
                   {searchQuery && (
                     <button
                       type="button"
                       onClick={() => setSearchQuery('')}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-[#8B8B96] hover:text-white p-0.5"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-[#A0A0B2] hover:text-white p-0.5 cursor-pointer"
                     >
                       <X className="h-3.5 w-3.5" />
                     </button>
@@ -213,32 +209,30 @@ export default function CreatorSessionHistoryPage() {
                 {/* Date Inputs */}
                 <div className="flex items-center gap-2.5 flex-wrap">
                   <div className="flex items-center gap-1.5">
-                    <span className="text-[11px] font-bold text-[#8B8B96] flex items-center gap-1">
-                      <Calendar className="h-3.5 w-3.5 text-[#00F5D4]" /> From:
+                    <span className={`text-[11px] font-bold flex items-center gap-1 ${theme === 'light' ? 'text-[#64748B]' : 'text-[#A0A0B2]'}`}>
+                      <Calendar className="h-3.5 w-3.5 text-[#EB1000]" /> From:
                     </span>
                     <input
                       type="date"
                       value={startDate}
                       onChange={(e) => setStartDate(e.target.value)}
-                      className={`px-2.5 py-1.5 rounded-xl text-xs border focus:outline-none focus:border-[#00F5D4] ${
-                        theme === 'light'
-                          ? 'bg-white border-[#DEE2E6] text-[#1A1D20]'
-                          : 'bg-[#13131A] border-[#1C1C26] text-white'
-                      }`}
+                      className={`px-3 py-2 rounded-xl text-xs border outline-none font-medium transition-all duration-200 ${theme === 'light'
+                          ? 'bg-white border-[#E2E8F0] text-[#0F172A] focus:border-[#EB1000]'
+                          : 'bg-[#12121C] border-[#222236] text-white focus:border-[#EB1000]'
+                        }`}
                     />
                   </div>
 
                   <div className="flex items-center gap-1.5">
-                    <span className="text-[11px] font-bold text-[#8B8B96]">To:</span>
+                    <span className={`text-[11px] font-bold ${theme === 'light' ? 'text-[#64748B]' : 'text-[#A0A0B2]'}`}>To:</span>
                     <input
                       type="date"
                       value={endDate}
                       onChange={(e) => setEndDate(e.target.value)}
-                      className={`px-2.5 py-1.5 rounded-xl text-xs border focus:outline-none focus:border-[#00F5D4] ${
-                        theme === 'light'
-                          ? 'bg-white border-[#DEE2E6] text-[#1A1D20]'
-                          : 'bg-[#13131A] border-[#1C1C26] text-white'
-                      }`}
+                      className={`px-3 py-2 rounded-xl text-xs border outline-none font-medium transition-all duration-200 ${theme === 'light'
+                          ? 'bg-white border-[#E2E8F0] text-[#0F172A] focus:border-[#EB1000]'
+                          : 'bg-[#12121C] border-[#222236] text-white focus:border-[#EB1000]'
+                        }`}
                     />
                   </div>
                 </div>
@@ -247,7 +241,7 @@ export default function CreatorSessionHistoryPage() {
                 <div className="flex items-center gap-2 shrink-0">
                   <button
                     type="submit"
-                    className="px-4 py-2 rounded-xl bg-brand-gradient text-white font-bold text-xs shadow-md glow-teal hover:scale-105 transition flex items-center gap-1.5"
+                    className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#EB1000] to-[#CC0E00] text-white font-black text-xs shadow-md shadow-[#EB1000]/20 hover:opacity-90 transition flex items-center gap-1.5 cursor-pointer"
                   >
                     <Search className="h-3.5 w-3.5" /> Search
                   </button>
@@ -256,7 +250,7 @@ export default function CreatorSessionHistoryPage() {
                     <button
                       type="button"
                       onClick={handleResetFilters}
-                      className="px-3 py-2 rounded-xl text-xs font-bold text-[#FF5252] bg-[#FF5252]/10 border border-[#FF5252]/20 hover:bg-[#FF5252]/20 transition flex items-center gap-1"
+                      className="px-3.5 py-2.5 rounded-xl text-xs font-black text-[#FF3D71] bg-[#FF3D71]/10 border border-[#FF3D71]/30 hover:bg-[#FF3D71]/20 transition flex items-center gap-1 cursor-pointer"
                     >
                       <RotateCcw className="h-3.5 w-3.5" /> Reset
                     </button>
@@ -267,34 +261,34 @@ export default function CreatorSessionHistoryPage() {
 
             {isLoading ? (
               <div className="p-12 text-center flex flex-col items-center justify-center space-y-3">
-                <RefreshCw className="h-8 w-8 text-[#00F5D4] animate-spin" />
-                <p className="text-xs text-[#8B8B96]">Loading session history...</p>
+                <RefreshCw className="h-8 w-8 text-[#EB1000] animate-spin" />
+                <p className="text-xs text-[#A0A0B2] font-semibold">Loading session history...</p>
               </div>
             ) : sessions.length > 0 ? (
               <div className="space-y-3">
                 {sessions.map((s) => (
                   <div
                     key={s.id}
-                    className={`p-4 rounded-2xl border flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition ${theme === 'light' ? 'bg-[#F8F9FA] border-[#E9ECEF]' : 'bg-[#0A0A0F] border-[#1C1C26]'
+                    className={`p-4 sm:p-5 rounded-2xl border flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all ${theme === 'light' ? 'bg-[#F8FAFC] border-[#E2E8F0]' : 'bg-[#181826] border-[#2A2A3E]'
                       }`}
                   >
                     <div className="flex items-center gap-3.5 min-w-0">
                       <div className={`p-3 rounded-xl shrink-0 ${s.status === 'active'
-                          ? 'bg-[#00E676]/10 text-[#00E676] border border-[#00E676]/30'
-                          : 'bg-[#1C1C26] text-[#8B8B96]'
+                        ? 'bg-[#EB1000]/10 text-[#EB1000] border border-[#EB1000]/40 shadow-sm'
+                        : 'bg-[#EB1000]/10 text-[#EB1000] border border-[#EB1000]/20'
                         }`}>
                         <Radio className="h-5 w-5" />
                       </div>
                       <div className="min-w-0">
-                        <h4 className={`font-bold text-sm truncate ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'}`}>
+                        <h4 className={`font-extrabold text-sm truncate ${theme === 'light' ? 'text-[#0F172A]' : 'text-white'}`}>
                           {s.title}
                         </h4>
-                        <div className="flex items-center gap-3 text-[11px] text-[#8B8B96] mt-0.5 flex-wrap">
-                          <span className="font-semibold text-[#00F5D4]">{s.category || 'General'}</span>
+                        <div className="flex items-center gap-3 text-[11px] text-[#A0A0B2] mt-1 flex-wrap">
+                          <span className="font-extrabold text-[#EB1000]">{s.category || 'General'}</span>
                           <span>•</span>
                           <span>{s.streamingPlatform || 'YouTube Live'}</span>
                           <span>•</span>
-                          <span className="flex items-center gap-1">
+                          <span className="flex items-center gap-1 font-medium">
                             <Clock className="h-3 w-3" /> {new Date(s.createdAt || s.startedAt).toLocaleDateString()}
                           </span>
                         </div>
@@ -305,22 +299,19 @@ export default function CreatorSessionHistoryPage() {
                       {/* VIEW QUESTIONS DEDICATED PAGE LINK */}
                       <Link
                         href={`/creators/session-history/${s.id}`}
-                        className={`px-3 py-1.5 rounded-xl border text-xs font-bold transition-all flex items-center gap-1.5 glow-purple ${theme === 'light'
-                            ? 'bg-[#7B2FFF]/10 border-[#7B2FFF]/30 text-[#7B2FFF] hover:bg-[#7B2FFF]/20'
-                            : 'bg-[#1C1A2E] border-[#7B2FFF]/40 text-[#00F5D4] hover:bg-[#2A244D]'
-                          }`}
+                        className="px-4 py-2 rounded-xl bg-gradient-to-r from-[#EB1000] to-[#CC0E00] text-white font-black text-xs shadow-md shadow-[#EB1000]/20 hover:scale-[1.02] transition-all flex items-center gap-1.5"
                       >
-                        <span className="font-extrabold flex items-center gap-1">
+                        <span className="flex items-center gap-1">
                           View <ArrowRight className="h-3.5 w-3.5" />
                         </span>
-                        <span className="text-[11px] text-[#8B8B96] font-mono">
-                          ({s.questionCount || s.totalDonations || 0} Questions)
+                        <span className="text-[11px] text-white/80 font-mono">
+                          ({s.questionCount || s.totalDonations || 0})
                         </span>
                       </Link>
 
                       <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${s.status === 'active'
-                          ? 'bg-[#00E676]/10 text-[#00E676] border border-[#00E676]/30'
-                          : 'bg-[#1C1C26] text-[#8B8B96]'
+                        ? 'bg-[#00E676]/10 text-[#00E676] border border-[#00E676]/30'
+                        : theme === 'light' ? 'bg-[#E2E8F0] text-[#64748B]' : 'bg-[#12121C] text-[#A0A0B2] border border-[#222236]'
                         }`}>
                         {s.status || 'closed'}
                       </span>
@@ -330,10 +321,10 @@ export default function CreatorSessionHistoryPage() {
 
                 {/* PAGINATION CONTROLS */}
                 {pagination && (
-                  <div className={`mt-6 pt-4 border-t flex flex-col sm:flex-row items-center justify-between gap-4 ${theme === 'light' ? 'border-[#E9ECEF]' : 'border-[#1C1C26]'
+                  <div className={`mt-6 pt-4 border-t flex flex-col sm:flex-row items-center justify-between gap-4 ${theme === 'light' ? 'border-[#E2E8F0]' : 'border-current/10'
                     }`}>
-                    <div className="text-xs text-[#8B8B96]">
-                      Showing Page <span className="font-bold text-[#00F5D4]">{pagination.page}</span> of{' '}
+                    <div className="text-xs text-[#A0A0B2]">
+                      Showing Page <span className="font-extrabold text-[#EB1000]">{pagination.page}</span> of{' '}
                       <span className="font-bold">{pagination.totalPages}</span> ({pagination.totalCount} total sessions)
                     </div>
 
@@ -341,11 +332,11 @@ export default function CreatorSessionHistoryPage() {
                       <button
                         onClick={() => handlePageChange(pagination.page - 1)}
                         disabled={!pagination.hasPrevPage}
-                        className={`px-3 py-1.5 rounded-xl border text-xs font-bold flex items-center gap-1 transition ${pagination.hasPrevPage
-                            ? theme === 'light'
-                              ? 'bg-white border-[#E9ECEF] text-[#1A1D20] hover:bg-[#F8F9FA]'
-                              : 'bg-[#0A0A0F] border-[#1C1C26] text-white hover:border-[#00F5D4]/50'
-                            : 'opacity-40 cursor-not-allowed border-transparent text-[#8B8B96]'
+                        className={`px-3.5 py-2 rounded-xl border text-xs font-extrabold flex items-center gap-1 transition-all cursor-pointer ${pagination.hasPrevPage
+                          ? theme === 'light'
+                            ? 'bg-white border-[#E2E8F0] text-[#0F172A] hover:bg-[#F8FAFC]'
+                            : 'bg-[#181826] border-[#2A2A3E] text-white hover:border-[#EB1000]'
+                          : 'opacity-40 cursor-not-allowed border-transparent text-[#A0A0B2]'
                           }`}
                       >
                         <ChevronLeft className="h-4 w-4" /> Previous
@@ -356,11 +347,11 @@ export default function CreatorSessionHistoryPage() {
                           <button
                             key={pageNum}
                             onClick={() => handlePageChange(pageNum)}
-                            className={`w-8 h-8 rounded-xl text-xs font-extrabold flex items-center justify-center transition ${pageNum === pagination.page
-                                ? 'bg-brand-gradient text-white shadow-md glow-teal'
-                                : theme === 'light'
-                                  ? 'bg-white border border-[#E9ECEF] text-[#6C757D] hover:bg-[#F8F9FA]'
-                                  : 'bg-[#0A0A0F] border border-[#1C1C26] text-[#8B8B96] hover:text-white'
+                            className={`w-8 h-8 rounded-xl text-xs font-black flex items-center justify-center transition-all cursor-pointer ${pageNum === pagination.page
+                              ? 'bg-gradient-to-r from-[#EB1000] to-[#CC0E00] text-white shadow-md shadow-[#EB1000]/30'
+                              : theme === 'light'
+                                ? 'bg-white border border-[#E2E8F0] text-[#64748B] hover:bg-[#F8FAFC]'
+                                : 'bg-[#181826] border border-[#2A2A3E] text-[#A0A0B2] hover:text-white'
                               }`}
                           >
                             {pageNum}
@@ -371,11 +362,11 @@ export default function CreatorSessionHistoryPage() {
                       <button
                         onClick={() => handlePageChange(pagination.page + 1)}
                         disabled={!pagination.hasNextPage}
-                        className={`px-3 py-1.5 rounded-xl border text-xs font-bold flex items-center gap-1 transition ${pagination.hasNextPage
-                            ? theme === 'light'
-                              ? 'bg-white border-[#E9ECEF] text-[#1A1D20] hover:bg-[#F8F9FA]'
-                              : 'bg-[#0A0A0F] border-[#1C1C26] text-white hover:border-[#00F5D4]/50'
-                            : 'opacity-40 cursor-not-allowed border-transparent text-[#8B8B96]'
+                        className={`px-3.5 py-2 rounded-xl border text-xs font-extrabold flex items-center gap-1 transition-all cursor-pointer ${pagination.hasNextPage
+                          ? theme === 'light'
+                            ? 'bg-white border-[#E2E8F0] text-[#0F172A] hover:bg-[#F8FAFC]'
+                            : 'bg-[#181826] border-[#2A2A3E] text-white hover:border-[#EB1000]'
+                          : 'opacity-40 cursor-not-allowed border-transparent text-[#A0A0B2]'
                           }`}
                       >
                         Next <ChevronRight className="h-4 w-4" />
@@ -385,15 +376,15 @@ export default function CreatorSessionHistoryPage() {
                 )}
               </div>
             ) : (
-              <div className="p-12 text-center text-xs text-[#8B8B96] space-y-3">
-                <History className="h-10 w-10 mx-auto text-[#8B8B96] opacity-50" />
-                <p className="font-semibold text-sm">
+              <div className="p-12 text-center text-xs text-[#A0A0B2] space-y-3">
+                <History className="h-10 w-10 mx-auto text-[#EB1000] opacity-50" />
+                <p className="font-extrabold text-sm">
                   {isFiltered ? 'No broadcast sessions found matching your search and date criteria.' : 'No past broadcast sessions recorded yet.'}
                 </p>
                 {isFiltered && (
                   <button
                     onClick={handleResetFilters}
-                    className="px-4 py-2 rounded-xl bg-[#00F5D4]/10 border border-[#00F5D4]/30 text-[#00F5D4] font-bold text-xs hover:bg-[#00F5D4]/20 transition inline-flex items-center gap-1.5"
+                    className="px-4 py-2 rounded-xl bg-[#EB1000]/10 border border-[#EB1000]/30 text-[#EB1000] font-black text-xs hover:bg-[#EB1000]/20 transition inline-flex items-center gap-1.5 cursor-pointer"
                   >
                     <RotateCcw className="h-3.5 w-3.5" /> Clear Filters
                   </button>

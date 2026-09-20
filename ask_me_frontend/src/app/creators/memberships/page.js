@@ -230,9 +230,9 @@ export default function CreatorMembershipsPage() {
   return (
     <>
       {/* 2. MAIN CONTENT AREA */}
-      <div className="flex-1 flex flex-col min-w-0 h-screen overflow-y-auto">
+      <div className="flex-1 flex flex-col min-w-0">
         {/* TOP NAVBAR */}
-        <header className={`sticky top-0 z-20 border-b px-6 py-3.5 flex items-center justify-between backdrop-blur-md transition-colors ${theme === 'light' ? 'bg-white/90 border-[#E9ECEF]' : 'bg-[#13131A]/90 border-[#1C1C26]'}`}>
+        <header className={`sticky top-0 z-30 shrink-0 border-b px-6 py-3.5 flex items-center justify-between backdrop-blur-md transition-colors ${theme === 'light' ? 'bg-white/95 border-[#E9ECEF] shadow-sm' : 'bg-[#0A0A0F]/95 border-[#1C1C26] shadow-sm'}`}>
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-xl bg-[#FFD60A]/10 text-[#FFD60A]">
               <Sparkles className="h-5 w-5" />
@@ -248,20 +248,7 @@ export default function CreatorMembershipsPage() {
           </div>
 
           <div className="flex items-center gap-3">
-            {/* Notification Dropdown */}
-            <CreatorNotificationDropdown theme={theme} />
 
-            {/* Theme Toggle Button */}
-            <button
-              onClick={toggleTheme}
-              className={`p-2 rounded-xl border transition ${theme === 'light'
-                ? 'bg-[#F1F3F5] border-[#DEE2E6] text-[#495057] hover:text-[#1A1D20]'
-                : 'bg-[#1C1C26] border-[#2A2A38] text-[#8B8B96] hover:text-white'
-                }`}
-              title="Toggle Theme"
-            >
-              {theme === 'light' ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
-            </button>
 
             {/* Creator Profile Link */}
             <Link href="/creators/profile" className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border transition ${theme === 'light' ? 'bg-[#F1F3F5] border-[#DEE2E6]' : 'bg-[#1C1C26] border-[#2A2A38]'}`}>

@@ -333,7 +333,7 @@ function CreatorDashboardContent() {
             setActiveSession({
               ...active,
               paymentLink: active.paymentLink || `${window.location.origin}/pay/${active.sessionCode}?creatorId=${creatorId}&sessionId=${active.id}`,
-              qrCodeUrl: active.qrCodeUrl || `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(active.paymentLink || `${window.location.origin}/pay/${active.sessionCode}`)}`,
+              qrCodeUrl: active.qrCodeUrl || `https://api.qrserver.com/v1/create-qr-code/?size=400x400&ecc=H&margin=2&data=${encodeURIComponent(active.paymentLink || `${window.location.origin}/pay/${active.sessionCode}`)}`,
               overlayUrl: active.overlayUrl || `${window.location.origin}/overlay/${u?.username || creatorId}?sessionCode=${active.sessionCode}`,
             });
           }
@@ -407,7 +407,7 @@ function CreatorDashboardContent() {
         const sessData = data.data;
         const origin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000';
         const pLink = sessData.paymentLink || `${origin}/pay/${sessData.session.sessionCode}?creatorId=${creatorId}&sessionId=${sessData.session.id}`;
-        const qrUrl = sessData.qrCodeUrl || `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(pLink)}`;
+        const qrUrl = sessData.qrCodeUrl || `https://api.qrserver.com/v1/create-qr-code/?size=400x400&ecc=H&margin=2&data=${encodeURIComponent(pLink)}`;
         const oUrl = sessData.overlayUrl || `${origin}/overlay/${creator?.username || creatorId}?sessionCode=${sessData.session.sessionCode}`;
 
         const updatedSession = {
@@ -465,7 +465,7 @@ function CreatorDashboardContent() {
         const returnedSession = data.data?.session;
         const origin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000';
         const pLink = data.data?.paymentLink || `${origin}/pay/${returnedSession?.sessionCode}?creatorId=${creator?.id}&sessionId=${returnedSession?.id}`;
-        const qrUrl = data.data?.qrCodeUrl || `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(pLink)}`;
+        const qrUrl = data.data?.qrCodeUrl || `https://api.qrserver.com/v1/create-qr-code/?size=400x400&ecc=H&margin=2&data=${encodeURIComponent(pLink)}`;
         const oUrl = data.data?.overlayUrl || `${origin}/overlay/${creator?.username || creator?.id}?sessionCode=${returnedSession?.sessionCode}`;
 
         const activeObj = {
@@ -556,8 +556,8 @@ function CreatorDashboardContent() {
       <div className={`min-h-screen flex items-center justify-center font-sans ${theme === 'light' ? 'bg-[#F4F5F7] text-[#1A1D20]' : 'bg-[#0A0A0F] text-white'
         }`}>
         <div className="text-center space-y-3">
-          <div className="h-10 w-10 border-4 border-[#00F5D4] border-t-transparent rounded-full animate-spin mx-auto" />
-          <p className="text-xs font-bold tracking-wider uppercase text-[#00F5D4]">Loading Creator Control Room...</p>
+          <div className="h-10 w-10 border-4 border-[#EB1000] border-t-transparent rounded-full animate-spin mx-auto" />
+          <p className="text-xs font-bold tracking-wider uppercase text-[#EB1000]">Loading Creator Control Room...</p>
         </div>
       </div>
     );
@@ -569,9 +569,9 @@ function CreatorDashboardContent() {
   return (
     <>
       {/* 2. Main Studio Content Area */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
+      <div className="flex-1 flex flex-col min-w-0">
         {/* Header Bar */}
-        <header className={`border-b sticky top-0 z-20 px-6 py-4 flex items-center justify-between transition-colors duration-200 ${theme === 'light' ? 'border-[#E9ECEF] bg-white/90 backdrop-blur-md' : 'border-[#1C1C26] bg-[#0A0A0F]/80 backdrop-blur-md'
+        <header className={`border-b sticky top-0 z-30 shrink-0 px-6 py-4 flex items-center justify-between transition-colors duration-200 ${theme === 'light' ? 'border-[#E9ECEF] bg-white/95 backdrop-blur-md shadow-sm' : 'border-[#1C1C26] bg-[#0A0A0F]/95 backdrop-blur-md shadow-sm'
           }`}>
           <div>
             <h1 className={`font-heading font-black text-xl flex items-center gap-2 ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'
@@ -589,7 +589,7 @@ function CreatorDashboardContent() {
               onClick={toggleTheme}
               className={`px-3 py-1.5 rounded-xl border text-xs font-bold transition-all flex items-center gap-1.5 ${theme === 'light'
                 ? 'bg-[#F1F3F5] text-[#212529] border-[#E9ECEF] hover:bg-[#E9ECEF]'
-                : 'bg-[#1C1C26] text-white border-[#1C1C26] hover:border-[#00F5D4]/40'
+                : 'bg-[#1C1C26] text-white border-[#1C1C26] hover:border-[#EB1000]/40'
                 }`}
               title={theme === 'dark' ? 'Switch to Light Theme' : 'Switch to Dark Theme'}
             >
@@ -600,7 +600,7 @@ function CreatorDashboardContent() {
                 </>
               ) : (
                 <>
-                  <Moon className="h-4 w-4 text-[#7B2FFF]" />
+                  <Moon className="h-4 w-4 text-[#EB1000]" />
                   <span className="hidden sm:inline">Dark</span>
                 </>
               )}
@@ -609,9 +609,9 @@ function CreatorDashboardContent() {
             <Link
               href="/creators/kyc"
               className={`px-3.5 py-1.5 rounded-xl text-xs font-bold border transition-colors flex items-center gap-1.5 ${kycStatus === 'approved' || kycStatus === 'verified'
-                ? 'bg-[#00E676]/10 text-[#00E676] border-[#00E676]/30 hover:bg-[#00E676]/20'
+                ? 'bg-[#10B981]/10 text-[#10B981] border-[#10B981]/30 hover:bg-[#10B981]/20'
                 : kycStatus === 'rejected'
-                  ? 'bg-[#FF3D71]/10 text-[#FF3D71] border-[#FF3D71]/30 hover:bg-[#FF3D71]/20'
+                  ? 'bg-[#EF4444]/10 text-[#EF4444] border-[#EF4444]/30 hover:bg-[#EF4444]/20'
                   : 'bg-[#FFD60A]/10 text-[#FFD60A] border-[#FFD60A]/30 hover:bg-[#FFD60A]/20'
                 }`}
             >
@@ -631,16 +631,16 @@ function CreatorDashboardContent() {
             <div className="space-y-6 animate-fade-in">
               {/* Active Session Callout Banner with QR & OBS Overlay Grid if Live */}
               {activeSession && (
-                <div className={`p-6 rounded-3xl border-2 shadow-2xl space-y-6 glow-teal transition-colors ${theme === 'light' ? 'bg-white border-[#00F5D4]/60' : 'bg-[#13131A] border-[#00F5D4]/40'
+                <div className={`p-6 rounded-3xl border-2 shadow-2xl space-y-6 shadow-[#EB1000]/10 transition-colors ${theme === 'light' ? 'bg-white border-[#EB1000]/60' : 'bg-[#13131A] border-[#EB1000]/40'
                   }`}>
                   <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border-b pb-4 border-[#1C1C26]">
                     <div className="flex items-center gap-3">
-                      <div className="p-3.5 rounded-2xl bg-[#00F5D4]/10 text-[#00F5D4] border border-[#00F5D4]/30 animate-pulse">
+                      <div className="p-3.5 rounded-2xl bg-[#EB1000]/10 text-[#EB1000] border border-[#EB1000]/30 animate-pulse">
                         <Radio className="h-7 w-7" />
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
-                          <span className="px-2.5 py-0.5 rounded-full bg-[#00E676]/10 text-[#00E676] border border-[#00E676]/30 text-[10px] font-black uppercase tracking-wider animate-pulse">
+                          <span className="px-2.5 py-0.5 rounded-full bg-[#10B981]/15 text-[#10B981] border border-[#10B981]/30 text-[10px] font-black uppercase tracking-wider animate-pulse">
                             ● BROADCAST LIVE ACTIVE
                           </span>
                           {timeRemaining && (
@@ -656,10 +656,10 @@ function CreatorDashboardContent() {
                     </div>
 
                     <div className="flex items-center gap-2 shrink-0">
-                      <Link href="/creators/active-session" className="px-4 py-2 rounded-xl bg-[#00F5D4] text-white font-bold text-xs shadow-md hover:scale-105 transition">
+                      <Link href="/creators/active-session" className="px-4 py-2 rounded-xl bg-gradient-to-r from-[#EB1000] to-[#CC0E00] text-white font-bold text-xs shadow-md shadow-[#EB1000]/30 hover:scale-105 transition">
                         Manage Session
                       </Link>
-                      <button onClick={handleEndSession} className="px-4 py-2 rounded-xl bg-[#FF3D71] text-white border border-[#FF3D71] font-bold text-xs hover:bg-[#E03563] transition shadow-md">
+                      <button onClick={handleEndSession} className="px-4 py-2 rounded-xl bg-[#DC2626]/10 text-[#DC2626] border border-[#DC2626]/30 hover:bg-[#DC2626] hover:text-white font-bold text-xs transition shadow-md cursor-pointer">
                         End Session
                       </button>
                     </div>
@@ -671,17 +671,17 @@ function CreatorDashboardContent() {
                     <div className={`p-4 rounded-2xl border flex items-center gap-4 ${theme === 'light' ? 'bg-[#F8F9FA] border-[#E9ECEF]' : 'bg-[#0A0A0F] border-[#1C1C26]'}`}>
                       <BrandedQrCode qrUrl={activeSession.qrCodeUrl} size="sm" showBrandHeader={false} />
                       <div className="space-y-1 min-w-0 flex-1">
-                        <span className="text-[10px] font-bold text-[#00F5D4] uppercase">Instant UPI Payment Link & QR</span>
+                        <span className="text-[10px] font-bold text-[#EB1000] uppercase">Instant UPI Payment Link & QR</span>
                         <p className="text-xs font-mono truncate">{activeSession.paymentLink}</p>
                         <div className="flex flex-wrap gap-2 pt-1">
-                          <button onClick={() => copyPaymentLink(activeSession.paymentLink)} className="px-3.5 py-1.5 rounded-lg bg-[#00F5D4] text-white font-bold text-[11px] shadow-sm hover:scale-105 transition flex items-center gap-1">
+                          <button onClick={() => copyPaymentLink(activeSession.paymentLink)} className="px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-[#EB1000] to-[#CC0E00] text-white font-bold text-[11px] shadow-sm hover:scale-105 transition flex items-center gap-1 cursor-pointer">
                             <Copy className="h-3.5 w-3.5" /> Copy Link
                           </button>
-                          <button onClick={() => downloadQrCode(activeSession.qrCodeUrl, `askme_qr_${activeSession.sessionCode || 'code'}.png`)} className="px-3.5 py-1.5 rounded-lg bg-[#1C1C26] text-[#00F5D4] text-[11px] font-bold border border-[#00F5D4]/40 hover:bg-[#00F5D4]/10 transition flex items-center gap-1">
+                          <button onClick={() => downloadQrCode(activeSession.qrCodeUrl, `askme_qr_${activeSession.sessionCode || 'code'}.png`)} className="px-3.5 py-1.5 rounded-lg bg-[#1C1C26] text-white text-[11px] font-bold border border-[#252533] hover:border-[#EB1000]/50 transition flex items-center gap-1 cursor-pointer">
                             <Download className="h-3.5 w-3.5" /> Download QR
                           </button>
-                          <a href={activeSession.paymentLink} target="_blank" rel="noopener noreferrer" className="px-3.5 py-1.5 rounded-lg bg-[#1C1C26] text-white text-[11px] border border-[#252533] hover:border-[#00F5D4] transition flex items-center gap-1">
-                            Test Link <ExternalLink className="h-3.5 w-3.5 text-[#00F5D4]" />
+                          <a href={activeSession.paymentLink} target="_blank" rel="noopener noreferrer" className="px-3.5 py-1.5 rounded-lg bg-[#1C1C26] text-white text-[11px] border border-[#252533] hover:border-[#EB1000]/50 transition flex items-center gap-1">
+                            Test Link <ExternalLink className="h-3.5 w-3.5 text-[#EB1000]" />
                           </a>
                         </div>
                       </div>
@@ -689,19 +689,19 @@ function CreatorDashboardContent() {
 
                     {/* OBS Overlay Source */}
                     <div className={`p-4 rounded-2xl border flex items-center gap-4 ${theme === 'light' ? 'bg-[#F8F9FA] border-[#E9ECEF]' : 'bg-[#0A0A0F] border-[#1C1C26]'}`}>
-                      <div className="h-24 w-24 rounded-xl bg-[#7B2FFF]/10 border border-[#7B2FFF]/30 flex flex-col items-center justify-center text-[#7B2FFF] shrink-0">
+                      <div className="h-24 w-24 rounded-xl bg-[#EB1000]/10 border border-[#EB1000]/30 flex flex-col items-center justify-center text-[#EB1000] shrink-0">
                         <Monitor className="h-7 w-7" />
                         <span className="text-[9px] font-black mt-1 uppercase">OBS SOURCE</span>
                       </div>
                       <div className="space-y-1 min-w-0 flex-1">
-                        <span className="text-[10px] font-bold text-[#7B2FFF] uppercase">OBS Overlay Browser Source URL</span>
-                        <p className="text-xs font-mono truncate text-[#7B2FFF]">{activeSession.overlayUrl}</p>
+                        <span className="text-[10px] font-bold text-[#EB1000] uppercase">OBS Overlay Browser Source URL</span>
+                        <p className="text-xs font-mono truncate text-[#EB1000]">{activeSession.overlayUrl}</p>
                         <div className="flex gap-2 pt-1">
-                          <button onClick={() => copyOverlayUrl(activeSession.overlayUrl)} className="px-3 py-1.5 rounded-lg bg-[#7B2FFF] text-white font-bold text-[11px] shadow-sm hover:scale-105 transition">
+                          <button onClick={() => copyOverlayUrl(activeSession.overlayUrl)} className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-[#EB1000] to-[#CC0E00] text-white font-bold text-[11px] shadow-sm hover:scale-105 transition cursor-pointer">
                             <Copy className="h-3.5 w-3.5 inline mr-1" /> Copy Overlay
                           </button>
-                          <a href={activeSession.overlayUrl} target="_blank" rel="noopener noreferrer" className="px-3 py-1.5 rounded-lg bg-[#1C1C26] text-white text-[11px] border border-[#252533]">
-                            Preview <ExternalLink className="h-3.5 w-3.5 inline text-[#7B2FFF]" />
+                          <a href={activeSession.overlayUrl} target="_blank" rel="noopener noreferrer" className="px-3 py-1.5 rounded-lg bg-[#1C1C26] text-white text-[11px] border border-[#252533] hover:border-[#EB1000]/50 transition">
+                            Preview <ExternalLink className="h-3.5 w-3.5 inline text-[#EB1000]" />
                           </a>
                         </div>
                       </div>
@@ -715,12 +715,12 @@ function CreatorDashboardContent() {
                 }`}>
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="px-3 py-1 rounded-full bg-[#00F5D4]/10 border border-[#00F5D4]/30 text-[#00F5D4] text-xs font-bold uppercase tracking-wider">
+                    <span className="px-3 py-1 rounded-full bg-[#EB1000]/10 border border-[#EB1000]/30 text-[#EB1000] text-xs font-bold uppercase tracking-wider">
                       CREATOR CONTROL ROOM
                     </span>
                   </div>
                   <h2 className={`font-heading font-black text-2xl md:text-3xl tracking-tight mt-2 ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'}`}>
-                    Welcome, <span className="text-brand-gradient">{creator?.fullName || 'Creator Host'}</span>
+                    Welcome, <span className="bg-gradient-to-r from-[#EB1000] to-[#CC0E00] bg-clip-text text-transparent">{creator?.fullName || 'Creator Host'}</span>
                   </h2>
                   <p className={`text-xs md:text-sm mt-1 ${theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'}`}>
                     85% net revenue share enabled. Embed your stream overlay for paid viewer questions & instant UPI settlements.
@@ -729,7 +729,7 @@ function CreatorDashboardContent() {
 
                 <Link
                   href="/creators/start-live"
-                  className="px-5 py-3 rounded-2xl bg-brand-gradient text-white font-black text-xs shadow-lg glow-teal hover:scale-105 transition-all flex items-center gap-2 shrink-0"
+                  className="px-5 py-3 rounded-2xl bg-gradient-to-r from-[#EB1000] to-[#CC0E00] text-white font-black text-xs shadow-lg shadow-[#EB1000]/30 hover:scale-105 transition-all flex items-center gap-2 shrink-0"
                 >
                   <Radio className="h-5 w-5 stroke-[2.5]" /> Launch New Live Session
                 </Link>
@@ -739,25 +739,25 @@ function CreatorDashboardContent() {
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div className={`p-5 rounded-2xl border space-y-2 ${theme === 'light' ? 'bg-white border-[#E9ECEF]' : 'bg-[#13131A] border-[#1C1C26]'}`}>
                   <span className="text-xs font-bold text-[#8B8B96] flex items-center gap-1.5">
-                    <DollarSign className="h-4 w-4 text-[#00F5D4]" /> Total Net Earnings
+                    <DollarSign className="h-4 w-4 text-[#EB1000]" /> Total Net Earnings
                   </span>
                   <div className={`font-heading font-extrabold text-2xl ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'}`}>
                     ₹{walletMetrics.totalEarnings.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </div>
-                  <span className="text-[11px] text-[#00E676] font-semibold">85% Revenue Share active</span>
+                  <span className="text-[11px] text-[#10B981] font-semibold">85% Revenue Share active</span>
                 </div>
 
                 <div className={`p-5 rounded-2xl border space-y-2 ${theme === 'light' ? 'bg-white border-[#E9ECEF]' : 'bg-[#13131A] border-[#1C1C26]'}`}>
                   <span className="text-xs font-bold text-[#8B8B96] flex items-center gap-1.5">
-                    <MessageSquare className="h-4 w-4 text-[#FF3D71]" /> Questions Answered
+                    <MessageSquare className="h-4 w-4 text-[#EB1000]" /> Questions Answered
                   </span>
-                  <div className="font-heading font-extrabold text-2xl text-[#00F5D4]">{walletMetrics.questionsAnsweredCount} Paid Qs</div>
+                  <div className="font-heading font-extrabold text-2xl text-[#EB1000]">{walletMetrics.questionsAnsweredCount} Paid Qs</div>
                   <span className="text-[11px] text-[#8B8B96]">Min Fee: ₹10</span>
                 </div>
 
                 <div className={`p-5 rounded-2xl border space-y-2 ${theme === 'light' ? 'bg-white border-[#E9ECEF]' : 'bg-[#13131A] border-[#1C1C26]'}`}>
                   <span className="text-xs font-bold text-[#8B8B96] flex items-center gap-1.5">
-                    <Wallet className="h-4 w-4 text-[#FFD60A]" /> Available Balance
+                    <Wallet className="h-4 w-4 text-[#EB1000]" /> Available Balance
                   </span>
                   <div className={`font-heading font-extrabold text-2xl ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'}`}>
                     ₹{walletMetrics.availableBalance.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
@@ -767,8 +767,8 @@ function CreatorDashboardContent() {
 
                 {/* ACTIVE SUBSCRIBERS */}
                 <div className={`p-5 rounded-2xl border space-y-2 ${theme === 'light' ? 'bg-white border-[#E9ECEF]' : 'bg-[#13131A] border-[#1C1C26]'}`}>
-                  <span className="text-xs font-black text-[#FF9500] uppercase tracking-wider flex items-center gap-1.5">
-                    <Users className="h-4 w-4 text-[#FF9500]" /> ACTIVE SUBSCRIBERS
+                  <span className="text-xs font-black text-[#EB1000] uppercase tracking-wider flex items-center gap-1.5">
+                    <Users className="h-4 w-4 text-[#EB1000]" /> ACTIVE SUBSCRIBERS
                   </span>
                   <div className={`font-heading font-extrabold text-2xl ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'}`}>
                     {(activeSubscribersCount ?? 0)} Members
@@ -778,11 +778,11 @@ function CreatorDashboardContent() {
 
                 <div className={`p-5 rounded-2xl border space-y-2 ${theme === 'light' ? 'bg-white border-[#E9ECEF]' : 'bg-[#13131A] border-[#1C1C26]'}`}>
                   <span className="text-xs font-bold text-[#8B8B96] flex items-center gap-1.5">
-                    <ShieldCheck className="h-4 w-4 text-[#00F5D4]" /> KYC Verification
+                    <ShieldCheck className="h-4 w-4 text-[#EB1000]" /> KYC Verification
                   </span>
                   <div className="font-heading font-extrabold text-xl capitalize flex items-center gap-1.5">
-                    {kycStatus === 'approved' && <span className="text-[#00E676] flex items-center gap-1"><CheckCircle2 className="h-4 w-4" /> Approved</span>}
-                    {kycStatus === 'rejected' && <span className="text-[#FF3D71] flex items-center gap-1"><XCircle className="h-4 w-4" /> Rejected</span>}
+                    {kycStatus === 'approved' && <span className="text-[#10B981] flex items-center gap-1"><CheckCircle2 className="h-4 w-4" /> Approved</span>}
+                    {kycStatus === 'rejected' && <span className="text-[#EF4444] flex items-center gap-1"><XCircle className="h-4 w-4" /> Rejected</span>}
                     {(kycStatus === 'pending' || (kycStatus !== 'approved' && kycStatus !== 'rejected')) && (
                       <span className="text-[#FFD60A] flex items-center gap-1"><Clock className="h-4 w-4 animate-spin" /> Pending</span>
                     )}
@@ -798,25 +798,25 @@ function CreatorDashboardContent() {
           {activeTab === 'start-live' && (
             <div className="space-y-6 animate-fade-in max-w-4xl mx-auto">
               <div className={`p-6 rounded-3xl border shadow-xl ${theme === 'light' ? 'bg-white border-[#E9ECEF]' : 'bg-[#13131A] border-[#1C1C26]'}`}>
-                <div className="border-b pb-4 mb-6">
+                <div className="border-b pb-4 mb-6 border-[#1C1C26]">
                   <h3 className={`font-heading font-black text-xl flex items-center gap-2 ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'}`}>
-                    <Radio className="h-6 w-6 text-[#00F5D4]" /> Launch New Live Donation Session
+                    <Radio className="h-6 w-6 text-[#EB1000]" /> Launch New Live Donation Session
                   </h3>
                   <p className="text-xs text-[#8B8B96] mt-1">Follow the 4-step workflow: Live Session → Donation Settings → Generate QR → Generate Overlay</p>
                 </div>
 
                 {/* Steps Visual Indicator */}
                 <div className="grid grid-cols-4 gap-2 mb-6 text-center text-xs font-bold">
-                  <div className={`p-2.5 rounded-xl border ${wizardStep === 1 ? 'bg-[#00F5D4] text-[#0A0A0F] border-[#00F5D4] font-black' : wizardStep > 1 ? 'border-[#00F5D4] text-[#00F5D4]' : 'border-[#1C1C26] text-[#8B8B96]'}`}>
+                  <div className={`p-2.5 rounded-xl border ${wizardStep === 1 ? 'bg-gradient-to-r from-[#EB1000] to-[#CC0E00] text-white border-[#EB1000] font-black' : wizardStep > 1 ? 'border-[#EB1000] text-[#EB1000]' : 'border-[#1C1C26] text-[#8B8B96]'}`}>
                     1. Session Info
                   </div>
-                  <div className={`p-2.5 rounded-xl border ${wizardStep === 2 ? 'bg-[#7B2FFF] text-white border-[#7B2FFF] font-black' : wizardStep > 2 ? 'border-[#7B2FFF] text-[#7B2FFF]' : 'border-[#1C1C26] text-[#8B8B96]'}`}>
+                  <div className={`p-2.5 rounded-xl border ${wizardStep === 2 ? 'bg-gradient-to-r from-[#EB1000] to-[#CC0E00] text-white border-[#EB1000] font-black' : wizardStep > 2 ? 'border-[#EB1000] text-[#EB1000]' : 'border-[#1C1C26] text-[#8B8B96]'}`}>
                     2. Donation Settings
                   </div>
-                  <div className={`p-2.5 rounded-xl border ${wizardStep === 3 ? 'bg-[#FFD60A] text-[#0A0A0F] border-[#FFD60A] font-black' : wizardStep > 3 ? 'border-[#FFD60A] text-[#FFD60A]' : 'border-[#1C1C26] text-[#8B8B96]'}`}>
+                  <div className={`p-2.5 rounded-xl border ${wizardStep === 3 ? 'bg-gradient-to-r from-[#EB1000] to-[#CC0E00] text-white border-[#EB1000] font-black' : wizardStep > 3 ? 'border-[#EB1000] text-[#EB1000]' : 'border-[#1C1C26] text-[#8B8B96]'}`}>
                     3. Generate QR
                   </div>
-                  <div className={`p-2.5 rounded-xl border ${wizardStep === 4 ? 'bg-[#00E676] text-[#0A0A0F] border-[#00E676] font-black' : 'border-[#1C1C26] text-[#8B8B96]'}`}>
+                  <div className={`p-2.5 rounded-xl border ${wizardStep === 4 ? 'bg-gradient-to-r from-[#EB1000] to-[#CC0E00] text-white border-[#EB1000] font-black' : 'border-[#1C1C26] text-[#8B8B96]'}`}>
                     4. Generate Overlay
                   </div>
                 </div>
@@ -831,7 +831,7 @@ function CreatorDashboardContent() {
                         value={sessionForm.title}
                         onChange={(e) => setSessionForm(prev => ({ ...prev, title: e.target.value }))}
                         placeholder="e.g. BGMI Live Stream #5 - Paid Q&A & Support"
-                        className={`w-full rounded-xl border px-4 py-3 text-xs focus:outline-none focus:border-[#00F5D4] ${theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6]' : 'bg-[#0A0A0F] border-[#1C1C26]'}`}
+                        className={`w-full rounded-xl border px-4 py-3 text-xs focus:outline-none focus:border-[#EB1000] ${theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6]' : 'bg-[#0A0A0F] border-[#1C1C26]'}`}
                         required
                       />
                     </div>
@@ -842,7 +842,7 @@ function CreatorDashboardContent() {
                         <select
                           value={sessionForm.category}
                           onChange={(e) => setSessionForm(prev => ({ ...prev, category: e.target.value }))}
-                          className={`w-full rounded-xl border px-4 py-3 text-xs focus:outline-none focus:border-[#00F5D4] ${theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6]' : 'bg-[#0A0A0F] border-[#1C1C26]'}`}
+                          className={`w-full rounded-xl border px-4 py-3 text-xs focus:outline-none focus:border-[#EB1000] ${theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6]' : 'bg-[#0A0A0F] border-[#1C1C26]'}`}
                         >
                           <option value="Gaming & Esports">Gaming & Esports</option>
                           <option value="Tech & Coding">Tech & Coding</option>
@@ -857,7 +857,7 @@ function CreatorDashboardContent() {
                         <select
                           value={sessionForm.streamingPlatform}
                           onChange={(e) => setSessionForm(prev => ({ ...prev, streamingPlatform: e.target.value }))}
-                          className={`w-full rounded-xl border px-4 py-3 text-xs focus:outline-none focus:border-[#00F5D4] ${theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6]' : 'bg-[#0A0A0F] border-[#1C1C26]'}`}
+                          className={`w-full rounded-xl border px-4 py-3 text-xs focus:outline-none focus:border-[#EB1000] ${theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6]' : 'bg-[#0A0A0F] border-[#1C1C26]'}`}
                         >
                           <option value="YouTube Live">YouTube Live</option>
                           <option value="Twitch">Twitch</option>
@@ -875,7 +875,7 @@ function CreatorDashboardContent() {
                           value={sessionForm.streamUrl}
                           onChange={(e) => setSessionForm(prev => ({ ...prev, streamUrl: e.target.value }))}
                           placeholder="https://youtube.com/live/your-broadcast-id"
-                          className={`w-full rounded-xl border px-4 py-3 text-xs focus:outline-none focus:border-[#00F5D4] ${theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6]' : 'bg-[#0A0A0F] border-[#1C1C26]'}`}
+                          className={`w-full rounded-xl border px-4 py-3 text-xs focus:outline-none focus:border-[#EB1000] ${theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6]' : 'bg-[#0A0A0F] border-[#1C1C26]'}`}
                         />
                       </div>
 
@@ -887,13 +887,13 @@ function CreatorDashboardContent() {
                           max={24}
                           value={sessionForm.durationHours}
                           onChange={(e) => setSessionForm(prev => ({ ...prev, durationHours: e.target.value }))}
-                          className={`w-full rounded-xl border px-4 py-3 text-xs focus:outline-none focus:border-[#00F5D4] ${theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6]' : 'bg-[#0A0A0F] border-[#1C1C26]'}`}
+                          className={`w-full rounded-xl border px-4 py-3 text-xs focus:outline-none focus:border-[#EB1000] ${theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6]' : 'bg-[#0A0A0F] border-[#1C1C26]'}`}
                         />
                       </div>
                     </div>
 
                     <div className="pt-4 flex justify-end">
-                      <button onClick={() => setWizardStep(2)} disabled={!sessionForm.title.trim()} className="px-6 py-3 rounded-xl bg-brand-gradient text-white font-bold text-xs flex items-center gap-1.5 shadow-md">
+                      <button onClick={() => setWizardStep(2)} disabled={!sessionForm.title.trim()} className="px-6 py-3 rounded-xl bg-gradient-to-r from-[#EB1000] to-[#CC0E00] text-white font-bold text-xs flex items-center gap-1.5 shadow-md shadow-[#EB1000]/30 hover:opacity-95 cursor-pointer">
                         Next: Donation Settings <ArrowRight className="h-4 w-4" />
                       </button>
                     </div>
@@ -912,7 +912,7 @@ function CreatorDashboardContent() {
                           value={sessionForm.goalAmount}
                           onChange={(e) => setSessionForm(prev => ({ ...prev, goalAmount: e.target.value }))}
                           placeholder="5000"
-                          className={`w-full rounded-xl border px-4 py-3 text-xs focus:outline-none focus:border-[#00F5D4] ${theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6]' : 'bg-[#0A0A0F] border-[#1C1C26]'}`}
+                          className={`w-full rounded-xl border px-4 py-3 text-xs focus:outline-none focus:border-[#EB1000] ${theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6]' : 'bg-[#0A0A0F] border-[#1C1C26]'}`}
                         />
                       </div>
 
@@ -924,7 +924,7 @@ function CreatorDashboardContent() {
                           value={sessionForm.minDonation}
                           onChange={(e) => setSessionForm(prev => ({ ...prev, minDonation: e.target.value }))}
                           placeholder="10"
-                          className={`w-full rounded-xl border px-4 py-3 text-xs focus:outline-none focus:border-[#00F5D4] ${theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6]' : 'bg-[#0A0A0F] border-[#1C1C26]'}`}
+                          className={`w-full rounded-xl border px-4 py-3 text-xs focus:outline-none focus:border-[#EB1000] ${theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6]' : 'bg-[#0A0A0F] border-[#1C1C26]'}`}
                         />
                       </div>
                     </div>
@@ -935,15 +935,15 @@ function CreatorDashboardContent() {
                         rows={3}
                         value={sessionForm.description}
                         onChange={(e) => setSessionForm(prev => ({ ...prev, description: e.target.value }))}
-                        className={`w-full rounded-xl border p-3 text-xs focus:outline-none focus:border-[#00F5D4] ${theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6]' : 'bg-[#0A0A0F] border-[#1C1C26]'}`}
+                        className={`w-full rounded-xl border p-3 text-xs focus:outline-none focus:border-[#EB1000] ${theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6]' : 'bg-[#0A0A0F] border-[#1C1C26]'}`}
                       />
                     </div>
 
                     <div className="pt-4 flex items-center justify-between">
-                      <button onClick={() => setWizardStep(1)} className="px-4 py-2.5 rounded-xl border text-xs font-bold text-[#8B8B96]">
+                      <button onClick={() => setWizardStep(1)} className="px-4 py-2.5 rounded-xl border text-xs font-bold text-[#8B8B96] hover:text-white cursor-pointer">
                         Back to Step 1
                       </button>
-                      <button onClick={handleCreateSessionSubmit} disabled={isSubmittingSession} className="px-6 py-3 rounded-xl bg-brand-gradient text-white font-black text-xs flex items-center gap-2 shadow-md glow-teal">
+                      <button onClick={handleCreateSessionSubmit} disabled={isSubmittingSession} className="px-6 py-3 rounded-xl bg-gradient-to-r from-[#EB1000] to-[#CC0E00] text-white font-black text-xs flex items-center gap-2 shadow-md shadow-[#EB1000]/30 hover:opacity-95 cursor-pointer">
                         {isSubmittingSession ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />} Launch Session & Generate Output
                       </button>
                     </div>
@@ -953,7 +953,7 @@ function CreatorDashboardContent() {
                 {/* Step 3: QR Code */}
                 {wizardStep === 3 && createdSessionOutput && (
                   <div className="space-y-4 text-center">
-                    <div className="p-4 rounded-2xl bg-[#FFD60A]/10 border border-[#FFD60A]/30 text-[#FFD60A] text-xs font-bold flex items-center justify-center gap-2">
+                    <div className="p-4 rounded-2xl bg-[#EB1000]/10 border border-[#EB1000]/30 text-[#EB1000] text-xs font-bold flex items-center justify-center gap-2">
                       <CheckCircle2 className="h-5 w-5" /> Step 3: Unique Instant UPI QR Code Generated!
                     </div>
 
@@ -963,13 +963,13 @@ function CreatorDashboardContent() {
                     </div>
 
                     <div className="flex flex-wrap items-center justify-center gap-3">
-                      <button onClick={() => copyText(createdSessionOutput.paymentLink, 'Payment Link')} className="px-4 py-2.5 rounded-xl bg-[#00F5D4] text-white font-bold text-xs flex items-center gap-1">
+                      <button onClick={() => copyText(createdSessionOutput.paymentLink, 'Payment Link')} className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#EB1000] to-[#CC0E00] text-white font-bold text-xs flex items-center gap-1 shadow-md shadow-[#EB1000]/30 cursor-pointer">
                         <Copy className="h-4 w-4" /> Copy Payment Link
                       </button>
-                      <button onClick={() => downloadQrCode(createdSessionOutput.qrCodeUrl, `askme_qr_${createdSessionOutput.sessionCode || 'code'}.png`)} className="px-4 py-2.5 rounded-xl bg-[#1C1C26] text-[#00F5D4] font-bold text-xs border border-[#00F5D4]/40 hover:bg-[#00F5D4]/10 transition flex items-center gap-1">
-                        <Download className="h-4 w-4" /> Download QR
+                      <button onClick={() => downloadQrCode(createdSessionOutput.qrCodeUrl, `askme_qr_${createdSessionOutput.sessionCode || 'code'}.png`)} className="px-4 py-2.5 rounded-xl bg-[#1C1C26] text-white font-bold text-xs border border-[#252533] hover:border-[#EB1000]/50 transition flex items-center gap-1 cursor-pointer">
+                        <Download className="h-4 w-4 text-[#EB1000]" /> Download QR
                       </button>
-                      <button onClick={() => setWizardStep(4)} className="px-6 py-2.5 rounded-xl bg-[#7B2FFF] text-white font-bold text-xs flex items-center gap-1">
+                      <button onClick={() => setWizardStep(4)} className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#EB1000] to-[#CC0E00] text-white font-bold text-xs flex items-center gap-1 shadow-md cursor-pointer">
                         Next: Generate OBS Overlay <ArrowRight className="h-4 w-4" />
                       </button>
                     </div>
@@ -979,26 +979,26 @@ function CreatorDashboardContent() {
                 {/* Step 4: OBS Overlay */}
                 {wizardStep === 4 && createdSessionOutput && (
                   <div className="space-y-4 text-center">
-                    <div className="p-4 rounded-2xl bg-[#00E676]/10 border border-[#00E676]/30 text-[#00E676] text-xs font-bold flex items-center justify-center gap-2">
+                    <div className="p-4 rounded-2xl bg-[#10B981]/15 border border-[#10B981]/30 text-[#10B981] text-xs font-bold flex items-center justify-center gap-2">
                       <CheckCircle2 className="h-5 w-5" /> Step 4: Unique OBS Overlay Generated!
                     </div>
 
-                    <div className={`p-4 rounded-2xl border text-left font-mono text-xs ${theme === 'light' ? 'bg-[#F8F9FA]' : 'bg-[#0A0A0F]'}`}>
-                      <span className="text-[10px] text-[#7B2FFF] uppercase font-bold block">OBS Browser Source URL</span>
-                      <p className="text-[#00F5D4] font-bold break-all">{createdSessionOutput.overlayUrl}</p>
+                    <div className={`p-4 rounded-2xl border text-left font-mono text-xs ${theme === 'light' ? 'bg-[#F8F9FA] border-[#E9ECEF]' : 'bg-[#0A0A0F] border-[#1C1C26]'}`}>
+                      <span className="text-[10px] text-[#EB1000] uppercase font-bold block">OBS Browser Source URL</span>
+                      <p className="text-white font-bold break-all">{createdSessionOutput.overlayUrl}</p>
                     </div>
 
                     <div className="flex items-center justify-center gap-3">
-                      <button onClick={() => copyText(createdSessionOutput.overlayUrl, 'OBS Overlay URL')} className="px-5 py-2.5 rounded-xl bg-[#7B2FFF] text-white font-bold text-xs">
+                      <button onClick={() => copyText(createdSessionOutput.overlayUrl, 'OBS Overlay URL')} className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#EB1000] to-[#CC0E00] text-white font-bold text-xs shadow-md shadow-[#EB1000]/30 cursor-pointer">
                         <Copy className="h-4 w-4 inline mr-1" /> Copy Overlay URL
                       </button>
-                      <a href={createdSessionOutput.overlayUrl} target="_blank" rel="noopener noreferrer" className="px-5 py-2.5 rounded-xl bg-[#00F5D4] text-white font-bold text-xs">
-                        Preview Overlay Widget <ExternalLink className="h-4 w-4 inline ml-1" />
+                      <a href={createdSessionOutput.overlayUrl} target="_blank" rel="noopener noreferrer" className="px-5 py-2.5 rounded-xl bg-[#1C1C26] text-white font-bold text-xs border border-[#252533] hover:border-[#EB1000]/50 transition">
+                        Preview Overlay Widget <ExternalLink className="h-4 w-4 inline ml-1 text-[#EB1000]" />
                       </a>
                     </div>
 
                     <div className="pt-4">
-                      <button onClick={() => switchTab('active-session')} className="px-6 py-2.5 rounded-xl bg-brand-gradient text-white font-black text-xs shadow-md">
+                      <button onClick={() => switchTab('active-session')} className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#EB1000] to-[#CC0E00] text-white font-black text-xs shadow-md shadow-[#EB1000]/30 cursor-pointer">
                         Go to Active Session Dashboard
                       </button>
                     </div>
@@ -1012,15 +1012,15 @@ function CreatorDashboardContent() {
           {activeTab === 'active-session' && (
             <div className="space-y-6 animate-fade-in">
               {activeSession ? (
-                <div className={`p-6 rounded-3xl border space-y-6 shadow-2xl glow-teal ${theme === 'light' ? 'bg-white border-[#00F5D4]/60' : 'bg-[#13131A] border-[#00F5D4]/40'}`}>
+                <div className={`p-6 rounded-3xl border space-y-6 shadow-2xl shadow-[#EB1000]/10 ${theme === 'light' ? 'bg-white border-[#EB1000]/60' : 'bg-[#13131A] border-[#EB1000]/40'}`}>
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b pb-4 border-[#1C1C26]">
                     <div className="flex items-center gap-3">
-                      <div className="p-3.5 rounded-2xl bg-[#00F5D4]/10 text-[#00F5D4] border border-[#00F5D4]/30 animate-pulse">
+                      <div className="p-3.5 rounded-2xl bg-[#EB1000]/10 text-[#EB1000] border border-[#EB1000]/30 animate-pulse">
                         <Radio className="h-7 w-7" />
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
-                          <span className="px-2.5 py-0.5 rounded-full bg-[#00E676]/10 text-[#00E676] border border-[#00E676]/30 text-[10px] font-black uppercase tracking-wider animate-pulse">
+                          <span className="px-2.5 py-0.5 rounded-full bg-[#10B981]/15 text-[#10B981] border border-[#10B981]/30 text-[10px] font-black uppercase tracking-wider animate-pulse">
                             ● BROADCAST LIVE ACTIVE
                           </span>
                           {timeRemaining && (
@@ -1038,8 +1038,8 @@ function CreatorDashboardContent() {
                       </div>
                     </div>
 
-                    <button onClick={handleEndSession} className="px-5 py-2.5 rounded-xl bg-[#FF3D71] text-white border border-[#FF3D71] hover:bg-[#E03563] font-bold text-xs flex items-center gap-1.5 shrink-0 shadow-md">
-                      <StopCircle className="h-4 w-4 text-white" /> End Live Session
+                    <button onClick={handleEndSession} className="px-5 py-2.5 rounded-xl bg-[#DC2626]/10 text-[#DC2626] border border-[#DC2626]/30 hover:bg-[#DC2626] hover:text-white font-bold text-xs flex items-center gap-1.5 shrink-0 shadow-md cursor-pointer transition">
+                      <StopCircle className="h-4 w-4" /> End Live Session
                     </button>
                   </div>
 
@@ -1049,17 +1049,17 @@ function CreatorDashboardContent() {
                     <div className={`p-4 rounded-2xl border flex items-center gap-4 ${theme === 'light' ? 'bg-[#F8F9FA] border-[#E9ECEF]' : 'bg-[#0A0A0F] border-[#1C1C26]'}`}>
                       <BrandedQrCode qrUrl={activeSession.qrCodeUrl} size="sm" showBrandHeader={false} />
                       <div className="space-y-1 min-w-0 flex-1">
-                        <span className="text-[10px] font-bold text-[#00F5D4] uppercase">Viewer Payment Link & QR</span>
+                        <span className="text-[10px] font-bold text-[#EB1000] uppercase">Viewer Payment Link & QR</span>
                         <p className="text-xs font-mono truncate">{activeSession.paymentLink}</p>
                         <div className="flex flex-wrap gap-2 pt-1">
-                          <button onClick={() => copyText(activeSession.paymentLink, 'Payment Link')} className="px-2.5 py-1 rounded-lg bg-[#00F5D4] text-white font-bold text-[11px] flex items-center gap-1">
+                          <button onClick={() => copyText(activeSession.paymentLink, 'Payment Link')} className="px-2.5 py-1 rounded-lg bg-gradient-to-r from-[#EB1000] to-[#CC0E00] text-white font-bold text-[11px] flex items-center gap-1 shadow-sm cursor-pointer">
                             <Copy className="h-3 w-3" /> Copy Link
                           </button>
-                          <button onClick={() => downloadQrCode(activeSession.qrCodeUrl, `askme_qr_${activeSession.sessionCode || 'code'}.png`)} className="px-2.5 py-1 rounded-lg bg-[#1C1C26] text-[#00F5D4] text-[11px] font-bold border border-[#00F5D4]/40 hover:bg-[#00F5D4]/10 transition flex items-center gap-1">
-                            <Download className="h-3 w-3" /> Download QR
+                          <button onClick={() => downloadQrCode(activeSession.qrCodeUrl, `askme_qr_${activeSession.sessionCode || 'code'}.png`)} className="px-2.5 py-1 rounded-lg bg-[#1C1C26] text-white text-[11px] font-bold border border-[#252533] hover:border-[#EB1000]/50 transition flex items-center gap-1 cursor-pointer">
+                            <Download className="h-3 w-3 text-[#EB1000]" /> Download QR
                           </button>
-                          <a href={activeSession.paymentLink} target="_blank" rel="noopener noreferrer" className="px-2.5 py-1 rounded-lg bg-[#1C1C26] text-white text-[11px] flex items-center gap-1">
-                            Test Link <ExternalLink className="h-3 w-3 text-[#00F5D4]" />
+                          <a href={activeSession.paymentLink} target="_blank" rel="noopener noreferrer" className="px-2.5 py-1 rounded-lg bg-[#1C1C26] text-white text-[11px] flex items-center gap-1 border border-[#252533] hover:border-[#EB1000]/50">
+                            Test Link <ExternalLink className="h-3 w-3 text-[#EB1000]" />
                           </a>
                         </div>
                       </div>
@@ -1067,19 +1067,19 @@ function CreatorDashboardContent() {
 
                     {/* OBS Overlay */}
                     <div className={`p-4 rounded-2xl border flex items-center gap-4 ${theme === 'light' ? 'bg-[#F8F9FA] border-[#E9ECEF]' : 'bg-[#0A0A0F] border-[#1C1C26]'}`}>
-                      <div className="h-20 w-20 rounded-xl bg-[#7B2FFF]/10 border border-[#7B2FFF]/30 flex flex-col items-center justify-center text-[#7B2FFF] shrink-0">
+                      <div className="h-20 w-20 rounded-xl bg-[#EB1000]/10 border border-[#EB1000]/30 flex flex-col items-center justify-center text-[#EB1000] shrink-0">
                         <Monitor className="h-7 w-7" />
                         <span className="text-[8px] font-black mt-1">OBS SOURCE</span>
                       </div>
                       <div className="space-y-1 min-w-0 flex-1">
-                        <span className="text-[10px] font-bold text-[#7B2FFF] uppercase">OBS Overlay URL</span>
-                        <p className="text-xs font-mono truncate text-[#7B2FFF]">{activeSession.overlayUrl || overlayUrl}</p>
+                        <span className="text-[10px] font-bold text-[#EB1000] uppercase">OBS Overlay URL</span>
+                        <p className="text-xs font-mono truncate text-[#EB1000]">{activeSession.overlayUrl || overlayUrl}</p>
                         <div className="flex gap-2 pt-1">
-                          <button onClick={() => copyText(activeSession.overlayUrl || overlayUrl, 'OBS Overlay URL')} className="px-2.5 py-1 rounded-lg bg-[#7B2FFF] text-white font-bold text-[11px]">
+                          <button onClick={() => copyText(activeSession.overlayUrl || overlayUrl, 'OBS Overlay URL')} className="px-2.5 py-1 rounded-lg bg-gradient-to-r from-[#EB1000] to-[#CC0E00] text-white font-bold text-[11px] shadow-sm cursor-pointer">
                             <Copy className="h-3 w-3 inline mr-1" /> Copy Overlay
                           </button>
-                          <a href={activeSession.overlayUrl || overlayUrl} target="_blank" rel="noopener noreferrer" className="px-2.5 py-1 rounded-lg bg-[#1C1C26] text-white text-[11px]">
-                            Test Overlay <ExternalLink className="h-3 w-3 inline text-[#7B2FFF]" />
+                          <a href={activeSession.overlayUrl || overlayUrl} target="_blank" rel="noopener noreferrer" className="px-2.5 py-1 rounded-lg bg-[#1C1C26] text-white text-[11px] border border-[#252533] hover:border-[#EB1000]/50">
+                            Test Overlay <ExternalLink className="h-3 w-3 inline text-[#EB1000]" />
                           </a>
                         </div>
                       </div>
@@ -1091,7 +1091,7 @@ function CreatorDashboardContent() {
                   <Radio className="h-12 w-12 text-[#8B8B96] mx-auto stroke-1" />
                   <h4 className={`font-bold text-lg ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'}`}>No Active Broadcast Session</h4>
                   <p className="text-xs text-[#8B8B96] max-w-md mx-auto">Launch a new session to generate unique payment links, QR codes, and OBS stream overlays.</p>
-                  <button onClick={() => switchTab('start-live')} className="px-6 py-3 rounded-2xl bg-brand-gradient text-white font-black text-xs shadow-md glow-teal">
+                  <button onClick={() => switchTab('start-live')} className="px-6 py-3 rounded-2xl bg-gradient-to-r from-[#EB1000] to-[#CC0E00] text-white font-black text-xs shadow-md shadow-[#EB1000]/30 cursor-pointer">
                     + Launch Live Session Now
                   </button>
                 </div>
@@ -1103,7 +1103,7 @@ function CreatorDashboardContent() {
           {activeTab === 'session-history' && (
             <div className="space-y-4 animate-fade-in">
               <h3 className={`font-heading font-bold text-lg flex items-center gap-2 ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'}`}>
-                <History className="h-5 w-5 text-[#00F5D4]" /> All Created Live Donation Sessions ({sessions.length})
+                <History className="h-5 w-5 text-[#EB1000]" /> All Created Live Donation Sessions ({sessions.length})
               </h3>
 
               {sessions.length === 0 ? (
@@ -1113,11 +1113,11 @@ function CreatorDashboardContent() {
               ) : (
                 <div className="grid grid-cols-1 gap-4">
                   {sessions.map(s => (
-                    <div key={s.id} className={`p-5 rounded-3xl border space-y-4 shadow-xl ${s.status === 'active' ? 'border-[#00F5D4]/60 glow-teal' : ''} ${theme === 'light' ? 'bg-white border-[#E9ECEF]' : 'bg-[#13131A] border-[#1C1C26]'}`}>
+                    <div key={s.id} className={`p-5 rounded-3xl border space-y-4 shadow-xl ${s.status === 'active' ? 'border-[#EB1000]/60 shadow-lg shadow-[#EB1000]/20' : ''} ${theme === 'light' ? 'bg-white border-[#E9ECEF]' : 'bg-[#13131A] border-[#1C1C26]'}`}>
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b pb-3 border-[#1C1C26]">
                         <div>
                           <div className="flex items-center gap-2">
-                            <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase ${s.status === 'active' ? 'bg-[#00E676]/10 text-[#00E676]' : 'bg-[#1C1C26] text-[#8B8B96]'}`}>
+                            <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase ${s.status === 'active' ? 'bg-[#10B981]/15 text-[#10B981]' : 'bg-[#1C1C26] text-[#8B8B96]'}`}>
                               {s.status === 'active' ? '● LIVE ACTIVE' : 'CLOSED'}
                             </span>
                             <span className="text-xs text-[#8B8B96]">[{s.category || 'General'}]</span>
@@ -1126,7 +1126,7 @@ function CreatorDashboardContent() {
                         </div>
 
                         {s.status !== 'active' && (
-                          <button onClick={() => handleReStartSession(s.id)} className="px-4 py-2 rounded-xl bg-brand-gradient text-white font-bold text-xs shadow-md">
+                          <button onClick={() => handleReStartSession(s.id)} className="px-4 py-2 rounded-xl bg-gradient-to-r from-[#EB1000] to-[#CC0E00] text-white font-bold text-xs shadow-md shadow-[#EB1000]/30 cursor-pointer">
                             Re-launch Session
                           </button>
                         )}
@@ -1138,7 +1138,7 @@ function CreatorDashboardContent() {
                           {s.paymentLink}
                         </div>
                         <div className="p-2.5 rounded-xl bg-[#0A0A0F] border border-[#1C1C26] truncate">
-                          <span className="text-[10px] text-[#7B2FFF] block font-sans">OBS Overlay URL:</span>
+                          <span className="text-[10px] text-[#EB1000] block font-sans">OBS Overlay URL:</span>
                           {s.overlayUrl || `${origin}/overlay/${creator?.username || creator?.id}?sessionCode=${s.sessionCode}`}
                         </div>
                       </div>
@@ -1154,7 +1154,7 @@ function CreatorDashboardContent() {
             <div className="space-y-6 animate-fade-in">
               <div className={`p-6 rounded-3xl border space-y-4 ${theme === 'light' ? 'bg-white border-[#E9ECEF]' : 'bg-[#13131A] border-[#1C1C26]'}`}>
                 <h3 className={`font-heading font-black text-xl flex items-center gap-2 ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'}`}>
-                  <BarChart3 className="h-6 w-6 text-[#00F5D4]" /> Creator Revenue & Donation Analytics
+                  <BarChart3 className="h-6 w-6 text-[#EB1000]" /> Creator Revenue & Donation Analytics
                 </h3>
                 <p className="text-xs text-[#8B8B96]">Track revenue performance, answered viewer Q&As, and settlement payouts.</p>
 
@@ -1165,11 +1165,11 @@ function CreatorDashboardContent() {
                   </div>
                   <div className="p-4 rounded-2xl bg-[#0A0A0F] border border-[#1C1C26] space-y-1">
                     <span className="text-xs text-[#8B8B96] block">Platform Fee (15%)</span>
-                    <span className="text-2xl font-black text-[#FF3D71]">₹{(walletMetrics.totalEarnings / 0.85 * 0.15 || 0).toLocaleString('en-IN', { maximumFractionDigits: 2 })}</span>
+                    <span className="text-2xl font-black text-[#EF4444]">₹{(walletMetrics.totalEarnings / 0.85 * 0.15 || 0).toLocaleString('en-IN', { maximumFractionDigits: 2 })}</span>
                   </div>
                   <div className="p-4 rounded-2xl bg-[#0A0A0F] border border-[#1C1C26] space-y-1">
                     <span className="text-xs text-[#8B8B96] block">Creator Net Earnings (85%)</span>
-                    <span className="text-2xl font-black text-[#00E676]">₹{walletMetrics.totalEarnings.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</span>
+                    <span className="text-2xl font-black text-[#10B981]">₹{walletMetrics.totalEarnings.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</span>
                   </div>
                 </div>
               </div>
@@ -1180,16 +1180,16 @@ function CreatorDashboardContent() {
           {activeTab === 'profile-settings' && (
             <div className="space-y-6 animate-fade-in max-w-4xl mx-auto">
               <form onSubmit={handleSaveProfileSubmit} className={`p-6 rounded-3xl border space-y-6 shadow-xl ${theme === 'light' ? 'bg-white border-[#E9ECEF]' : 'bg-[#13131A] border-[#1C1C26]'}`}>
-                <div className="border-b pb-4">
+                <div className="border-b pb-4 border-[#1C1C26]">
                   <h3 className={`font-heading font-black text-xl flex items-center gap-2 ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'}`}>
-                    <Settings className="h-6 w-6 text-[#00F5D4]" /> Creator Profile & Bank Settings
+                    <Settings className="h-6 w-6 text-[#EB1000]" /> Creator Profile & Bank Settings
                   </h3>
                   <p className="text-xs text-[#8B8B96]">Update bio, display details, social handles, and payout bank account information.</p>
                 </div>
 
                 {/* Profile Details */}
                 <div className="space-y-4">
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-[#00F5D4]">1. Public Creator Profile</h4>
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-[#EB1000]">1. Public Creator Profile</h4>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-xs font-bold mb-1.5 text-[#8B8B96]">Full Name</label>
@@ -1197,7 +1197,7 @@ function CreatorDashboardContent() {
                         type="text"
                         value={profileForm.fullName}
                         onChange={(e) => setProfileForm(prev => ({ ...prev, fullName: e.target.value }))}
-                        className={`w-full rounded-xl border px-3.5 py-2.5 text-xs focus:outline-none focus:border-[#00F5D4] ${theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6]' : 'bg-[#0A0A0F] border-[#1C1C26]'}`}
+                        className={`w-full rounded-xl border px-3.5 py-2.5 text-xs focus:outline-none focus:border-[#EB1000] ${theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6]' : 'bg-[#0A0A0F] border-[#1C1C26]'}`}
                       />
                     </div>
                     <div>
@@ -1217,7 +1217,7 @@ function CreatorDashboardContent() {
                       rows={3}
                       value={profileForm.bio}
                       onChange={(e) => setProfileForm(prev => ({ ...prev, bio: e.target.value }))}
-                      className={`w-full rounded-xl border p-3 text-xs focus:outline-none focus:border-[#00F5D4] ${theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6]' : 'bg-[#0A0A0F] border-[#1C1C26]'}`}
+                      className={`w-full rounded-xl border p-3 text-xs focus:outline-none focus:border-[#EB1000] ${theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6]' : 'bg-[#0A0A0F] border-[#1C1C26]'}`}
                     />
                   </div>
                 </div>
@@ -1232,7 +1232,7 @@ function CreatorDashboardContent() {
                         type="text"
                         value={profileForm.accountHolderName}
                         onChange={(e) => setProfileForm(prev => ({ ...prev, accountHolderName: e.target.value }))}
-                        className={`w-full rounded-xl border px-3.5 py-2.5 text-xs focus:outline-none focus:border-[#00F5D4] ${theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6]' : 'bg-[#0A0A0F] border-[#1C1C26]'}`}
+                        className={`w-full rounded-xl border px-3.5 py-2.5 text-xs focus:outline-none focus:border-[#EB1000] ${theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6]' : 'bg-[#0A0A0F] border-[#1C1C26]'}`}
                       />
                     </div>
                     <div>
@@ -1241,7 +1241,7 @@ function CreatorDashboardContent() {
                         type="text"
                         value={profileForm.bankName}
                         onChange={(e) => setProfileForm(prev => ({ ...prev, bankName: e.target.value }))}
-                        className={`w-full rounded-xl border px-3.5 py-2.5 text-xs focus:outline-none focus:border-[#00F5D4] ${theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6]' : 'bg-[#0A0A0F] border-[#1C1C26]'}`}
+                        className={`w-full rounded-xl border px-3.5 py-2.5 text-xs focus:outline-none focus:border-[#EB1000] ${theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6]' : 'bg-[#0A0A0F] border-[#1C1C26]'}`}
                       />
                     </div>
                   </div>
@@ -1253,7 +1253,7 @@ function CreatorDashboardContent() {
                         type="text"
                         value={profileForm.accountNumber}
                         onChange={(e) => setProfileForm(prev => ({ ...prev, accountNumber: e.target.value }))}
-                        className={`w-full rounded-xl border px-3.5 py-2.5 text-xs focus:outline-none focus:border-[#00F5D4] ${theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6]' : 'bg-[#0A0A0F] border-[#1C1C26]'}`}
+                        className={`w-full rounded-xl border px-3.5 py-2.5 text-xs focus:outline-none focus:border-[#EB1000] ${theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6]' : 'bg-[#0A0A0F] border-[#1C1C26]'}`}
                       />
                     </div>
                     <div>
@@ -1262,7 +1262,7 @@ function CreatorDashboardContent() {
                         type="text"
                         value={profileForm.ifscCode}
                         onChange={(e) => setProfileForm(prev => ({ ...prev, ifscCode: e.target.value }))}
-                        className={`w-full rounded-xl border px-3.5 py-2.5 text-xs focus:outline-none focus:border-[#00F5D4] ${theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6]' : 'bg-[#0A0A0F] border-[#1C1C26]'}`}
+                        className={`w-full rounded-xl border px-3.5 py-2.5 text-xs focus:outline-none focus:border-[#EB1000] ${theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6]' : 'bg-[#0A0A0F] border-[#1C1C26]'}`}
                       />
                     </div>
                     <div>
@@ -1271,14 +1271,14 @@ function CreatorDashboardContent() {
                         type="text"
                         value={profileForm.upiId}
                         onChange={(e) => setProfileForm(prev => ({ ...prev, upiId: e.target.value }))}
-                        className={`w-full rounded-xl border px-3.5 py-2.5 text-xs focus:outline-none focus:border-[#00F5D4] ${theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6]' : 'bg-[#0A0A0F] border-[#1C1C26]'}`}
+                        className={`w-full rounded-xl border px-3.5 py-2.5 text-xs focus:outline-none focus:border-[#EB1000] ${theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6]' : 'bg-[#0A0A0F] border-[#1C1C26]'}`}
                       />
                     </div>
                   </div>
                 </div>
 
                 <div className="pt-4 flex justify-end">
-                  <button type="submit" disabled={isSavingProfile} className="px-6 py-3 rounded-xl bg-brand-gradient text-white font-black text-xs flex items-center gap-2 shadow-md glow-teal">
+                  <button type="submit" disabled={isSavingProfile} className="px-6 py-3 rounded-xl bg-gradient-to-r from-[#EB1000] to-[#CC0E00] text-white font-black text-xs flex items-center gap-2 shadow-md shadow-[#EB1000]/30 cursor-pointer hover:opacity-95">
                     {isSavingProfile ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />} Save Profile & Bank Settings
                   </button>
                 </div>

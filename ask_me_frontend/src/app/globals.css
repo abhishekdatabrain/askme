@@ -63,7 +63,7 @@ h6,
 }
 
 .bg-brand-gradient {
-  background: linear-gradient(135deg, #EB1000 0%, #CC0E00 100%);
+  background-color: #EB1000;
 }
 
 .bg-brand-gradient:hover {
@@ -71,9 +71,7 @@ h6,
 }
 
 .text-brand-gradient {
-  background: linear-gradient(135deg, #EB1000 0%, #B80D00 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: #EB1000;
 }
 
 .border-brand-gradient {

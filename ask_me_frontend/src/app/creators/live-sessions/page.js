@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { API_ENDPOINTS } from '@/config/api';
 import BrandedQrCode from '@/components/BrandedQrCode';
+import { downloadBrandedQrCard } from '@/utils/downloadBrandedQrCard';
 
 export default function CreatorLiveSessionsPage() {
   const { toast } = useToast();
@@ -32,40 +33,19 @@ export default function CreatorLiveSessionsPage() {
   const [timeRemaining, setTimeRemaining] = useState('');
   const [theme, setTheme] = useState('dark');
 
-  const downloadQrCode = async (qrUrl, filename = 'askme_payment_qr.png') => {
-    if (!qrUrl) return;
+  const downloadQrCode = async (qrUrl) => {
+    if (!activeSession) return;
     try {
-      if (qrUrl.startsWith('data:')) {
-        const link = document.createElement('a');
-        link.href = qrUrl;
-        link.download = filename;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        toast.success('QR Code downloaded successfully!', 'Downloaded');
-        return;
-      }
-
-      const response = await fetch(qrUrl);
-      const blob = await response.blob();
-      const blobUrl = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = blobUrl;
-      link.download = filename;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(blobUrl);
-      toast.success('QR Code downloaded successfully!', 'Downloaded');
+      await downloadBrandedQrCard({
+        creatorName: creator?.displayName || creator?.username || 'AskMe Creator',
+        username: creator?.username || 'creator',
+        qrUrl: activeSession.qrCodeUrl || qrUrl,
+        sessionTitle: activeSession.title,
+        theme: theme
+      });
+      toast.success('Branded QR Card downloaded successfully!', 'Downloaded');
     } catch (err) {
-      const link = document.createElement('a');
-      link.href = qrUrl;
-      link.target = '_blank';
-      link.download = filename;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      toast.success('QR Code download initiated!', 'Downloaded');
+      toast.error('Failed to download QR Card', 'Error');
     }
   };
 
@@ -109,7 +89,7 @@ export default function CreatorLiveSessionsPage() {
           setActiveSession({
             ...active,
             paymentLink: active.paymentLink || `${origin}/pay/${active.sessionCode}?creatorId=${uId}&sessionId=${active.id}`,
-            qrCodeUrl: active.qrCodeUrl || `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(active.paymentLink || `${origin}/pay/${active.sessionCode}`)}`,
+            qrCodeUrl: active.qrCodeUrl || `https://api.qrserver.com/v1/create-qr-code/?size=400x400&ecc=H&margin=2&data=${encodeURIComponent(active.paymentLink || `${origin}/pay/${active.sessionCode}`)}`,
             overlayUrl: active.overlayUrl || `${origin}/overlay/${creator?.username || uId}?sessionCode=${active.sessionCode}`,
           });
         } else {
@@ -210,7 +190,7 @@ export default function CreatorLiveSessionsPage() {
         const sessData = data.data;
         const origin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000';
         const pLink = sessData.paymentLink || `${origin}/pay/${sessData.session.sessionCode}?creatorId=${creatorId}&sessionId=${sessData.session.id}`;
-        const qrUrl = sessData.qrCodeUrl || `https://api.qrserver.com/v1/create-qr-code/?size=350x350&data=${encodeURIComponent(pLink)}`;
+        const qrUrl = sessData.qrCodeUrl || `https://api.qrserver.com/v1/create-qr-code/?size=400x400&ecc=H&margin=2&data=${encodeURIComponent(pLink)}`;
         const oUrl = sessData.overlayUrl || `${origin}/overlay/${creator?.username || creatorId}?sessionCode=${sessData.session.sessionCode}`;
 
         const outputObj = {
@@ -254,12 +234,12 @@ export default function CreatorLiveSessionsPage() {
 
   return (
     <>
-      <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
-        <header className={`border-b sticky top-0 z-20 px-6 py-4 flex items-center justify-between transition-colors ${theme === 'light' ? 'border-[#E9ECEF] bg-white/90 backdrop-blur-md' : 'border-[#1C1C26] bg-[#0A0A0F]/80 backdrop-blur-md'
+      <div className="flex-1 flex flex-col min-w-0">
+        <header className={`border-b sticky top-0 z-30 shrink-0 px-6 py-4 flex items-center justify-between transition-colors ${theme === 'light' ? 'border-[#E9ECEF] bg-white/95 backdrop-blur-md shadow-sm' : 'border-[#1C1C26] bg-[#0A0A0F]/95 backdrop-blur-md shadow-sm'
           }`}>
           <div>
             <h1 className={`font-heading font-black text-xl flex items-center gap-2 ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'}`}>
-              <Radio className="h-5 w-5 text-[#00F5D4]" /> Live Sessions
+              <Radio className="h-5 w-5 text-[#EB1000]" /> Live Sessions
             </h1>
             <p className={`text-xs ${theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'}`}>
               Create & manage live sessions to generate instant payment QR codes and OBS overlays.
@@ -277,16 +257,16 @@ export default function CreatorLiveSessionsPage() {
         <main className="p-6 max-w-5xl w-full mx-auto space-y-6">
           {/* Active Live Session Card (If Currently Active) */}
           {activeSession && (
-            <div className={`p-6 rounded-3xl border space-y-6 shadow-2xl glow-teal animate-fade-in ${theme === 'light' ? 'bg-white border-[#00F5D4]/60' : 'bg-[#13131A] border-[#00F5D4]/40'
+            <div className={`p-6 rounded-3xl border space-y-6 shadow-2xl shadow-[#EB1000]/10 animate-fade-in ${theme === 'light' ? 'bg-white border-[#EB1000]/40' : 'bg-[#13131A] border-[#EB1000]/40'
               }`}>
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b pb-4 border-[#1C1C26]">
                 <div className="flex items-center gap-3">
-                  <div className="p-3.5 rounded-2xl bg-[#00F5D4]/10 text-[#00F5D4] border border-[#00F5D4]/30 animate-pulse">
+                  <div className="p-3.5 rounded-2xl bg-[#EB1000]/10 text-[#EB1000] border border-[#EB1000]/30 animate-pulse">
                     <Radio className="h-7 w-7" />
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
-                      <span className="px-2.5 py-0.5 rounded-full bg-[#00E676]/10 text-[#00E676] border border-[#00E676]/30 text-[10px] font-black uppercase tracking-wider animate-pulse">
+                      <span className="px-2.5 py-0.5 rounded-full bg-[#EB1000]/10 text-[#EB1000] border border-[#EB1000]/30 text-[10px] font-black uppercase tracking-wider animate-pulse">
                         ● CURRENTLY BROADCASTING LIVE
                       </span>
                       {timeRemaining && (
@@ -301,7 +281,7 @@ export default function CreatorLiveSessionsPage() {
                   </div>
                 </div>
 
-                <button onClick={handleEndSession} className="px-5 py-2.5 rounded-xl bg-[#FF3D71] text-white border border-[#FF3D71] hover:bg-[#E03563] font-bold text-xs flex items-center gap-1.5 shrink-0 shadow-md">
+                <button onClick={handleEndSession} className="px-5 py-2.5 rounded-xl bg-[#EB1000] text-white border border-[#EB1000] hover:bg-[#CC0E00] font-bold text-xs flex items-center gap-1.5 shrink-0 shadow-md shadow-[#EB1000]/20">
                   <StopCircle className="h-4 w-4 text-white" /> End Live Session
                 </button>
               </div>
@@ -312,17 +292,17 @@ export default function CreatorLiveSessionsPage() {
                 <div className={`p-4 rounded-2xl border flex items-center gap-4 ${theme === 'light' ? 'bg-[#F8F9FA] border-[#E9ECEF]' : 'bg-[#0A0A0F] border-[#1C1C26]'}`}>
                   <BrandedQrCode qrUrl={activeSession.qrCodeUrl} size="sm" showBrandHeader={false} />
                   <div className="space-y-1 min-w-0 flex-1">
-                    <span className="text-[10px] font-bold text-[#00F5D4] uppercase">Instant UPI Payment Link & QR</span>
+                    <span className="text-[10px] font-bold text-[#EB1000] uppercase">Instant UPI Payment Link & QR</span>
                     <p className="text-xs font-mono truncate">{activeSession.paymentLink}</p>
                     <div className="flex flex-wrap gap-2 pt-1">
-                      <button onClick={() => copyText(activeSession.paymentLink, 'Payment Link')} className="px-3.5 py-1.5 rounded-lg bg-[#00F5D4] text-white font-bold text-[11px] shadow-sm hover:scale-105 transition flex items-center gap-1">
+                      <button onClick={() => copyText(activeSession.paymentLink, 'Payment Link')} className="px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-[#EB1000] to-[#CC0E00] text-white font-bold text-[11px] shadow-sm shadow-[#EB1000]/20 hover:scale-105 transition flex items-center gap-1">
                         <Copy className="h-3.5 w-3.5" /> Copy Link
                       </button>
-                      <button onClick={() => downloadQrCode(activeSession.qrCodeUrl, `askme_qr_${activeSession.sessionCode || 'code'}.png`)} className="px-3.5 py-1.5 rounded-lg bg-[#1C1C26] text-[#00F5D4] text-[11px] font-bold border border-[#00F5D4]/40 hover:bg-[#00F5D4]/10 transition flex items-center gap-1">
-                        <Download className="h-3.5 w-3.5" /> Download QR
+                      <button onClick={() => downloadQrCode(activeSession.qrCodeUrl)} className="px-3.5 py-1.5 rounded-lg bg-[#181826] text-[#EB1000] text-[11px] font-bold border border-[#EB1000]/40 hover:bg-[#EB1000]/10 transition flex items-center gap-1">
+                        <Download className="h-3.5 w-3.5" /> Download QR Card
                       </button>
-                      <a href={activeSession.paymentLink} target="_blank" rel="noopener noreferrer" className="px-3.5 py-1.5 rounded-lg bg-[#1C1C26] text-white text-[11px] border border-[#252533] hover:border-[#00F5D4] transition flex items-center gap-1">
-                        Test Link <ExternalLink className="h-3.5 w-3.5 text-[#00F5D4]" />
+                      <a href={activeSession.paymentLink} target="_blank" rel="noopener noreferrer" className="px-3.5 py-1.5 rounded-lg bg-[#181826] text-white text-[11px] border border-[#252533] hover:border-[#EB1000] transition flex items-center gap-1">
+                        Test Link <ExternalLink className="h-3.5 w-3.5 text-[#EB1000]" />
                       </a>
                     </div>
                   </div>
@@ -330,19 +310,19 @@ export default function CreatorLiveSessionsPage() {
 
                 {/* OBS Overlay */}
                 <div className={`p-4 rounded-2xl border flex items-center gap-4 ${theme === 'light' ? 'bg-[#F8F9FA] border-[#E9ECEF]' : 'bg-[#0A0A0F] border-[#1C1C26]'}`}>
-                  <div className="h-24 w-24 rounded-xl bg-[#7B2FFF]/10 border border-[#7B2FFF]/30 flex flex-col items-center justify-center text-[#7B2FFF] shrink-0">
+                  <div className="h-24 w-24 rounded-xl bg-[#EB1000]/10 border border-[#EB1000]/30 flex flex-col items-center justify-center text-[#EB1000] shrink-0">
                     <Monitor className="h-8 w-8" />
                     <span className="text-[9px] font-black mt-1">OBS SOURCE</span>
                   </div>
                   <div className="space-y-1 min-w-0 flex-1">
-                    <span className="text-[10px] font-bold text-[#7B2FFF] uppercase">OBS Overlay Browser Source URL</span>
-                    <p className="text-xs font-mono truncate text-[#7B2FFF]">{activeSession.overlayUrl}</p>
+                    <span className="text-[10px] font-bold text-[#EB1000] uppercase">OBS Overlay Browser Source URL</span>
+                    <p className="text-xs font-mono truncate text-[#EB1000]">{activeSession.overlayUrl}</p>
                     <div className="flex gap-2 pt-1">
-                      <button onClick={() => copyText(activeSession.overlayUrl, 'OBS Overlay URL')} className="px-3 py-1.5 rounded-lg bg-[#7B2FFF] text-white font-bold text-[11px] shadow-sm">
+                      <button onClick={() => copyText(activeSession.overlayUrl, 'OBS Overlay URL')} className="px-3 py-1.5 rounded-lg bg-[#EB1000] text-white font-bold text-[11px] shadow-sm">
                         <Copy className="h-3.5 w-3.5 inline mr-1" /> Copy Overlay
                       </button>
-                      <a href={activeSession.overlayUrl} target="_blank" rel="noopener noreferrer" className="px-3 py-1.5 rounded-lg bg-[#1C1C26] text-white text-[11px]">
-                        Preview Overlay <ExternalLink className="h-3.5 w-3.5 inline text-[#7B2FFF]" />
+                      <a href={activeSession.overlayUrl} target="_blank" rel="noopener noreferrer" className="px-3 py-1.5 rounded-lg bg-[#181826] text-white text-[11px] border border-[#252533] hover:border-[#EB1000]">
+                        Preview Overlay <ExternalLink className="h-3.5 w-3.5 inline text-[#EB1000]" />
                       </a>
                     </div>
                   </div>
@@ -363,7 +343,7 @@ export default function CreatorLiveSessionsPage() {
                 value={form.title}
                 onChange={(e) => setForm(prev => ({ ...prev, title: e.target.value }))}
                 placeholder="e.g. BGMI Live Stream #5 - Paid Q&A & Support"
-                className={`w-full rounded-xl border px-4 py-3 text-xs focus:outline-none focus:border-[#00F5D4] ${theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6]' : 'bg-[#0A0A0F] border-[#1C1C26]'
+                className={`w-full rounded-xl border px-4 py-3 text-xs focus:outline-none focus:border-[#EB1000] ${theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6]' : 'bg-[#0A0A0F] border-[#1C1C26]'
                   }`}
                 required
               />
@@ -376,7 +356,7 @@ export default function CreatorLiveSessionsPage() {
                 <select
                   value={form.category}
                   onChange={(e) => setForm(prev => ({ ...prev, category: e.target.value }))}
-                  className={`w-full rounded-xl border px-4 py-3 text-xs focus:outline-none focus:border-[#00F5D4] ${theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6]' : 'bg-[#0A0A0F] border-[#1C1C26]'
+                  className={`w-full rounded-xl border px-4 py-3 text-xs focus:outline-none focus:border-[#EB1000] ${theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6]' : 'bg-[#0A0A0F] border-[#1C1C26]'
                     }`}
                 >
                   <option value="Gaming & Esports">Gaming & Esports</option>
@@ -392,7 +372,7 @@ export default function CreatorLiveSessionsPage() {
                 <select
                   value={form.streamingPlatform}
                   onChange={(e) => setForm(prev => ({ ...prev, streamingPlatform: e.target.value }))}
-                  className={`w-full rounded-xl border px-4 py-3 text-xs focus:outline-none focus:border-[#00F5D4] ${theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6]' : 'bg-[#0A0A0F] border-[#1C1C26]'
+                  className={`w-full rounded-xl border px-4 py-3 text-xs focus:outline-none focus:border-[#EB1000] ${theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6]' : 'bg-[#0A0A0F] border-[#1C1C26]'
                     }`}
                 >
                   <option value="YouTube Live">YouTube Live</option>
@@ -406,13 +386,13 @@ export default function CreatorLiveSessionsPage() {
             {/* Stream URL (Optional) & Duration Limit */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-bold mb-1.5 text-[#8B8B96]">● Stream URL <span className="text-[#00F5D4] font-semibold">(Optional)</span></label>
+                <label className="block text-xs font-bold mb-1.5 text-[#8B8B96]">● Stream URL <span className="text-[#EB1000] font-semibold">(Optional)</span></label>
                 <input
                   type="url"
                   value={form.streamUrl}
                   onChange={(e) => setForm(prev => ({ ...prev, streamUrl: e.target.value }))}
                   placeholder="https://youtube.com/live/your-broadcast-id or twitch.tv/your-channel"
-                  className={`w-full rounded-xl border px-4 py-3 text-xs focus:outline-none focus:border-[#00F5D4] ${theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6]' : 'bg-[#0A0A0F] border-[#1C1C26]'
+                  className={`w-full rounded-xl border px-4 py-3 text-xs focus:outline-none focus:border-[#EB1000] ${theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6]' : 'bg-[#0A0A0F] border-[#1C1C26]'
                     }`}
                 />
               </div>
@@ -425,7 +405,7 @@ export default function CreatorLiveSessionsPage() {
                   max={24}
                   value={form.durationHours}
                   onChange={(e) => setForm(prev => ({ ...prev, durationHours: e.target.value }))}
-                  className={`w-full rounded-xl border px-4 py-3 text-xs focus:outline-none focus:border-[#00F5D4] ${theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6]' : 'bg-[#0A0A0F] border-[#1C1C26]'
+                  className={`w-full rounded-xl border px-4 py-3 text-xs focus:outline-none focus:border-[#EB1000] ${theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6]' : 'bg-[#0A0A0F] border-[#1C1C26]'
                     }`}
                 />
               </div>
@@ -439,32 +419,32 @@ export default function CreatorLiveSessionsPage() {
                 value={form.description}
                 onChange={(e) => setForm(prev => ({ ...prev, description: e.target.value }))}
                 placeholder="Welcome to our live broadcast! Ask questions & support live on stream."
-                className={`w-full rounded-xl border p-3 text-xs focus:outline-none focus:border-[#00F5D4] ${theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6]' : 'bg-[#0A0A0F] border-[#1C1C26]'
+                className={`w-full rounded-xl border p-3 text-xs focus:outline-none focus:border-[#EB1000] ${theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6]' : 'bg-[#0A0A0F] border-[#1C1C26]'
                   }`}
               />
             </div>
 
             {/* Stream Thumbnail / Cover Image (Simple Design at Very Bottom) */}
             <div className="pt-2 border-t border-[#1C1C26] space-y-2">
-              <label className="block text-xs font-bold text-[#8B8B96]">● Stream Thumbnail / Cover Image <span className="text-[#00F5D4] font-semibold">(Optional)</span></label>
+              <label className="block text-xs font-bold text-[#8B8B96]">● Stream Thumbnail / Cover Image <span className="text-[#EB1000] font-semibold">(Optional)</span></label>
               <div className="flex items-center gap-3">
                 <input
                   type="url"
                   value={form.thumbnailUrl}
                   onChange={(e) => setForm(prev => ({ ...prev, thumbnailUrl: e.target.value }))}
                   placeholder="Paste Thumbnail Image URL or Upload"
-                  className={`flex-1 rounded-xl border px-3.5 py-2.5 text-xs focus:outline-none focus:border-[#00F5D4] ${theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6]' : 'bg-[#0A0A0F] border-[#1C1C26]'
+                  className={`flex-1 rounded-xl border px-3.5 py-2.5 text-xs focus:outline-none focus:border-[#EB1000] ${theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6]' : 'bg-[#0A0A0F] border-[#1C1C26]'
                     }`}
                 />
                 <label className="px-4 py-2.5 rounded-xl bg-[#1C1C26] text-white hover:bg-[#252533] text-xs font-bold cursor-pointer transition flex items-center gap-1.5 shrink-0 border border-[#252533]">
-                  <Upload className="h-3.5 w-3.5 text-[#00F5D4]" /> Upload Image
+                  <Upload className="h-3.5 w-3.5 text-[#EB1000]" /> Upload Image
                   <input type="file" accept="image/*" onChange={handleThumbnailFileUpload} className="hidden" />
                 </label>
               </div>
               {form.thumbnailUrl && (
                 <div className="flex items-center gap-2 pt-1">
-                  <img src={form.thumbnailUrl} alt="Thumbnail Preview" className="h-10 w-16 rounded-lg object-cover border border-[#00F5D4]/40" />
-                  <span className="text-[11px] text-[#00E676] font-semibold">Thumbnail Selected</span>
+                  <img src={form.thumbnailUrl} alt="Thumbnail Preview" className="h-10 w-16 rounded-lg object-cover border border-[#EB1000]/40" />
+                  <span className="text-[11px] text-[#EB1000] font-semibold">Thumbnail Selected</span>
                 </div>
               )}
             </div>
@@ -473,7 +453,7 @@ export default function CreatorLiveSessionsPage() {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="px-8 py-3.5 rounded-2xl bg-brand-gradient text-white font-black text-xs shadow-lg glow-teal hover:scale-105 transition-all flex items-center gap-2"
+                className="px-8 py-3.5 rounded-2xl bg-gradient-to-r from-[#EB1000] to-[#CC0E00] text-white font-black text-xs shadow-lg shadow-[#EB1000]/30 hover:scale-105 transition-all flex items-center gap-2 cursor-pointer"
               >
                 {isSubmitting ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Radio className="h-4 w-4" />}
                 🔴 Launch Live Session Now

@@ -119,17 +119,16 @@ function ViewerSidebarContent({ theme: propTheme, onToggleTheme, activeTab: curr
       label: 'Live Sessions',
       icon: Tv,
       badge: liveCount > 0 ? `${liveCount} LIVE` : null,
-      badgeColor: 'bg-[#FF3D71] text-white animate-pulse',
-      iconColor: 'text-[#FF3D71]',
+      badgeColor: 'bg-[#EB1000] text-white animate-pulse shadow-sm',
+      iconColor: 'text-[#EB1000]',
       href: '/viewers/live-sessions',
     },
-
     {
       id: 'my-questions',
       label: 'My Questions',
       icon: MessageSquare,
       badge: myQuestionsCount > 0 ? `(${myQuestionsCount})` : '(0)',
-      badgeColor: 'bg-[#FF5500] text-white font-black',
+      badgeColor: 'bg-[#FF5500]/15 text-[#FF5500] border border-[#FF5500]/30 font-black',
       iconColor: 'text-[#FF5500]',
       href: '/viewers/my-questions',
     },
@@ -138,7 +137,7 @@ function ViewerSidebarContent({ theme: propTheme, onToggleTheme, activeTab: curr
       label: 'Following',
       icon: Heart,
       badge: null,
-      iconColor: 'text-[#FF3D71]',
+      iconColor: 'text-[#EB1000]',
       href: '/viewers/following',
     },
     {
@@ -146,8 +145,8 @@ function ViewerSidebarContent({ theme: propTheme, onToggleTheme, activeTab: curr
       label: 'My Memberships',
       icon: Sparkles,
       badge: 'VIP',
-      badgeColor: 'bg-[#FFD60A] text-white font-black',
-      iconColor: 'text-[#FFD60A]',
+      badgeColor: 'bg-amber-400/15 text-amber-400 border border-amber-400/30 font-black',
+      iconColor: 'text-amber-400',
       href: '/viewers/memberships',
     },
     {
@@ -218,17 +217,16 @@ function ViewerSidebarContent({ theme: propTheme, onToggleTheme, activeTab: curr
   };
 
   const renderSidebarContent = () => (
-    <div className="flex flex-col justify-between h-full p-4 selection:bg-[#00F5D4] selection:text-[#0A0A0F]">
-      <div className="space-y-6">
+    <div className="flex flex-col justify-between h-full p-4 selection:bg-[#EB1000] selection:text-white">
+      <div className="space-y-5">
         {/* BRANDING HEADER */}
         <div className="flex items-center justify-between px-2 pt-2">
           <Link href="/" onClick={() => setMobileOpen(false)} className="flex items-center gap-2.5 group">
             <Logo size="md" />
             <div>
-              <span className={`font-heading font-black text-lg block leading-none ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'}`}>
-                AskMe <span className="text-brand-gradient">VIEWER</span>
+              <span className={`font-heading font-black text-lg block leading-none ${theme === 'light' ? 'text-[#0F172A]' : 'text-white'}`}>
+                AskMe <span className="text-[#EB1000]">VIEWER</span>
               </span>
-
             </div>
           </Link>
           <button
@@ -241,10 +239,12 @@ function ViewerSidebarContent({ theme: propTheme, onToggleTheme, activeTab: curr
 
         {/* VIEWER USER PROFILE SUMMARY PILL */}
         {viewerUser && (
-          <div className={`p-3 rounded-2xl border flex items-center gap-3 ${theme === 'light' ? 'bg-[#F1F3F5] border-[#E9ECEF]' : 'bg-[#0A0A0F] border-[#1C1C26]'
+          <div className={`p-3 rounded-2xl border flex items-center gap-3 transition-colors ${
+            theme === 'light' ? 'bg-[#F8FAFC] border-[#E2E8F0]' : 'bg-[#0D0D14] border-[#1F1F30]'
+          }`}>
+            <div className={`h-9 w-9 rounded-xl border overflow-hidden shrink-0 flex items-center justify-center font-bold text-sm ${
+              theme === 'light' ? 'bg-[#FEF2F2] border-[#EB1000]/20 text-[#EB1000]' : 'bg-[#1C1C28] border-[#EB1000]/30 text-[#EB1000]'
             }`}>
-            <div className={`h-9 w-9 rounded-xl border overflow-hidden shrink-0 flex items-center justify-center font-bold text-sm ${theme === 'light' ? 'bg-[#FEF2F2] border-[#EB1000]/20 text-[#EB1000]' : 'bg-[#1C1C26] border-[#EB1000]/30 text-[#EB1000]'
-              }`}>
               {viewerUser.avatar || viewerUser.profileImage ? (
                 <img src={viewerUser.avatar || viewerUser.profileImage} alt={viewerUser.fullName || viewerUser.name || 'Viewer'} className="h-full w-full object-cover" />
               ) : (
@@ -252,10 +252,10 @@ function ViewerSidebarContent({ theme: propTheme, onToggleTheme, activeTab: curr
               )}
             </div>
             <div className="min-w-0 flex-1">
-              <h4 className={`font-bold text-xs truncate ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'}`}>
+              <h4 className={`font-bold text-xs truncate ${theme === 'light' ? 'text-[#0F172A]' : 'text-white'}`}>
                 {viewerUser.fullName || viewerUser.name || 'Viewer'}
               </h4>
-              <p className={`text-[10px] truncate ${theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'}`}>
+              <p className={`text-[10px] truncate ${theme === 'light' ? 'text-[#64748B]' : 'text-[#94A3B8]'}`}>
                 {viewerUser.email || viewerUser.username || 'Logged in'}
               </p>
             </div>
@@ -263,19 +263,20 @@ function ViewerSidebarContent({ theme: propTheme, onToggleTheme, activeTab: curr
         )}
 
         {/* BROADCAST LIVE STATUS CARD */}
-        <div className={`p-3.5 rounded-2xl border flex items-center justify-between gap-3 shadow-md ${liveCount > 0
-          ? theme === 'light' ? 'bg-[#FF3D71]/5 border-[#FF3D71]/30' : 'bg-[#FF3D71]/10 border-[#FF3D71]/30'
-          : theme === 'light' ? 'bg-[#F8F9FA] border-[#E9ECEF]' : 'bg-[#0A0A0F] border-[#1C1C26]'
-          }`}>
+        <div className={`p-3.5 rounded-2xl border flex items-center justify-between gap-3 transition-colors ${
+          liveCount > 0
+            ? theme === 'light' ? 'bg-[#FEF2F2] border-[#EB1000]/30' : 'bg-[#EB1000]/10 border-[#EB1000]/30'
+            : theme === 'light' ? 'bg-[#F8FAFC] border-[#E2E8F0]' : 'bg-[#0D0D14] border-[#1F1F30]'
+        }`}>
           <div className="flex items-center gap-2.5">
-            <div className={`p-2 rounded-xl shrink-0 ${liveCount > 0 ? 'bg-[#FF3D71] text-white animate-bounce' : 'bg-[#1C1C26] text-[#8B8B96]'}`}>
+            <div className={`p-2 rounded-xl shrink-0 ${liveCount > 0 ? 'bg-[#EB1000] text-white animate-bounce' : 'bg-[#1C1C28] text-[#94A3B8]'}`}>
               <Radio className="h-4 w-4" />
             </div>
             <div>
               <span className="text-[10px] font-black uppercase tracking-wider block text-[#8B8B96]">
                 STREAM FEED
               </span>
-              <span className={`text-xs font-extrabold block ${liveCount > 0 ? 'text-[#FF3D71]' : 'text-white'}`}>
+              <span className={`text-xs font-extrabold block ${liveCount > 0 ? 'text-[#EB1000]' : theme === 'light' ? 'text-[#0F172A]' : 'text-white'}`}>
                 {liveCount > 0 ? `${liveCount} Streamers Live` : 'Offline Feed'}
               </span>
             </div>
@@ -300,19 +301,19 @@ function ViewerSidebarContent({ theme: propTheme, onToggleTheme, activeTab: curr
                     setMobileOpen(false);
                   }}
                   className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs font-bold transition-all duration-150 cursor-pointer ${isActive
-                    ? 'bg-brand-gradient text-white shadow-md glow-brand font-black'
+                    ? 'bg-[#EB1000] text-white shadow-md shadow-[#EB1000]/20 font-black'
                     : theme === 'light'
-                      ? 'text-[#495057] hover:bg-[#FEF2F2] hover:text-[#EB1000]'
-                      : 'text-[#8B8B96] hover:bg-[#1C1C26] hover:text-white'
+                      ? 'text-[#334155] hover:bg-[#FEF2F2] hover:text-[#EB1000]'
+                      : 'text-[#94A3B8] hover:bg-[#1A1A26] hover:text-white'
                     }`}
                 >
                   <div className="flex items-center gap-3">
-                    <IconComp className={`h-4 w-4 ${isActive ? 'text-white' : item.iconColor || (theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]')}`} />
+                    <IconComp className={`h-4 w-4 ${isActive ? 'text-white' : item.iconColor || (theme === 'light' ? 'text-[#64748B]' : 'text-[#94A3B8]')}`} />
                     <span>{item.label}</span>
                   </div>
 
                   {item.badge && (
-                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-black ${item.badgeColor || 'bg-[#1C1C26] text-white'}`}>
+                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-black ${item.badgeColor || (theme === 'light' ? 'bg-[#E2E8F0] text-[#0F172A]' : 'bg-[#1F1F30] text-white')}`}>
                       {item.badge}
                     </span>
                   )}
@@ -324,20 +325,20 @@ function ViewerSidebarContent({ theme: propTheme, onToggleTheme, activeTab: curr
       </div>
 
       {/* FOOTER CONTROLS & THEME TOGGLE & SIGN OUT */}
-      <div className="space-y-3 pt-4 border-t border-[#1C1C26]">
+      <div className={`space-y-3 pt-4 border-t ${theme === 'light' ? 'border-[#E2E8F0]' : 'border-[#1F1F30]'}`}>
         {/* Theme Switcher Button */}
         <button
           onClick={toggleThemeHandler}
           className={`w-full py-2 px-3 rounded-2xl border text-xs font-bold transition flex items-center justify-between ${theme === 'light'
-            ? 'bg-[#F1F3F5] border-[#E9ECEF] text-[#212529]'
-            : 'bg-[#1C1C26] border-[#1C1C26] text-[#8B8B96] hover:text-white'
+            ? 'bg-[#F1F5F9] border-[#E2E8F0] text-[#0F172A]'
+            : 'bg-[#14141F] border-[#1F1F30] text-[#94A3B8] hover:text-white'
             }`}
         >
           <span className="flex items-center gap-2">
             {theme === 'dark' ? <Sun className="h-4 w-4 text-[#FFD60A]" /> : <Moon className="h-4 w-4 text-[#7B2CBF]" />}
             <span>{theme === 'dark' ? 'Light Theme' : 'Dark Theme'}</span>
           </span>
-          <span className="text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-md bg-[#0A0A0F]">
+          <span className={`text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-md ${theme === 'light' ? 'bg-white text-[#0F172A]' : 'bg-[#0A0A0F] text-white'}`}>
             {theme.toUpperCase()}
           </span>
         </button>
@@ -346,8 +347,8 @@ function ViewerSidebarContent({ theme: propTheme, onToggleTheme, activeTab: curr
         <button
           onClick={handleLogout}
           className={`w-full py-2 px-3 rounded-2xl border text-xs font-bold transition flex items-center justify-between ${theme === 'light'
-            ? 'bg-[#FFF5F5] border-[#FFE3E3] text-[#E03131] hover:bg-[#FFE3E3]'
-            : 'bg-[#FF3D71]/10 border-[#FF3D71]/20 text-[#FF3D71] hover:bg-[#FF3D71]/20 hover:border-[#FF3D71]/40'
+            ? 'bg-[#FEF2F2] border-[#FCA5A5]/40 text-[#DC2626] hover:bg-[#FEE2E2]'
+            : 'bg-[#EB1000]/10 border-[#EB1000]/25 text-[#EB1000] hover:bg-[#EB1000]/20'
             }`}
         >
           <span className="flex items-center gap-2">
@@ -361,30 +362,30 @@ function ViewerSidebarContent({ theme: propTheme, onToggleTheme, activeTab: curr
   return (
     <>
       {/* Mobile Sticky Header (< md) */}
-      <div className={`md:hidden sticky top-0 z-40 w-full px-4 py-3 border-b flex items-center justify-between ${theme === 'light' ? 'bg-white/95 border-[#E9ECEF] text-[#1A1D20]' : 'bg-[#0A0A0F]/95 border-[#1C1C26] text-white'
+      <div className={`md:hidden sticky top-0 z-40 w-full px-4 py-3 border-b flex items-center justify-between ${theme === 'light' ? 'bg-white/95 border-[#E2E8F0] text-[#0F172A]' : 'bg-[#0A0A0F]/95 border-[#1F1F30] text-white'
         } backdrop-blur-md`}>
         <div className="flex items-center gap-3">
           <button
             onClick={() => setMobileOpen(!mobileOpen)}
-            className={`p-2 rounded-xl border ${theme === 'light' ? 'bg-[#F1F3F5] border-[#E9ECEF] text-[#1A1D20]' : 'bg-[#13131A] border-[#1C1C26] text-white'
+            className={`p-2 rounded-xl border ${theme === 'light' ? 'bg-[#F1F5F9] border-[#E2E8F0] text-[#0F172A]' : 'bg-[#14141F] border-[#1F1F30] text-white'
               }`}
           >
             <Menu className="h-5 w-5" />
           </button>
 
           <Link href="/" className="flex items-center gap-2">
-            <div className="h-7 w-7 rounded-lg bg-brand-gradient flex items-center justify-center text-white font-black text-sm">
+            <div className="h-7 w-7 rounded-lg bg-[#EB1000] flex items-center justify-center text-white font-black text-sm shadow-sm">
               a
             </div>
             <span className="font-heading font-black text-sm">
-              AskMe <span className="text-brand-gradient">VIEWER</span>
+              AskMe <span className="text-[#EB1000]">VIEWER</span>
             </span>
           </Link>
         </div>
 
         <button
           onClick={toggleThemeHandler}
-          className={`p-2 rounded-xl border ${theme === 'light' ? 'bg-[#F1F3F5] border-[#E9ECEF]' : 'bg-[#13131A] border-[#1C1C26]'
+          className={`p-2 rounded-xl border ${theme === 'light' ? 'bg-[#F1F5F9] border-[#E2E8F0]' : 'bg-[#14141F] border-[#1F1F30]'
             }`}
         >
           {theme === 'dark' ? <Sun className="h-4 w-4 text-[#FFD60A]" /> : <Moon className="h-4 w-4 text-[#7B2CBF]" />}
@@ -398,7 +399,7 @@ function ViewerSidebarContent({ theme: propTheme, onToggleTheme, activeTab: curr
             className="fixed inset-0 bg-black/70 backdrop-blur-xs animate-fadeIn"
             onClick={() => setMobileOpen(false)}
           />
-          <div className={`relative w-72 max-w-[80vw] h-full flex flex-col z-10 shadow-2xl transition-colors duration-200 ${theme === 'light' ? 'bg-white text-[#1A1D20]' : 'bg-[#13131A] text-white'
+          <div className={`relative w-72 max-w-[80vw] h-full flex flex-col z-10 shadow-2xl transition-colors duration-200 ${theme === 'light' ? 'bg-white text-[#0F172A]' : 'bg-[#0D0D14] text-white'
             }`}>
             {renderSidebarContent()}
           </div>
@@ -407,7 +408,7 @@ function ViewerSidebarContent({ theme: propTheme, onToggleTheme, activeTab: curr
 
       {/* Desktop Sticky Sidebar (>= md) */}
       <aside
-        className={`hidden md:flex w-64 shrink-0 min-h-screen border-r flex-col justify-between selection:bg-[#00F5D4] selection:text-[#0A0A0F] transition-colors duration-200 ${theme === 'light' ? 'bg-white border-[#E9ECEF] text-[#1A1D20]' : 'bg-[#13131A] border-[#1C1C26] text-[#F5F5F7]'
+        className={`hidden md:flex w-64 shrink-0 h-full flex-col justify-between selection:bg-[#EB1000] selection:text-white transition-colors duration-200 ${theme === 'light' ? 'bg-white text-[#0F172A]' : 'bg-[#0D0D14] text-[#F5F5F7]'
           }`}
       >
         {renderSidebarContent()}
@@ -418,7 +419,7 @@ function ViewerSidebarContent({ theme: propTheme, onToggleTheme, activeTab: curr
 
 export default function ViewerSidebar(props) {
   return (
-    <Suspense fallback={<div className="w-64 shrink-0 min-h-screen bg-[#13131A] border-r border-[#1C1C26]"></div>}>
+    <Suspense fallback={<div className="w-64 shrink-0 h-full bg-[#0D0D14] border-r border-[#1F1F30]"></div>}>
       <ViewerSidebarContent {...props} />
     </Suspense>
   );

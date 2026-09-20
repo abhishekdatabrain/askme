@@ -33,6 +33,20 @@ export default function ViewerSessionQuestionsPage() {
   useEffect(() => {
     const savedTheme = typeof window !== 'undefined' ? (localStorage.getItem('askme_viewer_theme') || 'dark') : 'dark';
     setTheme(savedTheme);
+
+    const handleThemeChange = () => {
+      const updated = typeof window !== 'undefined' ? (localStorage.getItem('askme_viewer_theme') || 'dark') : 'dark';
+      setTheme(updated);
+    };
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('viewer-theme-changed', handleThemeChange);
+    }
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('viewer-theme-changed', handleThemeChange);
+      }
+    };
   }, []);
 
   const toggleTheme = () => {
@@ -89,20 +103,21 @@ export default function ViewerSessionQuestionsPage() {
 
   return (
     <>
-      <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
+      <div className="flex-1 flex flex-col min-w-0">
         {/* HEADER */}
-        <header className={`border-b sticky top-0 z-20 px-6 py-4 flex items-center justify-between transition-colors ${theme === 'light' ? 'border-[#E9ECEF] bg-white/90 backdrop-blur-md' : 'border-[#1C1C26] bg-[#0A0A0F]/80 backdrop-blur-md'
+        <header className={`border-b sticky top-0 z-30 shrink-0 px-6 py-4 flex items-center justify-between transition-colors ${theme === 'light' ? 'border-[#E2E8F0] bg-white/95 backdrop-blur-md shadow-sm' : 'border-[#1F1F30] bg-[#0A0A0F]/95 backdrop-blur-md shadow-sm'
           }`}>
           <div className="flex items-center gap-4">
             <Link
               href="/viewers/past-streams"
-              className="p-2 rounded-xl border border-[#1C1C26] hover:bg-[#1C1C26] text-[#8B8B96] hover:text-white transition flex items-center gap-1.5 text-xs font-bold"
+              className={`p-2 rounded-xl border transition flex items-center gap-1.5 text-xs font-bold ${theme === 'light' ? 'border-[#E2E8F0] bg-[#F8FAFC] hover:bg-[#E2E8F0] text-[#0F172A]' : 'border-[#1F1F30] hover:bg-[#1C1C28] text-[#94A3B8] hover:text-white'
+                }`}
             >
-              <ArrowLeft className="h-4 w-4" /> Back to Past Streams
+              <ArrowLeft className="h-4 w-4 text-[#EB1000]" /> Back to Past Streams
             </Link>
             <div>
-              <h1 className={`font-heading font-black text-xl flex items-center gap-2 ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'}`}>
-                <MessageSquare className="h-5 w-5 text-[#00F5D4]" /> Session Questions History ({questions.length})
+              <h1 className={`font-heading font-black text-xl flex items-center gap-2 ${theme === 'light' ? 'text-[#0F172A]' : 'text-white'}`}>
+                <MessageSquare className="h-5 w-5 text-[#EB1000]" /> Session Questions History ({questions.length})
               </h1>
               <p className={`text-xs ${theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'}`}>
                 Questions submitted by you during this broadcast session.
@@ -111,7 +126,8 @@ export default function ViewerSessionQuestionsPage() {
           </div>
 
           <div className="flex items-center gap-3">
-            <button onClick={toggleTheme} className="px-3 py-1.5 rounded-xl border text-xs font-bold flex items-center gap-1.5">
+            <button onClick={toggleTheme} className={`px-3 py-1.5 rounded-xl border text-xs font-bold flex items-center gap-1.5 transition ${theme === 'light' ? 'border-[#E9ECEF] bg-white text-[#1A1D20]' : 'border-[#1C1C26] bg-[#13131A] text-white'
+              }`}>
               {theme === 'dark' ? <Sun className="h-4 w-4 text-[#FFD60A]" /> : <Moon className="h-4 w-4 text-[#7B2FFF]" />}
               <span className="hidden sm:inline">{theme === 'dark' ? 'Light' : 'Dark'}</span>
             </button>
@@ -130,10 +146,10 @@ export default function ViewerSessionQuestionsPage() {
                   className="h-12 w-12 rounded-full border-2 border-[#00F5D4]/40 object-cover shrink-0"
                 />
                 <div>
-                  <h3 className="font-bold text-sm text-white">
+                  <h3 className={`font-bold text-sm ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'}`}>
                     {sessionInfo.creatorName}
                   </h3>
-                  <p className="text-xs text-[#8B8B96] flex items-center gap-1 mt-0.5">
+                  <p className={`text-xs flex items-center gap-1 mt-0.5 ${theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'}`}>
                     <Tv className="h-3.5 w-3.5 text-[#00F5D4]" /> {sessionInfo.sessionTitle}
                   </p>
                 </div>
@@ -165,8 +181,8 @@ export default function ViewerSessionQuestionsPage() {
               <div className={`p-12 rounded-2xl border text-center space-y-3 ${theme === 'light' ? 'bg-[#F8F9FA] border-[#E9ECEF]' : 'bg-[#0A0A0F] border-[#1C1C26]'
                 }`}>
                 <HelpCircle className="h-10 w-10 mx-auto text-[#8B8B96] opacity-40" />
-                <h4 className="font-bold text-white text-sm">No Questions Found for This Session</h4>
-                <p className="text-xs text-[#8B8B96] max-w-md mx-auto">
+                <h4 className={`font-bold text-sm ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'}`}>No Questions Found for This Session</h4>
+                <p className={`text-xs max-w-md mx-auto ${theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'}`}>
                   You haven't submitted any questions during this broadcast session.
                 </p>
               </div>
@@ -175,15 +191,15 @@ export default function ViewerSessionQuestionsPage() {
                 <div
                   key={q.id || idx}
                   className={`p-5 rounded-2xl border space-y-3 shadow-md transition ${q.isVip
-                      ? 'bg-[#1C1805] border-2 border-[#FFD60A]/80 shadow-xl glow-gold'
-                      : theme === 'light'
-                        ? 'bg-[#F8F9FA] border-[#E9ECEF]'
-                        : 'bg-[#0A0A0F] border-[#1C1C26]'
+                    ? 'bg-[#1C1805] border-2 border-[#FFD60A]/80 shadow-xl glow-gold'
+                    : theme === 'light'
+                      ? 'bg-[#F8F9FA] border-[#E9ECEF]'
+                      : 'bg-[#0A0A0F] border-[#1C1C26]'
                     }`}
                 >
-                  <div className="flex items-center justify-between gap-3 border-b pb-3 border-[#1C1C26]">
+                  <div className={`flex items-center justify-between gap-3 border-b pb-3 ${theme === 'light' ? 'border-[#E9ECEF]' : 'border-[#1C1C26]'}`}>
                     <div className="flex items-center gap-2">
-                      <span className="font-bold text-xs text-white">Question #{idx + 1}</span>
+                      <span className={`font-bold text-xs ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'}`}>Question #{idx + 1}</span>
                       {q.isVip && (
                         <span className="px-2.5 py-0.5 rounded-full bg-gradient-to-r from-[#FFD60A] to-[#FF9500] text-white text-[10px] font-black uppercase flex items-center gap-1 shadow-md">
                           ⚡ VIP PRIORITY
@@ -202,10 +218,10 @@ export default function ViewerSessionQuestionsPage() {
                         Submitted Question / Message:
                       </span>
                       <p className={`p-3 rounded-2xl text-xs italic border font-medium ${q.isVip
-                          ? 'bg-[#0A0A0F] text-[#FFD60A] border-[#FFD60A]/40'
-                          : theme === 'light'
-                            ? 'bg-white border-[#E9ECEF] text-[#00B49F]'
-                            : 'bg-[#13131A] text-[#00F5D4] border-[#1C1C26]'
+                        ? 'bg-[#0A0A0F] text-[#FFD60A] border-[#FFD60A]/40'
+                        : theme === 'light'
+                          ? 'bg-white border-[#E9ECEF] text-[#00B49F]'
+                          : 'bg-[#13131A] text-[#00F5D4] border-[#1C1C26]'
                         }`}>
                         "{q.isVip ? '⚡ VIP FAST-TRACK: ' : ''}{q.message}"
                       </p>
@@ -219,10 +235,10 @@ export default function ViewerSessionQuestionsPage() {
                     </span>
 
                     <span className={`px-3 py-1 rounded-full font-bold text-[10px] uppercase ${q.status === 'read'
-                        ? 'bg-[#00E676]/15 text-[#00E676] border border-[#00E676]/30'
-                        : q.status === 'cancelled'
-                          ? 'bg-[#FF3D71]/15 text-[#FF3D71] border border-[#FF3D71]/30'
-                          : 'bg-[#FFD60A]/15 text-[#FFD60A] border border-[#FFD60A]/30'
+                      ? 'bg-[#00E676]/15 text-[#00E676] border border-[#00E676]/30'
+                      : q.status === 'cancelled'
+                        ? 'bg-[#FF3D71]/15 text-[#FF3D71] border border-[#FF3D71]/30'
+                        : 'bg-[#FFD60A]/15 text-[#FFD60A] border border-[#FFD60A]/30'
                       }`}>
                       {q.status === 'read' ? '✓ Answered' : (q.status === 'cancelled' ? '✕ Cancelled' : '● unread')}
                     </span>

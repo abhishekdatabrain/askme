@@ -338,34 +338,24 @@ function ViewerDashboardContent() {
     return (
         <>
             {/* MAIN VIEWER CONTENT CONTAINER */}
-            <div className="flex-1 flex flex-col min-w-0 min-h-screen">
+            <div className="flex-1 flex flex-col min-w-0">
                 {/* MOBILE HEADER BAR WITH SIDEBAR TOGGLE */}
-                <header className={`md:hidden sticky top-0 z-40 border-b px-4 py-3 flex items-center justify-between shadow-lg ${theme === 'light' ? 'bg-white border-[#E9ECEF]' : 'bg-[#13131A] border-[#1C1C26]'
+                <header className={`md:hidden sticky top-0 z-40 border-b px-4 py-3 flex items-center justify-between shadow-lg ${theme === 'light' ? 'bg-white border-[#E2E8F0]' : 'bg-[#0A0A0F] border-[#1F1F30]'
                     }`}>
                     <div className="flex items-center gap-2">
                         <button
                             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                            className="p-2 rounded-xl bg-[#0A0A0F] border border-[#1C1C26] text-white"
+                            className={`p-2 rounded-xl border ${theme === 'light' ? 'bg-[#F1F5F9] border-[#E2E8F0] text-[#0F172A]' : 'bg-[#14141F] border-[#1F1F30] text-white'}`}
                         >
-                            {mobileMenuOpen ? <X className="h-5 w-5 text-[#00F5D4]" /> : <Menu className="h-5 w-5 text-[#00F5D4]" />}
+                            {mobileMenuOpen ? <X className="h-5 w-5 text-[#EB1000]" /> : <Menu className="h-5 w-5 text-[#EB1000]" />}
                         </button>
-                        <div className="h-8 w-8 rounded-xl bg-brand-gradient flex items-center justify-center text-white font-black text-lg">
+                        <div className="h-8 w-8 rounded-xl bg-[#EB1000] flex items-center justify-center text-white font-black text-lg shadow-sm">
                             a
                         </div>
                         <span className="font-heading font-black text-sm text-white">
-                            AskMe <span className="text-brand-gradient">VIEWER</span>
+                            AskMe <span className="text-[#EB1000]">VIEWER</span>
                         </span>
                     </div>
-
-                    {/* <div className="flex items-center gap-2">
-                        <button
-                            onClick={handleLogout}
-                            className="px-2.5 py-1.5 rounded-xl bg-[#FF3D71]/10 border border-[#FF3D71]/30 text-[#FF3D71] text-xs font-bold flex items-center gap-1"
-                        >
-                            <LogOut className="h-3.5 w-3.5" />
-                            <span>Sign Out</span>
-                        </button>
-                    </div> */}
                 </header>
 
                 {/* MOBILE DRAWER */}
@@ -386,11 +376,11 @@ function ViewerDashboardContent() {
                     </div>
                 )}
 
-                {/* TOP HEADER TITLE & SEARCH BAR & SIGN OUT */}
-                <div className={`border-b px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 sticky top-0 z-20 backdrop-blur-md ${theme === 'light' ? 'bg-white/95 border-[#E9ECEF]' : 'bg-[#13131A]/95 border-[#1C1C26]'
+                {/* TOP HEADER TITLE & SEARCH BAR */}
+                <header className={`border-b px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 sticky top-0 z-30 shrink-0 backdrop-blur-md shadow-sm transition-colors ${theme === 'light' ? 'bg-white/95 border-[#E2E8F0]' : 'bg-[#0A0A0F]/95 border-[#1F1F30]'
                     }`}>
                     <div>
-                        <h1 className={`font-heading font-black text-xl mt-1 ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'}`}>
+                        <h1 className={`font-heading font-black text-xl mt-1 ${theme === 'light' ? 'text-[#0F172A]' : 'text-white'}`}>
                             {activeTab === 'home' && 'Live Feed & Broadcast Discovery'}
                             {activeTab === 'live-sessions' && 'Active Live Broadcast Sessions'}
                             {activeTab === 'categories' && 'Category Filter & Channels'}
@@ -409,7 +399,7 @@ function ViewerDashboardContent() {
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                                 placeholder="Search creator name, @handle, title..."
-                                className={`w-full pl-10 pr-4 py-2 rounded-2xl border text-xs focus:outline-none focus:border-[#00F5D4] ${theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6] text-[#1A1D20]' : 'bg-[#0A0A0F] border-[#1C1C26] text-white'
+                                className={`w-full pl-10 pr-4 py-2 rounded-2xl border text-xs focus:outline-none focus:border-[#EB1000] transition-colors ${theme === 'light' ? 'bg-[#F8FAFC] border-[#E2E8F0] text-[#0F172A]' : 'bg-[#0D0D14] border-[#1F1F30] text-white'
                                     }`}
                             />
                         </div>
@@ -427,7 +417,7 @@ function ViewerDashboardContent() {
                             <span>Sign Out</span>
                         </button> */}
                     </div>
-                </div>
+                </header>
 
                 {/* MAIN BODY VIEW BY TAB */}
                 <main className="flex-1 p-4 sm:p-6 max-w-7xl w-full mx-auto space-y-6">
@@ -438,14 +428,14 @@ function ViewerDashboardContent() {
                             {/* Category Pill Bar */}
                             <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1">
                                 <span className="text-xs font-bold text-[#8B8B96] shrink-0 flex items-center gap-1">
-                                    <Filter className="h-3.5 w-3.5 text-[#00F5D4]" /> Category Filter:
+                                    <Filter className="h-3.5 w-3.5 text-[#EB1000]" /> Category Filter:
                                 </span>
                                 {categories.map(cat => (
                                     <button
                                         key={cat}
                                         onClick={() => setSelectedCategory(cat)}
                                         className={`px-3.5 py-1.5 rounded-full text-xs font-bold shrink-0 transition ${selectedCategory === cat
-                                            ? 'bg-[#00F5D4] text-white shadow-sm'
+                                            ? 'bg-white text-black font-extrabold border-2 border-[#EB1000] shadow-[0_0_15px_rgba(235,16,0,0.4)]'
                                             : theme === 'light'
                                                 ? 'bg-white text-[#495057] border border-[#DEE2E6] hover:bg-[#F1F3F5]'
                                                 : 'bg-[#13131A] text-[#8B8B96] border border-[#1C1C26] hover:text-white'
@@ -480,7 +470,7 @@ function ViewerDashboardContent() {
                                             <p className="text-xs text-[#8B8B96]">There are currently no followed creators or active live streams. Follow creators to see them here!</p>
                                             <button
                                                 onClick={() => { setSelectedCategory('All'); setSearchQuery(''); }}
-                                                className="px-4 py-2 rounded-xl bg-[#00F5D4] text-white text-xs font-bold"
+                                                className="px-4 py-2 rounded-xl bg-[#EB1000] text-white text-xs font-bold"
                                             >
                                                 Reset Category Filter
                                             </button>
@@ -496,7 +486,10 @@ function ViewerDashboardContent() {
                                             return (
                                                 <div
                                                     key={creator.creatorId || creator.id}
-                                                    className="p-5 rounded-3xl bg-[#13131A] border border-[#22222E] hover:border-[#FF5722]/50 shadow-2xl transition-all duration-200 hover:-translate-y-1 flex flex-col justify-between"
+                                                    className={`p-5 rounded-3xl border shadow-xl transition-all duration-200 hover:-translate-y-1 flex flex-col justify-between ${theme === 'light'
+                                                            ? 'bg-white border-[#E9ECEF] hover:border-[#EB1000]/50'
+                                                            : 'bg-[#13131A] border-[#22222E] hover:border-[#EB1000]/50 shadow-2xl'
+                                                        }`}
                                                 >
                                                     <div className="space-y-3.5">
                                                         {/* TOP BAR: LIVE NOW / FOLLOWED CREATOR Badge & Category Tag */}
@@ -513,12 +506,16 @@ function ViewerDashboardContent() {
                                                             )}
 
                                                             {/* Category Tag Pill on Top Right */}
-                                                            <span className="px-3 py-1 rounded-full bg-[#1C1C26] text-[#8B8B96] text-xs font-bold border border-[#2A2A3A] shrink-0">
+                                                            <span className={`px-3 py-1 rounded-full text-xs font-bold border shrink-0 ${theme === 'light'
+                                                                    ? 'bg-[#F1F3F5] text-[#495057] border-[#DEE2E6]'
+                                                                    : 'bg-[#1C1C26] text-[#8B8B96] border-[#2A2A3A]'
+                                                                }`}>
                                                                 {creator.category || creator.session?.category || 'General Q&A'}
                                                             </span>
                                                         </div>
 
-                                                        <div className="flex items-center justify-between gap-3 border-b border-[#22222E] pb-3.5">
+                                                        <div className={`flex items-center justify-between gap-3 border-b pb-3.5 ${theme === 'light' ? 'border-[#E9ECEF]' : 'border-[#22222E]'
+                                                            }`}>
                                                             {/* Avatar & Name Info (Clickable link to Creator Profile) */}
                                                             <Link
                                                                 href={`/creator/${creator.cleanUsername}`}
@@ -529,17 +526,21 @@ function ViewerDashboardContent() {
                                                                     <img
                                                                         src={getMediaUrl(creator.avatar) || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80'}
                                                                         alt={creator.fullName}
-                                                                        className="h-12 w-12 rounded-full object-cover border border-[#2A2A3A] group-hover:border-[#00F5D4] transition"
+                                                                        className={`h-12 w-12 rounded-full object-cover border transition ${theme === 'light' ? 'border-[#DEE2E6] group-hover:border-[#EB1000]' : 'border-[#2A2A3A] group-hover:border-[#00F5D4]'
+                                                                            }`}
                                                                     />
-                                                                    <span className="absolute -bottom-1 -right-1 h-4 w-4 rounded-full bg-[#FF5722] text-white text-[9px] font-bold flex items-center justify-center border border-[#13131A]" title="Verified Creator">
+                                                                    <span className={`absolute -bottom-1 -right-1 h-4 w-4 rounded-full bg-[#EB1000] text-white text-[9px] font-bold flex items-center justify-center border ${theme === 'light' ? 'border-white' : 'border-[#13131A]'
+                                                                        }`} title="Verified Creator">
                                                                         ✓
                                                                     </span>
                                                                 </div>
                                                                 <div className="min-w-0">
-                                                                    <h4 className="font-heading font-black text-base text-white truncate leading-tight group-hover:text-[#00F5D4] transition">
+                                                                    <h4 className={`font-heading font-black text-base truncate leading-tight transition ${theme === 'light' ? 'text-[#1A1D20] group-hover:text-[#EB1000]' : 'text-white group-hover:text-[#00F5D4]'
+                                                                        }`}>
                                                                         {creator.fullName}
                                                                     </h4>
-                                                                    <p className="text-xs text-[#8B8B96] font-mono truncate mt-0.5">
+                                                                    <p className={`text-xs font-mono truncate mt-0.5 ${theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'
+                                                                        }`}>
                                                                         {creator.username}
                                                                     </p>
                                                                 </div>
@@ -560,26 +561,24 @@ function ViewerDashboardContent() {
                                                             </div>
                                                         </div>
 
-                                                        {/* 2. SESSION TITLE WITH EMOJI */}
+                                                        {/* STREAM DESCRIPTION */}
                                                         <div className="space-y-1.5">
-                                                            {/* <h3 className="font-heading font-black text-base text-white leading-snug flex items-start gap-2">
-                                                            <span className="text-lg shrink-0">🎙️</span>
-                                                            <span>{creator.session?.title || `${creator.fullName}'s Official Live Q&A Broadcast`}</span>
-                                                        </h3> */}
-
-                                                            {/* STREAM DESCRIPTION */}
-                                                            <p className="text-xs text-[#8B8B96] line-clamp-2 leading-relaxed">
+                                                            <p className={`text-xs line-clamp-2 leading-relaxed ${theme === 'light' ? 'text-[#495057]' : 'text-[#8B8B96]'
+                                                                }`}>
                                                                 {creator.session?.description || creator.bio || 'Pro Esports player streaming & answering live questions. Ask about settings, sensitivity & pro tips!'}
                                                             </p>
                                                         </div>
 
                                                         {/* Divider */}
-                                                        <div className="border-b border-[#22222E] pt-1"></div>
+                                                        <div className={`border-b pt-1 ${theme === 'light' ? 'border-[#E9ECEF]' : 'border-[#22222E]'
+                                                            }`}></div>
 
                                                         {/* STATS ROW (Dynamic Followers & Answered Count) */}
-                                                        <div className="flex items-center justify-between text-xs text-[#8B8B96] pt-1">
-                                                            <span className="flex items-center gap-1 font-bold text-white">
-                                                                <Users className="h-3.5 w-3.5 text-[#FF5722]" />
+                                                        <div className={`flex items-center justify-between text-xs pt-1 ${theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'
+                                                            }`}>
+                                                            <span className={`flex items-center gap-1 font-bold ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'
+                                                                }`}>
+                                                                <Users className="h-3.5 w-3.5 text-[#EB1000]" />
                                                                 {(creator.followersCount || 0) >= 1000000
                                                                     ? `${((creator.followersCount || 0) / 1000000).toFixed(1)}M`
                                                                     : (creator.followersCount || 0) >= 1000
@@ -587,7 +586,8 @@ function ViewerDashboardContent() {
                                                                         : (creator.followersCount || 0)} Followers
                                                             </span>
 
-                                                            <span className="font-bold text-white">
+                                                            <span className={`font-bold ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'
+                                                                }`}>
                                                                 {creator.answeredCount !== undefined ? creator.answeredCount : 0} Answered
                                                             </span>
                                                         </div>
@@ -596,7 +596,7 @@ function ViewerDashboardContent() {
                                                     {/* 3. ACTION BUTTONS ROW (YouTube Subscribe & Ask Question) */}
                                                     <div className="space-y-2.5 pt-2">
                                                         <div className="flex items-center justify-between gap-3">
-                                                            {/* Official Google YouTube Subscribe Button Widget (Only shown if creator platform is YouTube) */}
+                                                            {/* Official Google YouTube Subscribe Button Widget */}
                                                             {creator.socialLinks?.platform?.toLowerCase() === "youtube" && (
                                                                 <div
                                                                     className="g-ytsubscribe"
@@ -609,14 +609,14 @@ function ViewerDashboardContent() {
                                                             {creator.session?.sessionCode ? (
                                                                 <Link
                                                                     href={`/pay/${creator.session.sessionCode}`}
-                                                                    className="flex-1 py-2.5 px-4 rounded-full bg-gradient-to-r from-[#FF5722] to-[#FF7043] hover:from-[#E64A19] hover:to-[#FF5722] text-white font-black text-xs shadow-xl glow-pay transition flex items-center justify-center gap-2 text-center truncate"
+                                                                    className="flex-1 py-2.5 px-4 rounded-full bg-[#EB1000] hover:bg-[#CC0E00] text-white font-black text-xs shadow-xl shadow-[#EB1000]/30 transition flex items-center justify-center gap-2 text-center truncate"
                                                                 >
                                                                     <MessageSquare className="h-4 w-4 shrink-0" /> Ask Question
                                                                 </Link>
                                                             ) : (
                                                                 <Link
                                                                     href={`/creator/${creator.cleanUsername}`}
-                                                                    className="flex-1 py-2.5 px-4 rounded-full bg-gradient-to-r from-[#FF5722] to-[#FF7043] hover:from-[#E64A19] hover:to-[#FF5722] text-white font-black text-xs shadow-xl glow-pay transition flex items-center justify-center gap-2 text-center truncate"
+                                                                    className="flex-1 py-2.5 px-4 rounded-full bg-[#EB1000] hover:bg-[#CC0E00] text-white font-black text-xs shadow-xl shadow-[#EB1000]/30 transition flex items-center justify-center gap-2 text-center truncate"
                                                                 >
                                                                     <MessageSquare className="h-4 w-4 shrink-0" /> Ask Question
                                                                 </Link>
@@ -640,7 +640,10 @@ function ViewerDashboardContent() {
                                                             return (
                                                                 <button
                                                                     onClick={() => setVipModalCreator(creator)}
-                                                                    className="w-full py-3 px-4 rounded-full bg-[#1C1805] hover:bg-[#262007] border border-[#B38F00] text-[#FFD60A] font-black text-xs transition flex items-center justify-center gap-2 shadow-md"
+                                                                    className={`w-full py-3 px-4 rounded-full border font-black text-xs transition flex items-center justify-center gap-2 shadow-md ${theme === 'light'
+                                                                            ? 'bg-[#FFFBEB] hover:bg-[#FEF3C7] border-[#F59E0B] text-[#B45309]'
+                                                                            : 'bg-[#1C1805] hover:bg-[#262007] border-[#B38F00] text-[#FFD60A]'
+                                                                        }`}
                                                                 >
                                                                     <span className="text-sm">💎</span> Join VIP Membership
                                                                 </button>

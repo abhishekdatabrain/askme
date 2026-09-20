@@ -79,11 +79,33 @@ export default function MyMembershipsPage() {
   //   }
   // };
 
+  const [theme, setTheme] = useState('dark');
+
+  // Theme Sync
+  useEffect(() => {
+    const saved = typeof window !== 'undefined' ? (localStorage.getItem('askme_viewer_theme') || 'dark') : 'dark';
+    setTheme(saved);
+
+    const handleThemeChange = () => {
+      const updated = typeof window !== 'undefined' ? (localStorage.getItem('askme_viewer_theme') || 'dark') : 'dark';
+      setTheme(updated);
+    };
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('viewer-theme-changed', handleThemeChange);
+    }
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('viewer-theme-changed', handleThemeChange);
+      }
+    };
+  }, []);
+
   if (loading) {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center p-12 space-y-3 min-h-[60vh]">
-        <div className="h-8 w-8 border-2 border-[#00F5D4] border-t-transparent rounded-full animate-spin" />
-        <p className="text-xs font-semibold text-[#8B8B96]">Loading My VIP Memberships...</p>
+      <div className={`flex-1 flex flex-col items-center justify-center p-12 space-y-3 min-h-[60vh] ${theme === 'light' ? 'bg-[#F8F9FA] text-[#1A1D20]' : 'bg-[#0A0A0F] text-white'}`}>
+        <div className="h-8 w-8 border-2 border-[#EB1000] border-t-transparent rounded-full animate-spin" />
+        <p className={`text-xs font-semibold ${theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'}`}>Loading My VIP Memberships...</p>
       </div>
     );
   }
@@ -91,28 +113,25 @@ export default function MyMembershipsPage() {
   return (
     <>
       {/* 2. MAIN CONTAINER */}
-      <div className="flex-1 flex flex-col min-w-0 min-h-screen">
+      <div className="flex-1 flex flex-col min-w-0">
         {/* HEADER */}
-        <header className="sticky top-0 z-40 bg-[#13131A]/95 backdrop-blur-md border-b border-[#1C1C26] px-4 sm:px-6 py-3.5 flex items-center justify-between">
-          <Link href="/viewers/dashboard" className="inline-flex items-center gap-2 text-xs font-bold text-[#8B8B96] hover:text-[#00F5D4] transition">
-            <ArrowLeft className="h-4 w-4" /> Back to Public Live Feed
+        <header className={`sticky top-0 z-30 shrink-0 backdrop-blur-md border-b px-4 sm:px-6 py-3.5 flex items-center justify-between shadow-sm transition-colors ${theme === 'light' ? 'bg-white/95 border-[#E2E8F0]' : 'bg-[#0A0A0F]/95 border-[#1F1F30]'
+          }`}>
+          <Link href="/viewers/dashboard" className={`inline-flex items-center gap-2 text-xs font-bold transition ${theme === 'light' ? 'text-[#64748B] hover:text-[#EB1000]' : 'text-[#94A3B8] hover:text-[#EB1000]'
+            }`}>
+            <ArrowLeft className="h-4 w-4 text-[#EB1000]" /> Back to Public Live Feed
           </Link>
 
-          <div className="flex items-center gap-2">
-            <span className="text-lg">💎</span>
-            <h1 className="font-heading font-black text-sm text-white">
-              My Memberships
-            </h1>
-          </div>
+
         </header>
 
         {/* MAIN BODY CONTAINER */}
         <main className="flex-1 p-4 sm:p-6 max-w-5xl w-full mx-auto space-y-6">
-          <div className="border-b border-[#1C1C26] pb-4">
-            <h2 className="font-heading font-black text-2xl text-white flex items-center gap-2">
+          <div className={`border-b pb-4 ${theme === 'light' ? 'border-[#E9ECEF]' : 'border-[#1C1C26]'}`}>
+            <h2 className={`font-heading font-black text-2xl flex items-center gap-2 ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'}`}>
               <span>💎</span> My Memberships ({memberships.filter(m => m.status === 'active').length})
             </h2>
-            <p className="text-xs text-[#8B8B96] mt-0.5">
+            <p className={`text-xs mt-0.5 ${theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'}`}>
               Manage your active VIP creator subscriptions, billing history, and membership perks.
             </p>
           </div>
@@ -125,15 +144,16 @@ export default function MyMembershipsPage() {
           )}
 
           {memberships.length === 0 ? (
-            <div className="p-12 rounded-3xl bg-[#13131A] border border-[#1C1C26] text-center space-y-4 max-w-md mx-auto">
+            <div className={`p-12 rounded-3xl border text-center space-y-4 max-w-md mx-auto ${theme === 'light' ? 'bg-white border-[#E9ECEF]' : 'bg-[#13131A] border-[#1C1C26]'
+              }`}>
               <span className="text-4xl block">💎</span>
-              <h3 className="font-heading font-bold text-lg text-white">No Active Memberships</h3>
-              <p className="text-xs text-[#8B8B96]">
+              <h3 className={`font-heading font-bold text-lg ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'}`}>No Active Memberships</h3>
+              <p className={`text-xs ${theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'}`}>
                 You haven't joined any VIP Creator Memberships yet. Explore creators and join for exclusive perks!
               </p>
               <Link
                 href="/"
-                className="px-5 py-2.5 rounded-xl bg-brand-gradient text-white text-xs font-bold shadow-md inline-block glow-teal"
+                className="px-5 py-2.5 rounded-xl bg-[#EB1000] text-white text-xs font-bold shadow-md inline-block"
               >
                 Explore Live Creators
               </Link>

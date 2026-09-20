@@ -366,25 +366,53 @@ export default function ViewerFollowingPage() {
   const startRecord = pagination.total === 0 ? 0 : (pagination.page - 1) * pagination.limit + 1;
   const endRecord = Math.min(pagination.page * pagination.limit, pagination.total || creators.length);
 
+  const [theme, setTheme] = useState('dark');
+
+  // Theme Sync
+  useEffect(() => {
+    const saved = typeof window !== 'undefined' ? (localStorage.getItem('askme_viewer_theme') || 'dark') : 'dark';
+    setTheme(saved);
+
+    const handleThemeChange = () => {
+      const updated = typeof window !== 'undefined' ? (localStorage.getItem('askme_viewer_theme') || 'dark') : 'dark';
+      setTheme(updated);
+    };
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('viewer-theme-changed', handleThemeChange);
+    }
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('viewer-theme-changed', handleThemeChange);
+      }
+    };
+  }, []);
+
   return (
     <>
       {/* MAIN CONTAINER */}
-      <div className="flex-1 flex flex-col min-w-0 min-h-screen" ref={topListRef}>
+      <div className="flex-1 flex flex-col min-w-0" ref={topListRef}>
         {/* HEADER */}
-        <header className="sticky top-0 z-40 bg-[#13131A]/95 backdrop-blur-md border-b border-[#1C1C26] px-4 sm:px-6 py-3.5 flex items-center justify-between">
-          <Link href="/" className="inline-flex items-center gap-2 text-xs font-bold text-[#8B8B96] hover:text-[#00F5D4] transition">
-            <ArrowLeft className="h-4 w-4" /> Back to Public Live Feed
+        <header className={`sticky top-0 z-30 shrink-0 backdrop-blur-md border-b px-4 sm:px-6 py-3.5 flex items-center justify-between shadow-sm transition-colors ${
+          theme === 'light' ? 'bg-white/95 border-[#E2E8F0]' : 'bg-[#0A0A0F]/95 border-[#1F1F30]'
+        }`}>
+          <Link href="/viewers/dashboard" className={`inline-flex items-center gap-2 text-xs font-bold transition ${
+            theme === 'light' ? 'text-[#64748B] hover:text-[#EB1000]' : 'text-[#94A3B8] hover:text-[#EB1000]'
+          }`}>
+            <ArrowLeft className="h-4 w-4 text-[#EB1000]" /> Back to Public Live Feed
           </Link>
         </header>
 
         {/* MAIN BODY CONTAINER */}
         <main className="flex-1 p-4 sm:p-6 max-w-6xl w-full mx-auto space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#1C1C26] pb-4">
+          <div className={`flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b pb-4 ${
+            theme === 'light' ? 'border-[#E9ECEF]' : 'border-[#1C1C26]'
+          }`}>
             <div>
-              <h2 className="font-heading font-black text-2xl text-white">
+              <h2 className={`font-heading font-black text-2xl ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'}`}>
                 Followed Creators ({pagination.total ?? creators.length})
               </h2>
-              <p className="text-xs text-[#8B8B96] mt-0.5">
+              <p className={`text-xs mt-0.5 ${theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'}`}>
                 Live broadcast notifications and quick support links for your favorite creators.
               </p>
             </div>
@@ -397,7 +425,11 @@ export default function ViewerFollowingPage() {
                 placeholder="Search followed creators..."
                 value={searchQuery}
                 onChange={handleSearchChange}
-                className="w-full pl-10 pr-10 py-2 rounded-2xl text-xs font-medium border outline-none transition bg-[#0A0A0F] border-[#1C1C26] text-white focus:border-[#00F5D4] focus:ring-1 focus:ring-[#00F5D4]"
+                className={`w-full pl-10 pr-10 py-2 rounded-2xl text-xs font-medium border outline-none transition ${
+                  theme === 'light'
+                    ? 'bg-[#F8F9FA] border-[#DEE2E6] text-[#1A1D20] focus:border-[#EB1000]'
+                    : 'bg-[#0A0A0F] border-[#1C1C26] text-white focus:border-[#00F5D4]'
+                }`}
               />
               {searchQuery && (
                 <button
@@ -413,16 +445,18 @@ export default function ViewerFollowingPage() {
 
           {loading ? (
             <div className="flex-1 flex flex-col items-center justify-center p-16 space-y-3 min-h-[40vh]">
-              <RefreshCw className="h-8 w-8 border-2 border-[#00F5D4] border-t-transparent rounded-full animate-spin text-[#00F5D4]" />
-              <p className="text-xs font-semibold text-[#8B8B96]">Loading Followed Creators...</p>
+              <RefreshCw className="h-8 w-8 border-2 border-[#EB1000] border-t-transparent rounded-full animate-spin text-[#EB1000]" />
+              <p className={`text-xs font-semibold ${theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'}`}>Loading Followed Creators...</p>
             </div>
           ) : creators.length === 0 ? (
-            <div className="p-12 rounded-3xl bg-[#13131A] border border-[#1C1C26] text-center space-y-4 max-w-md mx-auto">
+            <div className={`p-12 rounded-3xl border text-center space-y-4 max-w-md mx-auto ${
+              theme === 'light' ? 'bg-white border-[#E9ECEF]' : 'bg-[#13131A] border-[#1C1C26]'
+            }`}>
               <Heart className="h-10 w-10 text-[#8B8B96] mx-auto" />
-              <h3 className="font-heading font-bold text-lg text-white">
+              <h3 className={`font-heading font-bold text-lg ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'}`}>
                 {activeSearch ? 'No Matching Creators Found' : 'No Followed Creators Yet'}
               </h3>
-              <p className="text-xs text-[#8B8B96]">
+              <p className={`text-xs ${theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'}`}>
                 {activeSearch
                   ? `No followed creators match "${activeSearch}".`
                   : 'Browse the public live feed and click + Follow on creators to add them to your following list!'}
@@ -430,14 +464,14 @@ export default function ViewerFollowingPage() {
               {activeSearch ? (
                 <button
                   onClick={clearSearch}
-                  className="px-4 py-2.5 rounded-xl bg-[#00F5D4]/10 text-[#00F5D4] border border-[#00F5D4]/30 text-xs font-bold shadow-md inline-block"
+                  className="px-4 py-2.5 rounded-xl bg-[#EB1000]/10 text-[#EB1000] border border-[#EB1000]/30 text-xs font-bold shadow-md inline-block"
                 >
                   Clear Search
                 </button>
               ) : (
                 <Link
                   href="/viewers/dashboard"
-                  className="px-4 py-2.5 rounded-xl bg-[#00F5D4] text-white text-xs font-bold shadow-md inline-block"
+                  className="px-4 py-2.5 rounded-xl bg-[#EB1000] text-white text-xs font-bold shadow-md inline-block"
                 >
                   Explore Live Feed
                 </Link>
@@ -452,7 +486,11 @@ export default function ViewerFollowingPage() {
                   return (
                     <div
                       key={creator.creatorId || creator.id}
-                      className="p-5 rounded-3xl bg-[#13131A] border border-[#22222E] hover:border-[#FF5722]/50 shadow-2xl transition-all duration-200 hover:-translate-y-1 flex flex-col justify-between"
+                      className={`p-5 rounded-3xl border shadow-xl transition-all duration-200 hover:-translate-y-1 flex flex-col justify-between ${
+                        theme === 'light'
+                          ? 'bg-white border-[#E9ECEF] hover:border-[#EB1000]/50'
+                          : 'bg-[#13131A] border-[#22222E] hover:border-[#EB1000]/50 shadow-2xl'
+                      }`}
                     >
                       <div className="space-y-3.5">
                         {/* TOP BAR: LIVE NOW Above Profile & Category Tag on Top Right */}
@@ -467,13 +505,17 @@ export default function ViewerFollowingPage() {
                           )}
 
                           {/* Category Tag Pill on Top Right */}
-                          <span className="px-3 py-1 rounded-full bg-[#1C1C26] text-[#8B8B96] text-xs font-bold border border-[#2A2A3A] shrink-0">
+                          <span className={`px-3 py-1 rounded-full text-xs font-bold border shrink-0 ${
+                            theme === 'light' ? 'bg-[#F1F3F5] text-[#495057] border-[#DEE2E6]' : 'bg-[#1C1C26] text-[#8B8B96] border-[#2A2A3A]'
+                          }`}>
                             {creator.category || creator.session?.category || 'General Q&A'}
                           </span>
                         </div>
 
-                        <div className="flex items-center justify-between gap-3 border-b border-[#22222E] pb-3.5">
-                          {/* Avatar & Name Info (Clickable link to Creator Profile) */}
+                        <div className={`flex items-center justify-between gap-3 border-b pb-3.5 ${
+                          theme === 'light' ? 'border-[#E9ECEF]' : 'border-[#22222E]'
+                        }`}>
+                          {/* Avatar & Name Info */}
                           <Link
                             href={`/creator/${creator.cleanUsername}`}
                             className="flex items-center gap-3 min-w-0 group hover:opacity-90 transition cursor-pointer"
@@ -483,17 +525,25 @@ export default function ViewerFollowingPage() {
                               <img
                                 src={getMediaUrl(creator.avatar) || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80'}
                                 alt={creator.fullName}
-                                className="h-12 w-12 rounded-full object-cover border border-[#2A2A3A] group-hover:border-[#00F5D4] transition"
+                                className={`h-12 w-12 rounded-full object-cover border transition ${
+                                  theme === 'light' ? 'border-[#DEE2E6] group-hover:border-[#EB1000]' : 'border-[#2A2A3A] group-hover:border-[#00F5D4]'
+                                }`}
                               />
-                              <span className="absolute -bottom-1 -right-1 h-4 w-4 rounded-full bg-[#FF5722] text-white text-[9px] font-bold flex items-center justify-center border border-[#13131A]" title="Verified Creator">
+                              <span className={`absolute -bottom-1 -right-1 h-4 w-4 rounded-full bg-[#EB1000] text-white text-[9px] font-bold flex items-center justify-center border ${
+                                theme === 'light' ? 'border-white' : 'border-[#13131A]'
+                              }`} title="Verified Creator">
                                 ✓
                               </span>
                             </div>
                             <div className="min-w-0">
-                              <h4 className="font-heading font-black text-base text-white truncate leading-tight group-hover:text-[#00F5D4] transition">
+                              <h4 className={`font-heading font-black text-base truncate leading-tight transition ${
+                                theme === 'light' ? 'text-[#1A1D20] group-hover:text-[#EB1000]' : 'text-white group-hover:text-[#00F5D4]'
+                              }`}>
                                 {creator.fullName}
                               </h4>
-                              <p className="text-xs text-[#8B8B96] font-mono truncate mt-0.5">
+                              <p className={`text-xs font-mono truncate mt-0.5 ${
+                                theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'
+                              }`}>
                                 {creator.username}
                               </p>
                             </div>
@@ -512,17 +562,25 @@ export default function ViewerFollowingPage() {
                         </div>
 
                         {/* STREAM DESCRIPTION */}
-                        <p className="text-xs text-[#8B8B96] line-clamp-2 leading-relaxed">
+                        <p className={`text-xs line-clamp-2 leading-relaxed ${
+                          theme === 'light' ? 'text-[#495057]' : 'text-[#8B8B96]'
+                        }`}>
                           {creator.session?.description || creator.bio || 'Pro Esports player streaming & answering live questions. Ask about settings, sensitivity & pro tips!'}
                         </p>
 
                         {/* Divider */}
-                        <div className="border-b border-[#22222E] pt-1"></div>
+                        <div className={`border-b pt-1 ${
+                          theme === 'light' ? 'border-[#E9ECEF]' : 'border-[#22222E]'
+                        }`}></div>
 
                         {/* STATS ROW (Followers Count) */}
-                        <div className="flex items-center text-xs text-[#8B8B96] pt-1">
-                          <span className="flex items-center gap-1 font-bold text-white">
-                            <Users className="h-3.5 w-3.5 text-[#FF5722]" />
+                        <div className={`flex items-center text-xs pt-1 ${
+                          theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'
+                        }`}>
+                          <span className={`flex items-center gap-1 font-bold ${
+                            theme === 'light' ? 'text-[#1A1D20]' : 'text-white'
+                          }`}>
+                            <Users className="h-3.5 w-3.5 text-[#EB1000]" />
                             {(creator.followersCount || 0) >= 1000000
                               ? `${((creator.followersCount || 0) / 1000000).toFixed(1)}M`
                               : (creator.followersCount || 0) >= 1000
@@ -538,14 +596,14 @@ export default function ViewerFollowingPage() {
                           {creator.session?.sessionCode ? (
                             <Link
                               href={`/pay/${creator.session.sessionCode}`}
-                              className="w-full py-2.5 px-4 rounded-full bg-gradient-to-r from-[#FF5722] to-[#FF7043] hover:from-[#FF7043] hover:to-[#FF8A65] text-white font-black text-xs transition flex items-center justify-center gap-2 shadow-xl glow-pay text-center truncate"
+                              className="w-full py-2.5 px-4 rounded-full bg-[#EB1000] hover:bg-[#CC0E00] text-white font-black text-xs transition flex items-center justify-center gap-2 shadow-xl shadow-[#EB1000]/30 text-center truncate"
                             >
                               <MessageSquare className="h-4 w-4 shrink-0 fill-white" /> Ask Question
                             </Link>
                           ) : (
                             <Link
                               href={`/creator/${creator.cleanUsername}`}
-                              className="w-full py-2.5 px-4 rounded-full bg-gradient-to-r from-[#FF5722] to-[#FF7043] hover:from-[#FF7043] hover:to-[#FF8A65] text-white font-black text-xs transition flex items-center justify-center gap-2 shadow-xl glow-pay text-center truncate"
+                              className="w-full py-2.5 px-4 rounded-full bg-[#EB1000] hover:bg-[#CC0E00] text-white font-black text-xs transition flex items-center justify-center gap-2 shadow-xl shadow-[#EB1000]/30 text-center truncate"
                             >
                               <MessageSquare className="h-4 w-4 shrink-0 fill-white" /> Ask Question
                             </Link>
@@ -568,7 +626,11 @@ export default function ViewerFollowingPage() {
                           return (
                             <button
                               onClick={() => setVipModalCreator(creator)}
-                              className="w-full py-3 px-4 rounded-full bg-[#1C1805] hover:bg-[#262007] border border-[#B38F00] text-[#FFD60A] font-black text-xs transition flex items-center justify-center gap-2 shadow-md"
+                              className={`w-full py-3 px-4 rounded-full border font-black text-xs transition flex items-center justify-center gap-2 shadow-md ${
+                                theme === 'light'
+                                  ? 'bg-[#FFFBEB] hover:bg-[#FEF3C7] border-[#F59E0B] text-[#B45309]'
+                                  : 'bg-[#1C1805] hover:bg-[#262007] border-[#B38F00] text-[#FFD60A]'
+                              }`}
                             >
                               <span className="text-sm">💎</span> Join VIP Membership
                             </button>
@@ -582,7 +644,9 @@ export default function ViewerFollowingPage() {
 
               {/* PAGINATION BAR */}
               {creators.length > 0 && (
-                <div className="p-4 rounded-2xl bg-[#13131A] border border-[#1C1C26] flex flex-col sm:flex-row items-center justify-between gap-4 transition shadow-xl">
+                <div className={`p-4 rounded-2xl border flex flex-col sm:flex-row items-center justify-between gap-4 transition shadow-xl ${
+                  theme === 'light' ? 'bg-white border-[#E9ECEF]' : 'bg-[#13131A] border-[#1C1C26]'
+                }`}>
                   {/* Stats */}
                   <p className="text-xs font-medium text-[#8B8B96]">
                     Showing <span className="font-bold text-[#00F5D4]">{startRecord}</span> to{' '}
@@ -622,8 +686,8 @@ export default function ViewerFollowingPage() {
                           onClick={() => handlePageChange(pageNo)}
                           disabled={loading}
                           className={`h-8 min-w-[32px] px-2.5 rounded-xl text-xs font-black transition ${isCurrent
-                            ? 'bg-brand-gradient text-white shadow-sm glow-teal font-black scale-105'
-                            : 'bg-[#0A0A0F] border border-[#1C1C26] text-[#8B8B96] hover:text-white hover:bg-[#1C1C26]'
+                            ? 'bg-[#EB1000] text-white shadow-sm font-black scale-105'
+                            : 'bg-[#0D0D14] border border-[#1F1F30] text-[#94A3B8] hover:text-white hover:bg-[#1C1C28]'
                             }`}
                         >
                           {pageNo}

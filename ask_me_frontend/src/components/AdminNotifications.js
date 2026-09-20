@@ -134,7 +134,7 @@ export default function AdminNotifications() {
     }
     return {
       icon: Info,
-      color: 'text-[#00F5D4] bg-[#00F5D4]/10 border-[#00F5D4]/30',
+      color: 'text-[#EB1000] bg-[#EB1000]/10 border-[#EB1000]/30',
       badge: 'Admin Alert'
     };
   };
@@ -142,9 +142,9 @@ export default function AdminNotifications() {
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Header Banner */}
-      <div className="p-6 rounded-2xl bg-gradient-to-r from-[#13131A] via-[#1A1A26] to-[#13131A] border border-[#1C1C26] flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+      <div className="p-6 rounded-2xl bg-[#13131A] border border-[#1C1C26] flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
-          <div className="p-3.5 rounded-2xl bg-[#00F5D4]/10 border border-[#00F5D4]/30 text-[#00F5D4]">
+          <div className="p-3.5 rounded-2xl bg-[#EB1000]/10 border border-[#EB1000]/30 text-[#EB1000]">
             <Bell className="h-6 w-6" />
           </div>
           <div>

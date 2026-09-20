@@ -73,7 +73,7 @@ const createLiveSessionService = async (creatorId, data) => {
 
     const origin = process.env.FRONTEND_URL || "http://localhost:3000";
     const paymentLink = `${origin}/pay/${sessionCode}?creatorId=${creatorId}&sessionId=${newSession.id}`;
-    const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=350x350&data=${encodeURIComponent(paymentLink)}`;
+    const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&ecc=H&margin=2&data=${encodeURIComponent(paymentLink)}`;
     const overlayUrl = `${origin}/overlay/${creator.username}`;
 
     await QrCode.create(
@@ -226,7 +226,7 @@ const getLiveSessionsService = async (creatorId, queryParams = {}) => {
 
   const formatted = sessions.map((s) => {
     const paymentLink = `${origin}/pay/${s.session_code}?creatorId=${s.creator_id}&sessionId=${s.id}`;
-    const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=350x350&data=${encodeURIComponent(paymentLink)}`;
+    const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&ecc=H&margin=2&data=${encodeURIComponent(paymentLink)}`;
 
     let curStatus = s.status;
     if (curStatus === "active" && s.ends_at && now > new Date(s.ends_at)) {
@@ -365,7 +365,7 @@ const startLiveSessionByIdService = async (sessionId, creatorId) => {
 
     const origin = process.env.FRONTEND_URL || "http://localhost:3000";
     const paymentLink = `${origin}/pay/${session.session_code}?creatorId=${session.creator_id}&sessionId=${session.id}`;
-    const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=350x350&data=${encodeURIComponent(paymentLink)}`;
+    const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&ecc=H&margin=2&data=${encodeURIComponent(paymentLink)}`;
 
     return {
       session: {
@@ -422,7 +422,7 @@ const getPublicSessionDetailsService = async (sessionCode) => {
 
   const origin = process.env.FRONTEND_URL || "http://localhost:3000";
   const paymentLink = `${origin}/pay/${session.session_code}?creatorId=${session.creator_id}&sessionId=${session.id}`;
-  const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=350x350&data=${encodeURIComponent(paymentLink)}`;
+  const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&ecc=H&margin=2&data=${encodeURIComponent(paymentLink)}`;
 
   return {
     session: {

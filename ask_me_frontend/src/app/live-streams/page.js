@@ -319,8 +319,8 @@ export default function PublicLiveStreamsPage() {
                 type="button"
                 onClick={() => setSelectedCategory(cat)}
                 className={`px-4 py-2 rounded-full text-xs font-bold transition-all cursor-pointer shrink-0 ${selectedCategory === cat
-                  ? 'bg-[#222234] text-white border border-[#383850]'
-                  : 'text-[#8E8E9F] hover:text-white hover:bg-[#12121C]'
+                  ? 'bg-white text-black font-extrabold border-2 border-[#EB1000] shadow-[0_0_15px_rgba(235,16,0,0.4)]'
+                  : 'bg-[#0E0E18] text-[#8E8E9F] border border-[#222234] hover:text-white'
                   }`}
               >
                 {cat}

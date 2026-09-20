@@ -1458,7 +1458,7 @@ function ViewerPaymentContent() {
                 type="button"
                 disabled={isProcessing}
                 onClick={() => executePaymentSuccess(`pay_rzp_${Date.now()}`, razorpayTab.toUpperCase())}
-                className="w-full py-4 px-4 rounded-full bg-gradient-to-r from-[#FF5722] to-[#FF7043] hover:from-[#FF7043] hover:to-[#FF8A65] text-white font-black text-sm transition shadow-xl glow-pay flex items-center justify-center gap-2 cursor-pointer"
+                className="w-full py-4 px-4 rounded-full bg-gradient-to-r from-[#EB1000] to-[#CC0E00] hover:from-[#CC0E00] hover:to-[#EB1000] text-white font-black text-sm transition shadow-xl shadow-[#EB1000]/30 flex items-center justify-center gap-2 cursor-pointer"
               >
                 {isProcessing ? (
                   <>

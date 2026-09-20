@@ -251,7 +251,7 @@ const sendLoginOtpWhatsApp = async ({ phone, otp, expiresMinutes = 5 }) => {
 
   return await sendWhatsAppMessage({
     to: phone,
-    templateName: "askme_login_otp",
+    templateName: "otptemp",
     variables: [String(otp)]
   });
 

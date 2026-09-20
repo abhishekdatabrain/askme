@@ -220,45 +220,24 @@ export default function CreatorWalletPage() {
 
   return (
     <>
-      <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
-        <header className={`border-b sticky top-0 z-20 px-6 py-4 flex items-center justify-between transition-colors duration-200 ${theme === 'light' ? 'border-[#E9ECEF] bg-white/90 backdrop-blur-md' : 'border-[#1C1C26] bg-[#0A0A0F]/80 backdrop-blur-md'
+      <div className="flex-1 flex flex-col min-w-0">
+        <header className={`border-b sticky top-0 z-30 shrink-0 px-6 py-4 flex items-center justify-between transition-colors duration-200 ${theme === 'light' ? 'border-[#E9ECEF] bg-white/95 backdrop-blur-md shadow-sm' : 'border-[#1C1C26] bg-[#0A0A0F]/95 backdrop-blur-md shadow-sm'
           }`}>
           <div>
             <h1 className={`font-heading font-black text-xl flex items-center gap-2 ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'
               }`}>
-              <Wallet className="h-5 w-5 text-[#00F5D4]" /> Creator Wallet Module
+              <Wallet className="h-5 w-5 text-[#EB1000]" /> Creator Wallet Module
             </h1>
             <p className={`text-xs ${theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'
               }`}>Real-time viewer ledger, carried-forward balances & monthly settlement cycle</p>
           </div>
 
           <div className="flex items-center gap-3">
-            <CreatorNotificationDropdown theme={theme} />
 
-            <button
-              onClick={toggleTheme}
-              className={`px-3 py-1.5 rounded-xl border text-xs font-bold transition-all flex items-center gap-1.5 ${theme === 'light'
-                ? 'bg-[#F1F3F5] text-[#212529] border-[#E9ECEF] hover:bg-[#E9ECEF]'
-                : 'bg-[#1C1C26] text-white border-[#1C1C26] hover:border-[#00F5D4]/40'
-                }`}
-              title={theme === 'dark' ? 'Switch to Light Theme' : 'Switch to Dark Theme'}
-            >
-              {theme === 'dark' ? (
-                <>
-                  <Sun className="h-4 w-4 text-[#FFD60A]" />
-                  <span className="hidden sm:inline">Light Theme</span>
-                </>
-              ) : (
-                <>
-                  <Moon className="h-4 w-4 text-[#7B2FFF]" />
-                  <span className="hidden sm:inline">Dark Theme</span>
-                </>
-              )}
-            </button>
 
             <Link
               href="/creators/withdrawals"
-              className="px-4 py-2 rounded-xl bg-brand-gradient text-white text-xs font-black shadow-md glow-teal hover:opacity-95 transition flex items-center gap-1.5 shrink-0"
+              className="px-4 py-2 rounded-xl bg-gradient-to-r from-[#EB1000] to-[#CC0E00] text-white text-xs font-black shadow-md shadow-[#EB1000]/30 hover:opacity-95 transition flex items-center gap-1.5 shrink-0 cursor-pointer"
             >
               <ArrowUpRight className="h-4 w-4" /> Go to Payout Withdrawal
             </Link>
@@ -271,11 +250,11 @@ export default function CreatorWalletPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
 
             {/* 1. Total Lifetime Earnings */}
-            <div className={`p-5 rounded-3xl border space-y-2 shadow-xl transition-colors duration-200 ${theme === 'light' ? 'bg-white border-[#E9ECEF] hover:border-[#00F5D4]/60' : 'bg-[#13131A] border-[#1C1C26] hover:border-[#00F5D4]/40'
+            <div className={`p-5 rounded-3xl border space-y-2 shadow-xl transition-colors duration-200 ${theme === 'light' ? 'bg-white border-[#E9ECEF] hover:border-[#EB1000]/60' : 'bg-[#13131A] border-[#1C1C26] hover:border-[#EB1000]/40'
               }`}>
               <span className={`text-xs font-bold flex items-center gap-1.5 ${theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'
                 }`}>
-                <DollarSign className="h-4 w-4 text-[#00F5D4]" /> Total Earnings
+                <DollarSign className="h-4 w-4 text-[#EB1000]" /> Total Earnings
               </span>
               <div className={`font-heading font-black text-2xl ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'
                 }`}>
@@ -287,14 +266,14 @@ export default function CreatorWalletPage() {
             </div>
 
             {/* 2. Available Balance (Settlement + Carried Forward) */}
-            <div className={`p-5 rounded-3xl border-2 space-y-2 shadow-xl glow-teal ${theme === 'light'
-              ? 'bg-gradient-to-br from-white via-[#F8F9FA] to-white border-[#00F5D4]/60'
-              : 'bg-gradient-to-br from-[#13131A] via-[#1A1A26] to-[#13131A] border-[#00F5D4]/40'
+            <div className={`p-5 rounded-3xl border-2 space-y-2 shadow-xl shadow-[#EB1000]/10 ${theme === 'light'
+              ? 'bg-gradient-to-br from-white via-[#F8F9FA] to-white border-[#EB1000]/60'
+              : 'bg-gradient-to-br from-[#13131A] via-[#1A1A26] to-[#13131A] border-[#EB1000]/40'
               }`}>
-              <span className="text-xs font-bold text-[#00F5D4] flex items-center gap-1.5">
-                <Wallet className="h-4 w-4 text-[#00F5D4]" /> Available Balance
+              <span className="text-xs font-bold text-[#EB1000] flex items-center gap-1.5">
+                <Wallet className="h-4 w-4 text-[#EB1000]" /> Available Balance
               </span>
-              <div className="font-heading font-black text-2xl text-[#00F5D4]">
+              <div className="font-heading font-black text-2xl text-[#EB1000]">
                 ₹{walletData.availableBalance.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
               </div>
               <span className={`text-[11px] ${theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'
@@ -337,35 +316,40 @@ export default function CreatorWalletPage() {
           <div className={`p-6 rounded-3xl border space-y-5 shadow-xl transition-colors duration-200 ${theme === 'light' ? 'bg-white border-[#E9ECEF]' : 'bg-[#13131A] border-[#1C1C26]'
             }`}>
 
-            <div className={`flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border-b pb-4 ${theme === 'light' ? 'border-[#E9ECEF]' : 'border-[#1C1C26]'
+            <div className={`flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 border-b pb-4 ${theme === 'light' ? 'border-[#E9ECEF]' : 'border-[#1C1C26]'
               }`}>
-              <div className="flex items-center gap-2">
+              {/* Tab Navigation Buttons */}
+              <div className="flex items-center gap-2 overflow-x-auto max-w-full pb-1 sm:pb-0 shrink-0">
                 <button
+                  type="button"
                   onClick={() => setActiveTab('ledger')}
-                  className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${activeTab === 'ledger'
-                    ? 'bg-brand-gradient text-white shadow-md glow-teal'
-                    : theme === 'light' ? 'bg-[#F1F3F5] text-[#6C757D] hover:text-[#1A1D20]' : 'bg-[#0A0A0F] text-[#8B8B96] hover:text-white'
+                  className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap cursor-pointer shrink-0 ${activeTab === 'ledger'
+                    ? 'bg-gradient-to-r from-[#EB1000] to-[#CC0E00] text-white shadow-md shadow-[#EB1000]/30 font-black'
+                    : theme === 'light' ? 'bg-[#F8FAFC] text-[#6C757D] hover:text-[#1A1D20] border border-[#E2E8F0]' : 'bg-[#0A0A0F] text-[#8B8B96] hover:text-white border border-[#1C1C26]'
                     }`}
                 >
-                  <ArrowDownLeft className="h-4 w-4" /> Viewer Payments & Ledger ({transactions.length})
+                  <ArrowDownLeft className="h-4 w-4 shrink-0" />
+                  <span className="whitespace-nowrap">Viewer Payments & Ledger ({transactions.length})</span>
                 </button>
 
                 <button
+                  type="button"
                   onClick={() => setActiveTab('settlements')}
-                  className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${activeTab === 'settlements'
-                    ? 'bg-brand-gradient text-white shadow-md glow-teal'
-                    : theme === 'light' ? 'bg-[#F1F3F5] text-[#6C757D] hover:text-[#1A1D20]' : 'bg-[#0A0A0F] text-[#8B8B96] hover:text-white'
+                  className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap cursor-pointer shrink-0 ${activeTab === 'settlements'
+                    ? 'bg-gradient-to-r from-[#EB1000] to-[#CC0E00] text-white shadow-md shadow-[#EB1000]/30 font-black'
+                    : theme === 'light' ? 'bg-[#F8FAFC] text-[#6C757D] hover:text-[#1A1D20] border border-[#E2E8F0]' : 'bg-[#0A0A0F] text-[#8B8B96] hover:text-white border border-[#1C1C26]'
                     }`}
                 >
-                  <Calendar className="h-4 w-4" /> Monthly Settlements History ({settlements.length})
+                  <Calendar className="h-4 w-4 shrink-0" />
+                  <span className="whitespace-nowrap">Monthly Settlements History ({settlements.length})</span>
                 </button>
               </div>
 
               {/* Controls: Search, Filters & Download CSV */}
-              <div className="flex flex-wrap items-center gap-2.5 w-full md:w-auto">
+              <div className="flex flex-wrap items-center gap-2.5 w-full lg:w-auto justify-start lg:justify-end">
                 {activeTab === 'ledger' && (
                   <>
-                    <div className="relative flex-1 md:w-48">
+                    <div className="relative flex-1 min-w-[160px] sm:w-48">
                       <Search className={`absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 ${theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'
                         }`} />
                       <input
@@ -373,21 +357,21 @@ export default function CreatorWalletPage() {
                         placeholder="Search supporter..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className={`w-full pl-9 pr-3 py-1.5 rounded-xl border text-xs focus:outline-none focus:border-[#00F5D4] ${theme === 'light'
+                        className={`w-full pl-9 pr-3 py-2 rounded-xl border text-xs focus:outline-none focus:border-[#EB1000] ${theme === 'light'
                           ? 'bg-[#F8F9FA] border-[#DEE2E6] text-[#1A1D20] placeholder-[#A0A0A0]'
                           : 'bg-[#0A0A0F] border-[#1C1C26] text-white placeholder-[#8B8B96]'
                           }`}
                       />
                     </div>
 
-                    <div className={`flex items-center gap-1 p-1 rounded-xl border ${theme === 'light' ? 'bg-[#F8F9FA] border-[#E9ECEF]' : 'bg-[#0A0A0F] border-[#1C1C26]'
+                    <div className={`flex items-center gap-1 p-1 rounded-xl border shrink-0 ${theme === 'light' ? 'bg-[#F8F9FA] border-[#E9ECEF]' : 'bg-[#0A0A0F] border-[#1C1C26]'
                       }`}>
                       {['All', 'Successful', 'Pending', 'Failed'].map((st) => (
                         <button
                           key={st}
                           onClick={() => setFilterStatus(st)}
-                          className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition ${filterStatus === st
-                            ? 'bg-[#00F5D4] text-white'
+                          className={`px-3 py-1.5 rounded-lg text-[11px] font-bold transition cursor-pointer whitespace-nowrap ${filterStatus === st
+                            ? 'bg-[#EB1000] text-white shadow-sm'
                             : theme === 'light' ? 'text-[#6C757D] hover:text-[#1A1D20]' : 'text-[#8B8B96] hover:text-white'
                             }`}
                         >
@@ -401,10 +385,10 @@ export default function CreatorWalletPage() {
                 <button
                   onClick={handleDownloadCSV}
                   title={activeTab === 'ledger' ? 'Download Ledger CSV' : 'Download Monthly Settlements CSV'}
-                  className="px-3.5 py-1.5 rounded-xl bg-brand-gradient text-white font-bold text-xs hover:opacity-90 transition flex items-center gap-1.5 shadow-sm shrink-0"
+                  className="px-4 py-2 rounded-xl bg-gradient-to-r from-[#EB1000] to-[#CC0E00] text-white font-bold text-xs hover:opacity-90 transition flex items-center gap-1.5 shadow-md shadow-[#EB1000]/20 shrink-0 cursor-pointer whitespace-nowrap"
                 >
                   <Download className="h-4 w-4" />
-                  <span>Download CSV</span>
+                  <span className="whitespace-nowrap">Download CSV</span>
                 </button>
               </div>
             </div>
@@ -414,7 +398,7 @@ export default function CreatorWalletPage() {
               <div>
                 {isLoading ? (
                   <div className="p-12 text-center text-xs text-[#8B8B96] space-y-2">
-                    <div className="h-8 w-8 border-2 border-[#00F5D4] border-t-transparent rounded-full animate-spin mx-auto" />
+                    <div className="h-8 w-8 border-2 border-[#EB1000] border-t-transparent rounded-full animate-spin mx-auto" />
                     <p>Loading transaction history...</p>
                   </div>
                 ) : transactions.length === 0 ? (
@@ -473,7 +457,7 @@ export default function CreatorWalletPage() {
 
                               <td className="py-3.5 px-3 max-w-xs">
                                 {tx.message ? (
-                                  <p className={`p-2 rounded-xl text-[11px] border italic line-clamp-2 ${theme === 'light' ? 'bg-[#F8F9FA] border-[#E9ECEF] text-[#00B49F]' : 'bg-[#0A0A0F] border-[#1C1C26] text-[#00F5D4]'
+                                  <p className={`p-2 rounded-xl text-[11px] border italic line-clamp-2 ${theme === 'light' ? 'bg-[#F8F9FA] border-[#E9ECEF] text-[#00B49F]' : 'bg-[#0A0A0F] border-[#1C1C26] text-[#EB1000]'
                                     }`}>
                                     "{tx.message}"
                                   </p>
@@ -514,7 +498,7 @@ export default function CreatorWalletPage() {
                       <div className={`mt-6 pt-4 border-t flex flex-col sm:flex-row items-center justify-between gap-4 ${theme === 'light' ? 'border-[#E9ECEF]' : 'border-[#1C1C26]'
                         }`}>
                         <div className="text-xs text-[#8B8B96]">
-                          Showing Page <span className="font-bold text-[#00F5D4]">{pagination.page}</span> of{' '}
+                          Showing Page <span className="font-bold text-[#EB1000]">{pagination.page}</span> of{' '}
                           <span className="font-bold">{pagination.totalPages}</span> ({pagination.totalCount} total transactions)
                         </div>
 
@@ -525,7 +509,7 @@ export default function CreatorWalletPage() {
                             className={`px-3 py-1.5 rounded-xl border text-xs font-bold flex items-center gap-1 transition ${pagination.hasPrevPage
                               ? theme === 'light'
                                 ? 'bg-white border-[#E9ECEF] text-[#1A1D20] hover:bg-[#F8F9FA]'
-                                : 'bg-[#0A0A0F] border-[#1C1C26] text-white hover:border-[#00F5D4]/50'
+                                : 'bg-[#0A0A0F] border-[#1C1C26] text-white hover:border-[#EB1000]/50'
                               : 'opacity-40 cursor-not-allowed border-transparent text-[#8B8B96]'
                               }`}
                           >
@@ -538,7 +522,7 @@ export default function CreatorWalletPage() {
                                 key={pageNum}
                                 onClick={() => handlePageChange(pageNum)}
                                 className={`w-8 h-8 rounded-xl text-xs font-extrabold flex items-center justify-center transition ${pageNum === pagination.page
-                                  ? 'bg-brand-gradient text-white shadow-md glow-teal'
+                                  ? 'bg-gradient-to-r from-[#EB1000] to-[#CC0E00] text-white shadow-md shadow-[#EB1000]/30'
                                   : theme === 'light'
                                     ? 'bg-white border border-[#E9ECEF] text-[#6C757D] hover:bg-[#F8F9FA]'
                                     : 'bg-[#0A0A0F] border border-[#1C1C26] text-[#8B8B96] hover:text-white'
@@ -555,7 +539,7 @@ export default function CreatorWalletPage() {
                             className={`px-3 py-1.5 rounded-xl border text-xs font-bold flex items-center gap-1 transition ${pagination.hasNextPage
                               ? theme === 'light'
                                 ? 'bg-white border-[#E9ECEF] text-[#1A1D20] hover:bg-[#F8F9FA]'
-                                : 'bg-[#0A0A0F] border-[#1C1C26] text-white hover:border-[#00F5D4]/50'
+                                : 'bg-[#0A0A0F] border-[#1C1C26] text-white hover:border-[#EB1000]/50'
                               : 'opacity-40 cursor-not-allowed border-transparent text-[#8B8B96]'
                               }`}
                           >
@@ -612,7 +596,7 @@ export default function CreatorWalletPage() {
                               {s.earningMonth}
                             </td>
 
-                            <td className="py-3.5 px-3 font-bold text-[#00F5D4] whitespace-nowrap">
+                            <td className="py-3.5 px-3 font-bold text-[#EB1000] whitespace-nowrap">
                               {s.settlementMonth}
                             </td>
 
@@ -632,7 +616,7 @@ export default function CreatorWalletPage() {
                               ₹{(s.withdrawnAmount || 0).toFixed(2)}
                             </td>
 
-                            <td className="py-3.5 px-3 font-heading font-black text-[#00F5D4]">
+                            <td className="py-3.5 px-3 font-heading font-black text-[#EB1000]">
                               ₹{(s.remainingAmount || 0).toFixed(2)}
                             </td>
 

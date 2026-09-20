@@ -34,7 +34,7 @@ function StreamOverlayContent() {
               username: '@creator',
             },
             paymentLink: payUrl,
-            qrCodeUrl: `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(payUrl)}`,
+            qrCodeUrl: `https://api.qrserver.com/v1/create-qr-code/?size=400x400&ecc=H&margin=2&data=${encodeURIComponent(payUrl)}`,
             supportText: 'Support Creator',
             scanText: 'Scan & Send Message',
           });
@@ -48,7 +48,7 @@ function StreamOverlayContent() {
             username: '@creator',
           },
           paymentLink: payUrl,
-          qrCodeUrl: `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(payUrl)}`,
+          qrCodeUrl: `https://api.qrserver.com/v1/create-qr-code/?size=400x400&ecc=H&margin=2&data=${encodeURIComponent(payUrl)}`,
           supportText: 'Support Creator',
           scanText: 'Scan & Send Message',
         });
@@ -133,7 +133,7 @@ function StreamOverlayContent() {
   }
 
   const creatorName = overlayData?.creator?.fullName || 'Creator';
-  const qrUrl = overlayData?.qrCodeUrl || `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=AskMePay`;
+  const qrUrl = overlayData?.qrCodeUrl || `https://api.qrserver.com/v1/create-qr-code/?size=400x400&ecc=H&margin=2&data=AskMePay`;
 
   return (
     <div className="min-h-screen bg-transparent p-4 font-sans select-none flex flex-col justify-between items-start pointer-events-none">

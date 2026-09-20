@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { 
-  Search, Bell, Shield, Zap, Radio, User, ChevronDown, Activity, Settings, 
-  LogIn, Sun, Moon, Check, CheckCheck, Sparkles, UserCheck, DollarSign, 
+import {
+  Search, Bell, Shield, Zap, Radio, User, ChevronDown, Activity, Settings,
+  LogIn, Sun, Moon, Check, CheckCheck, Sparkles, UserCheck, DollarSign,
   ExternalLink, X, Loader2, ArrowRight, FileText, ChevronRight
 } from 'lucide-react';
 import { API_ENDPOINTS, getMediaUrl } from '@/config/api';
@@ -145,7 +145,7 @@ export default function AdminNavbar({ activeView, setActiveView, onOpenAuthModal
         method: 'PUT',
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
-    } catch (err) {}
+    } catch (err) { }
   };
 
   const handleMarkSingleRead = async (id, e) => {
@@ -157,7 +157,7 @@ export default function AdminNavbar({ activeView, setActiveView, onOpenAuthModal
         method: 'PUT',
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
-    } catch (err) {}
+    } catch (err) { }
   };
 
   const handleNavigate = (path, viewName) => {
@@ -172,17 +172,16 @@ export default function AdminNavbar({ activeView, setActiveView, onOpenAuthModal
   };
   const totalResultsCount = searchResults
     ? (searchResults.creators?.length || 0) +
-      (searchResults.liveSessions?.length || 0) +
-      (searchResults.payments?.length || 0) +
-      (searchResults.kyc?.length || 0)
+    (searchResults.liveSessions?.length || 0) +
+    (searchResults.payments?.length || 0) +
+    (searchResults.kyc?.length || 0)
     : 0;
 
   return (
-    <header className={`sticky top-0 z-40 w-full border-b backdrop-blur-md px-4 lg:px-8 py-3 transition-colors ${
-      theme === 'light'
+    <header className={`sticky top-0 z-40 w-full border-b backdrop-blur-md px-4 lg:px-8 py-3 transition-colors ${theme === 'light'
         ? 'bg-white/90 border-[#E9ECEF] text-[#212529]'
         : 'bg-[#0A0A0F]/90 border-[#1C1C26] text-[#F5F5F7]'
-    }`}>
+      }`}>
       <div className="flex items-center justify-between gap-4">
         {/* Brand Logo & Signal Status */}
         <div className="flex items-center gap-6">
@@ -202,9 +201,8 @@ export default function AdminNavbar({ activeView, setActiveView, onOpenAuthModal
           </div>
 
           {/* System Live Signal Telemetry Badge */}
-          <div className={`hidden md:flex items-center gap-2 px-3 py-1 rounded-full border text-xs ${
-            theme === 'light' ? 'bg-[#F1F3F5] border-[#E9ECEF]' : 'bg-[#13131A] border-[#1C1C26]'
-          }`}>
+          <div className={`hidden md:flex items-center gap-2 px-3 py-1 rounded-full border text-xs ${theme === 'light' ? 'bg-[#F1F3F5] border-[#E9ECEF]' : 'bg-[#13131A] border-[#1C1C26]'
+            }`}>
             <span className="relative flex h-2 w-2">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#00E676] opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-[#00E676]"></span>
@@ -228,11 +226,10 @@ export default function AdminNavbar({ activeView, setActiveView, onOpenAuthModal
               }}
               onFocus={() => setIsOpenSearchPopup(true)}
               placeholder="Search creators, live streams, askMails, or transactions... (⌘K)"
-              className={`w-full rounded-full border pl-9 pr-9 py-2 text-xs focus:border-[#00F5D4] focus:outline-none transition-all ${
-                theme === 'light'
+              className={`w-full rounded-full border pl-9 pr-9 py-2 text-xs focus:border-[#00F5D4] focus:outline-none transition-all ${theme === 'light'
                   ? 'bg-[#F8F9FA] border-[#E9ECEF] text-[#212529] placeholder-[#6C757D]'
                   : 'bg-[#13131A] border-[#1C1C26] text-[#F5F5F7] placeholder-[#8B8B96]'
-              }`}
+                }`}
             />
             {isSearching ? (
               <Loader2 className="absolute right-3 top-2.5 h-4 w-4 animate-spin text-[#00F5D4]" />
@@ -251,15 +248,13 @@ export default function AdminNavbar({ activeView, setActiveView, onOpenAuthModal
 
           {/* Search Dropdown Modal */}
           {isOpenSearchPopup && searchQuery.trim().length > 0 && (
-            <div className={`absolute left-0 right-0 top-full mt-2 rounded-2xl border shadow-2xl z-50 overflow-hidden animate-fade-in ${
-              theme === 'light'
+            <div className={`absolute left-0 right-0 top-full mt-2 rounded-2xl border shadow-2xl z-50 overflow-hidden animate-fade-in ${theme === 'light'
                 ? 'bg-white border-[#E9ECEF] text-[#212529]'
                 : 'bg-[#13131A] border-[#1C1C26] text-white'
-            }`}>
-              {/* Dropdown Header */}
-              <div className={`p-3 border-b flex items-center justify-between text-xs ${
-                theme === 'light' ? 'border-[#E9ECEF] bg-[#F8F9FA]' : 'border-[#1C1C26] bg-[#1A1A26]'
               }`}>
+              {/* Dropdown Header */}
+              <div className={`p-3 border-b flex items-center justify-between text-xs ${theme === 'light' ? 'border-[#E9ECEF] bg-[#F8F9FA]' : 'border-[#1C1C26] bg-[#1A1A26]'
+                }`}>
                 <div className="flex items-center gap-2 font-bold">
                   <Search className="h-3.5 w-3.5 text-[#00F5D4]" />
                   <span>Search Results</span>
@@ -296,9 +291,8 @@ export default function AdminNavbar({ activeView, setActiveView, onOpenAuthModal
                       <div
                         key={c.id}
                         onClick={() => handleNavigate('/admin/creators/all', 'creators')}
-                        className={`p-2 rounded-xl transition-all flex items-center justify-between cursor-pointer ${
-                          theme === 'light' ? 'hover:bg-[#F1F3F5]' : 'hover:bg-[#1A1A26]'
-                        }`}
+                        className={`p-2 rounded-xl transition-all flex items-center justify-between cursor-pointer ${theme === 'light' ? 'hover:bg-[#F1F3F5]' : 'hover:bg-[#1A1A26]'
+                          }`}
                       >
                         <div className="flex items-center gap-2.5 min-w-0">
                           <div className="h-7 w-7 rounded-full bg-gradient-to-tr from-[#7B2FFF] to-[#00F5D4] p-0.5 shrink-0">
@@ -318,11 +312,10 @@ export default function AdminNavbar({ activeView, setActiveView, onOpenAuthModal
                             <p className="text-[10px] text-[#8B8B96] truncate">{c.email}</p>
                           </div>
                         </div>
-                        <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full capitalize shrink-0 ${
-                          c.status === 'active' ? 'bg-[#00E676]/10 text-[#00E676] border border-[#00E676]/20' :
-                          c.status === 'blocked' ? 'bg-[#FF3D71]/10 text-[#FF3D71] border border-[#FF3D71]/20' :
-                          'bg-[#FFD60A]/10 text-[#FFD60A] border border-[#FFD60A]/20'
-                        }`}>
+                        <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full capitalize shrink-0 ${c.status === 'active' ? 'bg-[#00E676]/10 text-[#00E676] border border-[#00E676]/20' :
+                            c.status === 'blocked' ? 'bg-[#FF3D71]/10 text-[#FF3D71] border border-[#FF3D71]/20' :
+                              'bg-[#FFD60A]/10 text-[#FFD60A] border border-[#FFD60A]/20'
+                          }`}>
                           {c.status}
                         </span>
                       </div>
@@ -340,9 +333,8 @@ export default function AdminNavbar({ activeView, setActiveView, onOpenAuthModal
                       <div
                         key={s.id}
                         onClick={() => handleNavigate('/admin/live-sessions', 'live-sessions')}
-                        className={`p-2 rounded-xl transition-all flex items-center justify-between cursor-pointer ${
-                          theme === 'light' ? 'hover:bg-[#F1F3F5]' : 'hover:bg-[#1A1A26]'
-                        }`}
+                        className={`p-2 rounded-xl transition-all flex items-center justify-between cursor-pointer ${theme === 'light' ? 'hover:bg-[#F1F3F5]' : 'hover:bg-[#1A1A26]'
+                          }`}
                       >
                         <div className="flex items-center gap-2.5 min-w-0">
                           <div className="p-1.5 rounded-lg bg-[#FFD60A]/10 text-[#FFD60A] border border-[#FFD60A]/20 shrink-0">
@@ -353,10 +345,9 @@ export default function AdminNavbar({ activeView, setActiveView, onOpenAuthModal
                             <p className="text-[10px] text-[#8B8B96] truncate">Code: {s.session_code} • {s.category || 'General'}</p>
                           </div>
                         </div>
-                        <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full capitalize shrink-0 ${
-                          s.status === 'active' ? 'bg-[#00E676]/10 text-[#00E676] border border-[#00E676]/20' :
-                          'bg-[#1C1C26] text-[#8B8B96] border border-[#2C2C3E]'
-                        }`}>
+                        <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full capitalize shrink-0 ${s.status === 'active' ? 'bg-[#00E676]/10 text-[#00E676] border border-[#00E676]/20' :
+                            'bg-[#1C1C26] text-[#8B8B96] border border-[#2C2C3E]'
+                          }`}>
                           {s.status}
                         </span>
                       </div>
@@ -374,9 +365,8 @@ export default function AdminNavbar({ activeView, setActiveView, onOpenAuthModal
                       <div
                         key={p.id}
                         onClick={() => handleNavigate('/admin/payments/all', 'payments')}
-                        className={`p-2 rounded-xl transition-all flex items-center justify-between cursor-pointer ${
-                          theme === 'light' ? 'hover:bg-[#F1F3F5]' : 'hover:bg-[#1A1A26]'
-                        }`}
+                        className={`p-2 rounded-xl transition-all flex items-center justify-between cursor-pointer ${theme === 'light' ? 'hover:bg-[#F1F3F5]' : 'hover:bg-[#1A1A26]'
+                          }`}
                       >
                         <div className="flex items-center gap-2.5 min-w-0">
                           <div className="p-1.5 rounded-lg bg-[#00E676]/10 text-[#00E676] border border-[#00E676]/20 shrink-0">
@@ -389,9 +379,8 @@ export default function AdminNavbar({ activeView, setActiveView, onOpenAuthModal
                         </div>
                         <div className="text-right shrink-0">
                           <p className="text-xs font-bold text-[#00E676]">₹{parseFloat(p.amount || 0).toLocaleString()}</p>
-                          <span className={`text-[8px] font-bold px-1.5 py-0.2 rounded capitalize ${
-                            p.payment_status === 'success' ? 'bg-[#00E676]/10 text-[#00E676]' : 'bg-[#FF3D71]/10 text-[#FF3D71]'
-                          }`}>
+                          <span className={`text-[8px] font-bold px-1.5 py-0.2 rounded capitalize ${p.payment_status === 'success' ? 'bg-[#00E676]/10 text-[#00E676]' : 'bg-[#FF3D71]/10 text-[#FF3D71]'
+                            }`}>
                             {p.payment_status}
                           </span>
                         </div>
@@ -410,9 +399,8 @@ export default function AdminNavbar({ activeView, setActiveView, onOpenAuthModal
                       <div
                         key={k.id}
                         onClick={() => handleNavigate('/admin/kyc/pending', 'kyc')}
-                        className={`p-2 rounded-xl transition-all flex items-center justify-between cursor-pointer ${
-                          theme === 'light' ? 'hover:bg-[#F1F3F5]' : 'hover:bg-[#1A1A26]'
-                        }`}
+                        className={`p-2 rounded-xl transition-all flex items-center justify-between cursor-pointer ${theme === 'light' ? 'hover:bg-[#F1F3F5]' : 'hover:bg-[#1A1A26]'
+                          }`}
                       >
                         <div className="flex items-center gap-2.5 min-w-0">
                           <div className="p-1.5 rounded-lg bg-[#7B2FFF]/10 text-[#7B2FFF] border border-[#7B2FFF]/20 shrink-0">
@@ -423,11 +411,10 @@ export default function AdminNavbar({ activeView, setActiveView, onOpenAuthModal
                             <p className="text-[10px] text-[#8B8B96] truncate">PAN: {k.pan_number || 'N/A'}</p>
                           </div>
                         </div>
-                        <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full capitalize shrink-0 ${
-                          k.status === 'approved' ? 'bg-[#00E676]/10 text-[#00E676] border border-[#00E676]/20' :
-                          k.status === 'rejected' ? 'bg-[#FF3D71]/10 text-[#FF3D71] border border-[#FF3D71]/20' :
-                          'bg-[#FFD60A]/10 text-[#FFD60A] border border-[#FFD60A]/20'
-                        }`}>
+                        <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full capitalize shrink-0 ${k.status === 'approved' ? 'bg-[#00E676]/10 text-[#00E676] border border-[#00E676]/20' :
+                            k.status === 'rejected' ? 'bg-[#FF3D71]/10 text-[#FF3D71] border border-[#FF3D71]/20' :
+                              'bg-[#FFD60A]/10 text-[#FFD60A] border border-[#FFD60A]/20'
+                          }`}>
                           {k.status}
                         </span>
                       </div>
@@ -437,9 +424,8 @@ export default function AdminNavbar({ activeView, setActiveView, onOpenAuthModal
               </div>
 
               {/* Dropdown Footer */}
-              <div className={`p-2.5 border-t text-center ${
-                theme === 'light' ? 'border-[#E9ECEF] bg-[#F8F9FA]' : 'border-[#1C1C26] bg-[#0A0A0F]'
-              }`}>
+              <div className={`p-2.5 border-t text-center ${theme === 'light' ? 'border-[#E9ECEF] bg-[#F8F9FA]' : 'border-[#1C1C26] bg-[#0A0A0F]'
+                }`}>
                 <span className="text-[10px] text-[#8B8B96]">
                   Showing real-time results from AskMe Admin database
                 </span>
@@ -450,16 +436,15 @@ export default function AdminNavbar({ activeView, setActiveView, onOpenAuthModal
 
         {/* Right Section  Actions & Profile */}
         <div className="flex items-center gap-3">
-          
+
           {/* THEME TOGGLE BUTTON */}
           <button
             onClick={onToggleTheme}
             title={theme === 'dark' ? 'Switch to Light Theme' : 'Switch to Dark Theme'}
-            className={`p-2.5 rounded-xl border font-bold text-xs transition-all flex items-center gap-1.5 ${
-              theme === 'light'
+            className={`p-2.5 rounded-xl border font-bold text-xs transition-all flex items-center gap-1.5 ${theme === 'light'
                 ? 'bg-[#F1F3F5] text-[#212529] border-[#E9ECEF] hover:bg-[#E9ECEF]'
                 : 'bg-[#13131A] text-[#FFD60A] border-[#1C1C26] hover:border-[#FFD60A]/40'
-            }`}
+              }`}
           >
             {theme === 'dark' ? (
               <>
@@ -492,13 +477,12 @@ export default function AdminNavbar({ activeView, setActiveView, onOpenAuthModal
             <button
               onClick={() => setIsOpenNotifPopup(!isOpenNotifPopup)}
               title="Notifications"
-              className={`relative p-2.5 rounded-xl border transition-all flex items-center justify-center ${
-                isOpenNotifPopup
+              className={`relative p-2.5 rounded-xl border transition-all flex items-center justify-center ${isOpenNotifPopup
                   ? 'border-[#00F5D4] text-[#00F5D4] bg-[#00F5D4]/10'
                   : theme === 'light'
-                  ? 'bg-[#F1F3F5] border-[#E9ECEF] text-[#495057] hover:text-[#00F5D4]'
-                  : 'bg-[#13131A] border-[#1C1C26] text-[#8B8B96] hover:text-[#00F5D4] hover:border-[#00F5D4]/40'
-              }`}
+                    ? 'bg-[#F1F3F5] border-[#E9ECEF] text-[#495057] hover:text-[#00F5D4]'
+                    : 'bg-[#13131A] border-[#1C1C26] text-[#8B8B96] hover:text-[#00F5D4] hover:border-[#00F5D4]/40'
+                }`}
             >
               <Bell className="h-4 w-4" />
               {unreadCount > 0 && (
@@ -510,15 +494,13 @@ export default function AdminNavbar({ activeView, setActiveView, onOpenAuthModal
 
             {/* Notification Dropdown Popup Modal */}
             {isOpenNotifPopup && (
-              <div className={`absolute right-0 top-full mt-2 w-80 sm:w-96 rounded-2xl border shadow-2xl z-50 overflow-hidden animate-fade-in ${
-                theme === 'light'
+              <div className={`absolute right-0 top-full mt-2 w-80 sm:w-96 rounded-2xl border shadow-2xl z-50 overflow-hidden animate-fade-in ${theme === 'light'
                   ? 'bg-white border-[#E9ECEF] text-[#212529]'
                   : 'bg-[#13131A] border-[#1C1C26] text-white'
-              }`}>
-                {/* Popup Header */}
-                <div className={`p-4 border-b flex items-center justify-between ${
-                  theme === 'light' ? 'border-[#E9ECEF] bg-[#F8F9FA]' : 'border-[#1C1C26] bg-[#1A1A26]'
                 }`}>
+                {/* Popup Header */}
+                <div className={`p-4 border-b flex items-center justify-between ${theme === 'light' ? 'border-[#E9ECEF] bg-[#F8F9FA]' : 'border-[#1C1C26] bg-[#1A1A26]'
+                  }`}>
                   <div className="flex items-center gap-2">
                     <Bell className="h-4 w-4 text-[#00F5D4]" />
                     <h3 className="text-sm font-bold tracking-tight">Notifications</h3>
@@ -556,22 +538,20 @@ export default function AdminNavbar({ activeView, setActiveView, onOpenAuthModal
                         <div
                           key={notif.id}
                           onClick={() => isUnread && handleMarkSingleRead(notif.id)}
-                          className={`p-3.5 transition-colors flex items-start gap-3 cursor-pointer ${
-                            isUnread
+                          className={`p-3.5 transition-colors flex items-start gap-3 cursor-pointer ${isUnread
                               ? theme === 'light' ? 'bg-[#F1F3F5]/60' : 'bg-[#1A1A26]/80'
                               : 'hover:bg-[#1A1A26]/40'
-                          }`}
+                            }`}
                         >
                           {/* Icon Container */}
-                          <div className={`p-2 rounded-xl shrink-0 mt-0.5 ${
-                            isCreatorReg
+                          <div className={`p-2 rounded-xl shrink-0 mt-0.5 ${isCreatorReg
                               ? 'bg-gradient-to-tr from-[#7B2FFF]/20 to-[#00F5D4]/20 border border-[#00F5D4]/40 text-[#00F5D4]'
                               : notif.type === 'kyc'
-                              ? 'bg-[#FFD60A]/10 border border-[#FFD60A]/30 text-[#FFD60A]'
-                              : notif.type === 'payout'
-                              ? 'bg-[#00E676]/10 border border-[#00E676]/30 text-[#00E676]'
-                              : 'bg-[#1C1C26] border border-[#2C2C3E] text-[#8B8B96]'
-                          }`}>
+                                ? 'bg-[#FFD60A]/10 border border-[#FFD60A]/30 text-[#FFD60A]'
+                                : notif.type === 'payout'
+                                  ? 'bg-[#00E676]/10 border border-[#00E676]/30 text-[#00E676]'
+                                  : 'bg-[#1C1C26] border border-[#2C2C3E] text-[#8B8B96]'
+                            }`}>
                             {isCreatorReg ? (
                               <Sparkles className="h-4 w-4" />
                             ) : notif.type === 'kyc' ? (
@@ -586,9 +566,8 @@ export default function AdminNavbar({ activeView, setActiveView, onOpenAuthModal
                           {/* Content */}
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center justify-between gap-1">
-                              <h4 className={`text-xs font-bold truncate ${
-                                isUnread ? (theme === 'light' ? 'text-[#1A1D20]' : 'text-white') : 'text-[#8B8B96]'
-                              }`}>
+                              <h4 className={`text-xs font-bold truncate ${isUnread ? (theme === 'light' ? 'text-[#1A1D20]' : 'text-white') : 'text-[#8B8B96]'
+                                }`}>
                                 {notif.title}
                               </h4>
                               {isUnread && (
@@ -619,9 +598,8 @@ export default function AdminNavbar({ activeView, setActiveView, onOpenAuthModal
                 </div>
 
                 {/* Popup Footer */}
-                <div className={`p-3 border-t text-center ${
-                  theme === 'light' ? 'border-[#E9ECEF] bg-[#F8F9FA]' : 'border-[#1C1C26] bg-[#0A0A0F]'
-                }`}>
+                <div className={`p-3 border-t text-center ${theme === 'light' ? 'border-[#E9ECEF] bg-[#F8F9FA]' : 'border-[#1C1C26] bg-[#0A0A0F]'
+                  }`}>
                   <button
                     onClick={() => {
                       setIsOpenNotifPopup(false);

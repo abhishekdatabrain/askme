@@ -1,18 +1,18 @@
 import React from 'react';
 import { TrendingUp, ArrowUpRight, Radio, DollarSign, Users, CheckCircle } from 'lucide-react';
 
-export default function StatCard({ title, value, change, subtitle, icon: Icon, accent = "teal" }) {
+export default function StatCard({ title, value, change, subtitle, icon: Icon, accent = "red" }) {
   const accentClasses = {
-    teal: "border-[#00F5D4]/30 text-[#00F5D4] bg-[#00F5D4]/10",
+    red: "border-[#EB1000]/30 text-[#EB1000] bg-[#EB1000]/10",
     pink: "border-[#FF3D71]/30 text-[#FF3D71] bg-[#FF3D71]/10",
     yellow: "border-[#FFD60A]/30 text-[#FFD60A] bg-[#FFD60A]/10",
-    violet: "border-[#7B2FFF]/30 text-[#7B2FFF] bg-[#7B2FFF]/10",
+    green: "border-[#00E676]/30 text-[#00E676] bg-[#00E676]/10",
   };
 
   return (
-    <div className="rounded-2xl bg-[#13131A] border border-[#1C1C26] p-5 shadow-lg relative overflow-hidden group hover:border-[#00F5D4]/40 transition-all">
+    <div className="rounded-2xl bg-[#13131A] border border-[#1C1C26] p-5 shadow-lg relative overflow-hidden group hover:border-[#EB1000]/40 transition-all">
       {/* Background Subtle Glow Accent */}
-      <div className="absolute -right-6 -bottom-6 h-24 w-24 rounded-full bg-brand-gradient opacity-5 blur-xl group-hover:opacity-15 transition-opacity"></div>
+      <div className="absolute -right-6 -bottom-6 h-24 w-24 rounded-full bg-[#EB1000] opacity-5 blur-xl group-hover:opacity-15 transition-opacity"></div>
 
       <div className="flex items-center justify-between mb-3">
         <span className="text-xs font-semibold text-[#8B8B96] uppercase tracking-wider">

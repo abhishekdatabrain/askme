@@ -19,9 +19,11 @@ import {
   StopCircle,
   Sparkles,
   Download,
-  ArrowRight
+  ArrowRight,
+  Upload
 } from 'lucide-react';
-import { API_ENDPOINTS } from '@/config/api';
+import { API_ENDPOINTS, getMediaUrl } from '@/config/api';
+import { uploadFile, getLocalFilePreview } from '@/utils/fileUpload';
 
 export default function CreatorStartLivePage() {
   const { toast } = useToast();
@@ -34,13 +36,29 @@ export default function CreatorStartLivePage() {
   const [form, setForm] = useState({
     title: 'Gaming & Q&A Live Session',
     category: 'Gaming & Esports',
+    thumbnail: 'https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=600&q=80',
     streamingPlatform: 'YouTube Live',
     streamUrl: '',
-    durationHours: 2,
+    durationHours: '',
     goalAmount: 5000,
     minDonation: 10,
     description: 'Ask questions & support live on OBS stream during our broadcast!',
   });
+
+  const handleThumbnailUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const localPreview = getLocalFilePreview(file);
+      setForm(prev => ({ ...prev, thumbnail: localPreview }));
+      toast.info('Uploading cover image...', 'Upload In Progress');
+      const uploadRes = await uploadFile(file, 'general');
+      setForm(prev => ({ ...prev, thumbnail: uploadRes.path }));
+      toast.success('Stream thumbnail uploaded successfully!', 'Uploaded');
+    } catch (err) {
+      toast.error(err?.message || 'Failed to upload image.', 'Upload Error');
+    }
+  };
 
   useEffect(() => {
     const savedTheme = typeof window !== 'undefined' ? (localStorage.getItem('askme_creator_theme') || 'dark') : 'dark';
@@ -102,11 +120,12 @@ export default function CreatorStartLivePage() {
         title: form.title,
         category: form.category,
         description: form.description,
+        thumbnail: form.thumbnail,
         streamingPlatform: form.streamingPlatform,
         streamUrl: form.streamUrl,
-        durationHours: Number(form.durationHours) || 2,
-        goalAmount: Number(form.goalAmount) || 5000,
-        minDonation: Number(form.minDonation) || 10,
+        durationHours: Number(form.durationHours),
+        // goalAmount: Number(form.goalAmount) || 5000,
+        // minDonation: Number(form.minDonation) || 10,
       };
 
       const res = await fetch(API_ENDPOINTS.CREATORS.LIVE_SESSIONS, {
@@ -146,7 +165,6 @@ export default function CreatorStartLivePage() {
             </p>
           </div>
 
-          {/*  */}
         </header>
 
         <main className="p-6 max-w-5xl w-full mx-auto space-y-6">
@@ -167,45 +185,30 @@ export default function CreatorStartLivePage() {
               />
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className={`block text-xs font-extrabold mb-1.5 ${theme === 'light' ? 'text-[#0F172A]' : 'text-[#E2E8F0]'}`}>● Stream Category *</label>
-                <select
-                  value={form.category}
-                  onChange={(e) => setForm(prev => ({ ...prev, category: e.target.value }))}
-                  className={`w-full rounded-xl border px-4 py-3 text-xs outline-none font-medium transition-all duration-200 ${theme === 'light' ? 'bg-[#F8FAFC] border-[#E2E8F0] text-[#0F172A] focus:border-[#EB1000] focus:ring-1 focus:ring-[#EB1000]' : 'bg-[#181826] border-[#2A2A3E] text-white focus:border-[#EB1000] focus:ring-1 focus:ring-[#EB1000]'
-                    }`}
-                >
-                  <option value="Gaming & Esports">Gaming</option>
-                  <option value="Tech & Coding">Technology</option>
-                  <option value="Music & Art">Music</option>
-                  <option value="Just Chatting / Podcast">Podcast</option>
-                  <option value="Education / Q&A">Education</option>
-                </select>
-              </div>
-
-              {/* <div>
-                <label className={`block text-xs font-extrabold mb-1.5 ${theme === 'light' ? 'text-[#0F172A]' : 'text-[#E2E8F0]'}`}>● Streaming Platform *</label>
-                <select
-                  value={form.streamingPlatform}
-                  onChange={(e) => setForm(prev => ({ ...prev, streamingPlatform: e.target.value }))}
-                  className={`w-full rounded-xl border px-4 py-3 text-xs outline-none font-medium transition-all duration-200 ${theme === 'light' ? 'bg-[#F8FAFC] border-[#E2E8F0] text-[#0F172A] focus:border-[#EB1000] focus:ring-1 focus:ring-[#EB1000]' : 'bg-[#181826] border-[#2A2A3E] text-white focus:border-[#EB1000] focus:ring-1 focus:ring-[#EB1000]'
-                    }`}
-                >
-                  <option value="YouTube Live">YouTube Live</option>
-                  <option value="Twitch">Twitch</option>
-                  <option value="Kick Broadcast">Kick Broadcast</option>
-                  <option value="OBS Studio">OBS Studio / Custom RTMP</option>
-                </select>
-              </div> */}
+            <div>
+              <label className={`block text-xs font-extrabold mb-1.5 ${theme === 'light' ? 'text-[#0F172A]' : 'text-[#E2E8F0]'}`}>● Stream Category *</label>
+              <select
+                value={form.category}
+                required
+                onChange={(e) => setForm(prev => ({ ...prev, category: e.target.value }))}
+                className={`w-full rounded-xl border px-4 py-3 text-xs outline-none font-medium transition-all duration-200 ${theme === 'light' ? 'bg-[#F8FAFC] border-[#E2E8F0] text-[#0F172A] focus:border-[#EB1000] focus:ring-1 focus:ring-[#EB1000]' : 'bg-[#181826] border-[#2A2A3E] text-white focus:border-[#EB1000] focus:ring-1 focus:ring-[#EB1000]'
+                  }`}
+              >
+                <option value="Gaming & Esports">Gaming & Esports</option>
+                <option value="Tech & Coding">Tech & Coding</option>
+                <option value="Music & Art">Music & Art</option>
+                <option value="Just Chatting / Podcast">Just Chatting / Podcast</option>
+                <option value="Education / Q&A">Education / Q&A</option>
+              </select>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className={`block text-xs font-extrabold mb-1.5 ${theme === 'light' ? 'text-[#0F172A]' : 'text-[#E2E8F0]'}`}>Stream URL</label>
+                <label className={`block text-xs font-extrabold mb-1.5 ${theme === 'light' ? 'text-[#0F172A]' : 'text-[#E2E8F0]'}`}>Stream URL *</label>
                 <input
                   type="url"
                   value={form.streamUrl}
+                  required
                   onChange={(e) => setForm(prev => ({ ...prev, streamUrl: e.target.value }))}
                   placeholder="https://youtube.com/live/your-broadcast-id"
                   className={`w-full rounded-xl border px-4 py-3 text-xs outline-none font-medium transition-all duration-200 ${theme === 'light' ? 'bg-[#F8FAFC] border-[#E2E8F0] text-[#0F172A] placeholder-[#94A3B8] focus:border-[#EB1000] focus:ring-1 focus:ring-[#EB1000]' : 'bg-[#181826] border-[#2A2A3E] text-white placeholder-[#6E6E82] focus:border-[#EB1000] focus:ring-1 focus:ring-[#EB1000]'
@@ -227,37 +230,51 @@ export default function CreatorStartLivePage() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className={`block text-xs font-extrabold mb-1.5 ${theme === 'light' ? 'text-[#0F172A]' : 'text-[#E2E8F0]'}`}>Target Goal Amount (₹)</label>
+
+
+            <div>
+              <label className={`block text-xs font-extrabold mb-1.5 ${theme === 'light' ? 'text-[#0F172A]' : 'text-[#E2E8F0]'}`}>
+                ● Stream Thumbnail / Cover Image <span className="text-[#10B981] font-bold">(Optional)</span>
+              </label>
+              <div className="flex items-center gap-3">
                 <input
-                  type="number"
-                  min={100}
-                  value={form.goalAmount}
-                  onChange={(e) => setForm(prev => ({ ...prev, goalAmount: e.target.value }))}
-                  className={`w-full rounded-xl border px-4 py-3 text-xs outline-none font-medium transition-all duration-200 ${theme === 'light' ? 'bg-[#F8FAFC] border-[#E2E8F0] text-[#0F172A] focus:border-[#EB1000] focus:ring-1 focus:ring-[#EB1000]' : 'bg-[#181826] border-[#2A2A3E] text-white focus:border-[#EB1000] focus:ring-1 focus:ring-[#EB1000]'
+                  type="text"
+                  value={form.thumbnail}
+                  onChange={(e) => setForm(prev => ({ ...prev, thumbnail: e.target.value }))}
+                  placeholder="https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=600&q=80"
+                  className={`flex-1 rounded-xl border px-4 py-3 text-xs outline-none font-medium transition-all duration-200 ${theme === 'light' ? 'bg-[#F8FAFC] border-[#E2E8F0] text-[#0F172A] placeholder-[#94A3B8] focus:border-[#EB1000] focus:ring-1 focus:ring-[#EB1000]' : 'bg-[#181826] border-[#2A2A3E] text-white placeholder-[#6E6E82] focus:border-[#EB1000] focus:ring-1 focus:ring-[#EB1000]'
                     }`}
                 />
+                <label className={`px-4 py-3 rounded-xl border text-xs font-bold transition-all duration-200 cursor-pointer flex items-center gap-2 shrink-0 ${theme === 'light' ? 'bg-[#F1F5F9] border-[#E2E8F0] text-[#0F172A] hover:bg-[#E2E8F0]' : 'bg-[#181826] border-[#2A2A3E] text-white hover:bg-[#222236]'
+                  }`}>
+                  <Upload className="h-4 w-4 text-[#10B981]" />
+                  <span>Upload Image</span>
+                  <input type="file" accept="image/*" className="hidden" onChange={handleThumbnailUpload} />
+                </label>
               </div>
 
-              <div>
-                <label className={`block text-xs font-extrabold mb-1.5 ${theme === 'light' ? 'text-[#0F172A]' : 'text-[#E2E8F0]'}`}>Minimum Donation Allowed (₹)</label>
-                <input
-                  type="number"
-                  min={1}
-                  value={form.minDonation}
-                  onChange={(e) => setForm(prev => ({ ...prev, minDonation: e.target.value }))}
-                  className={`w-full rounded-xl border px-4 py-3 text-xs outline-none font-medium transition-all duration-200 ${theme === 'light' ? 'bg-[#F8FAFC] border-[#E2E8F0] text-[#0F172A] focus:border-[#EB1000] focus:ring-1 focus:ring-[#EB1000]' : 'bg-[#181826] border-[#2A2A3E] text-white focus:border-[#EB1000] focus:ring-1 focus:ring-[#EB1000]'
-                    }`}
-                />
-              </div>
+              {form.thumbnail && (
+                <div className="mt-2.5 flex items-center gap-3">
+                  <div className="h-9 w-14 rounded-lg overflow-hidden border border-[#10B981]/50 shadow-sm shrink-0">
+                    <img
+                      src={getMediaUrl(form.thumbnail)}
+                      alt="Stream Cover Preview"
+                      className="h-full w-full object-cover"
+                    />
+                  </div>
+                  <span className="text-xs font-extrabold text-[#10B981] flex items-center gap-1">
+                    Thumbnail Selected
+                  </span>
+                </div>
+              )}
             </div>
 
             <div>
-              <label className={`block text-xs font-extrabold mb-1.5 ${theme === 'light' ? 'text-[#0F172A]' : 'text-[#E2E8F0]'}`}>Viewer Prompt / Description</label>
+              <label className={`block text-xs font-extrabold mb-1.5 ${theme === 'light' ? 'text-[#0F172A]' : 'text-[#E2E8F0]'}`}>Stream Description *</label>
               <textarea
                 rows={3}
                 value={form.description}
+                required
                 onChange={(e) => setForm(prev => ({ ...prev, description: e.target.value }))}
                 className={`w-full rounded-xl border p-3 text-xs outline-none font-medium transition-all duration-200 ${theme === 'light' ? 'bg-[#F8FAFC] border-[#E2E8F0] text-[#0F172A] focus:border-[#EB1000] focus:ring-1 focus:ring-[#EB1000]' : 'bg-[#181826] border-[#2A2A3E] text-white focus:border-[#EB1000] focus:ring-1 focus:ring-[#EB1000]'
                   }`}
@@ -270,7 +287,7 @@ export default function CreatorStartLivePage() {
                 disabled={isSubmitting || !form.title.trim()}
                 className="px-6 py-3.5 rounded-2xl bg-gradient-to-r from-[#EB1000] to-[#CC0E00] text-white font-black text-xs shadow-xl shadow-[#EB1000]/30 hover:scale-[1.02] active:scale-95 transition-all flex items-center gap-2 cursor-pointer"
               >
-                {isSubmitting ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Radio className="h-4 w-4" />} Launch Session & Generate QR
+                {isSubmitting ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Radio className="h-4 w-4" />} 🔴 Launch Live Session Now
               </button>
             </div>
           </form>

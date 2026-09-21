@@ -127,13 +127,26 @@ export default function CreatorCard({
           </div>
         </div>
 
-        {/* Creator Name & Handle */}
-        <div className="space-y-0.5 pt-1">
+        {/* Creator Name, Handle & Stream Title */}
+        <div className="space-y-1 pt-1">
           <h4 className="font-heading font-extrabold text-base text-white flex items-center gap-1.5">
             {name}
             {/* {isVip && <Crown className="h-4 w-4 text-[#FFD60A] shrink-0" />} */}
           </h4>
           <div className="text-xs text-[#7A7A8E] font-medium">{handle}</div>
+
+          {/* Pure Stream Title Only */}
+          {(() => {
+            const rawTitle = creator.streamTitle || creator.session?.title || creator.title || '';
+            const pureTitle = rawTitle.includes(' - ') ? rawTitle.split(' - ').slice(1).join(' - ') : rawTitle;
+            const isGeneric = !pureTitle || pureTitle.toLowerCase().includes('is live') || pureTitle === name;
+            if (isGeneric) return null;
+            return (
+              <p className="text-xs font-bold text-[#E2E8F0] line-clamp-1 pt-0.5 truncate">
+                {pureTitle}
+              </p>
+            );
+          })()}
         </div>
 
 

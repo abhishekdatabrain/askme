@@ -31,7 +31,7 @@ const truecallerAuthViewer = async (req, res, next) => {
     });
 
     const verification = await verifyTruecallerResponse(req.body);
-
+    console.log('Incoming Body:', req.body);
     if (!verification.success || !verification.phone) {
       return res.status(401).json({
         status: 'fail',
@@ -147,33 +147,42 @@ const truecallerAuthViewer = async (req, res, next) => {
 //     next(err);
 //   }
 // };
-const truecallerCallback = async (req, res, next) => {
+const truecallerCallback = async (req, res) => {
+  const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+
   try {
-    const { code, state, error, payload, signature } = req.query;
-    console.log(req.query, "truecallerCallback");
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+    // Truecaller can send params in req.query or req.body depending on platform
+    const data = { ...req.query, ...req.body };
+    const { error, payload, signature, accessToken } = data;
+
+    console.log('[Truecaller Callback] Received payload keys:', Object.keys(data));
 
     if (error) {
+      console.warn('[Truecaller Callback Error]:', error);
       return res.redirect(`${frontendUrl}/viewers/login?error=${encodeURIComponent(error)}`);
     }
 
-    if (payload && signature) {
-      const verification = await verifyTruecallerResponse({ payload, signature });
+    if ((payload && signature) || accessToken) {
+      const verification = await verifyTruecallerResponse({
+        payload,
+        signature,
+        accessToken,
+      });
 
-      if (verification.success) {
+      if (verification && verification.success) {
         const cleanPhone = verification.phone;
         const displayName = verification.name || `Viewer ${verification.tenDigit.slice(-4)}`;
         const userEmail = verification.email || `${cleanPhone}@truecaller.user`;
 
-        // User lookup or auto-register
         let user = await User.findOne({
           where: {
             [Op.or]: [
               { phone: cleanPhone },
               { phone: verification.tenDigit },
-              { phone: verification.e164 }
-            ]
-          }
+              { phone: verification.e164 },
+              { email: userEmail },
+            ],
+          },
         });
 
         if (!user) {
@@ -184,23 +193,35 @@ const truecallerCallback = async (req, res, next) => {
             phone: cleanPhone,
             password: randomPassword,
             role: 'viewer',
-            truecaller_id: verification.truecallerId,
+            truecaller_id: verification.truecallerId || cleanPhone,
             truecaller_verified: true,
           });
+        } else if (!user.truecaller_verified) {
+          user.truecaller_verified = true;
+          await user.save();
         }
 
-        // Generate JWT Token
         const token = generateToken(user.id, user.role);
 
-        // SIDHE VIEWERS/DASHBOARD PAR REDIRECT
-        return res.redirect(`${frontendUrl}/viewers/dashboard?token=${token}`);
+        // Safe User Object for Frontend
+        const userParam = encodeURIComponent(
+          JSON.stringify({
+            id: user.id,
+            name: user.name,
+            phone: user.phone,
+            role: user.role,
+          })
+        );
+
+        // Redirect directly to dashboard with token & user payload
+        return res.redirect(`${frontendUrl}/viewers/dashboard?token=${token}&user=${userParam}`);
       }
     }
 
     return res.redirect(`${frontendUrl}/viewers/login?tc_status=fail`);
   } catch (err) {
-    console.error('[Truecaller Callback Error]:', err);
-    return res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:3000'}/viewers/login?error=server_error`);
+    console.error('[Truecaller Callback Exception]:', err);
+    return res.redirect(`${frontendUrl}/viewers/login?error=server_error`);
   }
 };
 module.exports = {

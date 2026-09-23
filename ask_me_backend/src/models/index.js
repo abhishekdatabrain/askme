@@ -24,6 +24,14 @@ const PaymentWebhook = require("./PaymentWebhookModel");
 const WalletSettlement = require("./WalletSettlementModel");
 const CreatorTestimonial = require("./CreatorTestimonialModel");
 const ContactMessage = require("./ContactMessageModel");
+const SupportTicket = require("./SupportTicketModel");
+
+// Creator & Support Tickets
+Creator.hasMany(SupportTicket, { foreignKey: "creator_id", as: "supportTickets" });
+SupportTicket.belongsTo(Creator, { foreignKey: "creator_id", as: "creator" });
+
+User.hasMany(SupportTicket, { foreignKey: "user_id", as: "supportTickets" });
+SupportTicket.belongsTo(User, { foreignKey: "user_id", as: "user" });
 
 // Admin & Refresh Token
 Admin.hasMany(AdminRefreshToken, { foreignKey: "admin_id", as: "refreshTokens" });
@@ -148,4 +156,5 @@ module.exports = {
   QrCode,
   CreatorTestimonial,
   ContactMessage,
+  SupportTicket,
 };

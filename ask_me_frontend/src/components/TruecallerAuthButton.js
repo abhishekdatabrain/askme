@@ -1,11 +1,7 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
-/**
- * Production-Ready Truecaller 1-Tap Authentication Component
- * Uses official Truecaller App Key (Partner Key) for Mobile 1-Tap & Web SDK verification.
- */
 export default function TruecallerAuthButton({
   onSuccess,
   onError,
@@ -14,82 +10,119 @@ export default function TruecallerAuthButton({
   className = '',
 }) {
   const [isVerifying, setIsVerifying] = useState(false);
+  const isTriggeredRef = useRef(false);
 
+  // 1. Truecaller Web SDK ke Callbacks & PostMessage Listeners
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      // Global callback handlers invoked by Truecaller Web SDK / Deep Link response
-      window.onTruecallerSuccess = (truecallerResponse) => {
-        setIsVerifying(false);
-        if (onSuccess) onSuccess(truecallerResponse);
-      };
+    if (typeof window === 'undefined') return;
 
-      window.onTruecallerError = (err) => {
-        setIsVerifying(false);
-        if (onError) onError(err || 'Truecaller verification cancelled or failed.');
-      };
-
-      // Dynamically load Truecaller Web SDK JS script if not present
-      if (!document.getElementById('truecaller-web-sdk')) {
-        const script = document.createElement('script');
-        script.id = 'truecaller-web-sdk';
-        script.src = 'https://sdk.truecaller.com/v1/truecallersdk.js';
-        script.async = true;
-        document.body.appendChild(script);
+    // Jab Truecaller Modal se CONTINUE dabane par response aaye
+    const handleSuccessData = (data) => {
+      console.log('[Truecaller Modal Success]:', data);
+      setIsVerifying(false);
+      if (onSuccess) {
+        onSuccess(data);
       }
+    };
+
+    const handleErrorData = (err) => {
+      console.error('[Truecaller Modal Error]:', err);
+      setIsVerifying(false);
+      if (onError) {
+        onError(err?.message || err || 'Verification cancelled or failed.');
+      }
+    };
+
+    // Global Functions jo SDK inject karti hai
+    window.onTruecallerSuccess = handleSuccessData;
+    window.onTruecallerError = handleErrorData;
+
+    // Truecaller Web SDK ka iframe/modal postMessage event bhejta hai
+    const handleMessageListener = (event) => {
+      try {
+        if (!event.data) return;
+
+        // Truecaller iframe response check
+        if (
+          event.data.type === 'TRUECALLER_AUTH_SUCCESS' ||
+          event.data.status === 'success' ||
+          (event.data.payload && event.data.signature) ||
+          event.data.accessToken
+        ) {
+          handleSuccessData(event.data);
+        } else if (
+          event.data.type === 'TRUECALLER_AUTH_FAILURE' ||
+          event.data.status === 'failed'
+        ) {
+          handleErrorData(event.data.error || 'Verification failed');
+        }
+      } catch (e) {
+        console.warn('[Truecaller Listener Warning]:', e);
+      }
+    };
+
+    window.addEventListener('message', handleMessageListener);
+
+    // Truecaller Web SDK script ensure karein
+    if (!document.getElementById('truecaller-web-sdk')) {
+      const script = document.createElement('script');
+      script.id = 'truecaller-web-sdk';
+      script.src = 'https://sdk.truecaller.com/v1/truecallersdk.js';
+      script.async = true;
+      document.body.appendChild(script);
     }
+
+    return () => {
+      window.removeEventListener('message', handleMessageListener);
+    };
   }, [onSuccess, onError]);
 
+  // 2. Button Click Handler
   const handleTruecallerAuth = () => {
     if (isLoading || isVerifying) return;
     setIsVerifying(true);
+    isTriggeredRef.current = true;
 
     try {
       const appKey = process.env.NEXT_PUBLIC_TRUECALLER_APP_KEY;
-      const requestNonce = `askme_nonce_${Date.now()}_${Math.random().toString(36).substring(2, 10)}`;
+      const requestNonce = `askme_nonce_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
 
-      const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
-        typeof navigator !== 'undefined' ? navigator.userAgent : ''
-      );
-
-      if (isMobile) {
-        // Mobile 1-Tap Verification via Truecaller App Deep Link
+      // Truecaller Web SDK agar page par loaded hai
+      if (window.Truecaller && typeof window.Truecaller.init === 'function') {
+        window.Truecaller.init({
+          appKey: appKey,
+          requestNonce: requestNonce,
+          buttonColor: '#0087FF',
+          buttonTextColor: '#ffffff',
+          lang: 'en',
+          onSuccess: (data) => {
+            console.log('[Truecaller SDK Direct Callback]:', data);
+            setIsVerifying(false);
+            if (onSuccess) onSuccess(data);
+          },
+          onError: (err) => {
+            console.error('[Truecaller SDK Error Callback]:', err);
+            setIsVerifying(false);
+            if (onError) onError(err?.message || 'Truecaller login failed.');
+          },
+        });
+      } else {
+        // Fallback: Agar Web SDK load nahi hua toh Deep Link trigger karein
+        const returnUrl = window.location.origin + window.location.pathname;
         const tcDeepLink = `truecallersdk://truesdk/web_verify?requestNonce=${encodeURIComponent(
           requestNonce
-        )}&partnerKey=${encodeURIComponent(appKey)}&partnerName=AskMe&lang=en&skipOption=true`;
+        )}&partnerKey=${encodeURIComponent(appKey)}&partnerName=AskMe&lang=en&skipOption=true&endpoint=${encodeURIComponent(
+          returnUrl
+        )}`;
 
         window.location.href = tcDeepLink;
 
-        // Reset verification indicator if app does not open within 3.5 seconds
         setTimeout(() => {
           setIsVerifying(false);
-        }, 3500);
-      } else {
-        // Desktop Browser / Web SDK Handling
-        if (window.Truecaller && typeof window.Truecaller.init === 'function') {
-          window.Truecaller.init({
-            appKey,
-            requestNonce,
-            onSuccess: (data) => {
-              setIsVerifying(false);
-              if (onSuccess) onSuccess(data);
-            },
-            onError: (err) => {
-              setIsVerifying(false);
-              if (onError) onError(err?.message || 'Truecaller verification failed.');
-            },
-          });
-        } else {
-          // If on Desktop browser without mobile app, inform user cleanly without 404/40010 OAuth errors
-          setIsVerifying(false);
-          if (onError) {
-            onError('Truecaller 1-Tap is optimized for mobile browsers with Truecaller app installed. Please try on a mobile phone or use WhatsApp / Email login.');
-          } else {
-            alert('Truecaller 1-Tap is optimized for mobile browsers with Truecaller app installed. Please try on a mobile phone or use WhatsApp / Email login.');
-          }
-        }
+        }, 4000);
       }
     } catch (err) {
-      console.error('[Truecaller Frontend] Auth trigger error:', err);
+      console.error('[Truecaller Frontend Trigger Error]:', err);
       setIsVerifying(false);
       if (onError) onError('Unable to start Truecaller authentication.');
     }
@@ -109,7 +142,6 @@ export default function TruecallerAuthButton({
         </>
       ) : (
         <>
-          {/* Iconic Truecaller 't' Logo */}
           <div className="w-5 h-5 rounded-full bg-white text-[#0087FF] flex items-center justify-center font-black text-xs shrink-0 shadow-sm">
             t
           </div>

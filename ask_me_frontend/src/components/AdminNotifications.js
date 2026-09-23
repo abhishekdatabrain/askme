@@ -191,7 +191,7 @@ export default function AdminNotifications() {
             onClick={() => setFilter(t)}
             className={`px-4 py-2 text-xs font-bold rounded-xl capitalize transition whitespace-nowrap ${
               filter === t
-                ? 'bg-brand-gradient text-white shadow-lg shadow-[#00F5D4]/20'
+                ? 'bg-brand-gradient text-white shadow-lg shadow-[#EB1000]/25'
                 : 'bg-[#13131A] text-[#8B8B96] hover:text-white border border-[#1C1C26]'
             }`}
           >
@@ -212,7 +212,7 @@ export default function AdminNotifications() {
       <div className="space-y-3">
         {isLoading && notifications.length === 0 ? (
           <div className="p-12 text-center bg-[#13131A] rounded-2xl border border-[#1C1C26]">
-            <RefreshCw className="h-8 w-8 text-[#00F5D4] animate-spin mx-auto mb-3" />
+            <RefreshCw className="h-8 w-8 text-[#EB1000] animate-spin mx-auto mb-3" />
             <p className="text-xs text-[#8B8B96]">Loading notifications...</p>
           </div>
         ) : filteredNotifications.length === 0 ? (

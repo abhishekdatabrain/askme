@@ -6,6 +6,7 @@ import { Mail, Lock, Eye, EyeOff, ShieldCheck, AlertCircle } from 'lucide-react'
 import { API_ENDPOINTS } from '@/config/api';
 import { useToast } from '@/context/ToastContext';
 import { setAdminSession } from '@/utils/cookies';
+import Logo from '@/components/Logo';
 
 export default function LoginPage() {
   const { toast } = useToast();
@@ -74,11 +75,11 @@ export default function LoginPage() {
           <div className="text-center space-y-2">
             <div className="inline-flex items-center gap-2">
               <div className="h-9 w-9 rounded-xl bg-brand-gradient flex items-center justify-center text-white font-black text-xl shadow-md glow-teal">
-                a
+                <Logo />
               </div>
-              <span className="font-heading font-black text-2xl text-white">AskMe <span className="text-brand-gradient">PRO</span></span>
+              <span className="font-heading font-black text-2xl text-white">AskMe</span>
             </div>
-            <h2 className="font-heading font-bold text-lg text-white">Admin Control Room Sign In</h2>
+            <h2 className="font-heading font-bold text-lg text-white">Admin Sign In</h2>
             <p className="text-xs text-[#8B8B96]">
               Sign in to manage live AskMe broadcasts, creators, payouts, and platform operations.
             </p>
@@ -102,7 +103,7 @@ export default function LoginPage() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="admin@gmail.com or admin@askme.com"
-                    className="w-full rounded-xl bg-[#0A0A0F] border border-[#1C1C26] pl-9 pr-3 py-2 text-xs text-white placeholder-[#8B8B96] focus:border-[#00F5D4] focus:outline-none"
+                    className="w-full rounded-xl bg-[#0A0A0F] border border-[#1C1C26] pl-9 pr-3 py-2 text-xs text-white placeholder-[#8B8B96] focus:border-[#EB1000] focus:outline-none"
                   />
                 </div>
               </div>
@@ -119,7 +120,7 @@ export default function LoginPage() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••••••"
-                    className="w-full rounded-xl bg-[#0A0A0F] border border-[#1C1C26] pl-9 pr-9 py-2 text-xs text-white placeholder-[#8B8B96] focus:border-[#00F5D4] focus:outline-none"
+                    className="w-full rounded-xl bg-[#0A0A0F] border border-[#1C1C26] pl-9 pr-9 py-2 text-xs text-white placeholder-[#8B8B96] focus:border-[#EB1000] focus:outline-none"
                   />
                   <button
                     type="button"
@@ -134,7 +135,7 @@ export default function LoginPage() {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full py-2.5 rounded-xl bg-brand-gradient text-white font-bold text-xs shadow-xl glow-teal hover:opacity-95 transition-all flex items-center justify-center gap-1.5 disabled:opacity-50"
+                className="w-full py-2.5 rounded-xl bg-[#EB1000] hover:bg-[#D00E00] text-white font-bold text-xs shadow-xl shadow-[#EB1000]/25 hover:opacity-95 transition-all flex items-center justify-center gap-1.5 disabled:opacity-50"
               >
                 <ShieldCheck className="h-4 w-4" /> {isSubmitting ? 'Signing In...' : 'Sign In to Admin Dashboard'}
               </button>

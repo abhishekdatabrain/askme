@@ -23,9 +23,13 @@ import {
   Eye,
   EyeOff,
   AlertCircle,
-  X
+  X,
+  Check,
+  MessageSquare,
+  RefreshCw
 } from 'lucide-react';
-import { API_ENDPOINTS } from '@/config/api';
+import { API_ENDPOINTS, getMediaUrl } from '@/config/api';
+import { uploadFile } from '@/utils/fileUpload';
 
 export default function CreatorRegisterForm({ onClose, onComplete }) {
   const { toast } = useToast();
@@ -54,6 +58,87 @@ export default function CreatorRegisterForm({ onClose, onComplete }) {
   });
 
   const [registeredCreator, setRegisteredCreator] = useState(null);
+
+  // WhatsApp OTP Verification States
+  const [regWaStep, setRegWaStep] = useState('idle'); // 'idle' | 'otp_sent' | 'verified'
+  const [regWaOtp, setRegWaOtp] = useState('');
+  const [regWaLoading, setRegWaLoading] = useState(false);
+  const [regWaError, setRegWaError] = useState('');
+  const [regWaSuccess, setRegWaSuccess] = useState('');
+
+  const handleSendRegWaOtp = async () => {
+    const cleanMobile = (formData.mobileNumber || '').replace(/[^0-9]/g, '');
+    if (!cleanMobile || cleanMobile.length !== 10) {
+      const errText = 'Please enter a valid 10-digit mobile number first.';
+      setRegWaError(errText);
+      toast.error(errText, 'Mobile Required');
+      return;
+    }
+    setRegWaError('');
+    setRegWaSuccess('');
+    try {
+      setRegWaLoading(true);
+      const res = await fetch(API_ENDPOINTS.CREATORS.WHATSAPP_SEND_OTP, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone: cleanMobile }),
+      });
+      const data = await res.json();
+      if (res.ok && data.status === 'success') {
+        const msg = data.message || `WhatsApp OTP sent to +91 ${cleanMobile}`;
+        setRegWaSuccess(msg);
+        toast.success(msg, 'WhatsApp OTP Sent');
+        setRegWaStep('otp_sent');
+      } else {
+        const errText = data.message || 'Failed to send WhatsApp OTP.';
+        setRegWaError(errText);
+        toast.error(errText, 'OTP Error');
+      }
+    } catch (err) {
+      const errText = 'Server error while sending WhatsApp OTP.';
+      setRegWaError(errText);
+      toast.error(errText, 'OTP Error');
+    } finally {
+      setRegWaLoading(false);
+    }
+  };
+
+  const handleVerifyRegWaOtp = async () => {
+    const cleanMobile = (formData.mobileNumber || '').replace(/[^0-9]/g, '');
+    if (!regWaOtp || regWaOtp.length < 4) {
+      const errText = 'Please enter the 6-digit OTP code sent to your WhatsApp.';
+      setRegWaError(errText);
+      toast.error(errText, 'OTP Required');
+      return;
+    }
+    setRegWaError('');
+    setRegWaSuccess('');
+    try {
+      setRegWaLoading(true);
+      const res = await fetch(API_ENDPOINTS.CREATORS.WHATSAPP_VERIFY_OTP, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone: cleanMobile, otp: regWaOtp }),
+      });
+      const data = await res.json();
+      if (res.ok && data.status === 'success') {
+        const msg = 'Mobile number verified via WhatsApp!';
+        setRegWaSuccess(msg);
+        toast.success(msg, 'Mobile Verified!');
+        setRegWaStep('verified');
+      } else {
+        const errText = data.message || 'Invalid WhatsApp OTP code.';
+        setRegWaError(errText);
+        toast.error(errText, 'Verification Failed');
+      }
+    } catch (err) {
+      const errText = 'Server error verifying OTP.';
+      setRegWaError(errText);
+      toast.error(errText, 'Error');
+    } finally {
+      setRegWaLoading(false);
+    }
+  };
 
   const countries = [
     'India (IN)',
@@ -108,14 +193,37 @@ export default function CreatorRegisterForm({ onClose, onComplete }) {
     }));
   };
 
-  const handleFileChange = (e) => {
+  const [profileImagePreview, setProfileImagePreview] = useState('');
+  const [uploadingImage, setUploadingImage] = useState(false);
+
+  const handleFileChange = async (e) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        handleInputChange('profileImage', reader.result);
-      };
-      reader.readAsDataURL(file);
+    if (!file) return;
+
+    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
+    if (!validTypes.includes(file.type.toLowerCase())) {
+      toast?.error?.('Please select a valid image file (JPG, PNG, WEBP, GIF).', 'Invalid Image');
+      return;
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      toast?.error?.('Image file size must be less than 10MB.', 'File Too Large');
+      return;
+    }
+
+    const previewUrl = URL.createObjectURL(file);
+    setProfileImagePreview(previewUrl);
+
+    try {
+      setUploadingImage(true);
+      toast?.info?.('Uploading profile image...', 'Uploading');
+      const res = await uploadFile(file, 'profile');
+      handleInputChange('profileImage', res.path);
+      toast?.success?.('Profile image uploaded successfully!', 'Upload Complete');
+    } catch (err) {
+      toast?.error?.(err?.message || 'Failed to upload image.', 'Upload Error');
+    } finally {
+      setUploadingImage(false);
     }
   };
 
@@ -172,6 +280,12 @@ export default function CreatorRegisterForm({ onClose, onComplete }) {
       return;
     }
 
+    if (regWaStep !== 'verified') {
+      const errText = 'Please verify your mobile number via WhatsApp OTP before continuing.';
+      toast.error(errText, 'OTP Verification Required');
+      return;
+    }
+
     setStep(2);
   };
 
@@ -194,6 +308,13 @@ export default function CreatorRegisterForm({ onClose, onComplete }) {
     const cleanMobile = String(formData.mobileNumber || '').replace(/\D/g, '');
     if (cleanMobile.length !== 10) {
       toast.error('Mobile number must be exactly 10 digits.', 'Invalid Mobile Number');
+      return;
+    }
+
+    if (regWaStep !== 'verified') {
+      const errText = 'Please verify your mobile number via WhatsApp OTP before completing registration.';
+      setErrorMsg(errText);
+      toast.error(errText, 'OTP Verification Required');
       return;
     }
 
@@ -367,6 +488,85 @@ export default function CreatorRegisterForm({ onClose, onComplete }) {
                         className="w-full rounded-xl bg-[#0A0A0F] border border-[#1C1C26] pl-9 pr-3 py-2 text-xs text-white placeholder-[#8B8B96] focus:border-[#00F5D4] focus:outline-none font-mono"
                       />
                     </div>
+
+                    {/* WhatsApp OTP Verification UI */}
+                    <div className="mt-2 space-y-2">
+                      {regWaStep === 'verified' ? (
+                        <div className="flex items-center gap-2 px-3 py-2 bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-emerald-400 text-xs font-medium">
+                          <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-400" />
+                          <span>WhatsApp Mobile Verified ✓</span>
+                        </div>
+                      ) : (
+                        <>
+                          {(formData.mobileNumber || '').length === 10 && regWaStep === 'idle' && (
+                            <button
+                              type="button"
+                              onClick={handleSendRegWaOtp}
+                              disabled={regWaLoading}
+                              className="w-full py-2 px-3 rounded-xl bg-gradient-to-r from-emerald-600 to-green-500 hover:from-emerald-500 hover:to-green-400 text-white font-medium text-xs shadow-md shadow-emerald-600/20 flex items-center justify-center gap-2 transition-all disabled:opacity-50"
+                            >
+                              {regWaLoading ? (
+                                <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                              ) : (
+                                <MessageSquare className="w-3.5 h-3.5" />
+                              )}
+                              <span>Send WhatsApp OTP to Verify Mobile</span>
+                            </button>
+                          )}
+
+                          {regWaStep === 'otp_sent' && (
+                            <div className="p-2.5 rounded-xl bg-[#0A0A0F] border border-emerald-500/30 space-y-2">
+                              <p className="text-[11px] text-emerald-400 flex items-center gap-1.5 font-medium">
+                                <MessageSquare className="w-3.5 h-3.5 shrink-0" />
+                                OTP sent via WhatsApp! Enter below:
+                              </p>
+                              <div className="flex gap-2">
+                                <input
+                                  type="text"
+                                  maxLength={6}
+                                  value={regWaOtp}
+                                  onChange={(e) => setRegWaOtp(e.target.value.replace(/\D/g, ''))}
+                                  placeholder="6-digit OTP"
+                                  className="flex-1 rounded-lg bg-[#13131A] border border-[#1C1C26] px-3 py-1.5 text-xs text-white placeholder-[#8B8B96] focus:border-emerald-500 focus:outline-none tracking-widest text-center font-mono"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={handleVerifyRegWaOtp}
+                                  disabled={regWaLoading || regWaOtp.length < 4}
+                                  className="px-3 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-black font-semibold text-xs flex items-center gap-1 transition-all disabled:opacity-50"
+                                >
+                                  {regWaLoading ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : 'Verify'}
+                                </button>
+                              </div>
+                              <div className="flex justify-between items-center text-[10px] text-[#8B8B96]">
+                                <span>Didn't receive code?</span>
+                                <button
+                                  type="button"
+                                  onClick={handleSendRegWaOtp}
+                                  disabled={regWaLoading}
+                                  className="text-emerald-400 hover:underline"
+                                >
+                                  Resend OTP
+                                </button>
+                              </div>
+                            </div>
+                          )}
+
+                          {regWaError && (
+                            <p className="text-[11px] text-red-400 flex items-center gap-1">
+                              <AlertCircle className="w-3 h-3" />
+                              {regWaError}
+                            </p>
+                          )}
+                          {regWaSuccess && regWaStep !== 'verified' && (
+                            <p className="text-[11px] text-emerald-400 flex items-center gap-1">
+                              <CheckCircle2 className="w-3 h-3" />
+                              {regWaSuccess}
+                            </p>
+                          )}
+                        </>
+                      )}
+                    </div>
                   </div>
                 </div>
 
@@ -457,25 +657,19 @@ export default function CreatorRegisterForm({ onClose, onComplete }) {
                   <label className="block text-xs font-semibold text-[#8B8B96] mb-1.5">Profile Image</label>
                   <div className="flex items-center gap-3">
                     <img
-                      src={formData.profileImage}
+                      src={profileImagePreview || (formData.profileImage ? getMediaUrl(formData.profileImage) : 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80')}
                       alt="Avatar Preview"
-                      className="h-12 w-12 rounded-full object-cover border-2 border-[#00F5D4] shrink-0"
+                      className="h-12 w-12 rounded-full object-cover border-2 border-[#EB1000] shrink-0"
                     />
                     <div className="flex-1 space-y-1.5">
-                      <input
-                        type="text"
-                        value={formData.profileImage}
-                        onChange={(e) => handleInputChange('profileImage', e.target.value)}
-                        placeholder="Image URL or upload file below..."
-                        className="w-full rounded-xl bg-[#0A0A0F] border border-[#1C1C26] px-3 py-1.5 text-xs text-white placeholder-[#8B8B96] focus:border-[#00F5D4] focus:outline-none"
-                      />
-                      <label className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-[#1C1C26] text-[#00F5D4] text-[11px] font-semibold cursor-pointer hover:bg-[#00F5D4]/10 transition-colors border border-[#00F5D4]/30">
+                      <label className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-[#1C1C26] text-[#FF3D71] text-[11px] font-semibold cursor-pointer hover:bg-[#FF3D71]/10 transition-colors border border-[#FF3D71]/30">
                         <Camera className="h-3.5 w-3.5" />
-                        <span>Choose Local File</span>
+                        <span>{uploadingImage ? 'Uploading...' : 'Choose File'}</span>
                         <input
                           type="file"
                           accept="image/*"
                           onChange={handleFileChange}
+                          disabled={uploadingImage}
                           className="hidden"
                         />
                       </label>

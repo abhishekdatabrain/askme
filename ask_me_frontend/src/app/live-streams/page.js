@@ -6,6 +6,7 @@ import LandingNavbar from '@/components/LandingNavbar';
 import LandingFooter from '@/components/LandingFooter';
 import CreatorCard from '@/components/CreatorCard';
 import VipMembershipModal from '@/components/VipMembershipModal';
+import StreamPlayerModal from '@/components/StreamPlayerModal';
 import { API_ENDPOINTS, getMediaUrl } from '@/config/api';
 import { getViewerToken, getCookie, getViewerUser } from '@/utils/cookies';
 import { useToast } from '@/context/ToastContext';
@@ -41,6 +42,7 @@ export default function PublicLiveStreamsPage() {
   const [filterType, setFilterType] = useState('live'); // default to live
   const [followedCreators, setFollowedCreators] = useState({});
   const [vipModalCreator, setVipModalCreator] = useState(null);
+  const [streamModalCreator, setStreamModalCreator] = useState(null);
   const [currentLiveIndex, setCurrentLiveIndex] = useState(0);
   const [isAutoRotating, setIsAutoRotating] = useState(true);
 
@@ -225,22 +227,9 @@ export default function PublicLiveStreamsPage() {
     setVipModalCreator(creator);
   };
 
-  // Redirect directly to live stream link on Watch Stream click
+  // Open embedded live stream player modal on Watch Stream click
   const handleWatchStream = (creator) => {
-    const streamUrl =
-      creator.liveStreamUrl ||
-      creator.streamUrl ||
-      creator.session?.streamUrl ||
-      creator.youtubeUrl ||
-      (creator.cleanUsername ? `https://youtube.com/@${creator.cleanUsername}/live` : 'https://youtube.com');
-
-    if (streamUrl) {
-      if (streamUrl.startsWith('http://') || streamUrl.startsWith('https://')) {
-        window.open(streamUrl, '_blank', 'noopener,noreferrer');
-      } else {
-        router.push(streamUrl);
-      }
-    }
+    setStreamModalCreator(creator);
   };
 
   // Redirect directly to creator payment page on Ask Question click
@@ -408,6 +397,13 @@ export default function PublicLiveStreamsPage() {
         onSuccess={() => {
           if (toast?.success) toast.success(`Successfully joined ${vipModalCreator?.name}'s VIP Membership!`, 'VIP Unlocked');
         }}
+      />
+
+      {/* Embedded Live Stream Player Modal */}
+      <StreamPlayerModal
+        isOpen={!!streamModalCreator}
+        onClose={() => setStreamModalCreator(null)}
+        creator={streamModalCreator}
       />
     </div>
   );

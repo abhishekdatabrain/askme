@@ -210,7 +210,7 @@ export default function ReportsAnalytics({ activeSubTab }) {
         <div className="flex items-center gap-3 overflow-x-auto pb-1">
           <button
             onClick={handleDownloadReport}
-            className="px-3.5 py-2 rounded-2xl bg-brand-gradient text-white font-bold text-xs flex items-center gap-1.5 hover:opacity-90 transition-all shrink-0 shadow-lg shadow-[#00F5D4]/10"
+            className="px-3.5 py-2 rounded-2xl bg-brand-gradient text-white font-bold text-xs flex items-center gap-1.5 hover:opacity-90 transition-all shrink-0 shadow-lg shadow-[#EB1000]/20"
             title="Download CSV Report"
           >
             <Download className="h-4 w-4" />
@@ -223,7 +223,7 @@ export default function ReportsAnalytics({ activeSubTab }) {
             className="p-2 rounded-2xl bg-[#13131A] border border-[#1C1C26] text-[#8B8B96] hover:text-white transition-all shrink-0"
             title="Refresh Telemetry"
           >
-            <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin text-[#00F5D4]' : ''}`} />
+            <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin text-[#EB1000]' : ''}`} />
           </button>
 
           <div className="flex items-center gap-1 bg-[#13131A] p-1 rounded-2xl border border-[#1C1C26]">
@@ -232,7 +232,7 @@ export default function ReportsAnalytics({ activeSubTab }) {
                 key={tf}
                 onClick={() => setReportTimeframe(tf)}
                 className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${reportTimeframe === tf
-                    ? 'bg-[#1C1C26] text-[#00F5D4]'
+                    ? 'bg-[#1C1C26] text-[#EB1000]'
                     : 'text-[#8B8B96] hover:text-white'
                   }`}
               >
@@ -252,7 +252,7 @@ export default function ReportsAnalytics({ activeSubTab }) {
 
       {loading && !reportData ? (
         <div className="py-20 flex flex-col items-center justify-center space-y-3">
-          <Loader2 className="h-8 w-8 text-[#00F5D4] animate-spin" />
+          <Loader2 className="h-8 w-8 text-[#EB1000] animate-spin" />
           <p className="text-xs text-[#8B8B96]">Loading dynamic analytics telemetry...</p>
         </div>
       ) : (
@@ -264,7 +264,7 @@ export default function ReportsAnalytics({ activeSubTab }) {
                 <span className="text-xs font-bold text-[#8B8B96] uppercase tracking-wider">
                   Revenue Report ({reportTimeframe})
                 </span>
-                <span className="text-xs text-[#00F5D4] font-semibold bg-[#00F5D4]/10 px-2.5 py-1 rounded-full border border-[#00F5D4]/30">
+                <span className="text-xs text-[#EB1000] font-semibold bg-[#EB1000]/10 px-2.5 py-1 rounded-full border border-[#EB1000]/30">
                   Dynamic Calculation ({reportTimeframe})
                 </span>
               </div>

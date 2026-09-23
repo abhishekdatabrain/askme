@@ -1,6 +1,8 @@
 const crypto = require("crypto");
+const bcrypt = require('bcryptjs');
+const { Op } = require('sequelize');
 const sequelize = require("../../config/database");
-const { DonationSession, Donation, PaymentTransaction, PaymentWebhook, Wallet, WalletTransaction, VipMembership, Creator } = require("../../models");
+const { DonationSession, QrCode, Donation, PaymentTransaction, PaymentWebhook, Wallet, WalletTransaction, VipMembership, Creator, User } = require("../../models");
 const { getCreatorNetSharePercent } = require("../../config/commissionConfig");
 const { createCreatorNotificationService } = require("./notificationService");
 const { sendAskListedWhatsApp, sendNewAskReceivedWhatsApp } = require("../../services/whatsappService");
@@ -26,6 +28,7 @@ const processViewerDonationService = async (data, authenticatedUser = null) => {
     gatewayOrderId,
     gatewayPaymentId,
     gatewaySignature,
+    viewerId
   } = data;
 
   const parsedAmount = parseFloat(amount || 0);
@@ -37,15 +40,36 @@ const processViewerDonationService = async (data, authenticatedUser = null) => {
 
   let session = null;
   if (sessionId) {
-    session = await DonationSession.findByPk(sessionId);
+    session = await DonationSession.findByPk(sessionId, {
+      include: [{ model: QrCode, as: "qrCode", required: false }],
+    });
   } else if (sessionCode) {
-    session = await DonationSession.findOne({ where: { session_code: sessionCode } });
+    session = await DonationSession.findOne({
+      where: { session_code: sessionCode },
+      include: [{ model: QrCode, as: "qrCode", required: false }],
+    });
   }
 
   if (session && session.status !== "active") {
-    const err = new Error("This Live Donation Session has ended. New payments are no longer accepted for this QR Code.");
+    const err = new Error("This Live Donation Session has ended. New payments are no longer accepted.");
     err.statusCode = 400;
     throw err;
+  }
+
+  if (session) {
+    const qrCodeRecord = session.qrCode || (await QrCode.findOne({ where: { session_id: session.id } }));
+    const now = new Date();
+    const qrExpiresAt = qrCodeRecord?.expires_at || (session.started_at ? new Date(new Date(session.started_at).getTime() + 3 * 3600 * 1000) : null);
+    const isQrExpired = qrCodeRecord?.status === "expired" || (qrExpiresAt && now >= new Date(qrExpiresAt));
+
+    if (isQrExpired) {
+      if (qrCodeRecord && qrCodeRecord.status !== "expired") {
+        qrCodeRecord.update({ status: "expired" }).catch(() => { });
+      }
+      const err = new Error("QR payment session has expired, but the live session is still active.");
+      err.statusCode = 400;
+      throw err;
+    }
   }
 
   const targetCreatorId = creatorId || session?.creator_id;
@@ -62,9 +86,52 @@ const processViewerDonationService = async (data, authenticatedUser = null) => {
     throw err;
   }
 
-  const viewerIdToSave = authenticatedUser?.id || data.viewerId || data.viewer_id || null;
-  const viewerEmailToSave = authenticatedUser?.email || viewerEmail || null;
+  let viewerIdToSave = authenticatedUser?.id || data.viewerId || data.viewer_id || null;
+  const viewerEmailToSave = authenticatedUser?.email || viewerEmail || data.viewerEmail || data.viewer_email || null;
+  const viewerMobileToSave = viewerMobile || data.viewerMobile || data.viewer_mobile || data.viewerPhone || data.viewer_phone || data.phone_number || data.phone || null;
 
+  const isGuest = data.is_guest !== undefined ? !!data.is_guest : !viewerIdToSave;
+
+  // Resolve or auto-create a Viewer User record for guest checkout so viewer_id is ALWAYS saved in database
+  if (!viewerIdToSave) {
+    try {
+      const orConditions = [];
+      if (viewerEmailToSave) {
+        orConditions.push({ email: viewerEmailToSave });
+      }
+      if (viewerMobileToSave) {
+        orConditions.push({ phone: viewerMobileToSave });
+      }
+
+      let existingViewer = null;
+      if (orConditions.length > 0) {
+        existingViewer = await User.findOne({
+          where: { [Op.or]: orConditions },
+        });
+      }
+
+      if (existingViewer) {
+        viewerIdToSave = existingViewer.id;
+      } else {
+        const rawPassword = `GuestPass_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
+        const hashedPassword = await bcrypt.hash(rawPassword, 10);
+
+        const newViewer = await User.create({
+          name: viewerName && viewerName.trim() ? viewerName.trim() : "Guest Supporter",
+          email: viewerEmailToSave || `guest_${Date.now()}_${Math.random().toString(36).substring(2, 6)}@askme.guest`,
+          phone: viewerMobileToSave || null,
+          password: hashedPassword,
+          role: "viewer",
+        });
+
+        if (newViewer) {
+          viewerIdToSave = newViewer.id;
+        }
+      }
+    } catch (guestErr) {
+      console.error("Guest viewer record create karne me error:", guestErr.message);
+    }
+  }
   // Check VIP membership
   let isVipMember = false;
   if (viewerIdToSave && targetCreatorId) {
@@ -90,7 +157,7 @@ const processViewerDonationService = async (data, authenticatedUser = null) => {
         viewer_id: viewerIdToSave ? String(viewerIdToSave) : null,
         viewer_name: viewerName ? viewerName.trim() : "Anonymous Supporter",
         viewer_email: viewerEmailToSave,
-        viewer_mobile: viewerMobile || null,
+        viewer_mobile: viewerMobileToSave,
         amount: parsedAmount,
         currency: "INR",
         message: message ? message.trim() : "",
@@ -99,6 +166,7 @@ const processViewerDonationService = async (data, authenticatedUser = null) => {
         status: "not_read",
         paid_at: new Date(),
         is_vip: isVipMember,
+        is_guest: isGuest,
       },
       { transaction }
     );
@@ -189,11 +257,10 @@ const processViewerDonationService = async (data, authenticatedUser = null) => {
         const creatorObj = await Creator.findByPk(targetCreatorId);
         const creatorName = creatorObj?.full_name || creatorObj?.username || "Creator";
         const creatorMobile = creatorObj?.mobile;
-        console.log("CreatorName in chat", viewerMobile);
-        return
-        if (viewerMobile) {
+
+        if (viewerMobileToSave) {
           sendAskListedWhatsApp({
-            viewerPhone: viewerMobile,
+            viewerPhone: viewerMobileToSave,
             creatorName: creatorName,
             sessionCode: session?.session_code || sessionCode
           }).catch(err => console.error('[WhatsApp Service] Error sending ask_listed:', err.message));
@@ -230,7 +297,7 @@ const processViewerDonationService = async (data, authenticatedUser = null) => {
         const socketPayload = {
           id: donationRecord.id,
           sessionId: targetSessionId,
-          senderType: "viewer",
+          senderType: isGuest ? "guest" : "viewer",
           senderId: viewerIdToSave || 0,
           senderName: donorDisplayName,
           donationId: donationRecord.id,
@@ -238,6 +305,7 @@ const processViewerDonationService = async (data, authenticatedUser = null) => {
           message: message ? message.trim() : `Supported the stream with ₹${parsedAmount}`,
           messageType: "donation",
           isVip: isVipMember,
+          isGuest: isGuest,
           queuePosition,
           createdAt: new Date(),
         };
@@ -326,14 +394,57 @@ const handlePaymentWebhookService = async (body, headers = {}) => {
     const targetCreatorId = payload.creatorId || payload.creator_id || 1;
     const targetSessionId = payload.sessionId || payload.session_id || 1;
 
+    let viewerIdToSave = payload.viewerId || payload.viewer_id || null;
+    const viewerEmailToSave = payload.viewerEmail || payload.email || null;
+    const viewerMobileToSave = payload.viewerMobile || payload.phone || null;
+
+    if (!viewerIdToSave) {
+      try {
+        const orConditions = [];
+        if (viewerEmailToSave && viewerEmailToSave.trim()) {
+          orConditions.push({ email: viewerEmailToSave.trim().toLowerCase() });
+        }
+        if (viewerMobileToSave && viewerMobileToSave.trim()) {
+          orConditions.push({ phone: viewerMobileToSave.trim() });
+        }
+
+        let existingViewer = null;
+        if (orConditions.length > 0) {
+          existingViewer = await User.findOne({
+            where: { [sequelize.Op.or]: orConditions },
+          });
+        }
+
+        if (existingViewer) {
+          viewerIdToSave = existingViewer.id;
+        } else {
+          const defaultPassword = `GuestPass_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
+          const newViewer = await User.create({
+            name: payload.viewerName || payload.name ? (payload.viewerName || payload.name).trim() : "Guest Supporter",
+            email: viewerEmailToSave && viewerEmailToSave.trim() ? viewerEmailToSave.trim().toLowerCase() : `guest_${Date.now()}_${Math.random().toString(36).substring(2, 6)}@askme.guest`,
+            phone: viewerMobileToSave && viewerMobileToSave.trim() ? viewerMobileToSave.trim() : null,
+            password: defaultPassword,
+            role: "user",
+          });
+          if (newViewer) {
+            viewerIdToSave = newViewer.id;
+          }
+        }
+      } catch (guestErr) {
+        console.warn("Notice resolving/creating guest viewer record in webhook:", guestErr.message);
+      }
+    }
+
     const transaction = await sequelize.transaction();
     try {
       const donationRecord = await Donation.create(
         {
           session_id: targetSessionId,
           creator_id: targetCreatorId,
+          viewer_id: viewerIdToSave ? String(viewerIdToSave) : null,
           viewer_name: payload.viewerName || payload.name || "Anonymous Supporter",
-          viewer_email: payload.viewerEmail || payload.email || null,
+          viewer_email: viewerEmailToSave,
+          viewer_mobile: viewerMobileToSave,
           amount: parsedAmount,
           currency: "INR",
           message: payload.message || "",
@@ -341,6 +452,7 @@ const handlePaymentWebhookService = async (body, headers = {}) => {
           payment_status: "success",
           status: "not_read",
           paid_at: new Date(),
+          is_guest: !payload.viewerId && !payload.viewer_id,
         },
         { transaction }
       );

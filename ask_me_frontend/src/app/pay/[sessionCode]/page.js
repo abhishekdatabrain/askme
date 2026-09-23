@@ -25,6 +25,7 @@ import {
   LogIn,
   AlertCircle,
   Mail,
+  Phone,
   UserPlus,
   ArrowLeft
 } from 'lucide-react';
@@ -33,6 +34,7 @@ import { getViewerToken, getViewerUser, setViewerSession, clearViewerSession, re
 import Logo from '@/components/Logo';
 import GoogleAuthProvider from '@/components/GoogleAuthProvider';
 import { useGoogleLogin } from '@react-oauth/google';
+import { getSocket } from '@/config/socket';
 
 function ViewerPaymentContent() {
   const params = useParams();
@@ -54,6 +56,8 @@ function ViewerPaymentContent() {
   // Payment Form State
   const [amount, setAmount] = useState('100');
   const [viewerName, setViewerName] = useState('');
+  const [viewerEmail, setViewerEmail] = useState('');
+  const [viewerPhone, setViewerPhone] = useState('');
   const [isAnonymous, setIsAnonymous] = useState(false);
   const [message, setMessage] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('upi'); // 'upi' | 'card' | 'netbanking'
@@ -82,6 +86,8 @@ function ViewerPaymentContent() {
     if (u) {
       setViewerUser(u);
       if (u.name) setViewerName(u.name);
+      if (u.email) setViewerEmail(u.email);
+      if (u.mobile || u.phone) setViewerPhone(u.mobile || u.phone);
     }
   }, []);
 
@@ -171,6 +177,46 @@ function ViewerPaymentContent() {
 
     fetchSession();
   }, [sessionCodeParam, queryCreatorId, querySessionId]);
+
+  // Real-time Socket.IO listener for QR status & session status changes
+  useEffect(() => {
+    if (!sessionData?.id) return;
+    try {
+      const socket = getSocket();
+      socket.emit('join_session', { sessionId: sessionData.id, userType: 'viewer' });
+
+      const handleQrStatusChanged = (data) => {
+        if (String(data.sessionId) === String(sessionData.id)) {
+          setSessionData((prev) => prev ? {
+            ...prev,
+            qrStatus: data.qrStatus || 'expired',
+            isQrExpired: true,
+          } : prev);
+        }
+      };
+
+      const handleSessionEnded = (data) => {
+        if (String(data.sessionId) === String(sessionData.id)) {
+          setSessionData((prev) => prev ? {
+            ...prev,
+            status: 'closed',
+            // liveSessionStatus: 'closed',
+          } : prev);
+        }
+      };
+
+      socket.on('qr_status_changed', handleQrStatusChanged);
+      socket.on('session_ended', handleSessionEnded);
+
+      return () => {
+        socket.off('qr_status_changed', handleQrStatusChanged);
+        socket.off('session_ended', handleSessionEnded);
+        socket.emit('leave_session', { sessionId: sessionData.id });
+      };
+    } catch (err) {
+      console.warn('Socket connection notice:', err.message);
+    }
+  }, [sessionData?.id]);
 
   // Google OAuth Handler
   const handleGoogleAuthBackend = async (googleResponsePayload) => {
@@ -457,16 +503,19 @@ function ViewerPaymentContent() {
   const handlePaymentSubmit = async (e) => {
     if (e && e.preventDefault) e.preventDefault();
 
-    // Check if viewer is logged in
-    const currentUser = viewerUser || getViewerUser();
-    if (!currentUser) {
-      setShowAuthModal(true);
-      return;
-    }
-
     const numericAmount = parseFloat(amount);
     if (!numericAmount || numericAmount <= 0) {
       alert('Please enter a valid amount.');
+      return;
+    }
+
+    if (!viewerEmail || !viewerEmail.trim()) {
+      alert('Please enter your email address.');
+      return;
+    }
+
+    if (!viewerPhone || !viewerPhone.trim()) {
+      alert('Please enter your phone number.');
       return;
     }
 
@@ -475,7 +524,7 @@ function ViewerPaymentContent() {
       return;
     }
 
-    // Open Razorpay Testing Mode Payment Gateway
+    // Open Payment Gateway Testing Mode Payment Gateway directly for everyone!
     setShowRazorpayModal(true);
   };
 
@@ -502,7 +551,8 @@ function ViewerPaymentContent() {
         anonymous: isAnonymous,
         isVip: isVipMember,
         viewerId: currentUser?.id || null,
-        viewerEmail: currentUser?.email || null,
+        viewerEmail: viewerEmail || currentUser?.email || null,
+        viewerPhone: viewerPhone || currentUser?.mobile || currentUser?.phone || null,
       };
 
       const res = await fetch(API_ENDPOINTS.CREATORS.PAY_PROCESS, {
@@ -554,7 +604,7 @@ function ViewerPaymentContent() {
         email: currentUser?.email || 'supporter@askme.live',
         contact: currentUser?.mobile || '9876543210',
       },
-      theme: { color: '#00F5D4' },
+      theme: { color: '#f52500ff' },
       handler: function (response) {
         executePaymentSuccess(response.razorpay_payment_id, paymentMethod);
       },
@@ -636,40 +686,52 @@ function ViewerPaymentContent() {
 
         {/* SUCCESS CONFIRMATION MODAL / SCREEN */}
         {paymentSuccess ? (
-          <div className="p-8 rounded-3xl bg-[#13131A] border-2 border-[#00E676]/50 shadow-2xl text-center space-y-5 animate-scale-up glow-teal">
-            <div className="h-20 w-20 rounded-full bg-[#00E676]/10 border-2 border-[#00E676] flex items-center justify-center text-[#00E676] mx-auto animate-pulse">
+          <div className="p-6 sm:p-8 rounded-3xl bg-[#13131A] border border-[#EB1000]/30 shadow-2xl shadow-[#EB1000]/10 text-center space-y-5 animate-scale-up">
+            <div className="h-20 w-20 rounded-full bg-[#00E676]/10 border-2 border-[#00E676] flex items-center justify-center text-[#00E676] mx-auto animate-pulse shadow-lg shadow-[#00E676]/20">
               <CheckCircle2 className="h-10 w-10 stroke-[2.5]" />
             </div>
 
             <div>
-              <span className="px-3 py-1 rounded-full bg-[#00E676]/10 text-[#00E676] text-xs font-black uppercase tracking-wider">
-                PAYMENT COMPLETED
+              <span className="px-3.5 py-1 rounded-full bg-[#00E676]/15 text-[#00E676] border border-[#00E676]/30 text-xs font-black uppercase tracking-wider inline-flex items-center gap-1.5">
+                <Sparkles className="h-3.5 w-3.5" /> PAYMENT COMPLETED
               </span>
-              <h2 className="font-heading font-black text-3xl text-white tracking-tight mt-2">
+              <h2 className="font-heading font-black text-3xl sm:text-4xl text-white tracking-tight mt-3">
                 ₹{(parseFloat(paymentSuccess?.amount || paymentSuccess?.grossAmount || 0)).toFixed(2)}
               </h2>
-              <p className="text-xs text-[#8B8B96] mt-1">
-                Sent to <span className="text-[#00F5D4] font-bold">{creatorData?.fullName || 'Creator Host'}</span>
+              <p className="text-xs text-slate-400 mt-1.5">
+                Sent to <span className="text-[#00E676] font-bold">{creatorData?.fullName || 'Creator Host'}</span>
               </p>
             </div>
 
-            <div className="p-4 rounded-2xl bg-[#0A0A0F] border border-[#1C1C26] space-y-2 text-left text-xs">
-              <div className="flex justify-between border-b border-[#1C1C26] pb-2">
-                <span className="text-[#8B8B96]">Transaction ID</span>
-                <span className="font-mono text-white font-bold">{paymentSuccess.donationUuid}</span>
+            <div className="p-4 rounded-2xl bg-[#0A0A0F] border border-[#1C1C26] space-y-2.5 text-left text-xs">
+              <div className="flex justify-between items-center border-b border-[#1C1C26] pb-2">
+                <span className="text-slate-400 font-medium">Transaction ID</span>
+                <span className="font-mono text-white font-bold tracking-tight">{paymentSuccess.donationUuid}</span>
               </div>
-              <div className="flex justify-between border-b border-[#1C1C26] pb-2">
-                <span className="text-[#8B8B96]">Supporter Name</span>
+              <div className="flex justify-between items-center border-b border-[#1C1C26] pb-2">
+                <span className="text-slate-400 font-medium">Supporter Name</span>
                 <span className="text-white font-bold">{paymentSuccess.viewerName}</span>
               </div>
-              <div className="flex justify-between border-b border-[#1C1C26] pb-2">
-                <span className="text-[#8B8B96]">Payment Gateway Method</span>
-                <span className="text-[#00F5D4] font-bold">{paymentSuccess.paymentMethod || 'Instant UPI'}</span>
+              <div className="flex justify-between items-center border-b border-[#1C1C26] pb-2">
+                <span className="text-slate-400 font-medium">Payment Gateway Method</span>
+                <span className="text-[#00E676] font-bold">{paymentSuccess.paymentMethod || 'Instant UPI'}</span>
               </div>
+              {paymentSuccess.viewerEmail && (
+                <div className="flex justify-between items-center border-b border-[#1C1C26] pb-2">
+                  <span className="text-slate-400 font-medium">Email Address</span>
+                  <span className="text-white font-bold">{paymentSuccess.viewerEmail}</span>
+                </div>
+              )}
+              {paymentSuccess.viewerPhone && (
+                <div className="flex justify-between items-center border-b border-[#1C1C26] pb-2">
+                  <span className="text-slate-400 font-medium">Phone Number</span>
+                  <span className="text-white font-bold">{paymentSuccess.viewerPhone}</span>
+                </div>
+              )}
               {paymentSuccess.message && (
                 <div className="pt-1">
-                  <span className="text-[#8B8B96] block mb-1">Live Stream Message:</span>
-                  <p className="p-2.5 rounded-xl bg-[#13131A] text-[#00F5D4] italic font-medium">
+                  <span className="text-slate-400 block mb-1.5 font-medium">Live Stream Message:</span>
+                  <p className="p-3 rounded-xl bg-[#13131A] border border-[#1C1C26] text-white font-medium text-sm leading-relaxed">
                     "{paymentSuccess.message}"
                   </p>
                 </div>
@@ -678,33 +740,33 @@ function ViewerPaymentContent() {
 
             {/* Queue Position Notification Banner */}
             {paymentSuccess.isVip || isVipMember ? (
-              <div className="p-4 rounded-2xl bg-[#1C1805] border-2 border-[#FFD60A] text-[#FFD60A] space-y-1 text-center shadow-xl glow-gold animate-pulse">
+              <div className="p-4 rounded-2xl bg-[#1C1805] border border-[#FFD60A]/70 text-[#FFD60A] space-y-1.5 text-center shadow-xl glow-gold animate-pulse">
                 <div className="flex items-center justify-center gap-2 font-black text-xs uppercase tracking-wider">
                   <span>👑 VIP Member Priority Question</span>
                 </div>
                 <p className="text-sm font-extrabold text-white">
-                  Aap <span className="text-[#FFD60A] font-black underline text-base">TOP VIP Priority</span> pe hain queue mein!
+                  You are at <span className="text-[#FFD60A] font-black underline text-base">TOP VIP Priority</span> in the queue!
                 </p>
-                <p className="text-[11px] text-[#8B8B96]">
-                  Aapka question creator live dashboard pe highest priority queue par show hoga.
+                <p className="text-[11px] text-slate-300 font-medium">
+                  Your question will be shown at the highest priority queue on creator's live dashboard.
                 </p>
               </div>
             ) : (
-              <div className="p-4 rounded-2xl bg-[#00E676]/10 border-2 border-[#00E676]/40 text-[#00E676] space-y-1 text-center shadow-lg glow-teal animate-pulse">
+              <div className="p-4 rounded-2xl bg-[#00E676]/10 border border-[#00E676]/30 text-[#00E676] space-y-1.5 text-center shadow-lg animate-pulse">
                 <div className="flex items-center justify-center gap-2 font-black text-xs uppercase tracking-wider">
                   <CheckCircle2 className="h-4 w-4 text-[#00E676]" /> Live Queue Notification
                 </div>
                 <p className="text-sm font-extrabold text-white">
-                  Aap <span className="text-[#00F5D4] font-black underline text-base">#{paymentSuccess.queuePosition || 1}</span> number pe hain queue mein!
+                  You are <span className="text-[#00E676] font-black underline text-base">#{paymentSuccess.queuePosition || 1}</span> in the queue!
                 </p>
-                <p className="text-[11px] text-[#8B8B96]">
+                <p className="text-[11px] text-slate-300 font-medium">
                   Creator turns to your question next on the live stream broadcast.
                 </p>
               </div>
             )}
 
-            <div className="p-3 rounded-xl bg-[#00F5D4]/10 border border-[#00F5D4]/30 text-[#00F5D4] text-xs font-bold flex items-center justify-center gap-2">
-              <Sparkles className="h-4 w-4" /> Message broadcasted to live stream overlay!
+            <div className="p-3 rounded-xl bg-[#EB1000]/10 border border-[#EB1000]/30 text-[#EB1000] text-xs font-bold flex items-center justify-center gap-2">
+              <Sparkles className="h-4 w-4 text-[#EB1000]" /> Message broadcasted to live stream overlay!
             </div>
 
             <button
@@ -712,7 +774,7 @@ function ViewerPaymentContent() {
                 setPaymentSuccess(null);
                 setMessage('');
               }}
-              className="w-full py-3 rounded-xl bg-brand-gradient text-white font-bold text-xs shadow-md glow-teal hover:opacity-95 transition"
+              className="w-full py-3.5 rounded-xl bg-brand-gradient hover:bg-brand-primary text-white font-bold text-xs shadow-md glow-brand hover:opacity-95 transition cursor-pointer"
             >
               Send Another Question / Support
             </button>
@@ -727,7 +789,7 @@ function ViewerPaymentContent() {
                   <span>👑 VIP Member Priority Access Active!</span>
                 </div>
                 <p className="text-[11px] text-white">
-                  Aap creator ke VIP Member hain. Aapka paid question creator dashboard live question queue mein <strong>normal question se HIGHER PRIORITY (TOP)</strong> par dikhega!
+                  You are a VIP Member of this creator. Your paid question will appear at <strong>HIGHER PRIORITY (TOP)</strong> over normal questions on the creator live queue!
                 </p>
               </div>
             )}
@@ -761,171 +823,221 @@ function ViewerPaymentContent() {
               </div>
             </div>
 
-            {/* Inactive Session Warning if Closed */}
-            {sessionData?.status && sessionData.status !== 'active' && (
+            {/* Inactive or Expired Session Warnings */}
+            {sessionData?.status && sessionData.status !== 'active' ? (
               <div className="p-4 rounded-2xl bg-[#FF3D71]/10 border-2 border-[#FF3D71]/40 text-[#FF3D71] text-xs font-bold text-center space-y-1 animate-pulse">
-                <p className="font-heading font-black text-sm uppercase">LIVE SESSION CLOSED</p>
-                <p className="text-[11px] text-[#8B8B96]">The creator has ended this live session. QR Code & Payment link are disabled.</p>
+                <p className="font-heading font-black text-sm uppercase flex items-center justify-center gap-1.5">
+                  <AlertCircle className="h-4 w-4" /> LIVE SESSION CLOSED
+                </p>
+                <p className="text-[11px] text-[#8B8B96]">The creator has ended this live broadcast. New donations are closed. Existing questions & messages remain available.</p>
               </div>
-            )}
+            ) : (sessionData?.isQrExpired || sessionData?.qrStatus === 'expired') ? (
+              <div className="p-4 rounded-2xl bg-[#FF9500]/10 border-2 border-[#FF9500]/40 text-[#FF9500] text-xs font-bold text-center space-y-1">
+                <p className="font-heading font-black text-sm uppercase flex items-center justify-center gap-1.5">
+                  <AlertCircle className="h-4 w-4 text-[#FF9500]" /> QR PAYMENT EXPIRED
+                </p>
+                <p className="text-[11px] text-[#F5F5F7]">
+                  QR payment session has expired, but the live session is still active.
+                </p>
+              </div>
+            ) : null}
 
-            {/* Interactive Payment Form */}
-            <form onSubmit={handlePaymentSubmit} className="space-y-5">
-
-              {/* 1. Enter Amount */}
-              <div>
-                <label className="block text-xs font-bold text-white mb-2 flex items-center justify-between">
-                  <span>Enter Amount (₹) <span className="text-[#FF3D71]">*</span></span>
-                  <span className="text-[11px] text-[#00F5D4]">100% Instant UPI</span>
-                </label>
-
-                {/* Preset Chips */}
-                <div className="grid grid-cols-5 gap-2 mb-3">
-                  {['50', '100', '250', '500', '1000'].map(val => (
-                    <button
-                      key={val}
-                      type="button"
-                      onClick={() => setAmount(val)}
-                      className={`py-2 rounded-xl text-xs font-black transition-all cursor-pointer ${amount === val
-                        ? 'bg-brand-gradient text-white shadow-md scale-105'
-                        : 'bg-[#0A0A0F] text-white border border-[#1C1C26] hover:border-[#00F5D4]/40'
-                        }`}
-                    >
-                      ₹{val}
-                    </button>
-                  ))}
+            {/* Interactive Payment Form (Disabled / Hidden if QR Expired or Session Closed) */}
+            {(sessionData?.isQrExpired || sessionData?.qrStatus === 'expired' || (sessionData?.status && sessionData.status !== 'active')) ? (
+              <div className="p-6 rounded-2xl bg-[#0A0A0F] border border-[#1C1C26] text-center space-y-3">
+                <div className="h-12 w-12 rounded-full bg-[#1C1C26] text-[#8B8B96] flex items-center justify-center mx-auto">
+                  <Lock className="h-6 w-6" />
                 </div>
-
-                <div className="relative">
-                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white font-black text-base">₹</span>
-                  <input
-                    type="number"
-                    min="1"
-                    required
-                    value={amount}
-                    onChange={(e) => setAmount(e.target.value)}
-                    placeholder="Enter custom amount"
-                    className="w-full rounded-2xl bg-[#0A0A0F] border border-[#1C1C26] pl-8 pr-4 py-3 text-base text-white font-bold placeholder-[#8B8B96] focus:outline-none focus:border-[#00F5D4] transition"
-                  />
-                </div>
+                <h4 className="text-sm font-bold text-white">Payment Submission Disabled</h4>
+                <p className="text-xs text-[#8B8B96] max-w-sm mx-auto">
+                  {sessionData?.status !== 'active'
+                    ? 'This live broadcast has ended. New payment requests are no longer accepted.'
+                    : 'QR payment session has expired, but the live session is still active.'}
+                </p>
               </div>
+            ) : (
+              <form onSubmit={handlePaymentSubmit} className="space-y-5">
 
-              {/* Viewer Account Badge */}
-              <div className="rounded-2xl border transition-all">
-                {viewerUser ? (
-                  <div className="p-3.5 rounded-2xl bg-[#00E676]/10 border border-[#00E676]/30 flex items-center justify-between text-xs">
-                    <div className="flex items-center gap-2 text-[#00E676] font-bold">
-                      <User className="h-4 w-4" />
-                      <span>Logged in as <strong className="text-white">{viewerUser.name}</strong></span>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        clearViewerSession();
-                        setViewerUser(null);
-                        setViewerName('');
-                        setIsVipMember(false);
-                      }}
-                      className="text-[#8B8B96] hover:text-[#FF3D71] text-[11px] font-semibold transition underline cursor-pointer"
-                    >
-                      Change
-                    </button>
-                  </div>
-                ) : (
-                  <div className="p-3.5 rounded-2xl bg-[#0A0A0F] border border-[#FFD60A]/40 flex items-center justify-between text-xs">
-                    <div className="flex items-center gap-2 text-[#FFD60A] font-bold">
-                      <Lock className="h-4 w-4 shrink-0" />
-                      <span>Login required to ask question & pay</span>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setShowAuthModal(true)}
-                      className="px-3 py-1.5 rounded-xl bg-[#FFD60A] text-white font-black text-[11px] hover:opacity-90 transition shadow-md cursor-pointer"
-                    >
-                      Login / Sign Up
-                    </button>
-                  </div>
-                )}
-              </div>
-
-              {/* 2. Name (Optional) */}
-              <div>
-                <div className="flex items-center justify-between mb-1.5">
-                  <label className="text-xs font-bold text-white">Viewer Name (Optional)</label>
-                  <label className="flex items-center gap-1.5 text-xs text-[#8B8B96] cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={isAnonymous}
-                      onChange={(e) => setIsAnonymous(e.target.checked)}
-                      className="rounded accent-[#00F5D4]"
-                    />
-                    <span>Send Anonymously</span>
+                {/* 1. Enter Amount */}
+                <div>
+                  <label className="block text-xs font-bold text-white mb-2 flex items-center justify-between">
+                    <span>Enter Amount (₹) <span className="text-[#FF3D71]">*</span></span>
+                    <span className="text-[11px] text-[#00F5D4]">100% Instant UPI</span>
                   </label>
+
+                  {/* Preset Chips */}
+                  <div className="grid grid-cols-5 gap-2 mb-3">
+                    {['50', '100', '250', '500', '1000'].map(val => (
+                      <button
+                        key={val}
+                        type="button"
+                        onClick={() => setAmount(val)}
+                        className={`py-2 rounded-xl text-xs font-black transition-all cursor-pointer ${amount === val
+                          ? 'bg-brand-gradient text-white shadow-md scale-105'
+                          : 'bg-[#0A0A0F] text-white border border-[#1C1C26] hover:border-[#00F5D4]/40'
+                          }`}
+                      >
+                        ₹{val}
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="relative">
+                    <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white font-black text-base">₹</span>
+                    <input
+                      type="number"
+                      min="1"
+                      required
+                      value={amount}
+                      onChange={(e) => setAmount(e.target.value)}
+                      placeholder="Enter custom amount"
+                      className="w-full rounded-2xl bg-[#0A0A0F] border border-[#1C1C26] pl-8 pr-4 py-3 text-base text-white font-bold placeholder-[#8B8B96] focus:outline-none focus:border-[#00F5D4] transition"
+                    />
+                  </div>
                 </div>
-                {!isAnonymous && (
-                  <input
-                    type="text"
-                    value={viewerName}
-                    onChange={(e) => setViewerName(e.target.value)}
-                    placeholder="Enter your name / display handle"
-                    className="w-full rounded-xl bg-[#0A0A0F] border border-[#1C1C26] px-3.5 py-2.5 text-xs text-white placeholder-[#8B8B96] focus:outline-none focus:border-[#00F5D4]"
+
+                {/* Viewer Account Badge */}
+                <div className="rounded-2xl border transition-all">
+                  {viewerUser ? (
+                    <div className="p-3.5 rounded-2xl bg-[#00E676]/10 border border-[#00E676]/30 flex items-center justify-between text-xs">
+                      <div className="flex items-center gap-2 text-[#00E676] font-bold">
+                        <User className="h-4 w-4" />
+                        <span>Logged in as <strong className="text-white">{viewerUser.name}</strong></span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          clearViewerSession();
+                          setViewerUser(null);
+                          setViewerName('');
+                          setViewerEmail('');
+                          setViewerPhone('');
+                          setIsVipMember(false);
+                        }}
+                        className="text-[#8B8B96] hover:text-[#FF3D71] text-[11px] font-semibold transition underline cursor-pointer"
+                      >
+                        Change
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="p-3.5 rounded-2xl bg-[#0A0A0F] border border-[#1C1C26] flex items-center justify-between text-xs text-[#8B8B96]">
+                      <div className="flex items-center gap-2 text-gray-300 font-semibold">
+                        <Sparkles className="h-4 w-4 text-[#00E676] shrink-0" />
+                        <span>Paying as <strong className="text-white">Guest</strong> (No login required)</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setShowAuthModal(true)}
+                        className="text-[#00E676] hover:underline text-[11px] font-bold cursor-pointer"
+                      >
+                        Login / Sign Up
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {/* 2. Name (Optional) */}
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="text-xs font-bold text-white">Viewer Name </label>
+                    <label className="flex items-center gap-1.5 text-xs text-[#8B8B96] cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={isAnonymous}
+                        onChange={(e) => setIsAnonymous(e.target.checked)}
+                        className="rounded accent-[#00F5D4]"
+                      />
+                      <span>Send Anonymously</span>
+                    </label>
+                  </div>
+                  {!isAnonymous && (
+                    <input
+                      type="text"
+                      value={viewerName}
+                      onChange={(e) => setViewerName(e.target.value)}
+                      placeholder="Enter your name / display handle"
+                      className="w-full rounded-xl bg-[#0A0A0F] border border-[#1C1C26] px-3.5 py-2.5 text-xs text-white placeholder-[#8B8B96] focus:outline-none focus:border-[#00F5D4]"
+                    />
+                  )}
+                </div>
+
+                {/* 3. Email & Phone Number (Optional) */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-white mb-1.5">
+                      Email Address *
+                    </label>
+                    <div className="relative">
+                      <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[#8B8B96]" />
+                      <input
+                        type="email"
+                        required
+                        value={viewerEmail}
+                        onChange={(e) => setViewerEmail(e.target.value)}
+                        placeholder="your.email@example.com"
+                        className="w-full rounded-xl bg-[#0A0A0F] border border-[#1C1C26] pl-9 pr-3.5 py-2.5 text-xs text-white placeholder-[#8B8B96] focus:outline-none focus:border-[#00F5D4]"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-white mb-1.5">
+                      Phone Number *
+                    </label>
+                    <div className="relative">
+                      <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[#8B8B96]" />
+                      <input
+                        type="number"
+                        required
+                        value={viewerPhone}
+                        onChange={(e) => setViewerPhone(e.target.value)}
+                        placeholder="10-digit mobile / WhatsApp"
+                        className="w-full rounded-xl bg-[#0A0A0F] border border-[#1C1C26] pl-9 pr-3.5 py-2.5 text-xs text-white placeholder-[#8B8B96] focus:outline-none focus:border-[#00F5D4]"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* 3. Message / Paid Question */}
+                <div>
+                  <label className="block text-xs font-bold text-white mb-1.5">
+                    Live Stream Message / Paid Question <span className="text-[#FF3D71]">*</span>
+                  </label>
+                  <textarea
+                    rows={3}
+                    required
+                    value={message}
+                    onChange={(e) => setMessage(e.target.value)}
+                    placeholder="Ask a question or send a shoutout to appear live on stream overlay..."
+                    className="w-full rounded-2xl bg-[#0A0A0F] border border-[#1C1C26] p-3 text-xs text-white placeholder-[#8B8B96] focus:outline-none focus:border-[#00F5D4]"
                   />
-                )}
-              </div>
+                </div>
 
-              {/* 3. Message / Paid Question */}
-              <div>
-                <label className="block text-xs font-bold text-white mb-1.5">
-                  Live Stream Message / Paid Question <span className="text-[#FF3D71]">*</span>
-                </label>
-                <textarea
-                  rows={3}
-                  required
-                  value={message}
-                  onChange={(e) => setMessage(e.target.value)}
-                  placeholder="Ask a question or send a shoutout to appear live on stream overlay..."
-                  className="w-full rounded-2xl bg-[#0A0A0F] border border-[#1C1C26] p-3 text-xs text-white placeholder-[#8B8B96] focus:outline-none focus:border-[#00F5D4]"
-                />
-              </div>
-
-              {/* Submit / Pay Button */}
-              {viewerUser ? (
+                {/* Submit / Pay Button */}
                 <button
                   type="submit"
-                  disabled={isProcessing || (sessionData?.status && sessionData.status !== 'active')}
-                  className={`w-full py-3.5 rounded-2xl font-black text-sm shadow-xl transition-all flex items-center justify-center gap-2 mt-4 cursor-pointer ${sessionData?.status && sessionData.status !== 'active'
+                  disabled={isProcessing || sessionData?.isQrExpired || sessionData?.qrStatus === 'expired' || (sessionData?.status && sessionData.status !== 'active')}
+                  className={`w-full py-3.5 rounded-2xl font-black text-sm shadow-xl transition-all flex items-center justify-center gap-2 mt-4 cursor-pointer ${sessionData?.isQrExpired || sessionData?.qrStatus === 'expired' || (sessionData?.status && sessionData.status !== 'active')
                     ? 'bg-[#1C1C26] text-[#8B8B96] cursor-not-allowed border border-[#1C1C26]'
-                    : 'bg-brand-gradient text-white glow-teal hover:opacity-95'
+                    : 'bg-brand-gradient text-white glow-brand hover:opacity-95'
                     }`}
                 >
                   {sessionData?.status && sessionData.status !== 'active' ? (
                     'Session Closed - Payments Disabled'
+                  ) : (sessionData?.isQrExpired || sessionData?.qrStatus === 'expired') ? (
+                    'QR Payment Expired - Payments Disabled'
                   ) : isProcessing ? (
                     <>
                       <RefreshCw className="h-5 w-5 animate-spin" /> Processing Payment...
                     </>
                   ) : (
                     <>
-                      <Heart className="h-5 w-5 fill-current" /> Pay ₹{amount || '100'} Now
+                      <Heart className="h-5 w-5 fill-current" /> Pay ₹{amount || '100'} & Send Question
                     </>
                   )}
                 </button>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (!message || !message.trim()) {
-                      alert('Please enter your live stream message / paid question first.');
-                      return;
-                    }
-                    setShowAuthModal(true);
-                  }}
-                  className="w-full py-3.5 rounded-2xl font-black text-sm shadow-xl transition-all flex items-center justify-center gap-2 mt-4 bg-brand-gradient text-white glow-teal hover:opacity-95 cursor-pointer"
-                >
-                  <Lock className="h-4 w-4" /> Login to Pay ₹{amount || '100'} & Send Question
-                </button>
-              )}
-            </form>
+              </form>
+            )}
           </div>
         )}
       </main>
@@ -1465,7 +1577,7 @@ function ViewerPaymentContent() {
                     <RefreshCw className="h-4 w-4 animate-spin" /> Processing Payment...
                   </>
                 ) : (
-                  <span>Pay ₹{amount || '100'}</span>
+                  <span>Pay ₹{amount}</span>
                 )}
               </button>
             </div>

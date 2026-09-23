@@ -215,7 +215,7 @@ export default function CreatorCard({
             e.stopPropagation();
             if (onJoinVip) onJoinVip(creator);
           }}
-          className="w-full p-2.5 px-4 rounded-full bg-[#18150A] border border-[#FFD60A]/30 flex items-center justify-between text-xs text-[#FFD60A] font-bold hover:bg-[#2A230C] hover:border-[#FFD60A]/60 transition-all cursor-pointer active:scale-95 group/vip"
+          className="w-full p-2.5 px-4 rounded-full bg-[#18150A] border border-[#FFD60A]/30 flex items-center justify-center text-xs text-[#FFD60A] font-bold hover:bg-[#2A230C] hover:border-[#FFD60A]/60 transition-all cursor-pointer active:scale-95 group/vip"
         >
           <div className="flex items-center justify-center gap-1.5">
             <Crown className="h-3.5 w-3.5 text-[#FFD60A] group-hover/vip:scale-110 transition-transform" />

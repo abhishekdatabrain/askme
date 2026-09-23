@@ -40,8 +40,8 @@ export default function CreatorStartLivePage() {
     streamingPlatform: 'YouTube Live',
     streamUrl: '',
     durationHours: '',
-    goalAmount: 5000,
-    minDonation: 10,
+    // goalAmount: 5000,
+    // minDonation: 10,
     description: 'Ask questions & support live on OBS stream during our broadcast!',
   });
 
@@ -194,11 +194,13 @@ export default function CreatorStartLivePage() {
                 className={`w-full rounded-xl border px-4 py-3 text-xs outline-none font-medium transition-all duration-200 ${theme === 'light' ? 'bg-[#F8FAFC] border-[#E2E8F0] text-[#0F172A] focus:border-[#EB1000] focus:ring-1 focus:ring-[#EB1000]' : 'bg-[#181826] border-[#2A2A3E] text-white focus:border-[#EB1000] focus:ring-1 focus:ring-[#EB1000]'
                   }`}
               >
-                <option value="Gaming & Esports">Gaming & Esports</option>
-                <option value="Tech & Coding">Tech & Coding</option>
-                <option value="Music & Art">Music & Art</option>
-                <option value="Just Chatting / Podcast">Just Chatting / Podcast</option>
-                <option value="Education / Q&A">Education / Q&A</option>
+                <option value="Gaming">Gaming</option>
+                <option value="Technology">Technology</option>
+                <option value="Music">Music</option>
+                <option value="Podcast">Podcast</option>
+                <option value="Education">Education</option>
+                <option value="Politics">Politics</option>
+
               </select>
             </div>
 
@@ -237,17 +239,10 @@ export default function CreatorStartLivePage() {
                 ● Stream Thumbnail / Cover Image <span className="text-[#10B981] font-bold">(Optional)</span>
               </label>
               <div className="flex items-center gap-3">
-                <input
-                  type="text"
-                  value={form.thumbnail}
-                  onChange={(e) => setForm(prev => ({ ...prev, thumbnail: e.target.value }))}
-                  placeholder="https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=600&q=80"
-                  className={`flex-1 rounded-xl border px-4 py-3 text-xs outline-none font-medium transition-all duration-200 ${theme === 'light' ? 'bg-[#F8FAFC] border-[#E2E8F0] text-[#0F172A] placeholder-[#94A3B8] focus:border-[#EB1000] focus:ring-1 focus:ring-[#EB1000]' : 'bg-[#181826] border-[#2A2A3E] text-white placeholder-[#6E6E82] focus:border-[#EB1000] focus:ring-1 focus:ring-[#EB1000]'
-                    }`}
-                />
+
                 <label className={`px-4 py-3 rounded-xl border text-xs font-bold transition-all duration-200 cursor-pointer flex items-center gap-2 shrink-0 ${theme === 'light' ? 'bg-[#F1F5F9] border-[#E2E8F0] text-[#0F172A] hover:bg-[#E2E8F0]' : 'bg-[#181826] border-[#2A2A3E] text-white hover:bg-[#222236]'
                   }`}>
-                  <Upload className="h-4 w-4 text-[#10B981]" />
+                  <Upload className="h-4 w-20 text-[#10B981]" />
                   <span>Upload Image</span>
                   <input type="file" accept="image/*" className="hidden" onChange={handleThumbnailUpload} />
                 </label>

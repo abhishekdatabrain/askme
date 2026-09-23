@@ -1,5 +1,11 @@
 const sequelize = require("../../config/database");
-const { KycVerification, KycDocument, CreatorBankAccount, CreatorProfile } = require("../../models");
+const models = require("../../models");
+const KycVerification = models.KycVerification;
+const KycDocument = models.KycDocument;
+const CreatorBankAccount = models.CreatorBankAccount;
+const CreatorProfile = models.CreatorProfile;
+const CreatorSocialLink = models.CreatorSocialLink;
+const CreatorsModel = models.CreatorsModel || models.Creator;
 const { validateIFSC, validatePAN } = require("../validators/creatorValidator");
 const { maskBankAccount } = require("../../utils/maskSensitiveData");
 
@@ -15,6 +21,10 @@ const submitKycService = async (creatorId, data) => {
 
   const {
     fullName,
+    mobileNumber,
+    category,
+    socialMediaUrl,
+    socialLinks,
     dateOfBirth,
     address,
     country,
@@ -63,7 +73,11 @@ const submitKycService = async (creatorId, data) => {
     safeDocType = "government_id";
   }
 
-  const docFileUrl = fileUrl || "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&w=400&q=80";
+  let rawDocUrl = (documentFileUrl || fileUrl || "").trim();
+  if (rawDocUrl.startsWith("blob:") || rawDocUrl.startsWith("data:")) {
+    rawDocUrl = "";
+  }
+  const docFileUrl = rawDocUrl || "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&w=400&q=80";
 
   const transaction = await sequelize.transaction();
 
@@ -140,10 +154,44 @@ const submitKycService = async (creatorId, data) => {
       { transaction }
     );
 
-    await CreatorProfile.update(
-      { kyc_status: "pending" },
-      { where: { creator_id: creatorId }, transaction }
-    );
+    if (CreatorProfile) {
+      const updateFields = { kyc_status: "pending" };
+      if (category) {
+        updateFields.bio = `${category} Creator`;
+      }
+      await CreatorProfile.update(
+        updateFields,
+        { where: { creator_id: creatorId }, transaction }
+      );
+    }
+
+    if (mobileNumber && CreatorsModel) {
+      const creatorRec = await CreatorsModel.findByPk(creatorId, { transaction });
+      if (creatorRec && !creatorRec.mobile) {
+        const cleanPhone = String(mobileNumber).replace(/[^0-9+]/g, '');
+        if (cleanPhone) {
+          await creatorRec.update({ mobile: cleanPhone }, { transaction });
+        }
+      }
+    }
+
+    if (Array.isArray(socialLinks) && socialLinks.length > 0 && CreatorSocialLink) {
+      for (const item of socialLinks) {
+        if (!item || !item.platform || !item.link) continue;
+        const plat = String(item.platform).trim().toLowerCase();
+        const url = String(item.link).trim();
+        if (!plat || !url) continue;
+
+        const [linkRec, created] = await CreatorSocialLink.findOrCreate({
+          where: { creator_id: creatorId, platform: plat },
+          defaults: { creator_id: creatorId, platform: plat, profile_url: url },
+          transaction,
+        });
+        if (!created && linkRec) {
+          await linkRec.update({ profile_url: url }, { transaction });
+        }
+      }
+    }
 
     await transaction.commit();
 

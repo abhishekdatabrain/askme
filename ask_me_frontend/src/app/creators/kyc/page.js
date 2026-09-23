@@ -33,7 +33,8 @@ import {
     Moon,
     Bell
 } from 'lucide-react';
-import { API_ENDPOINTS } from '@/config/api';
+import { API_ENDPOINTS, getMediaUrl } from '@/config/api';
+import { uploadFile } from '@/utils/fileUpload';
 import { getCreatorToken, getCreatorUser, clearCreatorSession } from '@/utils/cookies';
 
 export default function CreatorKycPage() {
@@ -86,12 +87,25 @@ export default function CreatorKycPage() {
     const [errorMsg, setErrorMsg] = useState('');
     const [successMsg, setSuccessMsg] = useState('');
 
+    // Lock Pre-filled Data States
+    const [isNameLocked, setIsNameLocked] = useState(false);
+    const [isMobileLocked, setIsMobileLocked] = useState(false);
+
     // KYC Form State
     const [formData, setFormData] = useState({
         fullName: '',
+        mobileCountryCode: '+91',
+        mobileNumber: '',
+        category: '', // Dropdown: 'Creator', 'Freelancer', 'Business', 'Individual'
+        socialMediaUrl: '', // Main profile / portfolio URL
+        youtubeUrl: '',
+        instagramUrl: '',
+        facebookUrl: '',
+        twitchUrl: '',
+        linkedinUrl: '',
         dateOfBirth: '',
         address: '',
-        country: '',
+        country: 'India',
         state: '',
         city: '',
         pincode: '',
@@ -226,11 +240,38 @@ export default function CreatorKycPage() {
 
         setCreatorUser(user);
         setToken(savedToken);
+
+        const rawName = (user.fullName || user.full_name || user.name || '').trim();
+        const rawMobile = String(user.mobile || user.mobileNumber || user.phone || '').trim();
+
+        let codePrefix = '+91';
+        let numOnly = '';
+        if (rawMobile) {
+            const digits = rawMobile.replace(/\D/g, '');
+            if (digits.length === 10) {
+                numOnly = digits;
+            } else if (digits.length > 10) {
+                numOnly = digits.slice(-10);
+                codePrefix = `+${digits.slice(0, digits.length - 10)}`;
+            } else {
+                numOnly = digits;
+            }
+        }
+
         setFormData(prev => ({
             ...prev,
-            fullName: user.fullName || user.full_name || user.name || '',
-            accountHolderName: user.fullName || user.full_name || user.name || '',
+            fullName: rawName || prev.fullName,
+            accountHolderName: rawName || prev.accountHolderName,
+            mobileNumber: numOnly || prev.mobileNumber,
+            mobileCountryCode: codePrefix || prev.mobileCountryCode,
         }));
+
+        if (rawName) {
+            setIsNameLocked(true);
+        }
+        if (numOnly && numOnly.length === 10) {
+            setIsMobileLocked(true);
+        }
 
         const checkKycStatus = async () => {
             try {
@@ -278,17 +319,88 @@ export default function CreatorKycPage() {
         setErrorMsg('');
     };
 
-    const handleFileUpload = (e) => {
+    const [isUploadingDoc, setIsUploadingDoc] = useState(false);
+    const [docPreviewUrl, setDocPreviewUrl] = useState('');
+
+    const handleFileUpload = async (e) => {
         const file = e.target.files?.[0];
-        if (file) {
-            const fakeUrl = URL.createObjectURL(file);
-            setFormData(prev => ({ ...prev, documentPreview: fakeUrl }));
-            toast.success('Document uploaded for KYC submission preview.', 'File Selected');
+        if (!file) return;
+
+        const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'application/pdf'];
+        if (!allowedTypes.includes(file.type.toLowerCase())) {
+            toast.error('Please upload a valid image (JPG, PNG, WEBP) or PDF document.', 'Invalid File Type');
+            return;
+        }
+
+        if (file.size > 15 * 1024 * 1024) {
+            toast.error('File size exceeds the 15MB limit.', 'File Too Large');
+            return;
+        }
+
+        const localBlob = URL.createObjectURL(file);
+        setDocPreviewUrl(localBlob);
+
+        try {
+            setIsUploadingDoc(true);
+            toast.info('Uploading document to server...', 'Uploading File');
+            const res = await uploadFile(file, 'document');
+            setFormData(prev => ({ ...prev, documentPreview: res.path }));
+            toast.success('KYC Document uploaded successfully!', 'Upload Complete');
+        } catch (err) {
+            toast.error(err?.message || 'Failed to upload document.', 'Upload Error');
+        } finally {
+            setIsUploadingDoc(false);
         }
     };
 
     const validateStep1 = () => {
-        if (!formData.fullName.trim()) return 'Legal Full Name is required.';
+        if (!formData.fullName || !formData.fullName.trim()) {
+            return 'Legal Full Name is required.';
+        }
+
+        // 10-Digit Mobile Number Validation
+        const cleanMobile = String(formData.mobileNumber || '').replace(/\D/g, '');
+        if (!cleanMobile) {
+            return 'Mobile Number is required.';
+        }
+        if (cleanMobile.length !== 10) {
+            return 'Mobile Number must be a valid 10-digit number (e.g. 9876543210).';
+        }
+
+        // Category Dropdown Validation
+        if (!formData.category || !formData.category.trim()) {
+            return 'Please select a Category (Creator, Freelancer, Business, or Individual).';
+        }
+
+        // Social Media URL Validation helper
+        const validateUrlFormat = (urlStr, platformName) => {
+            if (!urlStr || !urlStr.trim()) return null;
+            const trimmed = urlStr.trim();
+            const testUrl = (trimmed.startsWith('http://') || trimmed.startsWith('https://')) ? trimmed : `https://${trimmed}`;
+            try {
+                const parsed = new URL(testUrl);
+                if (!parsed.hostname || !parsed.hostname.includes('.')) {
+                    return `Invalid URL format for ${platformName}. E.g. https://${platformName.toLowerCase().replace(/[^a-z]/g, '')}.com/yourprofile`;
+                }
+                return null;
+            } catch (e) {
+                return `Invalid URL format for ${platformName}. E.g. https://${platformName.toLowerCase().replace(/[^a-z]/g, '')}.com/yourprofile`;
+            }
+        };
+
+        const primaryErr = validateUrlFormat(formData.socialMediaUrl, 'Primary Social Media');
+        if (primaryErr) return primaryErr;
+        const ytErr = validateUrlFormat(formData.youtubeUrl, 'YouTube');
+        if (ytErr) return ytErr;
+        const instaErr = validateUrlFormat(formData.instagramUrl, 'Instagram');
+        if (instaErr) return instaErr;
+        const linkedinErr = validateUrlFormat(formData.linkedinUrl, 'LinkedIn');
+        if (linkedinErr) return linkedinErr;
+        const fbErr = validateUrlFormat(formData.facebookUrl, 'Facebook');
+        if (fbErr) return fbErr;
+        const twitchErr = validateUrlFormat(formData.twitchUrl, 'Twitch');
+        if (twitchErr) return twitchErr;
+
         if (!formData.dateOfBirth) return 'Date of Birth is required.';
         if (!formData.address.trim()) return 'Residential Address is required.';
         if (!formData.country.trim()) return 'Country is required.';
@@ -372,6 +484,16 @@ export default function CreatorKycPage() {
             const payload = {
                 creatorId,
                 fullName: formData.fullName,
+                mobileNumber: `${formData.mobileCountryCode} ${formData.mobileNumber}`,
+                category: formData.category,
+                socialMediaUrl: formData.socialMediaUrl,
+                socialLinks: [
+                    { platform: 'youtube', link: formData.youtubeUrl },
+                    { platform: 'instagram', link: formData.instagramUrl },
+                    { platform: 'linkedin', link: formData.linkedinUrl },
+                    { platform: 'facebook', link: formData.facebookUrl },
+                    { platform: 'twitch', link: formData.twitchUrl },
+                ].filter(s => s.link && s.link.trim()),
                 dateOfBirth: formData.dateOfBirth,
                 address: formData.address,
                 city: formData.city,
@@ -728,26 +850,44 @@ export default function CreatorKycPage() {
                                         <User className="h-4 w-4" />
                                     </span>
                                     <h3 className={`font-extrabold text-sm ${theme === 'light' ? 'text-[#0F172A]' : 'text-white'}`}>
-                                        Personal Information & Residential Address
+                                        Personal Information & Contact Details
                                     </h3>
                                 </div>
 
+                                {/* Row 1: Legal Full Name & Date of Birth */}
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div>
-                                        <label className={`block text-xs font-extrabold mb-1.5 ${theme === 'light' ? 'text-[#0F172A]' : 'text-[#E2E8F0]'}`}>
-                                            Legal Full Name (Matching PAN/ID) *
-                                        </label>
-                                        <input
-                                            type="text"
-                                            required
-                                            value={formData.fullName}
-                                            onChange={(e) => handleInputChange('fullName', e.target.value)}
-                                            placeholder="e.g. Abhishek Kumar"
-                                            className={`w-full px-4 py-3 rounded-xl border text-xs outline-none font-medium transition-all duration-200 ${theme === 'light'
-                                                ? 'bg-[#F8FAFC] border-[#E2E8F0] text-[#0F172A] placeholder-[#94A3B8] focus:border-[#EB1000] focus:ring-1 focus:ring-[#EB1000]'
-                                                : 'bg-[#181826] border-[#2A2A3E] text-white placeholder-[#6E6E82] focus:border-[#EB1000] focus:ring-1 focus:ring-[#EB1000]'
-                                                }`}
-                                        />
+                                        <div className="flex items-center justify-between mb-1.5">
+                                            <label className={`block text-xs font-extrabold ${theme === 'light' ? 'text-[#0F172A]' : 'text-[#E2E8F0]'}`}>
+                                                Legal Full Name (Matching PAN/ID) *
+                                            </label>
+                                            {isNameLocked && (
+                                                <span className="inline-flex items-center gap-1 text-[10px] font-extrabold text-amber-500 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/30">
+                                                    <Lock className="h-3 w-3" /> Pre-filled & Locked
+                                                </span>
+                                            )}
+                                        </div>
+                                        <div className="relative">
+                                            <input
+                                                type="text"
+                                                required
+                                                readOnly={isNameLocked}
+                                                value={formData.fullName}
+                                                onChange={(e) => !isNameLocked && handleInputChange('fullName', e.target.value)}
+                                                placeholder="e.g. Raja Kumar"
+                                                className={`w-full px-4 py-3 rounded-xl border text-xs outline-none font-medium transition-all duration-200 ${isNameLocked
+                                                    ? theme === 'light'
+                                                        ? 'bg-[#E2E8F0]/60 border-[#CBD5E1] text-[#475569] cursor-not-allowed'
+                                                        : 'bg-[#12121C] border-[#2A2A3E] text-[#94A3B8] cursor-not-allowed'
+                                                    : theme === 'light'
+                                                        ? 'bg-[#F8FAFC] border-[#E2E8F0] text-[#0F172A] placeholder-[#94A3B8] focus:border-[#EB1000] focus:ring-1 focus:ring-[#EB1000]'
+                                                        : 'bg-[#181826] border-[#2A2A3E] text-white placeholder-[#6E6E82] focus:border-[#EB1000] focus:ring-1 focus:ring-[#EB1000]'
+                                                    }`}
+                                            />
+                                            {isNameLocked && (
+                                                <Lock className="absolute right-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-amber-500/80 pointer-events-none" />
+                                            )}
+                                        </div>
                                     </div>
 
                                     <div>
@@ -767,6 +907,160 @@ export default function CreatorKycPage() {
                                     </div>
                                 </div>
 
+                                {/* Row 2: Mobile Number (with Country Code selector & lock) & Category Dropdown */}
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div>
+                                        <div className="flex items-center justify-between mb-1.5">
+                                            <label className={`block text-xs font-extrabold ${theme === 'light' ? 'text-[#0F172A]' : 'text-[#E2E8F0]'}`}>
+                                                Mobile Number * (10 Digits)
+                                            </label>
+                                            {isMobileLocked && (
+                                                <span className="inline-flex items-center gap-1 text-[10px] font-extrabold text-amber-500 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/30">
+                                                    <Lock className="h-3 w-3" /> Verified Mobile (Locked)
+                                                </span>
+                                            )}
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <select
+                                                disabled={isMobileLocked}
+                                                value={formData.mobileCountryCode || '+91'}
+                                                onChange={(e) => handleInputChange('mobileCountryCode', e.target.value)}
+                                                className={`w-28 px-2.5 py-3 rounded-xl border text-xs outline-none font-mono font-bold transition-all ${isMobileLocked
+                                                    ? theme === 'light' ? 'bg-[#E2E8F0]/60 border-[#CBD5E1] text-[#475569] cursor-not-allowed' : 'bg-[#12121C] border-[#2A2A3E] text-[#94A3B8] cursor-not-allowed'
+                                                    : theme === 'light' ? 'bg-[#F8FAFC] border-[#E2E8F0] text-[#0F172A]' : 'bg-[#181826] border-[#2A2A3E] text-white'
+                                                    }`}
+                                            >
+                                                <option value="+91">🇮🇳 +91</option>
+
+                                            </select>
+                                            <div className="relative flex-1">
+                                                <input
+                                                    type="tel"
+                                                    maxLength={10}
+                                                    required
+                                                    readOnly={isMobileLocked}
+                                                    value={formData.mobileNumber}
+                                                    onChange={(e) => !isMobileLocked && handleInputChange('mobileNumber', e.target.value.replace(/\D/g, ''))}
+                                                    placeholder="9876543210"
+                                                    className={`w-full px-4 py-3 rounded-xl border text-xs outline-none font-mono font-bold transition-all duration-200 ${isMobileLocked
+                                                        ? theme === 'light'
+                                                            ? 'bg-[#E2E8F0]/60 border-[#CBD5E1] text-[#475569] cursor-not-allowed'
+                                                            : 'bg-[#12121C] border-[#2A2A3E] text-[#94A3B8] cursor-not-allowed'
+                                                        : theme === 'light'
+                                                            ? 'bg-[#F8FAFC] border-[#E2E8F0] text-[#0F172A] placeholder-[#94A3B8] focus:border-[#EB1000] focus:ring-1 focus:ring-[#EB1000]'
+                                                            : 'bg-[#181826] border-[#2A2A3E] text-white placeholder-[#6E6E82] focus:border-[#EB1000] focus:ring-1 focus:ring-[#EB1000]'
+                                                        }`}
+                                                />
+                                                {isMobileLocked && (
+                                                    <Lock className="absolute right-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-amber-500/80 pointer-events-none" />
+                                                )}
+                                            </div>
+                                        </div>
+                                        <span className="text-[10px] text-gray-400 block mt-1">Must be exactly 10 digits to continue to Step 2.</span>
+                                    </div>
+
+                                    <div>
+                                        <label className={`block text-xs font-extrabold mb-1.5 ${theme === 'light' ? 'text-[#0F172A]' : 'text-[#E2E8F0]'}`}>
+                                            Stream Category *
+                                        </label>
+                                        <select
+                                            required
+                                            value={formData.category || ''}
+                                            onChange={(e) => handleInputChange('category', e.target.value)}
+                                            className={`w-full px-4 py-3 rounded-xl border text-xs outline-none font-medium transition-all duration-200 ${theme === 'light'
+                                                ? 'bg-[#F8FAFC] border-[#E2E8F0] text-[#0F172A] focus:border-[#EB1000] focus:ring-1 focus:ring-[#EB1000]'
+                                                : 'bg-[#181826] border-[#2A2A3E] text-white focus:border-[#EB1000] focus:ring-1 focus:ring-[#EB1000]'
+                                                }`}
+                                        >
+                                            <option value="">Select Category...</option>
+                                            <option value="Gaming">Gaming</option>
+                                            <option value="Politics">Politics</option>
+                                            <option value="Technology">Technology</option>
+                                            <option value="Finance">Finance</option>
+                                        </select>
+                                        <span className="text-[10px] text-gray-400 block mt-1">Choose the category that best describes your profile.</span>
+                                    </div>
+                                </div>
+
+                                {/* Row 3: Social Media Links (YouTube, Instagram, Facebook, Twitch, LinkedIn, etc.) */}
+                                <div className={`p-4 rounded-2xl border space-y-3 ${theme === 'light' ? 'bg-[#F8FAFC] border-[#E2E8F0]' : 'bg-[#181826]/70 border-[#2A2A3E]'}`}>
+                                    <div className="flex items-center gap-2 border-b pb-2 border-current/10">
+                                        <Sparkles className="h-4 w-4 text-[#EB1000]" />
+                                        <h4 className={`font-extrabold text-xs ${theme === 'light' ? 'text-[#0F172A]' : 'text-white'}`}>
+                                            Social Media Links & Profiles
+                                        </h4>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                        <div>
+                                            <label className="block text-[11px] font-bold text-gray-400 mb-1">🎬 YouTube Channel URL</label>
+                                            <input
+                                                type="url"
+                                                value={formData.youtubeUrl || ''}
+                                                onChange={(e) => handleInputChange('youtubeUrl', e.target.value)}
+                                                placeholder="https://youtube.com/@channel"
+                                                className={`w-full px-3.5 py-2.5 rounded-xl border text-xs outline-none transition ${theme === 'light' ? 'bg-white border-[#E2E8F0] text-[#0F172A]' : 'bg-[#101018] border-[#2A2A3E] text-white'}`}
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-[11px] font-bold text-gray-400 mb-1">📸 Instagram Profile URL</label>
+                                            <input
+                                                type="url"
+                                                value={formData.instagramUrl || ''}
+                                                onChange={(e) => handleInputChange('instagramUrl', e.target.value)}
+                                                placeholder="https://instagram.com/username"
+                                                className={`w-full px-3.5 py-2.5 rounded-xl border text-xs outline-none transition ${theme === 'light' ? 'bg-white border-[#E2E8F0] text-[#0F172A]' : 'bg-[#101018] border-[#2A2A3E] text-white'}`}
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-[11px] font-bold text-gray-400 mb-1">💼 LinkedIn Profile URL</label>
+                                            <input
+                                                type="url"
+                                                value={formData.linkedinUrl || ''}
+                                                onChange={(e) => handleInputChange('linkedinUrl', e.target.value)}
+                                                placeholder="https://linkedin.com/in/username"
+                                                className={`w-full px-3.5 py-2.5 rounded-xl border text-xs outline-none transition ${theme === 'light' ? 'bg-white border-[#E2E8F0] text-[#0F172A]' : 'bg-[#101018] border-[#2A2A3E] text-white'}`}
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-[11px] font-bold text-gray-400 mb-1">👥 Facebook Profile / Page URL</label>
+                                            <input
+                                                type="url"
+                                                value={formData.facebookUrl || ''}
+                                                onChange={(e) => handleInputChange('facebookUrl', e.target.value)}
+                                                placeholder="https://facebook.com/username"
+                                                className={`w-full px-3.5 py-2.5 rounded-xl border text-xs outline-none transition ${theme === 'light' ? 'bg-white border-[#E2E8F0] text-[#0F172A]' : 'bg-[#101018] border-[#2A2A3E] text-white'}`}
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-[11px] font-bold text-gray-400 mb-1">🎮 Twitch Stream URL</label>
+                                            <input
+                                                type="url"
+                                                value={formData.twitchUrl || ''}
+                                                onChange={(e) => handleInputChange('twitchUrl', e.target.value)}
+                                                placeholder="https://twitch.tv/channel"
+                                                className={`w-full px-3.5 py-2.5 rounded-xl border text-xs outline-none transition ${theme === 'light' ? 'bg-white border-[#E2E8F0] text-[#0F172A]' : 'bg-[#101018] border-[#2A2A3E] text-white'}`}
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-[11px] font-bold text-gray-400 mb-1">🌐 Primary Portfolio / Website URL</label>
+                                            <input
+                                                type="url"
+                                                value={formData.socialMediaUrl || ''}
+                                                onChange={(e) => handleInputChange('socialMediaUrl', e.target.value)}
+                                                placeholder="https://yourwebsite.com"
+                                                className={`w-full px-3.5 py-2.5 rounded-xl border text-xs outline-none transition ${theme === 'light' ? 'bg-white border-[#E2E8F0] text-[#0F172A]' : 'bg-[#101018] border-[#2A2A3E] text-white'}`}
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Row 4: Residential Address */}
                                 <div>
                                     <label className={`block text-xs font-extrabold mb-1.5 ${theme === 'light' ? 'text-[#0F172A]' : 'text-[#E2E8F0]'}`}>
                                         Residential Address *
@@ -784,6 +1078,7 @@ export default function CreatorKycPage() {
                                     />
                                 </div>
 
+                                {/* Row 5: Country, State, City */}
                                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                                     <div>
                                         <label className={`block text-xs font-extrabold mb-1.5 ${theme === 'light' ? 'text-[#0F172A]' : 'text-[#E2E8F0]'}`}>
@@ -955,18 +1250,18 @@ export default function CreatorKycPage() {
                                                 }`}
                                         />
                                         <label className="px-5 py-3 rounded-xl bg-[#EB1000]/10 text-[#EB1000] border border-[#EB1000]/30 hover:bg-[#EB1000]/20 text-xs font-black cursor-pointer flex items-center justify-center gap-2 shrink-0 transition">
-                                            <Upload className="h-4 w-4 text-[#EB1000]" /> Pick Image File
-                                            <input type="file" accept="image/*" className="hidden" onChange={handleFileUpload} />
+                                            <Upload className="h-4 w-4 text-[#EB1000]" /> {isUploadingDoc ? 'Uploading...' : 'Pick Image File'}
+                                            <input type="file" accept="image/*,application/pdf" disabled={isUploadingDoc} className="hidden" onChange={handleFileUpload} />
                                         </label>
                                     </div>
                                 </div>
 
                                 {/* Live Document Preview Thumbnail Card */}
-                                {formData.documentPreview && (
+                                {(docPreviewUrl || formData.documentPreview) && (
                                     <div className={`p-4 rounded-2xl border flex items-center gap-3 transition-all ${theme === 'light' ? 'bg-[#F8FAFC] border-[#E2E8F0]' : 'bg-[#181826] border-[#2A2A3E]'
                                         }`}>
                                         <img
-                                            src={formData.documentPreview}
+                                            src={docPreviewUrl || getMediaUrl(formData.documentPreview)}
                                             alt="Document Preview"
                                             className="h-16 w-24 object-cover rounded-xl border border-current/20 shadow-md"
                                             onError={(e) => {
@@ -1219,15 +1514,15 @@ export default function CreatorKycPage() {
                                                 Legal Full Name
                                             </span>
                                             <span className={`font-extrabold text-sm block mt-0.5 ${theme === 'light' ? 'text-[#0F172A]' : 'text-white'}`}>
-                                                {formData.fullName}
+                                                {formData.fullName} {isNameLocked ? '🔒 (Locked)' : ''}
                                             </span>
                                         </div>
                                         <div>
                                             <span className={`text-[10px] uppercase font-black tracking-wider block ${theme === 'light' ? 'text-[#64748B]' : 'text-[#A0A0B2]'}`}>
-                                                Date of Birth
+                                                Mobile & Category
                                             </span>
                                             <span className={`font-extrabold text-sm block mt-0.5 ${theme === 'light' ? 'text-[#0F172A]' : 'text-white'}`}>
-                                                {formData.dateOfBirth || 'N/A'}
+                                                {formData.mobileCountryCode} {formData.mobileNumber} {isMobileLocked ? '🔒' : ''} &bull; <span className="text-[#EB1000]">{formData.category || 'Creator'}</span>
                                             </span>
                                         </div>
                                         <div>
@@ -1246,6 +1541,21 @@ export default function CreatorKycPage() {
                                                 {formData.panNumber} ({formData.documentType})
                                             </span>
                                         </div>
+                                        {(formData.youtubeUrl || formData.instagramUrl || formData.linkedinUrl || formData.facebookUrl || formData.twitchUrl || formData.socialMediaUrl) && (
+                                            <div className="col-span-1 sm:col-span-2">
+                                                <span className={`text-[10px] uppercase font-black tracking-wider block ${theme === 'light' ? 'text-[#64748B]' : 'text-[#A0A0B2]'}`}>
+                                                    Social Media Profiles
+                                                </span>
+                                                <div className="flex flex-wrap gap-2 mt-1">
+                                                    {formData.youtubeUrl && <span className="px-2 py-0.5 rounded bg-red-500/10 text-red-500 font-bold text-[11px] border border-red-500/20">YouTube</span>}
+                                                    {formData.instagramUrl && <span className="px-2 py-0.5 rounded bg-pink-500/10 text-pink-500 font-bold text-[11px] border border-pink-500/20">Instagram</span>}
+                                                    {formData.linkedinUrl && <span className="px-2 py-0.5 rounded bg-blue-600/10 text-blue-500 font-bold text-[11px] border border-blue-500/20">LinkedIn</span>}
+                                                    {formData.facebookUrl && <span className="px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 font-bold text-[11px] border border-blue-400/20">Facebook</span>}
+                                                    {formData.twitchUrl && <span className="px-2 py-0.5 rounded bg-purple-500/10 text-purple-400 font-bold text-[11px] border border-purple-400/20">Twitch</span>}
+                                                    {formData.socialMediaUrl && <span className="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 font-bold text-[11px] border border-emerald-400/20">Portfolio</span>}
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
 
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

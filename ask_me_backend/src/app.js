@@ -67,8 +67,10 @@ const { getPublicTestimonials } = require('./controllers/creatorTestimonialContr
 app.get('/api/public/creator-testimonials', getPublicTestimonials);
 
 const contactRoutes = require('./routes/contactRoutes');
+const ticketRoutes = require('./routes/ticketRoutes');
 
 // API Routes
+app.use('/api/tickets', ticketRoutes);
 app.use('/api/contact', contactRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/auth/truecaller', truecallerRoutes);

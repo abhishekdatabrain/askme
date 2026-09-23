@@ -189,7 +189,7 @@ export default function KycApprovalQueue({ activeSubTab }) {
       {/* Header */}
       <div className="border-b border-[#1C1C26] pb-4">
         <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded-xl bg-[#00F5D4]/10 text-[#00F5D4] border border-[#00F5D4]/30">
+          <div className="p-2.5 rounded-xl bg-[#EB1000]/10 text-[#EB1000] border border-[#EB1000]/30">
             <ShieldCheck className="h-5 w-5" />
           </div>
           <div>
@@ -216,7 +216,7 @@ export default function KycApprovalQueue({ activeSubTab }) {
                 </div>
                 <div className="flex flex-wrap items-center gap-3 text-xs text-[#8B8B96] mt-1">
                   <span className="flex items-center gap-1 text-white font-medium">
-                    <FileText className="h-3.5 w-3.5 text-[#00F5D4]" />
+                    <FileText className="h-3.5 w-3.5 text-[#EB1000]" />
                     {item.docType} ({item.idNumber})
                   </span>
                   <span>•</span>
@@ -249,7 +249,7 @@ export default function KycApprovalQueue({ activeSubTab }) {
                   onClick={() => setSelectedDocModal(item)}
                   className="px-3 py-1.5 rounded-xl bg-[#1C1C26] text-white hover:bg-[#252533] text-xs font-bold flex items-center gap-1 transition"
                 >
-                  <Eye className="h-3.5 w-3.5 text-[#00F5D4]" />
+                  <Eye className="h-3.5 w-3.5 text-[#EB1000]" />
                   Details
                 </button>
                 {item.status === 'pending' && (
@@ -280,7 +280,7 @@ export default function KycApprovalQueue({ activeSubTab }) {
       {/* PAGINATION CONTROLS BAR */}
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-[#1C1C26] text-xs">
         <span className="text-[#8B8B96]">
-          Showing <strong className="text-white">{kycRequests.length}</strong> of <strong className="text-[#00F5D4]">{totalCount}</strong> KYC Submissions (Page {currentPage} of {totalPages})
+          Showing <strong className="text-white">{kycRequests.length}</strong> of <strong className="text-[#EB1000]">{totalCount}</strong> KYC Submissions (Page {currentPage} of {totalPages})
         </span>
         <div className="flex items-center gap-2">
           <button
@@ -291,7 +291,7 @@ export default function KycApprovalQueue({ activeSubTab }) {
           >
             ← Previous
           </button>
-          <span className="px-3 py-1.5 rounded-xl bg-[#0A0A0F] border border-[#1C1C26] font-bold text-[#00F5D4]">
+          <span className="px-3 py-1.5 rounded-xl bg-[#0A0A0F] border border-[#1C1C26] font-bold text-[#EB1000]">
             {currentPage} / {totalPages}
           </span>
           <button
@@ -358,7 +358,7 @@ export default function KycApprovalQueue({ activeSubTab }) {
           <div className="bg-[#13131A] border border-[#1C1C26] rounded-2xl w-full max-w-lg p-6 space-y-4 max-h-[85vh] overflow-y-auto my-auto animate-scale-up">
             <div className="flex items-center justify-between border-b border-[#1C1C26] pb-3">
               <h3 className="font-bold text-white text-base flex items-center gap-2">
-                <ShieldCheck className="h-5 w-5 text-[#00F5D4]" />
+                <ShieldCheck className="h-5 w-5 text-[#EB1000]" />
                 KYC Verification Document Details
               </h3>
               <button onClick={() => setSelectedDocModal(null)} className="text-[#8B8B96] hover:text-white p-1">
@@ -374,7 +374,7 @@ export default function KycApprovalQueue({ activeSubTab }) {
 
               <div className="p-3 rounded-xl bg-[#0A0A0F] border border-[#1C1C26] space-y-1">
                 <span className="text-[10px] text-[#8B8B96]">Submitted Document Type</span>
-                <p className="font-bold text-[#00F5D4]">{selectedDocModal.docType}</p>
+                <p className="font-bold text-[#EB1000]">{selectedDocModal.docType}</p>
                 <p className="text-white">ID Number: {selectedDocModal.idNumber}</p>
               </div>
 

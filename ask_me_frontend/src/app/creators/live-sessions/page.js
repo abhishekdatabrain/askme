@@ -117,18 +117,19 @@ export default function CreatorLiveSessionsPage() {
       return;
     }
 
-    const durationMs = (Number(activeSession.durationHours) || 2) * 3600 * 1000;
-    const endTime = activeSession.endsAt
-      ? new Date(activeSession.endsAt).getTime()
-      : new Date(activeSession.startedAt || activeSession.createdAt || Date.now()).getTime() + durationMs;
+    const startedTime = activeSession.startedAt
+      ? new Date(activeSession.startedAt).getTime()
+      : (activeSession.createdAt ? new Date(activeSession.createdAt).getTime() : Date.now());
+    const qrEndTime = activeSession.qrExpiresAt
+      ? new Date(activeSession.qrExpiresAt).getTime()
+      : startedTime + 3 * 3600 * 1000;
 
     const updateTimer = () => {
       const now = Date.now();
-      const diff = endTime - now;
+      const diff = qrEndTime - now;
 
       if (diff <= 0) {
-        setTimeRemaining('00h 00m 00s (Expired)');
-        handleEndSession();
+        setTimeRemaining('QR Expired (Stream Active)');
       } else {
         const hours = Math.floor(diff / (1000 * 60 * 60));
         const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
@@ -270,8 +271,11 @@ export default function CreatorLiveSessionsPage() {
                         ● CURRENTLY BROADCASTING LIVE
                       </span>
                       {timeRemaining && (
-                        <span className="px-2.5 py-0.5 rounded-full bg-[#FFD60A]/10 text-[#FFD60A] text-[10px] font-bold flex items-center gap-1">
-                          <Clock className="h-3 w-3 animate-spin" /> Timer: {timeRemaining}
+                        <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold flex items-center gap-1 border ${timeRemaining.includes('Expired')
+                          ? 'bg-[#FF9500]/10 text-[#FF9500] border-[#FF9500]/40'
+                          : 'bg-[#FFD60A]/10 text-[#FFD60A] border-[#FFD60A]/30'
+                          }`}>
+                          <Clock className="h-3 w-3" /> QR Expiry: {timeRemaining}
                         </span>
                       )}
                     </div>

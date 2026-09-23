@@ -179,8 +179,8 @@ export default function AdminNavbar({ activeView, setActiveView, onOpenAuthModal
 
   return (
     <header className={`sticky top-0 z-40 w-full border-b backdrop-blur-md px-4 lg:px-8 py-3 transition-colors ${theme === 'light'
-        ? 'bg-white/90 border-[#E9ECEF] text-[#212529]'
-        : 'bg-[#0A0A0F]/90 border-[#1C1C26] text-[#F5F5F7]'
+      ? 'bg-white/90 border-[#E9ECEF] text-[#212529]'
+      : 'bg-[#0A0A0F]/90 border-[#1C1C26] text-[#F5F5F7]'
       }`}>
       <div className="flex items-center justify-between gap-4">
         {/* Brand Logo & Signal Status */}
@@ -190,26 +190,16 @@ export default function AdminNavbar({ activeView, setActiveView, onOpenAuthModal
             <div className="flex flex-col">
               <div className="flex items-center gap-1.5">
                 <span className={`font-heading font-bold text-lg tracking-tight ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'}`}>AskMe</span>
-                <span className="px-1.5 py-0.2 text-[10px] font-extrabold tracking-widest uppercase rounded bg-brand-gradient text-white shadow-sm">
-                  PRO
-                </span>
+
               </div>
               <span className={`text-[10px] font-medium tracking-wide ${theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'}`}>
-                Super Admin Control Room
+                Super Admin
               </span>
             </div>
           </div>
 
           {/* System Live Signal Telemetry Badge */}
-          <div className={`hidden md:flex items-center gap-2 px-3 py-1 rounded-full border text-xs ${theme === 'light' ? 'bg-[#F1F3F5] border-[#E9ECEF]' : 'bg-[#13131A] border-[#1C1C26]'
-            }`}>
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#00E676] opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-[#00E676]"></span>
-            </span>
-            <span className={theme === 'light' ? 'text-[#6C757D] font-medium' : 'text-[#8B8B96] font-medium'}>LIVE SIGNAL:</span>
-            <span className="text-[#00E676] font-bold tracking-wide">{systemStatus}</span>
-          </div>
+
         </div>
 
         {/* Command Palette Search Container */}
@@ -226,13 +216,13 @@ export default function AdminNavbar({ activeView, setActiveView, onOpenAuthModal
               }}
               onFocus={() => setIsOpenSearchPopup(true)}
               placeholder="Search creators, live streams, askMails, or transactions... (⌘K)"
-              className={`w-full rounded-full border pl-9 pr-9 py-2 text-xs focus:border-[#00F5D4] focus:outline-none transition-all ${theme === 'light'
-                  ? 'bg-[#F8F9FA] border-[#E9ECEF] text-[#212529] placeholder-[#6C757D]'
-                  : 'bg-[#13131A] border-[#1C1C26] text-[#F5F5F7] placeholder-[#8B8B96]'
+              className={`w-full rounded-full border pl-9 pr-9 py-2 text-xs focus:border-[#EB1000] focus:outline-none transition-all ${theme === 'light'
+                ? 'bg-[#F8F9FA] border-[#E9ECEF] text-[#212529] placeholder-[#6C757D]'
+                : 'bg-[#13131A] border-[#1C1C26] text-[#F5F5F7] placeholder-[#8B8B96]'
                 }`}
             />
             {isSearching ? (
-              <Loader2 className="absolute right-3 top-2.5 h-4 w-4 animate-spin text-[#00F5D4]" />
+              <Loader2 className="absolute right-3 top-2.5 h-4 w-4 animate-spin text-[#EB1000]" />
             ) : searchQuery ? (
               <button
                 onClick={() => {
@@ -249,21 +239,21 @@ export default function AdminNavbar({ activeView, setActiveView, onOpenAuthModal
           {/* Search Dropdown Modal */}
           {isOpenSearchPopup && searchQuery.trim().length > 0 && (
             <div className={`absolute left-0 right-0 top-full mt-2 rounded-2xl border shadow-2xl z-50 overflow-hidden animate-fade-in ${theme === 'light'
-                ? 'bg-white border-[#E9ECEF] text-[#212529]'
-                : 'bg-[#13131A] border-[#1C1C26] text-white'
+              ? 'bg-white border-[#E9ECEF] text-[#212529]'
+              : 'bg-[#13131A] border-[#1C1C26] text-white'
               }`}>
               {/* Dropdown Header */}
               <div className={`p-3 border-b flex items-center justify-between text-xs ${theme === 'light' ? 'border-[#E9ECEF] bg-[#F8F9FA]' : 'border-[#1C1C26] bg-[#1A1A26]'
                 }`}>
                 <div className="flex items-center gap-2 font-bold">
-                  <Search className="h-3.5 w-3.5 text-[#00F5D4]" />
+                  <Search className="h-3.5 w-3.5 text-[#EB1000]" />
                   <span>Search Results</span>
                   {isSearching ? (
                     <span className="text-[10px] text-[#8B8B96] font-normal flex items-center gap-1">
-                      <Loader2 className="h-3 w-3 animate-spin text-[#00F5D4]" /> Searching...
+                      <Loader2 className="h-3 w-3 animate-spin text-[#EB1000]" /> Searching...
                     </span>
                   ) : (
-                    <span className="px-1.5 py-0.5 text-[10px] rounded-md bg-[#00F5D4]/10 text-[#00F5D4] border border-[#00F5D4]/20">
+                    <span className="px-1.5 py-0.5 text-[10px] rounded-md bg-[#EB1000]/10 text-[#EB1000] border border-[#EB1000]/20">
                       {totalResultsCount} found
                     </span>
                   )}
@@ -284,7 +274,7 @@ export default function AdminNavbar({ activeView, setActiveView, onOpenAuthModal
                 {/* 1. CREATORS */}
                 {searchResults?.creators?.length > 0 && (
                   <div className="p-2">
-                    <div className="px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-wider text-[#00F5D4] flex items-center gap-1.5">
+                    <div className="px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-wider text-[#EB1000] flex items-center gap-1.5">
                       <User className="h-3 w-3" /> Creators ({searchResults.creators.length})
                     </div>
                     {searchResults.creators.map((c) => (
@@ -295,11 +285,11 @@ export default function AdminNavbar({ activeView, setActiveView, onOpenAuthModal
                           }`}
                       >
                         <div className="flex items-center gap-2.5 min-w-0">
-                          <div className="h-7 w-7 rounded-full bg-gradient-to-tr from-[#7B2FFF] to-[#00F5D4] p-0.5 shrink-0">
+                          <div className="h-7 w-7 rounded-full bg-gradient-to-tr from-[#EB1000] to-[#D00E00] p-0.5 shrink-0">
                             {c.profile_image ? (
                               <img src={getMediaUrl(c.profile_image)} alt="" className="h-full w-full rounded-full object-cover" />
                             ) : (
-                              <div className="h-full w-full rounded-full bg-[#0A0A0F] flex items-center justify-center text-[10px] font-bold text-[#00F5D4]">
+                              <div className="h-full w-full rounded-full bg-[#0A0A0F] flex items-center justify-center text-[10px] font-bold text-[#EB1000]">
                                 {c.full_name?.[0] || 'C'}
                               </div>
                             )}
@@ -313,8 +303,8 @@ export default function AdminNavbar({ activeView, setActiveView, onOpenAuthModal
                           </div>
                         </div>
                         <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full capitalize shrink-0 ${c.status === 'active' ? 'bg-[#00E676]/10 text-[#00E676] border border-[#00E676]/20' :
-                            c.status === 'blocked' ? 'bg-[#FF3D71]/10 text-[#FF3D71] border border-[#FF3D71]/20' :
-                              'bg-[#FFD60A]/10 text-[#FFD60A] border border-[#FFD60A]/20'
+                          c.status === 'blocked' ? 'bg-[#FF3D71]/10 text-[#FF3D71] border border-[#FF3D71]/20' :
+                            'bg-[#FFD60A]/10 text-[#FFD60A] border border-[#FFD60A]/20'
                           }`}>
                           {c.status}
                         </span>
@@ -346,7 +336,7 @@ export default function AdminNavbar({ activeView, setActiveView, onOpenAuthModal
                           </div>
                         </div>
                         <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full capitalize shrink-0 ${s.status === 'active' ? 'bg-[#00E676]/10 text-[#00E676] border border-[#00E676]/20' :
-                            'bg-[#1C1C26] text-[#8B8B96] border border-[#2C2C3E]'
+                          'bg-[#1C1C26] text-[#8B8B96] border border-[#2C2C3E]'
                           }`}>
                           {s.status}
                         </span>
@@ -412,8 +402,8 @@ export default function AdminNavbar({ activeView, setActiveView, onOpenAuthModal
                           </div>
                         </div>
                         <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full capitalize shrink-0 ${k.status === 'approved' ? 'bg-[#00E676]/10 text-[#00E676] border border-[#00E676]/20' :
-                            k.status === 'rejected' ? 'bg-[#FF3D71]/10 text-[#FF3D71] border border-[#FF3D71]/20' :
-                              'bg-[#FFD60A]/10 text-[#FFD60A] border border-[#FFD60A]/20'
+                          k.status === 'rejected' ? 'bg-[#FF3D71]/10 text-[#FF3D71] border border-[#FF3D71]/20' :
+                            'bg-[#FFD60A]/10 text-[#FFD60A] border border-[#FFD60A]/20'
                           }`}>
                           {k.status}
                         </span>
@@ -442,8 +432,8 @@ export default function AdminNavbar({ activeView, setActiveView, onOpenAuthModal
             onClick={onToggleTheme}
             title={theme === 'dark' ? 'Switch to Light Theme' : 'Switch to Dark Theme'}
             className={`p-2.5 rounded-xl border font-bold text-xs transition-all flex items-center gap-1.5 ${theme === 'light'
-                ? 'bg-[#F1F3F5] text-[#212529] border-[#E9ECEF] hover:bg-[#E9ECEF]'
-                : 'bg-[#13131A] text-[#FFD60A] border-[#1C1C26] hover:border-[#FFD60A]/40'
+              ? 'bg-[#F1F3F5] text-[#212529] border-[#E9ECEF] hover:bg-[#E9ECEF]'
+              : 'bg-[#13131A] text-[#FFD60A] border-[#1C1C26] hover:border-[#FFD60A]/40'
               }`}
           >
             {theme === 'dark' ? (
@@ -478,10 +468,10 @@ export default function AdminNavbar({ activeView, setActiveView, onOpenAuthModal
               onClick={() => setIsOpenNotifPopup(!isOpenNotifPopup)}
               title="Notifications"
               className={`relative p-2.5 rounded-xl border transition-all flex items-center justify-center ${isOpenNotifPopup
-                  ? 'border-[#00F5D4] text-[#00F5D4] bg-[#00F5D4]/10'
-                  : theme === 'light'
-                    ? 'bg-[#F1F3F5] border-[#E9ECEF] text-[#495057] hover:text-[#00F5D4]'
-                    : 'bg-[#13131A] border-[#1C1C26] text-[#8B8B96] hover:text-[#00F5D4] hover:border-[#00F5D4]/40'
+                ? 'border-[#00F5D4] text-[#00F5D4] bg-[#00F5D4]/10'
+                : theme === 'light'
+                  ? 'bg-[#F1F3F5] border-[#E9ECEF] text-[#495057] hover:text-[#00F5D4]'
+                  : 'bg-[#13131A] border-[#1C1C26] text-[#8B8B96] hover:text-[#00F5D4] hover:border-[#00F5D4]/40'
                 }`}
             >
               <Bell className="h-4 w-4" />
@@ -495,8 +485,8 @@ export default function AdminNavbar({ activeView, setActiveView, onOpenAuthModal
             {/* Notification Dropdown Popup Modal */}
             {isOpenNotifPopup && (
               <div className={`absolute right-0 top-full mt-2 w-80 sm:w-96 rounded-2xl border shadow-2xl z-50 overflow-hidden animate-fade-in ${theme === 'light'
-                  ? 'bg-white border-[#E9ECEF] text-[#212529]'
-                  : 'bg-[#13131A] border-[#1C1C26] text-white'
+                ? 'bg-white border-[#E9ECEF] text-[#212529]'
+                : 'bg-[#13131A] border-[#1C1C26] text-white'
                 }`}>
                 {/* Popup Header */}
                 <div className={`p-4 border-b flex items-center justify-between ${theme === 'light' ? 'border-[#E9ECEF] bg-[#F8F9FA]' : 'border-[#1C1C26] bg-[#1A1A26]'
@@ -539,18 +529,18 @@ export default function AdminNavbar({ activeView, setActiveView, onOpenAuthModal
                           key={notif.id}
                           onClick={() => isUnread && handleMarkSingleRead(notif.id)}
                           className={`p-3.5 transition-colors flex items-start gap-3 cursor-pointer ${isUnread
-                              ? theme === 'light' ? 'bg-[#F1F3F5]/60' : 'bg-[#1A1A26]/80'
-                              : 'hover:bg-[#1A1A26]/40'
+                            ? theme === 'light' ? 'bg-[#F1F3F5]/60' : 'bg-[#1A1A26]/80'
+                            : 'hover:bg-[#1A1A26]/40'
                             }`}
                         >
                           {/* Icon Container */}
                           <div className={`p-2 rounded-xl shrink-0 mt-0.5 ${isCreatorReg
-                              ? 'bg-gradient-to-tr from-[#7B2FFF]/20 to-[#00F5D4]/20 border border-[#00F5D4]/40 text-[#00F5D4]'
-                              : notif.type === 'kyc'
-                                ? 'bg-[#FFD60A]/10 border border-[#FFD60A]/30 text-[#FFD60A]'
-                                : notif.type === 'payout'
-                                  ? 'bg-[#00E676]/10 border border-[#00E676]/30 text-[#00E676]'
-                                  : 'bg-[#1C1C26] border border-[#2C2C3E] text-[#8B8B96]'
+                            ? 'bg-gradient-to-tr from-[#7B2FFF]/20 to-[#00F5D4]/20 border border-[#00F5D4]/40 text-[#00F5D4]'
+                            : notif.type === 'kyc'
+                              ? 'bg-[#FFD60A]/10 border border-[#FFD60A]/30 text-[#FFD60A]'
+                              : notif.type === 'payout'
+                                ? 'bg-[#00E676]/10 border border-[#00E676]/30 text-[#00E676]'
+                                : 'bg-[#1C1C26] border border-[#2C2C3E] text-[#8B8B96]'
                             }`}>
                             {isCreatorReg ? (
                               <Sparkles className="h-4 w-4" />
@@ -616,7 +606,7 @@ export default function AdminNavbar({ activeView, setActiveView, onOpenAuthModal
           </div>
 
           {/* Admin Profile */}
-          <div className="flex items-center gap-2 pl-2 border-l border-[#1C1C26]">
+          {/* <div className="flex items-center gap-2 pl-2 border-l border-[#1C1C26]">
             <div className="h-8 w-8 rounded-full bg-gradient-to-tr from-[#7B2FFF] to-[#00F5D4] p-0.5">
               <div className="h-full w-full rounded-full bg-[#0A0A0F] flex items-center justify-center text-xs font-bold text-[#00F5D4]">
                 SA
@@ -626,7 +616,7 @@ export default function AdminNavbar({ activeView, setActiveView, onOpenAuthModal
               <span className="text-xs font-bold text-[#F5F5F7]">Super Admin</span>
             </div>
             <ChevronDown className="h-3.5 w-3.5 text-[#8B8B96]" />
-          </div>
+          </div> */}
         </div>
       </div>
     </header>

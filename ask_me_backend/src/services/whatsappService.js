@@ -55,76 +55,38 @@ const sendWhatsAppTemplate = async ({ to, templateName, variables = [], buttonsP
   try {
     if (provider === 'fonada' || process.env.FONADA_USER_ID) {
       const urlStr = process.env.FONADA_API_URL;
-      const userId = process.env.FONADA_USER_ID;
-      const password = process.env.FONADA_PASSWORD;
-      const wabaNumber = process.env.FONADA_WABA_NUMBER;
-      // const defaultTemplate = process.env.FONADA_TEMPLATE_NAME || 'askme_login_otp';
+      const userId = (process.env.FONADA_USER_ID || '').trim();
+      const password = (process.env.FONADA_PASSWORD || '').trim();
+      const wabaNumber = (process.env.FONADA_WABA_NUMBER || '').trim();
       const targetTemplate = templateName;
 
       const sendFonadaRequest = (targetTemplate) => {
         const varArr = Array.isArray(variables) ? variables : (variables ? [variables] : []);
-        const firstVar = varArr[0] || '';
-        console.log(varArr, firstVar, "firstVar")
+        const otpCode = String(varArr[0] || '').trim();
 
-        const defaultMsgText = (targetTemplate && varArr.length > 0) ? String(varArr[0]) : (text || 'Askme Alert');
+        // Fonada template me msg ko exact template format me OTP replace karke chahiye hota hai:
+        const templateMessageText = `${otpCode} is your verification code. For your security, do not share this code.`;
 
-        // const fields = {
-        //   userid: userId,
-        //   password: password,
-        //   wabaNumber: wabaNumber,
-        //   output: 'json',
-        //   mobile: cleanPhone,
-        //   msgType: targetTemplate ? 'TEMPLATE' : 'TEXT',
-        //   templateName: targetTemplate,
-        //   msg: defaultMsgText,
-        // };
         const fields = {
           userid: userId,
           password: password,
           wabaNumber: wabaNumber,
           output: 'json',
-          mobile: cleanPhone,
+          mobile: String(cleanPhone).trim(),
           sendMethod: 'quick',
           msgType: targetTemplate ? 'TEMPLATE' : 'TEXT',
           templateName: targetTemplate,
-          msg: defaultMsgText,
-          variables: String(varArr[0] || '').trim(),
+          msg: targetTemplate ? templateMessageText : (text || otpCode),
+          variables: otpCode,
+          bodyVariables: JSON.stringify([otpCode]),
+          buttonVariables: JSON.stringify([otpCode])
         };
-
-        if (varArr.length > 0) {
-          fields.variables = String(varArr[0]).trim();
-          fields.bodyVariables = JSON.stringify(varArr);
-        }
-
-        if (buttonsPayload) {
-          fields.buttonsPayload =
-            typeof buttonsPayload === 'string'
-              ? buttonsPayload
-              : JSON.stringify(buttonsPayload);
-        }
-        console.log("Fonada Fields:", fields);
-
-        // if (varArr.length > 0) {
-        //   console.log(varArr, "varArr")
-        //   fields.variables = varArr.join(',');
-        //   fields.bodyVariables = JSON.stringify(varArr);
-        //   fields.buttonsPayload = JSON.stringify(varArr);
-        // }
-        if (varArr.length > 0) {
-          fields.variables = String(varArr[0]).trim();
-          // fields.variables = varArr.join(',');
-          // fields.bodyVariables = JSON.stringify(varArr);
-        }
-        if (buttonsPayload) {
-          fields.buttonsPayload = typeof buttonsPayload === 'string' ? buttonsPayload : JSON.stringify(buttonsPayload);
-        }
-        console.log("Fonada Fields:", fields);
 
         const boundary = '--------------------------' + Date.now().toString(16);
         let postBody = '';
 
         for (const [key, val] of Object.entries(fields)) {
-          if (val === undefined || val === null) continue;
+          if (val === undefined || val === null || val === '') continue;
           postBody += `--${boundary}\r\n`;
           postBody += `Content-Disposition: form-data; name="${key}"\r\n\r\n`;
           postBody += `${val}\r\n`;
@@ -138,7 +100,7 @@ const sendWhatsAppTemplate = async ({ to, templateName, variables = [], buttonsP
           const req = https.request(
             {
               hostname: parsedUrl.hostname,
-              port: parsedUrl.port || 443,
+              port: parsedUrl.port,
               path: parsedUrl.pathname + parsedUrl.search,
               method: 'POST',
               rejectUnauthorized: false,
@@ -154,7 +116,6 @@ const sendWhatsAppTemplate = async ({ to, templateName, variables = [], buttonsP
               res.on('end', () => {
                 let parsed;
                 try {
-                  console.log();
                   parsed = JSON.parse(body);
                 } catch (e) {
                   parsed = { body };
@@ -175,55 +136,13 @@ const sendWhatsAppTemplate = async ({ to, templateName, variables = [], buttonsP
             resolve({ success: false, error: err.message });
           });
 
+          console.log('Sending Fonada Payload:\n', postBody);
           req.write(postBody);
-          console.log("========== FONADA ==========");
-          console.log("template:", targetTemplate);
-          console.log("variables:", JSON.stringify(fields.variables));
-          console.log("variables length:", String(fields.variables).length);
-          console.log("bodyVariables:", fields.bodyVariables);
-          console.log("============================");
           req.end();
         });
       };
 
       return await sendFonadaRequest(targetTemplate);
-    } else if (provider === 'meta' && process.env.META_WHATSAPP_TOKEN && process.env.META_WHATSAPP_PHONE_ID) {
-      const url = `https://graph.facebook.com/v18.0/${process.env.META_WHATSAPP_PHONE_ID}/messages`;
-
-      const payload = templateName
-        ? {
-          messaging_product: 'whatsapp',
-          to: cleanPhone,
-          type: 'template',
-          template: {
-            name: templateName,
-            language: { code: 'en' },
-          },
-        }
-        : {
-          messaging_product: 'whatsapp',
-          recipient_type: 'individual',
-          to: cleanPhone,
-          type: 'text',
-          text: { preview_url: true, body: text },
-        };
-
-      const res = await fetch(url, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${process.env.META_WHATSAPP_TOKEN}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload),
-      });
-
-      const data = await res.json();
-      if (!res.ok) {
-        console.error('[WhatsApp Service] Meta Cloud API error:', data);
-        return { success: false, provider: 'meta', error: data };
-      }
-
-      return { success: true, provider: 'meta', messageId: data.messages?.[0]?.id };
     }
 
     return { success: false, error: 'No active WhatsApp provider configured' };
@@ -245,16 +164,23 @@ const sendWhatsAppMessage = sendWhatsAppTemplate;
 const sendLoginOtpWhatsApp = async ({ phone, otp, expiresMinutes = 5 }) => {
   if (!phone || !otp) return null;
 
-  console.log("WhatsApp OTP:", otp, phone);
+  // Phone number ko 91 prefix ke saath clean ensure karein
+  const cleanPhone = String(phone).replace(/\D/g, '');
+  const formattedPhone = cleanPhone.length === 10 ? `91${cleanPhone}` : cleanPhone;
+  const otpStr = String(otp).trim();
 
-  const text = `Your Askme verification code is ${otp}. Use this code to log in to your Askme account.`;
+  console.log("WhatsApp OTP:", otpStr, formattedPhone);
+
+  const text = `Your Askme verification code is ${otpStr}. Use this code to log in to your Askme account.`;
 
   return await sendWhatsAppMessage({
-    to: phone,
+    to: formattedPhone,
+    mobile: formattedPhone, // handler compatibility ke liye
     templateName: "otptemp",
-    variables: [String(otp)]
+    variables: [otpStr],
+    buttonsPayload: [otpStr], // copy-code button ke liye
+    text,
   });
-
 };
 
 /**

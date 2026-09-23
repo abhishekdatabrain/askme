@@ -187,16 +187,24 @@ const getOverlayAlertsService = async (creatorId, queryParams = {}) => {
   }
 
   let alerts = [];
-  let filterCounts = { all: 0, priority: 0, answered: 0, rejected: 0 };
+  let filterCounts = { all: 0, superchat: 0, members: 0, priority: 0, answered: 0, rejected: 0 };
   let latestReadAlert = null;
+
+  // If creator is NOT currently live in an active broadcast session, return empty live queue
+  if (!activeSession) {
+    return {
+      alerts: [],
+      filterCounts: { all: 0, superchat: 0, members: 0, priority: 0, answered: 0, rejected: 0 },
+      latestReadAlert: null,
+      activeSession: null,
+    };
+  }
 
   const donationWhere = {
     creator_id: creatorId,
+    session_id: activeSession.id,
     payment_status: "success",
   };
-  if (activeSession) {
-    donationWhere.session_id = activeSession.id;
-  }
 
   const donations = await Donation.findAll({
     where: donationWhere,

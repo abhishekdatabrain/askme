@@ -136,7 +136,7 @@ export default function ViewerManagement() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#1C1C26] pb-4">
         <div>
           <h2 className="text-lg font-bold text-white flex items-center gap-2">
-            <User className="h-5 w-5 text-[#00F5D4]" />
+            <User className="h-5 w-5 text-[#EB1000]" />
             Viewer Management
           </h2>
           <p className="text-xs text-[#8B8B96] mt-0.5">
@@ -169,7 +169,7 @@ export default function ViewerManagement() {
           placeholder="Search viewer by name or email address..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full pl-10 pr-4 py-2.5 bg-[#0A0A0F] border border-[#1C1C26] rounded-xl text-xs text-white placeholder-[#8B8B96] focus:outline-none focus:border-[#00F5D4] transition"
+          className="w-full pl-10 pr-4 py-2.5 bg-[#0A0A0F] border border-[#1C1C26] rounded-xl text-xs text-white placeholder-[#8B8B96] focus:outline-none focus:border-[#EB1000] transition"
         />
       </div>
 
@@ -241,7 +241,7 @@ export default function ViewerManagement() {
                       <button
                         onClick={() => handleOpenDetailModal(v.id)}
                         title="View Full Viewer Details"
-                        className="p-1.5 rounded-lg bg-[#1C1C26] text-[#8B8B96] hover:text-[#00F5D4] hover:bg-[#00F5D4]/10 transition flex items-center gap-1 text-[11px] px-2.5 font-bold"
+                        className="p-1.5 rounded-lg bg-[#1C1C26] text-[#8B8B96] hover:text-[#EB1000] hover:bg-[#EB1000]/10 transition flex items-center gap-1 text-[11px] px-2.5 font-bold"
                       >
                         <Eye className="h-3.5 w-3.5" />
                         <span>View Details</span>
@@ -271,7 +271,7 @@ export default function ViewerManagement() {
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-[#1C1C26] text-xs">
         <span className="text-[#8B8B96]">
           Showing <strong className="text-white">{viewers.length}</strong> of{' '}
-          <strong className="text-[#00F5D4]">{totalCount}</strong> Viewers (Page {currentPage} of {totalPages})
+          <strong className="text-[#EB1000]">{totalCount}</strong> Viewers (Page {currentPage} of {totalPages})
         </span>
         <div className="flex items-center gap-2">
           <button
@@ -282,7 +282,7 @@ export default function ViewerManagement() {
           >
             ← Previous
           </button>
-          <span className="px-3 py-1.5 rounded-xl bg-[#0A0A0F] border border-[#1C1C26] font-bold text-[#00F5D4]">
+          <span className="px-3 py-1.5 rounded-xl bg-[#0A0A0F] border border-[#1C1C26] font-bold text-[#EB1000]">
             {currentPage} / {totalPages}
           </span>
           <button
@@ -344,7 +344,7 @@ export default function ViewerManagement() {
 
                   <div className="p-3.5 rounded-xl bg-[#0A0A0F] border border-[#1C1C26] space-y-1">
                     <span className="text-[10px] text-[#8B8B96] flex items-center gap-1 font-bold">
-                      <MessageSquare className="h-3.5 w-3.5 text-[#00F5D4]" /> TOTAL QUESTIONS ASKED
+                      <MessageSquare className="h-3.5 w-3.5 text-[#EB1000]" /> TOTAL QUESTIONS ASKED
                     </span>
                     <p className="text-lg font-extrabold text-white">
                       {viewerDetail.totalQuestions || 0} Questions
@@ -369,7 +369,7 @@ export default function ViewerManagement() {
                   </div>
                   <div>
                     <span className="text-[10px] text-[#8B8B96] block">User Role</span>
-                    <span className="font-semibold text-[#00F5D4] capitalize">
+                    <span className="font-semibold text-[#EB1000] capitalize">
                       {viewerDetail.role === 'user' || viewerDetail.role === 'viewer' ? 'Viewer' : viewerDetail.role}
                     </span>
                   </div>
@@ -380,7 +380,7 @@ export default function ViewerManagement() {
                   <button
                     onClick={() => setActiveModalTab('history')}
                     className={`pb-2.5 font-bold text-xs border-b-2 transition ${activeModalTab === 'history'
-                        ? 'border-[#00F5D4] text-[#00F5D4]'
+                        ? 'border-[#EB1000] text-[#EB1000]'
                         : 'border-transparent text-[#8B8B96] hover:text-white'
                       }`}
                   >
@@ -389,7 +389,7 @@ export default function ViewerManagement() {
                   <button
                     onClick={() => setActiveModalTab('vip')}
                     className={`pb-2.5 font-bold text-xs border-b-2 transition ${activeModalTab === 'vip'
-                        ? 'border-[#00F5D4] text-[#00F5D4]'
+                        ? 'border-[#EB1000] text-[#EB1000]'
                         : 'border-transparent text-[#8B8B96] hover:text-white'
                       }`}
                   >

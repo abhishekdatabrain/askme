@@ -316,66 +316,66 @@ export default function CreatorWalletPage() {
           <div className={`p-6 rounded-3xl border space-y-5 shadow-xl transition-colors duration-200 ${theme === 'light' ? 'bg-white border-[#E9ECEF]' : 'bg-[#13131A] border-[#1C1C26]'
             }`}>
 
-            <div className={`flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 border-b pb-4 ${theme === 'light' ? 'border-[#E9ECEF]' : 'border-[#1C1C26]'
+            <div className={`flex flex-col xl:flex-row items-stretch xl:items-center justify-between gap-3 border-b pb-4 ${theme === 'light' ? 'border-[#E9ECEF]' : 'border-[#1C1C26]'
               }`}>
               {/* Tab Navigation Buttons */}
-              <div className="flex items-center gap-2 overflow-x-auto max-w-full pb-1 sm:pb-0 shrink-0">
+              <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0 shrink-0">
                 <button
                   type="button"
                   onClick={() => setActiveTab('ledger')}
-                  className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap cursor-pointer shrink-0 ${activeTab === 'ledger'
-                    ? 'bg-gradient-to-r from-[#EB1000] to-[#CC0E00] text-white shadow-md shadow-[#EB1000]/30 font-black'
-                    : theme === 'light' ? 'bg-[#F8FAFC] text-[#6C757D] hover:text-[#1A1D20] border border-[#E2E8F0]' : 'bg-[#0A0A0F] text-[#8B8B96] hover:text-white border border-[#1C1C26]'
+                  className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap cursor-pointer shrink-0 ${activeTab === 'ledger'
+                      ? 'bg-gradient-to-r from-[#EB1000] to-[#CC0E00] text-white shadow-md shadow-[#EB1000]/30 font-black'
+                      : theme === 'light' ? 'bg-[#F8FAFC] text-[#6C757D] hover:text-[#1A1D20] border border-[#E2E8F0]' : 'bg-[#0A0A0F] text-[#8B8B96] hover:text-white border border-[#1C1C26]'
                     }`}
                 >
                   <ArrowDownLeft className="h-4 w-4 shrink-0" />
-                  <span className="whitespace-nowrap">Viewer Payments & Ledger ({transactions.length})</span>
+                  <span className="whitespace-nowrap">Viewer Payments ({transactions.length})</span>
                 </button>
 
                 <button
                   type="button"
                   onClick={() => setActiveTab('settlements')}
-                  className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap cursor-pointer shrink-0 ${activeTab === 'settlements'
-                    ? 'bg-gradient-to-r from-[#EB1000] to-[#CC0E00] text-white shadow-md shadow-[#EB1000]/30 font-black'
-                    : theme === 'light' ? 'bg-[#F8FAFC] text-[#6C757D] hover:text-[#1A1D20] border border-[#E2E8F0]' : 'bg-[#0A0A0F] text-[#8B8B96] hover:text-white border border-[#1C1C26]'
+                  className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap cursor-pointer shrink-0 ${activeTab === 'settlements'
+                      ? 'bg-gradient-to-r from-[#EB1000] to-[#CC0E00] text-white shadow-md shadow-[#EB1000]/30 font-black'
+                      : theme === 'light' ? 'bg-[#F8FAFC] text-[#6C757D] hover:text-[#1A1D20] border border-[#E2E8F0]' : 'bg-[#0A0A0F] text-[#8B8B96] hover:text-white border border-[#1C1C26]'
                     }`}
                 >
                   <Calendar className="h-4 w-4 shrink-0" />
-                  <span className="whitespace-nowrap">Monthly Settlements History ({settlements.length})</span>
+                  <span className="whitespace-nowrap">Monthly Settlements ({settlements.length})</span>
                 </button>
               </div>
 
-              {/* Controls: Search, Filters & Download CSV */}
-              <div className="flex flex-wrap items-center gap-2.5 w-full lg:w-auto justify-start lg:justify-end">
+              {/* Right Side Controls: Search, Filters & Download CSV in ONE SINGLE ROW */}
+              <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0 shrink-0 justify-start xl:justify-end">
                 {activeTab === 'ledger' && (
                   <>
-                    <div className="relative flex-1 min-w-[160px] sm:w-48">
-                      <Search className={`absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 ${theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'
+                    <div className="relative w-36 sm:w-44 shrink-0">
+                      <Search className={`absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 ${theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'
                         }`} />
                       <input
                         type="text"
                         placeholder="Search supporter..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className={`w-full pl-9 pr-3 py-2 rounded-xl border text-xs focus:outline-none focus:border-[#EB1000] ${theme === 'light'
-                          ? 'bg-[#F8F9FA] border-[#DEE2E6] text-[#1A1D20] placeholder-[#A0A0A0]'
-                          : 'bg-[#0A0A0F] border-[#1C1C26] text-white placeholder-[#8B8B96]'
+                        className={`w-full pl-8 pr-2.5 py-1.5 rounded-xl border text-xs focus:outline-none focus:border-[#EB1000] ${theme === 'light'
+                            ? 'bg-[#F8F9FA] border-[#DEE2E6] text-[#1A1D20] placeholder-[#A0A0A0]'
+                            : 'bg-[#0A0A0F] border-[#1C1C26] text-white placeholder-[#8B8B96]'
                           }`}
                       />
                     </div>
 
-                    <div className={`flex items-center gap-1 p-1 rounded-xl border shrink-0 ${theme === 'light' ? 'bg-[#F8F9FA] border-[#E9ECEF]' : 'bg-[#0A0A0F] border-[#1C1C26]'
+                    <div className={`flex items-center gap-0.5 p-1 rounded-xl border shrink-0 ${theme === 'light' ? 'bg-[#F8F9FA] border-[#E9ECEF]' : 'bg-[#0A0A0F] border-[#1C1C26]'
                       }`}>
                       {['All', 'Successful', 'Pending', 'Failed'].map((st) => (
                         <button
                           key={st}
                           onClick={() => setFilterStatus(st)}
-                          className={`px-3 py-1.5 rounded-lg text-[11px] font-bold transition cursor-pointer whitespace-nowrap ${filterStatus === st
-                            ? 'bg-[#EB1000] text-white shadow-sm'
-                            : theme === 'light' ? 'text-[#6C757D] hover:text-[#1A1D20]' : 'text-[#8B8B96] hover:text-white'
+                          className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition cursor-pointer whitespace-nowrap ${filterStatus === st
+                              ? 'bg-[#EB1000] text-white shadow-sm font-extrabold'
+                              : theme === 'light' ? 'text-[#6C757D] hover:text-[#1A1D20]' : 'text-[#8B8B96] hover:text-white'
                             }`}
                         >
-                          {st}
+                          {st === 'Successful' ? 'Success' : st}
                         </button>
                       ))}
                     </div>
@@ -385,9 +385,9 @@ export default function CreatorWalletPage() {
                 <button
                   onClick={handleDownloadCSV}
                   title={activeTab === 'ledger' ? 'Download Ledger CSV' : 'Download Monthly Settlements CSV'}
-                  className="px-4 py-2 rounded-xl bg-gradient-to-r from-[#EB1000] to-[#CC0E00] text-white font-bold text-xs hover:opacity-90 transition flex items-center gap-1.5 shadow-md shadow-[#EB1000]/20 shrink-0 cursor-pointer whitespace-nowrap"
+                  className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-[#EB1000] to-[#CC0E00] text-white font-bold text-xs hover:opacity-90 transition flex items-center gap-1.5 shadow-md shadow-[#EB1000]/20 shrink-0 cursor-pointer whitespace-nowrap"
                 >
-                  <Download className="h-4 w-4" />
+                  <Download className="h-3.5 w-3.5" />
                   <span className="whitespace-nowrap">Download CSV</span>
                 </button>
               </div>

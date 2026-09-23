@@ -26,6 +26,7 @@ import {
   Flame
 } from 'lucide-react';
 import VipMembershipModal from '@/components/VipMembershipModal';
+import StreamPlayerModal from '@/components/StreamPlayerModal';
 import { getViewerToken, getCookie, getViewerUser } from '@/utils/cookies';
 
 const CATEGORIES = [
@@ -53,6 +54,7 @@ function LiveSessionsContent() {
   const [searchQuery, setSearchQuery] = useState('');
   const [followedIds, setFollowedIds] = useState(new Set());
   const [vipModalCreator, setVipModalCreator] = useState(null);
+  const [streamModalCreator, setStreamModalCreator] = useState(null);
   const [vipCreatorIds, setVipCreatorIds] = useState(new Set());
 
   // Theme listener
@@ -608,14 +610,23 @@ function LiveSessionsContent() {
                             `https://youtube.com/@${creator.cleanUsername || creator.username || ''}`;
 
                           return (
-                            <a
-                              href={watchUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="flex-1 py-2.5 px-4 rounded-full bg-[#EB1000] hover:bg-[#CC0E00] text-white font-black text-xs shadow-lg transition flex items-center justify-center gap-2 text-center truncate cursor-pointer"
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setStreamModalCreator({
+                                  ...creator,
+                                  name: creator.fullName || creator.name || creator.cleanUsername || 'Creator',
+                                  avatar: getMediaUrl(creator.avatar) || creator.avatar,
+                                  streamTitle: creator.session?.title || creator.title || `${creator.fullName || creator.cleanUsername}'s Live Broadcast`,
+                                  liveStreamUrl: watchUrl,
+                                  sessionCode: creator.session?.sessionCode || creator.cleanUsername,
+                                  cleanUsername: creator.cleanUsername || (creator.username ? String(creator.username).replace(/^@+/, '') : ''),
+                                });
+                              }}
+                              className="flex-1 py-2.5 px-4 rounded-full bg-[#EB1000] hover:bg-[#CC0E00] text-white font-black text-xs shadow-lg transition flex items-center justify-center gap-2 text-center truncate cursor-pointer active:scale-95"
                             >
                               <Tv className="h-4 w-4 shrink-0" /> Watch Now
-                            </a>
+                            </button>
                           );
                         })()}
 
@@ -677,6 +688,12 @@ function LiveSessionsContent() {
         onClose={() => setVipModalCreator(null)}
         creator={vipModalCreator}
         onSuccess={() => fetchMyVipMemberships()}
+      />
+
+      <StreamPlayerModal
+        isOpen={!!streamModalCreator}
+        onClose={() => setStreamModalCreator(null)}
+        creator={streamModalCreator}
       />
     </>
   );

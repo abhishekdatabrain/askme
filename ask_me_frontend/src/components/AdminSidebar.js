@@ -32,7 +32,9 @@ import {
   Moon,
   MessageSquare,
   Mail,
-  Inbox
+  Inbox,
+  Ticket,
+  HelpCircle
 } from 'lucide-react';
 
 import { API_ENDPOINTS } from '@/config/api';
@@ -56,7 +58,7 @@ export default function AdminSidebar({ activeTab: propsActiveTab, setActiveTab, 
         const count = notifs.filter(n => !n.isRead && n.status !== 'read').length;
         setUnreadCount(count);
       }
-    } catch (err) {}
+    } catch (err) { }
   };
 
   useEffect(() => {
@@ -119,7 +121,6 @@ export default function AdminSidebar({ activeTab: propsActiveTab, setActiveTab, 
         { id: 'kyc_pending', label: 'Pending KYC', path: '/admin/kyc/pending' },
         { id: 'kyc_approved', label: 'Approved KYC', path: '/admin/kyc/approved' },
         { id: 'kyc_rejected', label: 'Rejected KYC', path: '/admin/kyc/rejected' },
-        { id: 'user_agreement', label: 'User Agreement', path: '/admin/kyc/user-agreement' },
       ],
     },
     {
@@ -206,6 +207,18 @@ export default function AdminSidebar({ activeTab: propsActiveTab, setActiveTab, 
       path: '/admin/marketing/testimonials',
       children: [
         { id: 'marketing_testimonials', label: 'Creator Testimonials', path: '/admin/marketing/testimonials' },
+      ],
+    },
+    {
+      id: 'support_tickets',
+      label: 'Support Tickets',
+      subtitle: 'Payout & User Tickets',
+      icon: Ticket,
+      path: '/admin/tickets',
+      children: [
+        { id: 'tickets_all', label: 'All Tickets', path: '/admin/tickets' },
+        { id: 'tickets_payout', label: '🔒 Payout Change Requests', path: '/admin/tickets?type=payout' },
+        { id: 'tickets_unread', label: 'Unread / Pending', path: '/admin/tickets?status=unread' },
       ],
     },
     {
@@ -400,36 +413,10 @@ export default function AdminSidebar({ activeTab: propsActiveTab, setActiveTab, 
       {/* Footer Info & Theme Toggle Button */}
       <div className={`pt-3 mt-3 border-t flex flex-col gap-2 ${theme === 'light' ? 'border-[#E9ECEF]' : 'border-[#1C1C26]'}`}>
 
-        {/* Theme Switcher Button */}
-        {onToggleTheme && (
-          <button
-            onClick={onToggleTheme}
-            className={`w-full px-3 py-2 rounded-xl border text-xs font-bold transition-all flex items-center justify-between ${theme === 'light'
-              ? 'bg-[#F1F3F5] text-[#212529] border-[#E9ECEF] hover:bg-[#E9ECEF]'
-              : 'bg-[#13131A] text-[#F5F5F7] border-[#1C1C26] hover:border-[#EB1000]/40'
-              }`}
-          >
-            <div className="flex items-center gap-2">
-              {theme === 'dark' ? (
-                <>
-                  <Sun className="h-4 w-4 text-[#FFD60A]" />
-                  <span>Light Mode Theme</span>
-                </>
-              ) : (
-                <>
-                  <Moon className="h-4 w-4 text-[#EB1000]" />
-                  <span>Dark Mode Theme</span>
-                </>
-              )}
-            </div>
-            <span className="text-[10px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-[#EB1000] text-white">
-              TOGGLE
-            </span>
-          </button>
-        )}
+
 
         <div className={`flex items-center gap-2 text-[11px] ${theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'}`}>
-          <Lock className="h-3 w-3 text-[#00F5D4]" />
+          <Lock className="h-3 w-3 text-[#EB1000]" />
           <span>AskMe Platform</span>
         </div>
         <span className={`text-[10px] ${theme === 'light' ? 'text-[#6C757D]/70' : 'text-[#8B8B96]/60'}`}>Lake View City, Pune 411047</span>

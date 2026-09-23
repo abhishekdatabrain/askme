@@ -266,9 +266,9 @@ export default function WalletManagement({ activeSubTab }) {
 
           <div className="p-4 rounded-2xl bg-[#0A0A0F] border border-[#1C1C26] space-y-1">
             <span className="text-[11px] font-bold text-[#8B8B96] flex items-center gap-1">
-              <Wallet className="h-3.5 w-3.5 text-[#00F5D4]" /> Available for Settlement
+              <Wallet className="h-3.5 w-3.5 text-[#00E676]" /> Available for Settlement
             </span>
-            <div className="font-heading font-black text-xl text-[#00F5D4]">
+            <div className="font-heading font-black text-xl text-[#00E676]">
               ₹{totalAvailableBalance.toLocaleString('en-IN')}
             </div>
             <span className="text-[10px] text-[#8B8B96]">Pending Creator Payouts</span>
@@ -281,7 +281,7 @@ export default function WalletManagement({ activeSubTab }) {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#1C1C26] pb-3">
           <div>
             <h3 className="font-heading font-bold text-base text-white flex items-center gap-2">
-              <TrendingUp className="h-5 w-5 text-[#00F5D4]" /> Creator Wise Revenue & Wallet Balances
+              <TrendingUp className="h-5 w-5 text-[#EB1000]" /> Creator Wise Revenue & Wallet Balances
             </h3>
             <p className="text-xs text-[#8B8B96] mt-0.5">
               Overview of creator revenue earnings, platform commissions, and monthly wallet balance settlements.
@@ -301,11 +301,11 @@ export default function WalletManagement({ activeSubTab }) {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {creatorWallets.map((w) => (
-            <div key={w.creatorId} className="p-5 rounded-2xl bg-[#0A0A0F] border border-[#1C1C26] space-y-4 hover:border-[#00F5D4]/40 transition">
+            <div key={w.creatorId} className="p-5 rounded-2xl bg-[#0A0A0F] border border-[#1C1C26] space-y-4 hover:border-[#EB1000]/40 transition">
               <div className="flex items-center justify-between border-b border-[#1C1C26] pb-3">
                 <div>
                   <h4 className="font-heading font-black text-base text-white">{w.creatorName}</h4>
-                  <span className="text-xs text-[#00F5D4] font-semibold">{w.handle}</span>
+                  <span className="text-xs text-[#EB1000] font-semibold">{w.handle}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   {w.settlementStatus ? (
@@ -331,9 +331,9 @@ export default function WalletManagement({ activeSubTab }) {
                   <span className="text-[10px] text-[#8B8B96] block font-semibold">Net Share (85%)</span>
                   <span className="font-heading font-black text-[#00E676] text-sm">₹{(w.netCreatorShare || 0).toLocaleString('en-IN')}</span>
                 </div>
-                <div className="p-2.5 rounded-xl bg-[#13131A] border border-[#00F5D4]/30 bg-[#00F5D4]/5">
-                  <span className="text-[10px] text-[#00F5D4] block font-bold">Available Bal</span>
-                  <span className="font-heading font-black text-[#00F5D4] text-sm">₹{(w.availableBalance || 0).toLocaleString('en-IN')}</span>
+                <div className="p-2.5 rounded-xl bg-[#13131A] border border-[#00E676]/30 bg-[#00E676]/5">
+                  <span className="text-[10px] text-[#00E676] block font-bold">Available Bal</span>
+                  <span className="font-heading font-black text-[#00E676] text-sm">₹{(w.availableBalance || 0).toLocaleString('en-IN')}</span>
                 </div>
                 <div className="p-2.5 rounded-xl bg-[#13131A] border border-[#FFD60A]/30 bg-[#FFD60A]/5">
                   <span className="text-[10px] text-[#FFD60A] block font-bold">Pending Bal</span>
@@ -353,7 +353,7 @@ export default function WalletManagement({ activeSubTab }) {
         {/* PAGINATION CONTROLS BAR */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-[#1C1C26] text-xs">
           <span className="text-[#8B8B96]">
-            Showing <strong className="text-white">{creatorWallets.length}</strong> of <strong className="text-[#00F5D4]">{totalCount}</strong> Wallets (Page {currentPage} of {totalPages})
+            Showing <strong className="text-white">{creatorWallets.length}</strong> of <strong className="text-[#EB1000]">{totalCount}</strong> Wallets (Page {currentPage} of {totalPages})
           </span>
           <div className="flex items-center gap-2">
             <button
@@ -364,7 +364,7 @@ export default function WalletManagement({ activeSubTab }) {
             >
               ← Previous
             </button>
-            <span className="px-3 py-1.5 rounded-xl bg-[#0A0A0F] border border-[#1C1C26] font-bold text-[#00F5D4]">
+            <span className="px-3 py-1.5 rounded-xl bg-[#0A0A0F] border border-[#1C1C26] font-bold text-[#EB1000]">
               {currentPage} / {totalPages}
             </span>
             <button
@@ -386,7 +386,7 @@ export default function WalletManagement({ activeSubTab }) {
             <div className="flex items-center justify-between border-b border-[#1C1C26] pb-4">
               <div>
                 <h3 className="font-heading font-black text-lg text-white flex items-center gap-2">
-                  <Wallet className="h-5 w-5 text-[#00F5D4]" /> Manage Balance: {selectedWalletModal.creatorName}
+                  <Wallet className="h-5 w-5 text-[#EB1000]" /> Manage Balance: {selectedWalletModal.creatorName}
                 </h3>
                 <p className="text-xs text-[#8B8B96] mt-0.5">
                   Admin manual balance adjustment & bonus settlement.
@@ -408,7 +408,7 @@ export default function WalletManagement({ activeSubTab }) {
                   type="number"
                   value={editBalanceInput}
                   onChange={(e) => setEditBalanceInput(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-xl bg-[#0A0A0F] border border-[#1C1C26] text-white text-sm font-bold focus:outline-none focus:border-[#00F5D4]"
+                  className="w-full px-4 py-2.5 rounded-xl bg-[#0A0A0F] border border-[#1C1C26] text-white text-sm font-bold focus:outline-none focus:border-[#EB1000]"
                   required
                 />
               </div>
@@ -420,7 +420,7 @@ export default function WalletManagement({ activeSubTab }) {
                   placeholder="e.g. 500 or 0"
                   value={bonusCreditInput}
                   onChange={(e) => setBonusCreditInput(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-xl bg-[#0A0A0F] border border-[#1C1C26] text-[#00F5D4] text-sm font-bold focus:outline-none focus:border-[#00F5D4]"
+                  className="w-full px-4 py-2.5 rounded-xl bg-[#0A0A0F] border border-[#1C1C26] text-[#00E676] text-sm font-bold focus:outline-none focus:border-[#EB1000]"
                 />
                 <span className="text-[11px] text-[#8B8B96]">Bonus credit will be added to available balance instantly.</span>
               </div>

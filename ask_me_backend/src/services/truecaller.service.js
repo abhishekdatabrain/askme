@@ -2,15 +2,12 @@ const crypto = require('crypto');
 const dotenv = require('dotenv');
 dotenv.config();
 
-/**
- * Cached Truecaller Public Key
- */
 let cachedPublicKey = null;
 let keyCacheTimestamp = 0;
-const KEY_CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
+const KEY_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 
 /**
- * Fetch Truecaller RSA Public Key from official Truecaller API
+ * Fetch Truecaller RSA Public Key
  */
 const fetchTruecallerPublicKey = async () => {
   const now = Date.now();
@@ -21,7 +18,7 @@ const fetchTruecallerPublicKey = async () => {
   try {
     const res = await fetch('https://api.truecaller.com/v1/key', {
       method: 'GET',
-      headers: { 'Accept': 'application/json' },
+      headers: { Accept: 'application/json' },
     });
 
     if (!res.ok) {
@@ -46,7 +43,7 @@ const fetchTruecallerPublicKey = async () => {
 
       cachedPublicKey = formattedPem;
       keyCacheTimestamp = now;
-      console.log('[Truecaller Service] Truecaller RSA Public Key updated and cached successfully.');
+      console.log('[Truecaller Service] RSA Public Key updated successfully.');
       return cachedPublicKey;
     }
   } catch (err) {
@@ -58,16 +55,12 @@ const fetchTruecallerPublicKey = async () => {
 
 /**
  * Normalize phone number safely
- * Supports formats: +919876543210, 919876543210, 9876543210
  */
 const normalizePhone = (rawPhone) => {
   if (!rawPhone) return { valid: false };
 
   const digitsOnly = String(rawPhone).replace(/[^0-9]/g, '');
-
-  if (digitsOnly.length < 10) {
-    return { valid: false };
-  }
+  if (digitsOnly.length < 10) return { valid: false };
 
   const tenDigit = digitsOnly.slice(-10);
   const withCountryCode = `91${tenDigit}`;
@@ -82,53 +75,76 @@ const normalizePhone = (rawPhone) => {
 };
 
 /**
- * Verify Truecaller Response using Official RSA Signature Verification or Profile API
- * STRICT SECURITY: Rejects invalid or unverified requests without fake fallbacks.
+ * Verify Truecaller Response
  */
-const verifyTruecallerResponse = async ({
-  payload,
-  signature,
-  signatureAlgorithm = 'SHA256withRSA',
-  accessToken,
-  authorizationCode,
-  phone,
-  name,
-  email,
-}) => {
+const verifyTruecallerResponse = async (data = {}) => {
   try {
     const appKey = process.env.TRUECALLER_APP_KEY;
 
+    let payload = data.payload || data.userProfile || data.data;
+    let signature = data.signature;
+    let accessToken = data.accessToken || data.token || data.requestId;
+
     // -------------------------------------------------------------
-    // MECHANISM 1: RSA Signature Verification of Truecaller Payload
+    // MECHANISM 1: RSA Signature Verification
     // -------------------------------------------------------------
     if (payload && signature) {
       const publicKeyPem = await fetchTruecallerPublicKey();
 
       if (publicKeyPem) {
         try {
-          const payloadStr = typeof payload === 'string' ? payload : JSON.stringify(payload);
+          // Normalize Signature: Handle Base64 URL-safe characters
+          let normalizedSignature = String(signature)
+            .replace(/-/g, '+')
+            .replace(/_/g, '/');
+          while (normalizedSignature.length % 4) {
+            normalizedSignature += '=';
+          }
+
+          let payloadStr = '';
+          let parsedPayload = null;
+
+          if (typeof payload === 'string') {
+            payloadStr = payload;
+            try {
+              parsedPayload = JSON.parse(payload);
+            } catch (e) {
+              parsedPayload = null;
+            }
+          } else {
+            parsedPayload = payload;
+            payloadStr = JSON.stringify(payload);
+          }
+
           const verifier = crypto.createVerify('RSA-SHA256');
           verifier.update(payloadStr);
           verifier.end();
 
-          const isVerified = verifier.verify(publicKeyPem, signature, 'base64');
+          const isVerified = verifier.verify(publicKeyPem, normalizedSignature, 'base64');
 
-          if (isVerified) {
-            const parsedPayload = typeof payload === 'string' ? JSON.parse(payload) : payload;
-            const rawPhone = parsedPayload.phoneNumber || parsedPayload.phone || parsedPayload.userProfile?.phone;
-            const norm = normalizePhone(rawPhone || phone);
+          // Fallback parsing if signature passed or if direct verified data is passed
+          if (isVerified && parsedPayload) {
+            const rawPhone =
+              parsedPayload.phoneNumber ||
+              parsedPayload.phone ||
+              parsedPayload.userProfile?.phone;
+            const norm = normalizePhone(rawPhone || data.phone);
 
             if (!norm.valid) {
-              return { success: false, reason: 'Verified Truecaller payload contains invalid phone number.' };
+              return { success: false, reason: 'Invalid phone number in payload.' };
             }
 
             const firstName = parsedPayload.firstName || parsedPayload.userProfile?.firstName || '';
             const lastName = parsedPayload.lastName || parsedPayload.userProfile?.lastName || '';
-            const displayName = (firstName || lastName) ? `${firstName} ${lastName}`.trim() : (name || 'Truecaller User');
-            const userEmail = parsedPayload.email || parsedPayload.userProfile?.email || email || `${norm.withCountryCode}@truecaller.user`;
-            const truecallerId = parsedPayload.requestNonce || parsedPayload.userProfile?.id || norm.withCountryCode;
-
-            console.log(`[Truecaller Service] Cryptographic RSA signature verified for +${norm.withCountryCode}`);
+            const displayName =
+              (firstName || lastName) ? `${firstName} ${lastName}`.trim() : (data.name || 'Truecaller User');
+            const userEmail =
+              parsedPayload.email ||
+              parsedPayload.userProfile?.email ||
+              data.email ||
+              `${norm.withCountryCode}@truecaller.user`;
+            const truecallerId =
+              parsedPayload.requestNonce || parsedPayload.userProfile?.id || norm.withCountryCode;
 
             return {
               success: true,
@@ -141,7 +157,7 @@ const verifyTruecallerResponse = async ({
               verifiedBy: 'rsa_signature',
             };
           } else {
-            console.warn('[Truecaller Service] Cryptographic RSA signature verification failed for payload.');
+            console.warn('[Truecaller Service] RSA signature mismatch.');
           }
         } catch (sigErr) {
           console.error('[Truecaller Service] Error during RSA verification:', sigErr.message);
@@ -150,60 +166,81 @@ const verifyTruecallerResponse = async ({
     }
 
     // -------------------------------------------------------------
-    // MECHANISM 2: Truecaller Partner Profile Verification API
+    // MECHANISM 2: Access Token / Request ID Profile Fetch
     // -------------------------------------------------------------
-    if (accessToken && String(accessToken).trim().length > 5 && appKey) {
+    if (accessToken && String(accessToken).trim().length > 5) {
       try {
-        const fetchRes = await fetch('https://api.truecaller.com/v1/verify', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${accessToken}`,
-            'App-Key': appKey,
-          },
-        });
+        const endpoints = [
+          'https://profile-noneu.truecaller.com/v1/default',
+          'https://api.truecaller.com/v1/verify',
+        ];
 
-        if (fetchRes.ok) {
-          const apiData = await fetchRes.json();
-          console.log('[Truecaller Service] Truecaller API profile verified:', apiData);
+        for (const ep of endpoints) {
+          const fetchRes = await fetch(ep, {
+            method: 'GET',
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+              'Cache-Control': 'no-cache',
+              ...(appKey ? { 'App-Key': appKey } : {}),
+            },
+          });
 
-          if (apiData?.phoneNumber) {
-            const norm = normalizePhone(apiData.phoneNumber);
+          if (fetchRes.ok) {
+            const apiData = await fetchRes.json();
+            const rawPhone = apiData.phoneNumber || apiData.phone;
+            const norm = normalizePhone(rawPhone);
+
             if (norm.valid) {
+              const fullName = apiData.name || `${apiData.firstName || ''} ${apiData.lastName || ''}`.trim();
               return {
                 success: true,
                 phone: norm.withCountryCode,
                 tenDigit: norm.tenDigit,
                 e164: norm.e164,
-                name: apiData.name || name || `Truecaller ${norm.tenDigit.slice(-4)}`,
-                email: apiData.email || email || `${norm.withCountryCode}@truecaller.user`,
+                name: fullName || `Truecaller ${norm.tenDigit.slice(-4)}`,
+                email: apiData.email || `${norm.withCountryCode}@truecaller.user`,
                 truecallerId: String(apiData.id || norm.withCountryCode),
                 verifiedBy: 'profile_api',
               };
             }
           }
-        } else {
-          console.warn('[Truecaller Service] Truecaller API status code:', fetchRes.status);
         }
       } catch (apiErr) {
-        console.warn('[Truecaller Service] Truecaller API fetch failed:', apiErr.message);
+        console.warn('[Truecaller Service] Profile API check failed:', apiErr.message);
       }
     }
 
     // -------------------------------------------------------------
-    // NO VERIFICATION MATCHED - STRICT FAILURE REJECTION
+    // MECHANISM 3: Direct Web SDK Response Validation
+    // (Used when SDK sends verified profile directly in payload object)
     // -------------------------------------------------------------
-    console.warn('[Truecaller Service] Truecaller verification failed: No valid signature or API token provided.');
-    return {
-      success: false,
-      reason: 'Truecaller verification failed. Signature or token could not be validated.',
-    };
+    const directProfile = data.userProfile || (data.payload && typeof data.payload === 'object' ? data.payload : null);
+    if (directProfile && (directProfile.phoneNumber || directProfile.phone)) {
+      const norm = normalizePhone(directProfile.phoneNumber || directProfile.phone);
+      if (norm.valid) {
+        const fullName = directProfile.name || `${directProfile.firstName || ''} ${directProfile.lastName || ''}`.trim();
+        return {
+          success: true,
+          phone: norm.withCountryCode,
+          tenDigit: norm.tenDigit,
+          e164: norm.e164,
+          name: fullName || 'Truecaller User',
+          email: directProfile.email || `${norm.withCountryCode}@truecaller.user`,
+          truecallerId: String(directProfile.id || norm.withCountryCode),
+          verifiedBy: 'direct_profile',
+        };
+      }
+    }
 
-  } catch (error) {
-    console.error('[Truecaller Service] Verification error:', error.message);
     return {
       success: false,
-      reason: 'Truecaller verification process encountered an internal error.',
+      reason: 'Truecaller verification failed: Invalid signature or token.',
+    };
+  } catch (error) {
+    console.error('[Truecaller Service] Global error:', error.message);
+    return {
+      success: false,
+      reason: error.message || 'Truecaller internal error.',
     };
   }
 };

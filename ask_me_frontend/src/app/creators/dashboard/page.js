@@ -206,22 +206,19 @@ function CreatorDashboardContent() {
       return;
     }
 
-    const durationMs = (Number(activeSession.durationHours) || 2) * 3600 * 1000;
-    const startTime = activeSession.endsAt
-      ? new Date(activeSession.endsAt).getTime() - durationMs
-      : new Date(activeSession.startedAt || activeSession.createdAt || Date.now()).getTime();
-    const endTime = activeSession.endsAt
-      ? new Date(activeSession.endsAt).getTime()
-      : startTime + durationMs;
+    const startedTime = activeSession.startedAt
+      ? new Date(activeSession.startedAt).getTime()
+      : (activeSession.createdAt ? new Date(activeSession.createdAt).getTime() : Date.now());
+    const qrEndTime = activeSession.qrExpiresAt
+      ? new Date(activeSession.qrExpiresAt).getTime()
+      : startedTime + 3 * 3600 * 1000;
 
     const updateTimer = () => {
       const now = Date.now();
-      const diff = endTime - now;
+      const diff = qrEndTime - now;
 
       if (diff <= 0) {
-        setTimeRemaining('00h 00m 00s (Expired)');
-        handleEndSession();
-        toast.info('Live session automatically ended as duration time expired.', 'Session Auto-Closed');
+        setTimeRemaining('QR Expired (Stream Active)');
       } else {
         const hours = Math.floor(diff / (1000 * 60 * 60));
         const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));

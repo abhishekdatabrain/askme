@@ -374,6 +374,27 @@ export default function CreatorNotificationsPage() {
                 <div className="h-8 w-8 border-2 border-[#EB1000] border-t-transparent rounded-full animate-spin mx-auto" />
                 <p>Fetching live notifications...</p>
               </div>
+            ) : !activeSession ? (
+              <div className={`p-10 rounded-2xl border text-center space-y-4 shadow-xl ${theme === 'light' ? 'bg-white border-[#E9ECEF]' : 'bg-[#13131A] border-[#1C1C26]'}`}>
+                <div className="w-16 h-16 rounded-2xl bg-[#EB1000]/10 border border-[#EB1000]/30 flex items-center justify-center mx-auto text-[#EB1000]">
+                  <Radio className="h-8 w-8 animate-pulse" />
+                </div>
+                <div className="max-w-md mx-auto space-y-1.5">
+                  <h4 className={`font-black text-base ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'}`}>
+                    Broadcast Offline — No Active Live Session
+                  </h4>
+
+                </div>
+                <div>
+                  <Link
+                    href="/creators/start-live"
+                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#EB1000] to-[#CC0E00] hover:opacity-95 text-white text-xs font-black transition-all shadow-lg shadow-[#EB1000]/30"
+                  >
+                    <Radio className="h-4 w-4" />
+                    <span>Start Live Session</span>
+                  </Link>
+                </div>
+              </div>
             ) : notifications.length === 0 ? (
               searchQuery.trim() ? (
                 <div className={`p-8 rounded-2xl border text-center space-y-3 ${theme === 'light' ? 'bg-white border-[#E9ECEF]' : 'bg-[#13131A] border-[#1C1C26]'}`}>

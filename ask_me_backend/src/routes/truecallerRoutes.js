@@ -2,18 +2,11 @@ const express = require('express');
 const router = express.Router();
 const { truecallerAuthViewer, truecallerCallback } = require('../controllers/truecaller.controller');
 
-/**
- * @route   POST /api/auth/truecaller/viewer
- * @desc    Authenticate Askme Viewer via Truecaller
- * @access  Public
- */
+// Direct JSON Verification (Web SDK / Manual POST)
 router.post('/viewer', truecallerAuthViewer);
 
-/**
- * @route   GET /api/auth/truecaller/callback
- * @desc    Truecaller OAuth / Web Callback Handler
- * @access  Public
- */
+// Mobile Deep Link Return Handler (Handles both GET and POST)
 router.get('/callback', truecallerCallback);
+router.post('/callback', truecallerCallback);
 
 module.exports = router;

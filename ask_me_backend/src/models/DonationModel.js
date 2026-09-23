@@ -80,6 +80,22 @@ const Donation = sequelize.define(
             type: DataTypes.BOOLEAN,
             defaultValue: false,
         },
+        is_guest: {
+            type: DataTypes.BOOLEAN,
+            defaultValue: false,
+        },
+        answer_text: {
+            type: DataTypes.TEXT,
+            allowNull: true,
+        },
+        answered_at: {
+            type: DataTypes.DATE,
+            allowNull: true,
+        },
+        answered_mode: {
+            type: DataTypes.STRING(50),
+            allowNull: true,
+        },
     },
     {
         tableName: "donations",

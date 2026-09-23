@@ -8,6 +8,7 @@ import LandingFooter from '@/components/LandingFooter';
 import CreatorCard from '@/components/CreatorCard';
 import Logo from '../components/Logo';
 import VipMembershipModal from '@/components/VipMembershipModal';
+import StreamPlayerModal from '@/components/StreamPlayerModal';
 import { API_ENDPOINTS, getMediaUrl } from '@/config/api';
 import { getViewerToken, getCookie, getViewerUser } from '@/utils/cookies';
 import { useToast } from '@/context/ToastContext';
@@ -213,6 +214,7 @@ export default function Home() {
   const [currentLiveIndex, setCurrentLiveIndex] = useState(0);
   const [followedCreators, setFollowedCreators] = useState({});
   const [isAutoRotating, setIsAutoRotating] = useState(true);
+  const [streamModalCreator, setStreamModalCreator] = useState(null);
 
   // Fetch live streams from Backend API dynamically with 4s real-time polling (Server-Side Filtering)
   useEffect(() => {
@@ -1254,17 +1256,17 @@ export default function Home() {
 
                   {/* QR & Scanner Box Grid */}
                   <div className="grid grid-cols-2 gap-2.5 items-center">
-                    <div className="bg-white p-1.5 rounded-xl flex items-center justify-center h-24 shadow-inner overflow-hidden">
-                      <OriginalScannerImage className="w-18 h-auto" />
+                    <div className="rounded-xl flex items-center justify-center h-32 overflow-hidden relative group">
+                      <OriginalScannerImage className="h-full w-auto object-contain shadow-md rounded-xl" />
                     </div>
-                    <div className="h-24 rounded-xl bg-[#1A090C] border border-[#EB1000]/60 p-2 flex flex-col items-center justify-center text-center space-y-1">
-                      <div className="w-5 h-5 rounded bg-[#EB1000]/20 border border-[#EB1000] flex items-center justify-center text-[#EB1000]">
-                        <Smartphone className="h-3 w-3" />
+                    <div className="h-32 rounded-xl bg-[#1A090C] border border-[#EB1000]/60 p-2.5 flex flex-col items-center justify-center text-center space-y-1.5 shadow-lg">
+                      <div className="w-7 h-7 rounded-lg bg-[#EB1000]/20 border border-[#EB1000] flex items-center justify-center text-[#EB1000]">
+                        <Smartphone className="h-4 w-4" />
                       </div>
-                      <span className="text-[9px] font-mono font-bold text-white uppercase tracking-tight leading-tight">
+                      <span className="text-[10px] font-mono font-bold text-white uppercase tracking-tight leading-tight">
                         ASKME URL DETECTED
                       </span>
-                      <span className="text-[8px] text-[#A0A0B2]">Tap to Ask</span>
+                      <span className="text-[9px] text-[#A0A0B2]">Tap to Ask</span>
                     </div>
                   </div>
                 </div>
@@ -1982,15 +1984,12 @@ export default function Home() {
                   <button
                     type="button"
                     onClick={() => {
-                      const url =
-                        currentStream.liveStreamUrl ||
-                        currentStream.streamUrl ||
-                        (currentStream.username ? `https://youtube.com/@${String(currentStream.username).replace(/^@+/, '')}/live` : 'https://youtube.com');
-                      if (url.startsWith('http://') || url.startsWith('https://')) {
-                        window.open(url, '_blank', 'noopener,noreferrer');
-                      } else {
-                        router.push(url);
-                      }
+                      setStreamModalCreator({
+                        ...currentStream,
+                        name: currentStream.creatorName || currentStream.name || currentStream.username || 'Creator',
+                        cleanUsername: currentStream.cleanUsername || String(currentStream.username || '').replace(/^@+/, ''),
+                        streamTitle: currentStream.title || currentStream.streamTitle || '',
+                      });
                     }}
                     className="px-5 py-2.5 rounded-full bg-[#EB1000] text-white text-xs font-bold shadow-lg shadow-[#EB1000]/40 flex items-center gap-1.5 hover:opacity-90 transition-all cursor-pointer"
                   >
@@ -2129,7 +2128,7 @@ export default function Home() {
             <div className="relative z-30 flex flex-col items-center justify-center">
               <div className="w-20 h-20 sm:w-28 sm:h-28 rounded-full bg-gradient-to-br from-[#FF2A1A] via-[#EB1000] to-[#900600] text-white flex flex-col items-center justify-center shadow-[0_0_70px_rgba(235,16,0,0.9)] border-2 border-white/40 transition-transform duration-300 hover:scale-110 cursor-pointer">
                 <Logo size="sm" />
-                <span className="text-[10px] sm:text-[12px] font-black tracking-widest uppercase mt-1">ASKME</span>
+                {/* <span className="text-[10px] sm:text-[12px] font-black tracking-widest uppercase mt-1">ASKME</span> */}
               </div>
             </div>
 
@@ -4075,6 +4074,13 @@ export default function Home() {
         onClose={() => setAuthModalOpen(false)}
         initialRole={authModalRole}
         initialMode={authModalMode}
+      />
+
+      {/* Embedded Live Stream Player Modal */}
+      <StreamPlayerModal
+        isOpen={!!streamModalCreator}
+        onClose={() => setStreamModalCreator(null)}
+        creator={streamModalCreator}
       />
     </div>
   );

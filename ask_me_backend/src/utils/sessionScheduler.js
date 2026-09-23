@@ -1,40 +1,64 @@
 const { Op } = require('sequelize');
+const QrCode = require('../models/QrCodeModel');
 const DonationSession = require('../models/DonationSessionModels');
+const { getIO } = require('../config/socket');
 
 /**
- * 16. Auto Expiry Flow Scheduler (V1 Safety Mechanism):
- * Creator starts session -> ends_at = start + duration_hours (e.g. 4 hours)
- * Scheduler / Cron finds active sessions where ends_at <= NOW()
- * UPDATES: status = 'closed' (expired), ended_at = NOW()
- * Expired sessions immediately disappear from LIVE feed.
+ * 16. Auto Expiry Flow Scheduler (Independent QR Expiry Mechanism):
+ * Creator starts broadcast session -> QR Code expires in exactly 3 hours (expires_at)
+ * Scheduler / Cron finds active QR codes where expires_at <= NOW()
+ * UPDATES: QrCode.status = 'expired'
+ * NOTE: Live broadcast session (donation_sessions.status) remains 'active' until ended by creator/stream.
  */
 const checkAndExpireSessions = async () => {
   try {
     const now = new Date();
 
-    const [expiredCount] = await DonationSession.update(
-      {
-        status: 'closed',
-        ended_at: now,
-      },
-      {
-        where: {
-          status: 'active',
-          ends_at: {
-            [Op.ne]: null,
-            [Op.lte]: now,
-          },
+    // Find active QR codes whose expiry time has passed
+    const expiredQrRecords = await QrCode.findAll({
+      where: {
+        status: 'active',
+        expires_at: {
+          [Op.ne]: null,
+          [Op.lte]: now,
         },
-      }
-    ).catch((err) => {
-      console.warn('Auto-expiry update notice:', err.message);
-      return [0];
+      },
     });
 
-    if (expiredCount > 0) {
-      console.log(`[AUTO-EXPIRY SCHEDULER] ${expiredCount} live session(s) auto-expired at ${now.toISOString()}`);
+    if (expiredQrRecords.length > 0) {
+      const expiredSessionIds = expiredQrRecords.map((qr) => qr.session_id);
+
+      await QrCode.update(
+        { status: 'expired' },
+        {
+          where: {
+            id: expiredQrRecords.map((qr) => qr.id),
+          },
+        }
+      );
+
+      console.log(`[AUTO-EXPIRY SCHEDULER] ${expiredQrRecords.length} QR code session(s) expired at ${now.toISOString()}`);
+
+      // Broadcast real-time Socket.IO notification to active session rooms
+      try {
+        const io = getIO();
+        if (io) {
+          expiredSessionIds.forEach((sessionId) => {
+            const roomName = `live_session_${sessionId}`;
+            io.to(roomName).emit('qr_status_changed', {
+              sessionId,
+              qrStatus: 'expired',
+              isQrExpired: true,
+              message: 'QR payment session has expired, but the live session is still active.',
+            });
+          });
+        }
+      } catch (socketErr) {
+        console.warn('Notice: Socket.IO emit error during QR expiry:', socketErr.message);
+      }
     }
-    return expiredCount;
+
+    return expiredQrRecords.length;
   } catch (error) {
     console.error('[AUTO-EXPIRY SCHEDULER ERROR]:', error.message);
     return 0;
@@ -50,7 +74,7 @@ const startSessionScheduler = (intervalMs = 30000) => {
   // Recurring cron interval
   if (!schedulerTimer) {
     schedulerTimer = setInterval(checkAndExpireSessions, intervalMs);
-    console.log(`[SESSION SCHEDULER] Auto-expiry runner active (Interval: ${intervalMs / 1000}s)`);
+    console.log(`[SESSION SCHEDULER] QR 3-Hour Expiry runner active (Interval: ${intervalMs / 1000}s)`);
   }
 };
 

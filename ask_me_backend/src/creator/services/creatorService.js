@@ -16,6 +16,7 @@ const { getIO } = require("../../config/socket");
 const { sendLoginOtpWhatsApp } = require("../../services/whatsappService");
 const { generateAndStoreOtp, verifyStoredOtp } = require("../../utils/whatsappOtpStore");
 const { verifyTruecallerToken } = require("../../services/truecallerService");
+const { sendWelcomeEmailAsync } = require("../../services/emailService");
 const { Op } = require("sequelize");
 
 /**
@@ -43,10 +44,14 @@ const registerCreatorService = async (data) => {
   const creatorEmail = (email || "").trim().toLowerCase();
   const cleanUsername = (username || "").trim().replace(/^@+/, "");
   const creatorMobile = mobileNumber || mobile || null;
-  const avatarUrl = profileImage || profile_image || null;
+  let rawAvatar = (profileImage || profile_image || "").trim();
+  if (rawAvatar.startsWith("blob:") || rawAvatar.startsWith("data:")) {
+    rawAvatar = "";
+  }
+  const avatarUrl = rawAvatar || null;
   const creatorCountry = country || "India";
 
-  if (!creatorName || !cleanUsername || !creatorEmail || !password) {
+  if (!creatorName || !creatorEmail || !password) {
     const err = new Error("Full name, username, email, and password are required.");
     err.statusCode = 400;
     throw err;
@@ -65,11 +70,11 @@ const registerCreatorService = async (data) => {
     throw err;
   }
 
-  if (cleanUsername.length < 3) {
-    const err = new Error("Username must be at least 3 characters long.");
-    err.statusCode = 400;
-    throw err;
-  }
+  // if (cleanUsername.length < 3) {
+  //   const err = new Error("Username must be at least 3 characters long.");
+  //   err.statusCode = 400;
+  //   throw err;
+  // }
 
   const transaction = await sequelize.transaction();
 
@@ -84,15 +89,15 @@ const registerCreatorService = async (data) => {
       throw err;
     }
 
-    const existingUsername = await CreatorsModel.findOne({
-      where: { username: cleanUsername },
-      transaction,
-    });
-    if (existingUsername) {
-      const err = new Error("This username is already taken.");
-      err.statusCode = 409;
-      throw err;
-    }
+    // const existingUsername = await CreatorsModel.findOne({
+    //   where: { username: cleanUsername },
+    //   transaction,
+    // });
+    // if (existingUsername) {
+    //   const err = new Error("This username is already taken.");
+    //   err.statusCode = 409;
+    //   throw err;
+    // }
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -100,7 +105,7 @@ const registerCreatorService = async (data) => {
       {
         role: "creator",
         full_name: creatorName,
-        username: cleanUsername,
+        // username: cleanUsername,
         email: creatorEmail,
         mobile: creatorMobile,
         password: hashedPassword,
@@ -184,6 +189,12 @@ const registerCreatorService = async (data) => {
     }
 
     await transaction.commit();
+
+    sendWelcomeEmailAsync({
+      email: creator.email,
+      name: creator.full_name,
+      role: "creator",
+    });
 
     const token = generateToken(creator.id, "creator");
 
@@ -321,9 +332,11 @@ const googleAuthCreatorService = async ({ idToken, credential, token: bodyToken,
     verifiedName = verifiedEmail.split("@")[0] || "Google Creator";
   }
 
+  let isNewAccount = false;
   let creator = await CreatorsModel.findOne({ where: { email: verifiedEmail } });
 
   if (!creator) {
+    isNewAccount = true;
     const transaction = await sequelize.transaction();
     try {
       const baseUsername = verifiedEmail.split("@")[0].replace(/[^a-zA-Z0-9]/g, "").toLowerCase() || "creator";
@@ -373,6 +386,12 @@ const googleAuthCreatorService = async ({ idToken, credential, token: bodyToken,
       );
 
       await transaction.commit();
+
+      sendWelcomeEmailAsync({
+        email: creator.email,
+        name: creator.full_name,
+        role: "creator",
+      });
     } catch (err) {
       if (transaction && !transaction.finished) await transaction.rollback();
       throw err;
@@ -396,8 +415,10 @@ const googleAuthCreatorService = async ({ idToken, credential, token: bodyToken,
       role: "creator",
       status: creator.status,
       kycStatus,
+      isNewAccount,
     },
     token: jwtToken,
+    isNewAccount,
   };
 };
 
@@ -470,7 +491,9 @@ const updateCreatorProfileService = async (creatorId, data) => {
   try {
     const updateData = {};
     if (fullName) updateData.full_name = fullName;
-    if (profileImage !== undefined) updateData.profile_image = profileImage;
+    if (profileImage !== undefined && typeof profileImage === 'string' && !profileImage.trim().startsWith('blob:') && !profileImage.trim().startsWith('data:')) {
+      updateData.profile_image = profileImage.trim();
+    }
     if (country) updateData.country = country;
 
     if (Object.keys(updateData).length > 0) {
@@ -504,7 +527,22 @@ const updateCreatorProfileService = async (creatorId, data) => {
       }
     }
 
-    if (paymentInfo && typeof paymentInfo === "object") {
+    if (paymentInfo && typeof paymentInfo === "object" && (paymentInfo.upiId || paymentInfo.accountNumber)) {
+      const existingBank = await CreatorBankAccount.findOne({
+        where: { creator_id: creatorId, status: "active" },
+      });
+
+      if (existingBank && (existingBank.upi_id || (existingBank.account_number && existingBank.account_number !== "N/A"))) {
+        const isUpiChanged = paymentInfo.upiId && paymentInfo.upiId !== existingBank.upi_id;
+        const isAccChanged = paymentInfo.accountNumber && paymentInfo.accountNumber !== existingBank.account_number && paymentInfo.accountNumber !== maskBankAccount(existingBank.account_number);
+
+        if (isUpiChanged || isAccChanged) {
+          const err = new Error("Account details can be filled once only. In case of changes required, please raise a ticket for support.");
+          err.statusCode = 400;
+          throw err;
+        }
+      }
+
       const [bankRec] = await CreatorBankAccount.findOrCreate({
         where: { creator_id: creatorId },
         defaults: {
@@ -519,16 +557,19 @@ const updateCreatorProfileService = async (creatorId, data) => {
         },
         transaction,
       });
-      await bankRec.update(
-        {
-          upi_id: paymentInfo.upiId !== undefined ? paymentInfo.upiId : bankRec.upi_id,
-          bank_name: paymentInfo.bankName !== undefined ? paymentInfo.bankName : bankRec.bank_name,
-          account_number: paymentInfo.accountNumber !== undefined ? paymentInfo.accountNumber : bankRec.account_number,
-          ifsc_code: paymentInfo.ifscCode !== undefined ? String(paymentInfo.ifscCode).toUpperCase() : bankRec.ifsc_code,
-          account_holder_name: paymentInfo.accountHolderName || fullName || creator.full_name,
-        },
-        { transaction }
-      );
+
+      if (!bankRec.upi_id && (!bankRec.account_number || bankRec.account_number === "N/A")) {
+        await bankRec.update(
+          {
+            upi_id: paymentInfo.upiId !== undefined ? paymentInfo.upiId : bankRec.upi_id,
+            bank_name: paymentInfo.bankName !== undefined ? paymentInfo.bankName : bankRec.bank_name,
+            account_number: paymentInfo.accountNumber !== undefined ? paymentInfo.accountNumber : bankRec.account_number,
+            ifsc_code: paymentInfo.ifscCode !== undefined ? String(paymentInfo.ifscCode).toUpperCase() : bankRec.ifsc_code,
+            account_holder_name: paymentInfo.accountHolderName || fullName || creator.full_name,
+          },
+          { transaction }
+        );
+      }
     }
 
     await transaction.commit();
@@ -594,6 +635,15 @@ const saveCreatorBankAccountService = async (creatorId, data) => {
   }
 
   const { accountHolderName, bankName, accountNumber, ifscCode, upiId, accountType } = data;
+
+  const existingBank = await CreatorBankAccount.findOne({
+    where: { creator_id: creatorId, status: "active" },
+  });
+  if (existingBank && (existingBank.upi_id || (existingBank.account_number && existingBank.account_number !== "N/A"))) {
+    const err = new Error("Account details can be filled once only. In case of changes required, please raise a ticket for support.");
+    err.statusCode = 400;
+    throw err;
+  }
 
   if (!accountHolderName || (!accountNumber && !upiId)) {
     const err = new Error("Please provide Account Holder Name and Bank Account Number or UPI ID.");

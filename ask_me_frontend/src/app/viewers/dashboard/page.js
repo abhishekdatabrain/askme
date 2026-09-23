@@ -44,7 +44,25 @@ function ViewerDashboardContent() {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [checkingAuth, setCheckingAuth] = useState(true);
+    useEffect(() => {
+        const token = searchParams.get('token');
+        const userParam = searchParams.get('user');
 
+        if (token) {
+            // 1. Session Storage / LocalStorage mein save karein
+            localStorage.setItem('token', token);
+            if (userParam) {
+                try {
+                    localStorage.setItem('user', decodeURIComponent(userParam));
+                } catch (e) {
+                    console.error(e);
+                }
+            }
+
+            // 2. URL se token clean karein taaki URL neat dikhe
+            router.replace('/viewers/dashboard');
+        }
+    }, [searchParams, router]);
     // Auth Protection Check
     useEffect(() => {
         const token = getViewerToken() || getCookie('askme_viewer_token') || (typeof window !== 'undefined' ? localStorage.getItem('askme_viewer_token') : null);
@@ -487,8 +505,8 @@ function ViewerDashboardContent() {
                                                 <div
                                                     key={creator.creatorId || creator.id}
                                                     className={`p-5 rounded-3xl border shadow-xl transition-all duration-200 hover:-translate-y-1 flex flex-col justify-between ${theme === 'light'
-                                                            ? 'bg-white border-[#E9ECEF] hover:border-[#EB1000]/50'
-                                                            : 'bg-[#13131A] border-[#22222E] hover:border-[#EB1000]/50 shadow-2xl'
+                                                        ? 'bg-white border-[#E9ECEF] hover:border-[#EB1000]/50'
+                                                        : 'bg-[#13131A] border-[#22222E] hover:border-[#EB1000]/50 shadow-2xl'
                                                         }`}
                                                 >
                                                     <div className="space-y-3.5">
@@ -507,8 +525,8 @@ function ViewerDashboardContent() {
 
                                                             {/* Category Tag Pill on Top Right */}
                                                             <span className={`px-3 py-1 rounded-full text-xs font-bold border shrink-0 ${theme === 'light'
-                                                                    ? 'bg-[#F1F3F5] text-[#495057] border-[#DEE2E6]'
-                                                                    : 'bg-[#1C1C26] text-[#8B8B96] border-[#2A2A3A]'
+                                                                ? 'bg-[#F1F3F5] text-[#495057] border-[#DEE2E6]'
+                                                                : 'bg-[#1C1C26] text-[#8B8B96] border-[#2A2A3A]'
                                                                 }`}>
                                                                 {creator.category || creator.session?.category || 'General Q&A'}
                                                             </span>
@@ -641,8 +659,8 @@ function ViewerDashboardContent() {
                                                                 <button
                                                                     onClick={() => setVipModalCreator(creator)}
                                                                     className={`w-full py-3 px-4 rounded-full border font-black text-xs transition flex items-center justify-center gap-2 shadow-md ${theme === 'light'
-                                                                            ? 'bg-[#FFFBEB] hover:bg-[#FEF3C7] border-[#F59E0B] text-[#B45309]'
-                                                                            : 'bg-[#1C1805] hover:bg-[#262007] border-[#B38F00] text-[#FFD60A]'
+                                                                        ? 'bg-[#FFFBEB] hover:bg-[#FEF3C7] border-[#F59E0B] text-[#B45309]'
+                                                                        : 'bg-[#1C1805] hover:bg-[#262007] border-[#B38F00] text-[#FFD60A]'
                                                                         }`}
                                                                 >
                                                                     <span className="text-sm">💎</span> Join VIP Membership

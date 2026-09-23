@@ -40,17 +40,19 @@ function CreatorLoginContent() {
         const validToken = token || 'askme_jwt_creator_token';
         setCreatorSession(validToken, creator);
         setIsSubmitted(true);
-        toast.success('Creator Google Sign In Successful! Redirecting...', 'Welcome Back');
-
+        const isNewAccount = data.isNewAccount || data.data?.isNewAccount || creator.isNewAccount;
         const status = (creator.kycStatus || 'pending').toLowerCase();
         let targetUrl = '/creators/kyc';
 
-        if (status === 'approved') {
+        if (isNewAccount) {
+          targetUrl = '/creators/kyc';
+          toast.success('Creator registered via Google! Redirecting to KYC verification...', 'Registration Successful');
+        } else if (status === 'approved') {
           targetUrl = '/creators/dashboard';
-        } else if (status === 'not_submitted') {
+          toast.success('Creator Google Sign In Successful! Redirecting...', 'Welcome Back');
+        } else {
           targetUrl = '/creators/kyc';
-        } else if (status === 'rejected') {
-          targetUrl = '/creators/kyc';
+          toast.success('Redirecting to Creator KYC Verification...', 'KYC Verification Required');
         }
 
         setRedirectPath(targetUrl);

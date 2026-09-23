@@ -7,7 +7,7 @@ export default function UserAgreement({ activeSubTab }) {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#1C1C26] pb-5">
         <div className="flex items-center gap-3">
-          <div className="p-3 rounded-2xl bg-[#00F5D4]/10 text-[#00F5D4] border border-[#00F5D4]/30 shadow-md">
+          <div className="p-3 rounded-2xl bg-[#EB1000]/10 text-[#EB1000] border border-[#EB1000]/30 shadow-md">
             <FileText className="h-6 w-6" />
           </div>
           <div>
@@ -20,7 +20,7 @@ export default function UserAgreement({ activeSubTab }) {
           </div>
         </div>
 
-        <div className="px-3.5 py-1.5 rounded-xl bg-[#0A0A0F] border border-[#00F5D4]/30 text-[#00F5D4] text-xs font-bold flex items-center gap-1.5">
+        <div className="px-3.5 py-1.5 rounded-xl bg-[#0A0A0F] border border-[#EB1000]/30 text-[#EB1000] text-xs font-bold flex items-center gap-1.5">
           <ShieldCheck className="h-4 w-4" /> Active Policy v2.4
         </div>
       </div>
@@ -29,9 +29,9 @@ export default function UserAgreement({ activeSubTab }) {
       <div className="space-y-5 text-xs leading-relaxed text-[#8B8B96]">
         
         {/* Section 1: Revenue Split */}
-        <div className="p-5 rounded-2xl bg-[#0A0A0F] border border-[#1C1C26] space-y-2.5 hover:border-[#00F5D4]/30 transition">
+        <div className="p-5 rounded-2xl bg-[#0A0A0F] border border-[#1C1C26] space-y-2.5 hover:border-[#EB1000]/30 transition">
           <div className="flex items-center gap-2 text-white font-bold text-sm">
-            <Scale className="h-4 w-4 text-[#00F5D4]" />
+            <Scale className="h-4 w-4 text-[#EB1000]" />
             <span>1. Revenue Share Split & Dynamic Platform Fee</span>
           </div>
           <p>
@@ -43,7 +43,7 @@ export default function UserAgreement({ activeSubTab }) {
         </div>
 
         {/* Section 2: KYC & Payouts */}
-        <div className="p-5 rounded-2xl bg-[#0A0A0F] border border-[#1C1C26] space-y-2.5 hover:border-[#00F5D4]/30 transition">
+        <div className="p-5 rounded-2xl bg-[#0A0A0F] border border-[#1C1C26] space-y-2.5 hover:border-[#EB1000]/30 transition">
           <div className="flex items-center gap-2 text-white font-bold text-sm">
             <Lock className="h-4 w-4 text-[#FFD60A]" />
             <span>2. Identity Verification & Bank Settlement Requirements</span>
@@ -57,7 +57,7 @@ export default function UserAgreement({ activeSubTab }) {
         </div>
 
         {/* Section 3: Anti-Fraud */}
-        <div className="p-5 rounded-2xl bg-[#0A0A0F] border border-[#1C1C26] space-y-2.5 hover:border-[#00F5D4]/30 transition">
+        <div className="p-5 rounded-2xl bg-[#0A0A0F] border border-[#1C1C26] space-y-2.5 hover:border-[#EB1000]/30 transition">
           <div className="flex items-center gap-2 text-white font-bold text-sm">
             <AlertTriangle className="h-4 w-4 text-[#FF3D71]" />
             <span>3. Fraud Prevention & Chargeback Protection</span>
@@ -71,9 +71,9 @@ export default function UserAgreement({ activeSubTab }) {
         </div>
 
         {/* Section 4: Live Stream Conduct */}
-        <div className="p-5 rounded-2xl bg-[#0A0A0F] border border-[#1C1C26] space-y-2.5 hover:border-[#00F5D4]/30 transition">
+        <div className="p-5 rounded-2xl bg-[#0A0A0F] border border-[#1C1C26] space-y-2.5 hover:border-[#EB1000]/30 transition">
           <div className="flex items-center gap-2 text-white font-bold text-sm">
-            <ScrollText className="h-4 w-4 text-[#00F5D4]" />
+            <ScrollText className="h-4 w-4 text-[#EB1000]" />
             <span>4. Community Broadcasting Guidelines & Code of Conduct</span>
           </div>
           <p>
@@ -86,7 +86,7 @@ export default function UserAgreement({ activeSubTab }) {
       {/* Footer Bar */}
       <div className="pt-4 border-t border-[#1C1C26] flex items-center justify-between text-[11px] text-[#8B8B96]">
         <span>Last Updated: 18 August 2026</span>
-        <span className="text-[#00F5D4] font-bold">Futurepast Ventures LLP Legal Compliance</span>
+        <span className="text-[#EB1000] font-bold">Futurepast Ventures LLP Legal Compliance</span>
       </div>
     </div>
   );

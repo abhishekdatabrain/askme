@@ -34,9 +34,13 @@ const createLiveSessionService = async (creatorId, data) => {
     throw err;
   }
 
-  const durationNum = Number(durationHours) || 2;
-  const endsAt = new Date(Date.now() + durationNum * 3600 * 1000);
+  const durationNum = Number(durationHours);
+  const startedAt = new Date();
+  // const endsAt = new Date(startedAt.getTime() + Math.max(durationNum, 5) * 3600 * 1000);
 
+  const qrExpiresAt = new Date(
+    startedAt.getTime() + durationNum * 3600 * 1000
+  );
   const uniqueSlug = title
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
@@ -61,10 +65,10 @@ const createLiveSessionService = async (creatorId, data) => {
         description: description || "",
         thumbnail_url: thumbnailUrl || "",
         stream_url: streamUrl || "",
-        duration_hours: durationNum,
-        ends_at: endsAt,
+        // duration_hours: durationNum,
+        // ends_at: endsAt,
         status: "active",
-        started_at: new Date(),
+        started_at: startedAt,
         total_donations: 0,
         total_amount: 0,
       },
@@ -83,6 +87,8 @@ const createLiveSessionService = async (creatorId, data) => {
         payment_url: paymentLink,
         qr_image_url: qrCodeUrl,
         status: "active",
+        expires_at: qrExpiresAt,
+        qrcode_duration: durationNum,
       },
       { transaction }
     );
@@ -116,6 +122,10 @@ const createLiveSessionService = async (creatorId, data) => {
         durationHours: newSession.duration_hours,
         endsAt: newSession.ends_at,
         status: newSession.status,
+        liveSessionStatus: newSession.status,
+        qrStatus: "active",
+        isQrExpired: false,
+        qrExpiresAt,
         startedAt: newSession.started_at,
         createdAt: newSession.createdAt,
         totalDonations: 0,
@@ -197,6 +207,7 @@ const getLiveSessionsService = async (creatorId, queryParams = {}) => {
 
   const { count, rows: sessions } = await DonationSession.findAndCountAll({
     where: whereCondition,
+    include: [{ model: QrCode, as: "qrCode", required: false }],
     order: [["started_at", "DESC"]],
     limit,
     offset,
@@ -204,7 +215,7 @@ const getLiveSessionsService = async (creatorId, queryParams = {}) => {
 
   const sessionIds = sessions.map((s) => s.id);
 
-  // Grouped query to fetch donation question counts for all sessions at once (Eliminates N+1!)
+  // Grouped query to fetch donation question counts for all sessions at once
   let questionCountsMap = {};
   if (sessionIds.length > 0) {
     const counts = await Donation.findAll({
@@ -228,13 +239,19 @@ const getLiveSessionsService = async (creatorId, queryParams = {}) => {
     const paymentLink = `${origin}/pay/${s.session_code}?creatorId=${s.creator_id}&sessionId=${s.id}`;
     const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&ecc=H&margin=2&data=${encodeURIComponent(paymentLink)}`;
 
-    let curStatus = s.status;
-    if (curStatus === "active" && s.ends_at && now > new Date(s.ends_at)) {
-      curStatus = "closed";
-      // Perform silent update without blocking response
-      s.update({ status: "closed", ended_at: s.ends_at }).catch(() => { });
+    const qrCode = s.qrCode;
+    const qrExpiresAt = qrCode?.expires_at || (s.started_at ? new Date(new Date(s.started_at).getTime() + 3 * 3600 * 1000) : null);
+    let qrStatus = qrCode?.status;
+
+    if (qrStatus === "active" && qrExpiresAt && now >= new Date(qrExpiresAt)) {
+      qrStatus = "expired";
+      if (qrCode) {
+        qrCode.update({ status: "expired" }).catch(() => { });
+      }
     }
 
+    const isQrExpired = qrStatus === "expired";
+    const liveSessionStatus = s.status;
     const questionCount = questionCountsMap[s.id] || s.total_donations || 0;
 
     return {
@@ -247,7 +264,11 @@ const getLiveSessionsService = async (creatorId, queryParams = {}) => {
       streamUrl: s.stream_url,
       durationHours: s.duration_hours || 2,
       endsAt: s.ends_at,
-      status: curStatus,
+      status: s.status,
+      liveSessionStatus,
+      qrStatus,
+      isQrExpired,
+      qrExpiresAt,
       startedAt: s.started_at,
       createdAt: s.createdAt || s.started_at,
       endedAt: s.ended_at,
@@ -334,18 +355,33 @@ const startLiveSessionByIdService = async (sessionId, creatorId) => {
       { where: { creator_id: targetCreatorId, status: "active" }, transaction }
     );
 
-    const durationNum = Number(session.duration_hours || 2);
-    const endsAt = new Date(Date.now() + durationNum * 3600 * 1000);
+    const startedAt = new Date();
+    const qrExpiresAt = new Date(startedAt.getTime() + 3 * 3600 * 1000);
 
     await session.update(
       {
         status: "active",
-        started_at: new Date(),
-        ends_at: endsAt,
+        started_at: startedAt,
         ended_at: null,
       },
       { transaction }
     );
+
+    const [qrRecord] = await QrCode.findOrCreate({
+      where: { session_id: session.id },
+      defaults: {
+        session_id: session.id,
+        qr_token: `QR-${session.id}-${Date.now()}`,
+        payment_url: `${process.env.FRONTEND_URL || "http://localhost:3000"}/pay/${session.session_code}`,
+        status: "active",
+        expires_at: qrExpiresAt,
+      },
+      transaction,
+    });
+
+    if (qrRecord) {
+      await qrRecord.update({ status: "active", expires_at: qrExpiresAt }, { transaction });
+    }
 
     await transaction.commit();
 
@@ -375,9 +411,13 @@ const startLiveSessionByIdService = async (sessionId, creatorId) => {
         category: session.category,
         description: session.description,
         thumbnailUrl: session.thumbnail_url,
-        durationHours: durationNum,
-        endsAt,
+        durationHours: session.duration_hours || 2,
+        endsAt: session.ends_at,
         status: "active",
+        liveSessionStatus: "active",
+        qrStatus: "active",
+        isQrExpired: false,
+        qrExpiresAt,
         startedAt: session.started_at,
         paymentLink,
         qrCodeUrl,
@@ -401,10 +441,15 @@ const getPublicSessionDetailsService = async (sessionCode) => {
     throw err;
   }
 
-  let session = await DonationSession.findOne({ where: { session_code: sessionCode } });
+  let session = await DonationSession.findOne({
+    where: { session_code: sessionCode },
+    include: [{ model: QrCode, as: "qrCode", required: false }],
+  });
 
   if (!session && !isNaN(sessionCode)) {
-    session = await DonationSession.findByPk(sessionCode);
+    session = await DonationSession.findByPk(sessionCode, {
+      include: [{ model: QrCode, as: "qrCode", required: false }],
+    });
   }
 
   if (!session) {
@@ -413,10 +458,19 @@ const getPublicSessionDetailsService = async (sessionCode) => {
     throw err;
   }
 
-  if (session.status === "active" && session.ends_at && new Date() > new Date(session.ends_at)) {
-    await session.update({ status: "closed", ended_at: session.ends_at }).catch(() => { });
+  const now = new Date();
+  const qrCodeRecord = session.qrCode || (await QrCode.findOne({ where: { session_id: session.id } }));
+  const qrExpiresAt = qrCodeRecord?.expires_at || (session.started_at ? new Date(new Date(session.started_at).getTime() + 3 * 3600 * 1000) : null);
+  let qrStatus = qrCodeRecord?.status || "active";
+
+  if (qrStatus === "active" && qrExpiresAt && now >= new Date(qrExpiresAt)) {
+    qrStatus = "expired";
+    if (qrCodeRecord) {
+      qrCodeRecord.update({ status: "expired" }).catch(() => { });
+    }
   }
 
+  const isQrExpired = qrStatus === "expired";
   const creator = await CreatorsModel.findByPk(session.creator_id);
   const profile = await CreatorProfile.findOne({ where: { creator_id: session.creator_id } });
 
@@ -434,8 +488,13 @@ const getPublicSessionDetailsService = async (sessionCode) => {
       thumbnailUrl: session.thumbnail_url,
       streamUrl: session.stream_url,
       status: session.status,
+      liveSessionStatus: session.status,
+      qrStatus,
+      isQrExpired,
+      qrExpiresAt,
       endsAt: session.ends_at,
       startedAt: session.started_at,
+      endedAt: session.ended_at,
       totalDonations: session.total_donations || 0,
       totalAmount: parseFloat(session.total_amount || 0),
     },
@@ -462,33 +521,59 @@ const getSessionQuestionsService = async (sessionId, queryParams = {}) => {
   }
 
   const { page, limit, offset } = parsePagination(queryParams);
-  const { search, q, startDate, from, endDate, to, filter, type } = queryParams;
+  const { search, q, startDate, from, endDate, to, filter, type, status, isAnswered, answeredStatus } = queryParams;
 
   const whereCondition = {
     session_id: sessionId,
     payment_status: "success",
   };
 
+  const andConditions = [];
+
   // Filter by members vs superchat
   const targetType = (filter || type || "").toLowerCase();
   if (targetType === "members" || targetType === "priority" || targetType === "vip") {
-    whereCondition.is_vip = true;
+    andConditions.push({ is_vip: true });
   } else if (targetType === "superchat") {
-    whereCondition[Op.or] = [
-      { is_vip: false },
-      { is_vip: null }
-    ];
+    andConditions.push({
+      [Op.or]: [{ is_vip: false }, { is_vip: null }]
+    });
+  }
+
+  // Answered vs Unanswered / Not Answered server-side filter
+  const statusFilter = (status || isAnswered || answeredStatus || "").toLowerCase();
+  if (statusFilter === "answered" || statusFilter === "read" || statusFilter === "true" || statusFilter === "accepted") {
+    andConditions.push({
+      [Op.or]: [
+        { status: { [Op.in]: ["answered", "read", "completed", "answered_on_stream", "answered_later"] } },
+        { answered_at: { [Op.ne]: null } }
+      ]
+    });
+  } else if (statusFilter === "unanswered" || statusFilter === "not_answered" || statusFilter === "not_read" || statusFilter === "false" || statusFilter === "pending") {
+    andConditions.push({
+      [Op.and]: [
+        {
+          [Op.or]: [
+            { status: { [Op.notIn]: ["answered", "read", "completed", "answered_on_stream", "answered_later"] } },
+            { status: null }
+          ]
+        },
+        { answered_at: null }
+      ]
+    });
   }
 
   // Search filter (viewer_name, viewer_email, message)
   const searchTerm = (search || q || "").trim();
   if (searchTerm) {
     const searchPattern = `%${searchTerm}%`;
-    whereCondition[Op.or] = [
-      { viewer_name: { [Op.iLike]: searchPattern } },
-      { viewer_email: { [Op.iLike]: searchPattern } },
-      { message: { [Op.iLike]: searchPattern } },
-    ];
+    andConditions.push({
+      [Op.or]: [
+        { viewer_name: { [Op.iLike]: searchPattern } },
+        { viewer_email: { [Op.iLike]: searchPattern } },
+        { message: { [Op.iLike]: searchPattern } },
+      ]
+    });
   }
 
   // Date filter (startDate / endDate or from / to)
@@ -511,14 +596,17 @@ const getSessionQuestionsService = async (sessionId, queryParams = {}) => {
       }
     }
     if (Object.getOwnPropertySymbols(dateCond).length > 0) {
-      whereCondition[Op.and] = whereCondition[Op.and] || [];
-      whereCondition[Op.and].push({
+      andConditions.push({
         [Op.or]: [
           { paid_at: dateCond },
           { createdAt: dateCond }
         ]
       });
     }
+  }
+
+  if (andConditions.length > 0) {
+    whereCondition[Op.and] = andConditions;
   }
 
   const { count, rows: records } = await Donation.findAndCountAll({
@@ -528,17 +616,23 @@ const getSessionQuestionsService = async (sessionId, queryParams = {}) => {
     offset,
   });
 
-  const questions = records.map((d) => ({
-    id: d.id,
-    donationUuid: d.donation_uuid,
-    viewerName: d.anonymous ? "Anonymous Supporter" : d.viewer_name || "Supporter",
-    viewerEmail: d.viewer_email || "",
-    amount: parseFloat(d.amount || 0),
-    message: d.message || "",
-    paidAt: d.paid_at || d.createdAt,
-    isVip: !!d.is_vip,
-    status: d.status || "not_read",
-  }));
+  const questions = records.map((d) => {
+    const isAns = (d.status === "answered" || d.status === "read" || d.status === "completed" || d.status === "answered_on_stream" || d.status === "answered_later" || !!d.answered_at);
+    return {
+      id: d.id,
+      donationUuid: d.donation_uuid,
+      viewerName: d.anonymous ? "Anonymous Supporter" : d.viewer_name || "Supporter",
+      viewerEmail: d.viewer_email || "",
+      amount: parseFloat(d.amount || 0),
+      message: d.message || "",
+      paidAt: d.paid_at || d.createdAt,
+      isVip: !!d.is_vip,
+      status: d.status || (isAns ? "read" : "not_read"),
+      answerText: d.answer_text || null,
+      answeredAt: d.answered_at || null,
+      isAnswered: isAns,
+    };
+  });
 
   // Sort VIP questions first in queue
   questions.sort((a, b) => {

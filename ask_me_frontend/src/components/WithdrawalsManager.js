@@ -177,7 +177,7 @@ export default function WithdrawalsManager({ activeSubTab }) {
       {/* Table matching requirement #12 */}
       {isLoading ? (
         <div className="p-12 text-center text-xs text-[#8B8B96] space-y-2">
-          <div className="h-8 w-8 border-2 border-[#00F5D4] border-t-transparent rounded-full animate-spin mx-auto" />
+          <div className="h-8 w-8 border-2 border-[#EB1000] border-t-transparent rounded-full animate-spin mx-auto" />
           <p>Loading withdrawal requests...</p>
         </div>
       ) : filteredWithdrawals.length === 0 ? (
@@ -202,7 +202,7 @@ export default function WithdrawalsManager({ activeSubTab }) {
                 <tr key={w.id} className="hover:bg-[#0A0A0F]/60 transition">
 
                   {/* Request ID */}
-                  <td className="py-3.5 px-2 font-mono text-[#00F5D4] font-bold">
+                  <td className="py-3.5 px-2 font-mono text-[#EB1000] font-bold">
                     {w.id}
                   </td>
 
@@ -225,7 +225,7 @@ export default function WithdrawalsManager({ activeSubTab }) {
                   {/* Status Badge */}
                   <td className="py-3.5 px-2">
                     <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold capitalize ${w.status === 'completed' || w.status === 'paid' ? 'bg-[#00E676]/10 text-[#00E676] border border-[#00E676]/30' :
-                      w.status === 'approved' ? 'bg-[#00F5D4]/10 text-[#00F5D4] border border-[#00F5D4]/30' :
+                      w.status === 'approved' ? 'bg-[#EB1000]/10 text-[#EB1000] border border-[#EB1000]/30' :
                         w.status === 'processing' ? 'bg-[#FFD60A]/10 text-[#FFD60A] border border-[#FFD60A]/30' :
                           w.status === 'pending' ? 'bg-[#FFD60A]/20 text-[#FFD60A] border border-[#FFD60A]/40' :
                             'bg-[#FF3D71]/10 text-[#FF3D71] border border-[#FF3D71]/30'
@@ -243,7 +243,7 @@ export default function WithdrawalsManager({ activeSubTab }) {
                         <>
                           <button
                             onClick={() => handleUpdateStatusCall(w.id, 'approved')}
-                            className="px-2.5 py-1 rounded-lg bg-[#00F5D4] text-white font-bold text-[11px] hover:opacity-90 transition"
+                            className="px-2.5 py-1 rounded-lg bg-[#EB1000] text-white font-bold text-[11px] hover:opacity-90 transition"
                           >
                             Approve
                           </button>
@@ -331,7 +331,7 @@ export default function WithdrawalsManager({ activeSubTab }) {
       {/* PAGINATION CONTROLS BAR */}
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-[#1C1C26] text-xs">
         <span className="text-[#8B8B96]">
-          Showing <strong className="text-white">{withdrawals.length}</strong> of <strong className="text-[#00F5D4]">{totalCount}</strong> Withdrawal Requests (Page {currentPage} of {totalPages})
+          Showing <strong className="text-white">{withdrawals.length}</strong> of <strong className="text-[#EB1000]">{totalCount}</strong> Withdrawal Requests (Page {currentPage} of {totalPages})
         </span>
         <div className="flex items-center gap-2">
           <button
@@ -342,7 +342,7 @@ export default function WithdrawalsManager({ activeSubTab }) {
           >
             ← Previous
           </button>
-          <span className="px-3 py-1.5 rounded-xl bg-[#0A0A0F] border border-[#1C1C26] font-bold text-[#00F5D4]">
+          <span className="px-3 py-1.5 rounded-xl bg-[#0A0A0F] border border-[#1C1C26] font-bold text-[#EB1000]">
             {currentPage} / {totalPages}
           </span>
           <button
@@ -393,7 +393,7 @@ export default function WithdrawalsManager({ activeSubTab }) {
                   placeholder="e.g. UTR982140192 / BANK-REF-902"
                   value={transactionRefInput}
                   onChange={(e) => setTransactionRefInput(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-xl bg-[#0A0A0F] border border-[#1C1C26] text-white text-xs font-mono font-bold focus:outline-none focus:border-[#00F5D4]"
+                  className="w-full px-4 py-2.5 rounded-xl bg-[#0A0A0F] border border-[#1C1C26] text-white text-xs font-mono font-bold focus:outline-none focus:border-[#EB1000]"
                 />
               </div>
 

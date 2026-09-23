@@ -43,6 +43,11 @@ const QrCode = sequelize.define(
         expires_at: {
             type: DataTypes.DATE,
         },
+        qrcode_duration: {
+            type: DataTypes.INTEGER,
+            allowNull: false,
+            defaultValue: 3,
+        }
     },
     {
         tableName: "qr_codes",

@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { User, Mail, Lock, Phone, ArrowRight, AlertCircle, CheckCircle2, Check, X, Eye, EyeOff } from 'lucide-react';
+import { User, Mail, Lock, Phone, ArrowRight, AlertCircle, CheckCircle2, Check, X, Eye, EyeOff, MessageSquare, RefreshCw } from 'lucide-react';
 import { API_ENDPOINTS } from '@/config/api';
 import { setViewerSession } from '@/utils/cookies';
 import { useToast } from '@/context/ToastContext';
@@ -21,6 +21,87 @@ export default function ViewerRegisterPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+
+  // WhatsApp OTP Verification States
+  const [regWaStep, setRegWaStep] = useState('idle'); // 'idle' | 'otp_sent' | 'verified'
+  const [regWaOtp, setRegWaOtp] = useState('');
+  const [regWaLoading, setRegWaLoading] = useState(false);
+  const [regWaError, setRegWaError] = useState('');
+  const [regWaSuccess, setRegWaSuccess] = useState('');
+
+  const handleSendRegWaOtp = async () => {
+    const cleanMobile = (formData.mobile || '').replace(/[^0-9]/g, '');
+    if (!cleanMobile || cleanMobile.length !== 10) {
+      const errText = 'Please enter a valid 10-digit mobile number first.';
+      setRegWaError(errText);
+      toast.error(errText, 'Mobile Required');
+      return;
+    }
+    setRegWaError('');
+    setRegWaSuccess('');
+    try {
+      setRegWaLoading(true);
+      const res = await fetch(API_ENDPOINTS.VIEWERS.WHATSAPP_SEND_OTP, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone: cleanMobile }),
+      });
+      const data = await res.json();
+      if (res.ok && data.status === 'success') {
+        const msg = data.message || `WhatsApp OTP sent to +91 ${cleanMobile}`;
+        setRegWaSuccess(msg);
+        toast.success(msg, 'WhatsApp OTP Sent');
+        setRegWaStep('otp_sent');
+      } else {
+        const errText = data.message || 'Failed to send WhatsApp OTP.';
+        setRegWaError(errText);
+        toast.error(errText, 'OTP Error');
+      }
+    } catch (err) {
+      const errText = 'Server error while sending WhatsApp OTP.';
+      setRegWaError(errText);
+      toast.error(errText, 'OTP Error');
+    } finally {
+      setRegWaLoading(false);
+    }
+  };
+
+  const handleVerifyRegWaOtp = async () => {
+    const cleanMobile = (formData.mobile || '').replace(/[^0-9]/g, '');
+    if (!regWaOtp || regWaOtp.length < 4) {
+      const errText = 'Please enter the 6-digit OTP code sent to your WhatsApp.';
+      setRegWaError(errText);
+      toast.error(errText, 'OTP Required');
+      return;
+    }
+    setRegWaError('');
+    setRegWaSuccess('');
+    try {
+      setRegWaLoading(true);
+      const res = await fetch(API_ENDPOINTS.VIEWERS.WHATSAPP_VERIFY_OTP, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone: cleanMobile, otp: regWaOtp }),
+      });
+      const data = await res.json();
+      if (res.ok && data.status === 'success') {
+        const msg = 'Mobile number verified via WhatsApp!';
+        setRegWaSuccess(msg);
+        toast.success(msg, 'Mobile Verified!');
+        setRegWaStep('verified');
+      } else {
+        const errText = data.message || 'Invalid WhatsApp OTP code.';
+        setRegWaError(errText);
+        toast.error(errText, 'Verification Failed');
+      }
+    } catch (err) {
+      const errText = 'Server error verifying OTP.';
+      setRegWaError(errText);
+      toast.error(errText, 'Error');
+    } finally {
+      setRegWaLoading(false);
+    }
+  };
 
   const handleChange = (e) => {
     setFormData({
@@ -74,6 +155,13 @@ export default function ViewerRegisterPage() {
       const msg = 'Invalid mobile number. Please enter a valid 10-digit phone number.';
       setErrorMessage(msg);
       toast.error(msg, 'Invalid Mobile Number');
+      return;
+    }
+
+    if (regWaStep !== 'verified') {
+      const msg = 'Please verify your mobile number via WhatsApp OTP before registering.';
+      setErrorMessage(msg);
+      toast.error(msg, 'Mobile Verification Required');
       return;
     }
 
@@ -193,9 +281,16 @@ export default function ViewerRegisterPage() {
 
             {/* Mobile Number */}
             <div>
-              <label className="block text-xs font-bold text-white mb-1">
-                Mobile Number <span className="text-[#EB1000]">*</span>
-              </label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-xs font-bold text-white">
+                  Mobile Number <span className="text-[#EB1000]">*</span>
+                </label>
+                {regWaStep === 'verified' && (
+                  <span className="text-[10px] font-extrabold text-[#00E676] flex items-center gap-1 bg-[#00E676]/10 px-2 py-0.5 rounded-full border border-[#00E676]/30">
+                    <Check className="h-3 w-3" /> WhatsApp Verified ✓
+                  </span>
+                )}
+              </div>
               <div className="relative">
                 <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[#8B8B96]" />
                 <input
@@ -203,16 +298,67 @@ export default function ViewerRegisterPage() {
                   name="mobile"
                   maxLength={10}
                   placeholder="9876543210"
+                  disabled={regWaStep === 'verified'}
                   value={formData.mobile}
                   onChange={(e) => {
                     const val = e.target.value.replace(/[^0-9]/g, '').slice(0, 10);
                     setFormData({ ...formData, mobile: val });
                     setErrorMessage('');
+                    if (regWaStep !== 'idle') setRegWaStep('idle');
                   }}
                   required
                   className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[#0D0D14] border border-[#1F1F30] text-xs text-white placeholder-[#8B8B96] focus:outline-none focus:border-[#EB1000] transition font-mono"
                 />
               </div>
+
+              {/* Send WhatsApp OTP Button */}
+              {formData.mobile.length === 10 && regWaStep === 'idle' && (
+                <button
+                  type="button"
+                  onClick={handleSendRegWaOtp}
+                  disabled={regWaLoading}
+                  className="mt-2 w-full py-2.5 px-3 rounded-xl bg-[#00E676] hover:bg-[#00C853] text-black font-black text-xs transition flex items-center justify-center gap-1.5 shadow-md cursor-pointer disabled:opacity-50"
+                >
+                  {regWaLoading ? (
+                    <RefreshCw className="h-4 w-4 animate-spin text-black" />
+                  ) : (
+                    <>
+                      <MessageSquare className="h-4 w-4 fill-black" />
+                      <span>Send WhatsApp OTP to Verify Mobile</span>
+                    </>
+                  )}
+                </button>
+              )}
+
+              {/* Enter OTP Field */}
+              {regWaStep === 'otp_sent' && (
+                <div className="mt-2 p-3 rounded-2xl bg-[#0A1A10] border border-[#00E676]/40 space-y-2">
+                  <div className="flex items-center justify-between text-[11px] font-bold text-[#00E676]">
+                    <span>Enter OTP sent to WhatsApp (+91 {formData.mobile}):</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      maxLength={6}
+                      value={regWaOtp}
+                      onChange={(e) => setRegWaOtp(e.target.value.replace(/\D/g, ''))}
+                      placeholder="123456"
+                      className="w-full py-2 px-3 rounded-xl border border-[#00E676]/50 text-xs text-center font-mono font-bold tracking-widest bg-[#0D0D14] text-white outline-none focus:border-[#00E676]"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleVerifyRegWaOtp}
+                      disabled={regWaLoading || !regWaOtp}
+                      className="px-4 py-2 rounded-xl bg-[#00E676] hover:bg-[#00C853] text-black font-black text-xs shrink-0 transition shadow-md cursor-pointer disabled:opacity-50"
+                    >
+                      {regWaLoading ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : 'Verify'}
+                    </button>
+                  </div>
+                  {regWaError && (
+                    <p className="text-[11px] text-[#EB1000] font-bold">{regWaError}</p>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Strong Password Input with Live Indicator */}

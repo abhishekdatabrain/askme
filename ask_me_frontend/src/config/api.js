@@ -92,7 +92,15 @@ export const API_ENDPOINTS = {
   CONTACT: {
     SUBMIT: `${API_BASE_URL}/contact/submit`,
     MESSAGES: `${API_BASE_URL}/contact/messages`,
+    MY_TICKETS: `${API_BASE_URL}/contact/my-tickets`,
     UPDATE_STATUS: (id) => `${API_BASE_URL}/contact/messages/${id}/status`,
+  },
+  TICKETS: {
+    CREATE: `${API_BASE_URL}/tickets/create`,
+    MY_TICKETS: `${API_BASE_URL}/tickets/my-tickets`,
+    ADMIN_ALL: `${API_BASE_URL}/tickets/admin/all`,
+    UPDATE_STATUS: (id) => `${API_BASE_URL}/tickets/admin/${id}/status`,
+    APPROVE_PAYOUT: (id) => `${API_BASE_URL}/tickets/admin/${id}/approve-payout`,
   },
 };
 

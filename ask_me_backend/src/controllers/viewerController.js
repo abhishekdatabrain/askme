@@ -11,6 +11,7 @@ const Donation = require('../models/DonationModel');
 const { sendLoginOtpWhatsApp } = require('../services/whatsappService');
 const { generateAndStoreOtp, verifyStoredOtp } = require('../utils/whatsappOtpStore');
 const { verifyTruecallerToken } = require('../services/truecallerService');
+const { sendWelcomeEmailAsync } = require('../services/emailService');
 const { Op } = require('sequelize');
 
 const { OAuth2Client } = require('google-auth-library');
@@ -63,6 +64,13 @@ const registerViewer = async (req, res, next) => {
       email: viewerEmail,
       password,
       phone: mobile,
+      role: 'viewer',
+    });
+
+    // Trigger non-blocking asynchronous welcome email to viewer
+    sendWelcomeEmailAsync({
+      email: newUser.email,
+      name: newUser.name,
       role: 'viewer',
     });
 

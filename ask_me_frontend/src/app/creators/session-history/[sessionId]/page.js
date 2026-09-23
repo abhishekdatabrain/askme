@@ -45,6 +45,7 @@ export default function DedicatedSessionQuestionsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all'); // 'all' | 'answered' | 'unanswered'
 
   // Theme Sync
   useEffect(() => {
@@ -76,7 +77,7 @@ export default function DedicatedSessionQuestionsPage() {
     }
   };
 
-  const fetchSessionAndQuestions = async (uId, token, search = searchQuery, start = startDate, end = endDate) => {
+  const fetchSessionAndQuestions = async (uId, token, search = searchQuery, start = startDate, end = endDate, stat = statusFilter) => {
     try {
       setIsLoading(true);
 
@@ -105,6 +106,9 @@ export default function DedicatedSessionQuestionsPage() {
       if (end) {
         qUrl += `&endDate=${encodeURIComponent(end)}`;
       }
+      if (stat && stat !== 'all') {
+        qUrl += `&status=${encodeURIComponent(stat)}`;
+      }
 
       const qRes = await fetch(qUrl, {
         headers: token ? { Authorization: `Bearer ${token}` } : {}
@@ -132,7 +136,7 @@ export default function DedicatedSessionQuestionsPage() {
     }
     setCreator(u);
     if (sessionId) {
-      fetchSessionAndQuestions(u.id, token, '', '', '');
+      fetchSessionAndQuestions(u.id, token, '', '', '', 'all');
     }
   }, [sessionId]);
 
@@ -140,20 +144,28 @@ export default function DedicatedSessionQuestionsPage() {
     if (e) e.preventDefault();
     if (!creator) return;
     const token = getCreatorToken();
-    fetchSessionAndQuestions(creator.id, token, searchQuery, startDate, endDate);
+    fetchSessionAndQuestions(creator.id, token, searchQuery, startDate, endDate, statusFilter);
+  };
+
+  const handleStatusChange = (newStatus) => {
+    setStatusFilter(newStatus);
+    if (!creator) return;
+    const token = getCreatorToken();
+    fetchSessionAndQuestions(creator.id, token, searchQuery, startDate, endDate, newStatus);
   };
 
   const handleResetFilters = () => {
     setSearchQuery('');
     setStartDate('');
     setEndDate('');
+    setStatusFilter('all');
     if (creator) {
       const token = getCreatorToken();
-      fetchSessionAndQuestions(creator.id, token, '', '', '');
+      fetchSessionAndQuestions(creator.id, token, '', '', '', 'all');
     }
   };
 
-  const isFiltered = searchQuery.trim() !== '' || startDate !== '' || endDate !== '';
+  const isFiltered = searchQuery.trim() !== '' || startDate !== '' || endDate !== '' || statusFilter !== 'all';
   const totalAmount = questions.reduce((acc, q) => acc + (parseFloat(q.amount) || 0), 0);
   const vipCount = questions.filter(q => q.isVip).length;
 
@@ -224,84 +236,102 @@ export default function DedicatedSessionQuestionsPage() {
                   </div>
                 )}
               </div>
-            </div>
-
-            {/* SEARCH & DATE FILTERS BAR */}
-            <div className={`p-4 rounded-2xl border transition-all ${theme === 'light' ? 'bg-[#F8FAFC] border-[#E2E8F0]' : 'bg-[#181826] border-[#2A2A3E]'
+            </div>            {/* SINGLE LINE SEARCH & DATE & STATUS FILTERS BAR */}
+            <div className={`p-3 rounded-2xl border transition-all ${theme === 'light' ? 'bg-[#F8FAFC] border-[#E2E8F0]' : 'bg-[#181826] border-[#2A2A3E]'
               }`}>
-              <form onSubmit={handleSearchSubmit} className="flex flex-col md:flex-row md:items-center justify-between gap-3 flex-wrap">
+              <form onSubmit={handleSearchSubmit} className="flex items-center gap-2.5 w-full overflow-x-auto no-scrollbar py-0.5">
                 {/* Search Box */}
-                <div className="relative flex-1 min-w-[200px]">
-                  <Search className={`absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 ${theme === 'light' ? 'text-[#64748B]' : 'text-[#EB1000]'
+                <div className="relative min-w-[160px] flex-1">
+                  <Search className={`absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 ${theme === 'light' ? 'text-[#64748B]' : 'text-[#EB1000]'
                     }`} />
                   <input
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Search by viewer name or question message..."
-                    className={`w-full pl-10 pr-9 py-2.5 rounded-xl text-xs border outline-none font-medium transition-all duration-200 ${theme === 'light'
-                        ? 'bg-white border-[#E2E8F0] text-[#0F172A] placeholder-[#94A3B8] focus:border-[#EB1000] focus:ring-1 focus:ring-[#EB1000]'
-                        : 'bg-[#12121C] border-[#222236] text-white placeholder-[#6E6E82] focus:border-[#EB1000] focus:ring-1 focus:ring-[#EB1000]'
+                    placeholder="Search viewer or message..."
+                    className={`w-full pl-9 pr-7 py-2 rounded-xl text-xs border outline-none font-medium transition-all ${theme === 'light'
+                      ? 'bg-white border-[#E2E8F0] text-[#0F172A] placeholder-[#94A3B8] focus:border-[#EB1000]'
+                      : 'bg-[#12121C] border-[#222236] text-white placeholder-[#6E6E82] focus:border-[#EB1000]'
                       }`}
                   />
                   {searchQuery && (
                     <button
                       type="button"
                       onClick={() => setSearchQuery('')}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-[#A0A0B2] hover:text-white p-0.5 cursor-pointer"
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#A0A0B2] hover:text-white p-0.5 cursor-pointer"
                     >
-                      <X className="h-3.5 w-3.5" />
+                      <X className="h-3 w-3" />
                     </button>
                   )}
                 </div>
 
-                {/* Date Inputs */}
-                <div className="flex items-center gap-2.5 flex-wrap">
-                  <div className="flex items-center gap-1.5">
-                    <span className={`text-[11px] font-bold flex items-center gap-1 ${theme === 'light' ? 'text-[#64748B]' : 'text-[#A0A0B2]'}`}>
-                      <Calendar className="h-3.5 w-3.5 text-[#EB1000]" /> From:
-                    </span>
-                    <input
-                      type="date"
-                      value={startDate}
-                      onChange={(e) => setStartDate(e.target.value)}
-                      className={`px-3 py-2 rounded-xl text-xs border outline-none font-medium transition-all duration-200 ${theme === 'light'
-                          ? 'bg-white border-[#E2E8F0] text-[#0F172A] focus:border-[#EB1000]'
-                          : 'bg-[#12121C] border-[#222236] text-white focus:border-[#EB1000]'
-                        }`}
-                    />
-                  </div>
+                {/* Server-Side Answered Status Dropdown */}
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <span className={`text-[11px] font-bold ${theme === 'light' ? 'text-[#64748B]' : 'text-[#A0A0B2]'}`}>
+                    Status:
+                  </span>
+                  <select
+                    value={statusFilter}
+                    onChange={(e) => handleStatusChange(e.target.value)}
+                    className={`px-2.5 py-2 rounded-xl text-xs border outline-none font-bold transition cursor-pointer ${theme === 'light'
+                      ? 'bg-white border-[#E2E8F0] text-[#0F172A] focus:border-[#EB1000]'
+                      : 'bg-[#12121C] border-[#222236] text-white focus:border-[#EB1000]'
+                      }`}
+                  >
+                    <option value="all">All Questions</option>
+                    <option value="answered">✓ Answered</option>
+                    <option value="unanswered">⏳ Not Answered</option>
+                  </select>
+                </div>
 
-                  <div className="flex items-center gap-1.5">
-                    <span className={`text-[11px] font-bold ${theme === 'light' ? 'text-[#64748B]' : 'text-[#A0A0B2]'}`}>To:</span>
-                    <input
-                      type="date"
-                      value={endDate}
-                      onChange={(e) => setEndDate(e.target.value)}
-                      className={`px-3 py-2 rounded-xl text-xs border outline-none font-medium transition-all duration-200 ${theme === 'light'
-                          ? 'bg-white border-[#E2E8F0] text-[#0F172A] focus:border-[#EB1000]'
-                          : 'bg-[#12121C] border-[#222236] text-white focus:border-[#EB1000]'
-                        }`}
-                    />
-                  </div>
+                {/* From Date */}
+                <div className="flex items-center gap-1 shrink-0">
+                  <span className={`text-[11px] font-bold flex items-center gap-0.5 ${theme === 'light' ? 'text-[#64748B]' : 'text-[#A0A0B2]'}`}>
+                    <Calendar className="h-3 w-3 text-[#EB1000]" /> From:
+                  </span>
+                  <input
+                    type="date"
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
+                    className={`px-2 py-1.5 rounded-xl text-xs border outline-none font-medium transition ${theme === 'light'
+                      ? 'bg-white border-[#E2E8F0] text-[#0F172A] focus:border-[#EB1000]'
+                      : 'bg-[#12121C] border-[#222236] text-white focus:border-[#EB1000]'
+                      }`}
+                  />
+                </div>
+
+                {/* To Date */}
+                <div className="flex items-center gap-1 shrink-0">
+                  <span className={`text-[11px] font-bold ${theme === 'light' ? 'text-[#64748B]' : 'text-[#A0A0B2]'}`}>To:</span>
+                  <input
+                    type="date"
+                    value={endDate}
+                    onChange={(e) => setEndDate(e.target.value)}
+                    className={`px-2 py-1.5 rounded-xl text-xs border outline-none font-medium transition ${theme === 'light'
+                      ? 'bg-white border-[#E2E8F0] text-[#0F172A] focus:border-[#EB1000]'
+                      : 'bg-[#12121C] border-[#222236] text-white focus:border-[#EB1000]'
+                      }`}
+                  />
                 </div>
 
                 {/* Search Button & Reset */}
-                <div className="flex items-center gap-2 shrink-0">
+                <div className="flex items-center gap-1.5 shrink-0">
                   <button
                     type="submit"
-                    className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#EB1000] to-[#CC0E00] text-white font-black text-xs shadow-md shadow-[#EB1000]/20 hover:opacity-90 transition flex items-center gap-1.5 cursor-pointer"
+                    className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-[#EB1000] to-[#CC0E00] text-white font-black text-xs shadow-md shadow-[#EB1000]/20 hover:opacity-90 transition flex items-center gap-1 cursor-pointer shrink-0"
                   >
-                    <Search className="h-3.5 w-3.5" /> Search
+                    <Search className="h-3.5 w-3.5" />
+                    <span>Search</span>
                   </button>
 
                   {isFiltered && (
                     <button
                       type="button"
                       onClick={handleResetFilters}
-                      className="px-3.5 py-2.5 rounded-xl text-xs font-black text-[#FF3D71] bg-[#FF3D71]/10 border border-[#FF3D71]/30 hover:bg-[#FF3D71]/20 transition flex items-center gap-1 cursor-pointer"
+                      className="px-2.5 py-2 rounded-xl text-xs font-black text-[#FF3D71] bg-[#FF3D71]/10 border border-[#FF3D71]/30 hover:bg-[#FF3D71]/20 transition flex items-center gap-1 cursor-pointer shrink-0"
                     >
-                      <RotateCcw className="h-3.5 w-3.5" /> Reset
+                      <RotateCcw className="h-3.5 w-3.5" />
+                      <span>Reset</span>
                     </button>
                   )}
                 </div>
@@ -397,13 +427,13 @@ export default function DedicatedSessionQuestionsPage() {
                     )}
 
                     <div className="flex items-center justify-between pt-1 text-xs">
-                      <span className={`px-3 py-1 rounded-full font-black text-[10px] uppercase ${q.status === 'read'
+                      <span className={`px-3 py-1 rounded-full font-black text-[10px] uppercase flex items-center gap-1 ${(q.isAnswered || q.status === 'read' || q.status === 'answered' || q.status === 'completed')
                         ? 'bg-[#00E676]/15 text-[#00E676] border border-[#00E676]/30'
-                        : q.status === 'cancelled'
+                        : q.status === 'cancelled' || q.status === 'rejected'
                           ? 'bg-[#FF3D71]/15 text-[#FF3D71] border border-[#FF3D71]/30'
                           : 'bg-[#FFD60A]/15 text-[#FFD60A] border border-[#FFD60A]/30'
                         }`}>
-                        {q.status === 'read' ? '✓ Accepted & Answered' : (q.status === 'cancelled' ? '✕ Cancelled' : '● Pending Queue')}
+                        {(q.isAnswered || q.status === 'read' || q.status === 'answered' || q.status === 'completed') ? '✓ Answered' : (q.status === 'cancelled' || q.status === 'rejected' ? '✕ Rejected' : '● Not Answered')}
                       </span>
                     </div>
                   </div>

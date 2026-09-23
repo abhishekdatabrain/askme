@@ -30,7 +30,13 @@ import {
   CheckCircle2,
   Sun,
   Moon,
-  Bell
+  Bell,
+  Lock,
+  HelpCircle,
+  X,
+  Send,
+  ShieldAlert,
+  Inbox
 } from 'lucide-react';
 import { API_ENDPOINTS, getMediaUrl } from '@/config/api';
 import { uploadFile, getLocalFilePreview } from '@/utils/fileUpload';
@@ -141,6 +147,12 @@ export default function CreatorProfilePage() {
     ifscCode: '',
     accountHolderName: '',
   });
+
+  const [isPayoutLocked, setIsPayoutLocked] = useState(false);
+  const [showTicketModal, setShowTicketModal] = useState(false);
+  const [ticketReason, setTicketReason] = useState('');
+  const [isSubmittingTicket, setIsSubmittingTicket] = useState(false);
+  const [myTickets, setMyTickets] = useState([]);
 
   const [isUpiVerified, setIsUpiVerified] = useState(false);
   const [isVerifyingUpi, setIsVerifyingUpi] = useState(false);
@@ -306,6 +318,18 @@ export default function CreatorProfilePage() {
         } else {
           setIsUpiVerified(false);
         }
+
+        if ((fetchedUpi && fetchedUpi.trim()) || (fetchedAccNum && fetchedAccNum.trim() && fetchedAccNum !== 'N/A')) {
+          setIsPayoutLocked(true);
+        } else {
+          setIsPayoutLocked(false);
+        }
+
+        // Fetch raised ticket history
+        const userEmail = c.email || userObj.email;
+        if (userEmail) {
+          fetchMyTickets(userEmail);
+        }
       }
     } catch (err) {
       console.warn(
@@ -321,66 +345,82 @@ export default function CreatorProfilePage() {
     fetchCreatorProfile();
   }, [fetchCreatorProfile]);
 
+  const [avatarPreviewUrl, setAvatarPreviewUrl] = useState('');
+
   const handleImageChange = async (e) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const localPreview = getLocalFilePreview(file);
-      setProfile(prev => ({ ...prev, profileImage: localPreview }));
-      try {
-        toast.info('Uploading avatar to server...', 'Upload In Progress');
-        const uploadResult = await uploadFile(file, 'profile');
-        setProfile(prev => ({ ...prev, profileImage: uploadResult.path }));
-        toast.success('Avatar uploaded successfully!', 'Profile Picture');
-      } catch (err) {
-        toast.error(err?.message || 'Failed to upload avatar image.', 'Upload Error');
-      }
+    if (!file) return;
+
+    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
+    if (!validTypes.includes(file.type.toLowerCase())) {
+      toast.error('Please select a valid image file (JPG, PNG, WEBP, GIF).', 'Invalid Image');
+      return;
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error('Image file size must be under 10MB.', 'File Too Large');
+      return;
+    }
+
+    const localPreview = getLocalFilePreview(file);
+    setAvatarPreviewUrl(localPreview);
+
+    try {
+      toast.info('Uploading avatar to server...', 'Upload In Progress');
+      const uploadResult = await uploadFile(file, 'profile');
+      setProfile(prev => ({ ...prev, profileImage: uploadResult.path }));
+      toast.success('Avatar uploaded successfully!', 'Profile Picture');
+    } catch (err) {
+      toast.error(err?.message || 'Failed to upload avatar image.', 'Upload Error');
     }
   };
 
   const handleSaveProfile = async (e) => {
     if (e) e.preventDefault();
 
-    // Validate UPI ID
-    const upiErr = validateUpiRules(bankAccount.upiId);
-    if (upiErr) {
-      toast.error(upiErr, 'UPI ID Error');
-      return;
-    }
-
-    // Auto verify UPI ID if not already verified
-    if (!isUpiVerified) {
-      const verified = await handleVerifyUpi(bankAccount.upiId);
-      if (!verified) {
+    if (!isPayoutLocked) {
+      // Validate UPI ID
+      const upiErr = validateUpiRules(bankAccount.upiId);
+      if (upiErr) {
+        toast.error(upiErr, 'UPI ID Error');
         return;
       }
-    }
 
-    // Validate Account Number and Confirmation Account Number
-    const accNum = String(bankAccount.accountNumber || '').trim();
-    const confNum = String(bankAccount.confirmAccountNumber || '').trim();
+      // Auto verify UPI ID if not already verified
+      if (!isUpiVerified) {
+        const verified = await handleVerifyUpi(bankAccount.upiId);
+        if (!verified) {
+          return;
+        }
+      }
 
-    if (accNum || confNum) {
-      if (!accNum) {
-        toast.error('Account Number is required.', 'Validation Error');
-        return;
-      }
-      if (!confNum) {
-        toast.error('Confirmation Account Number is required.', 'Validation Error');
-        return;
-      }
-      if (accNum !== confNum) {
-        toast.error('Account Number and Confirmation Account Number do not match.', 'Validation Error');
-        return;
-      }
-    }
+      // Validate Account Number and Confirmation Account Number
+      const accNum = String(bankAccount.accountNumber || '').trim();
+      const confNum = String(bankAccount.confirmAccountNumber || '').trim();
 
-    // Validate IFSC Code format if provided
-    const rawIfsc = String(bankAccount.ifscCode || '').trim().toUpperCase();
-    if (rawIfsc) {
-      const ifscRegex = /^[A-Z]{4}0[A-Z0-9]{6}$/;
-      if (!ifscRegex.test(rawIfsc)) {
-        toast.error('Invalid IFSC Code format. IFSC must be 11 characters (e.g. SBIN0001234, HDFC0000240).', 'Validation Error');
-        return;
+      if (accNum || confNum) {
+        if (!accNum) {
+          toast.error('Account Number is required.', 'Validation Error');
+          return;
+        }
+        if (!confNum) {
+          toast.error('Confirmation Account Number is required.', 'Validation Error');
+          return;
+        }
+        if (accNum !== confNum) {
+          toast.error('Account Number and Confirmation Account Number do not match.', 'Validation Error');
+          return;
+        }
+      }
+
+      // Validate IFSC Code format if provided
+      const rawIfsc = String(bankAccount.ifscCode || '').trim().toUpperCase();
+      if (rawIfsc) {
+        const ifscRegex = /^[A-Z]{4}0[A-Z0-9]{6}$/;
+        if (!ifscRegex.test(rawIfsc)) {
+          toast.error('Invalid IFSC Code format. IFSC must be 11 characters (e.g. SBIN0001234, HDFC0000240).', 'Validation Error');
+          return;
+        }
       }
     }
 
@@ -402,13 +442,15 @@ export default function CreatorProfilePage() {
           channelHandle: streamingChannels.channelHandle,
         },
         socialLinks: socialLinks,
-        paymentInfo: {
-          upiId: bankAccount.upiId,
-          bankName: bankAccount.bankName,
-          accountNumber: bankAccount.accountNumber,
-          ifscCode: bankAccount.ifscCode,
-          accountHolderName: bankAccount.accountHolderName,
-        },
+        ...(!isPayoutLocked ? {
+          paymentInfo: {
+            upiId: bankAccount.upiId,
+            bankName: bankAccount.bankName,
+            accountNumber: bankAccount.accountNumber,
+            ifscCode: bankAccount.ifscCode,
+            accountHolderName: bankAccount.accountHolderName,
+          }
+        } : {})
       };
 
       const res = await fetch(API_ENDPOINTS.CREATORS.PROFILE, {
@@ -432,6 +474,9 @@ export default function CreatorProfilePage() {
         }
 
         toast.success('Creator profile settings saved successfully!', 'Saved!');
+        if (bankAccount.upiId || bankAccount.accountNumber) {
+          setIsPayoutLocked(true);
+        }
         fetchCreatorProfile();
       } else {
         toast.error(data?.message || 'Failed to save profile settings.', 'Error');
@@ -441,6 +486,71 @@ export default function CreatorProfilePage() {
       toast.error('Network issue connecting to server.', 'Error');
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const fetchMyTickets = useCallback(async (email) => {
+    const targetEmail = email || profile.email;
+    if (!targetEmail) return;
+    try {
+      const endpoint = API_ENDPOINTS?.TICKETS?.MY_TICKETS || `http://localhost:5000/api/tickets/my-tickets`;
+      const url = `${endpoint}?email=${encodeURIComponent(targetEmail)}${profile.id ? `&creatorId=${profile.id}` : ''}`;
+      const res = await fetch(url);
+      const data = await res.json();
+      if (res.ok && data.data) {
+        setMyTickets(Array.isArray(data.data) ? data.data : []);
+      }
+    } catch (err) {
+      console.warn('Fetch my tickets notice:', err.message);
+    }
+  }, [profile.email, profile.id]);
+
+  const handleRaiseTicket = async (e) => {
+    if (e) e.preventDefault();
+    if (!ticketReason.trim()) {
+      toast.error('Please enter a reason for your change request.', 'Incomplete Ticket');
+      return;
+    }
+
+    try {
+      setIsSubmittingTicket(true);
+      const token = getCreatorToken();
+      const userObj = getCreatorUser();
+
+      const payload = {
+        name: profile.fullName || userObj?.fullName || 'Creator',
+        email: profile.email || userObj?.email || '',
+        phone: profile.mobile || '',
+        role: 'Streamer',
+        category: 'Payout Change',
+        subject: `Payout Details Change Ticket for ${profile.username || '@creator'}`,
+        message: `CREATOR PAYOUT CHANGE TICKET\nCreator ID: ${profile.id || userObj?.id}\nUsername: ${profile.username}\nCurrent UPI: ${bankAccount.upiId || 'N/A'}\nCurrent Bank: ${bankAccount.bankName || 'N/A'}\nCurrent Account Number: ${bankAccount.accountNumber || 'N/A'}\n\nREASON & REQUESTED CHANGES:\n${ticketReason}`,
+        creatorId: profile.id || userObj?.id
+      };
+
+      const res = await fetch(API_ENDPOINTS?.TICKETS?.CREATE || 'http://localhost:5000/api/tickets/create', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+      if (res.ok && data.status === 'success') {
+        toast.success(`Your ticket (${data.data?.ticket_number || '#TCK'}) for payout details change has been submitted! Our support team will review and contact you.`, 'Ticket Raised!');
+        setShowTicketModal(false);
+        setTicketReason('');
+        fetchMyTickets(profile.email || userObj?.email);
+      } else {
+        toast.error(data?.message || 'Failed to submit support ticket.', 'Error');
+      }
+    } catch (err) {
+      console.error('Raise ticket error:', err);
+      toast.error('Network issue submitting support ticket.', 'Error');
+    } finally {
+      setIsSubmittingTicket(false);
     }
   };
 
@@ -488,9 +598,9 @@ export default function CreatorProfilePage() {
               <div className="flex items-center gap-4 text-center sm:text-left">
                 {/* Compact Profile Image with Camera Upload Button */}
                 <div className="relative group shrink-0">
-                  {profile.profileImage ? (
+                  {(avatarPreviewUrl || profile.profileImage) ? (
                     <img
-                      src={getMediaUrl(profile.profileImage)}
+                      src={avatarPreviewUrl || getMediaUrl(profile.profileImage)}
                       alt={profile.fullName}
                       className="h-16 w-16 rounded-xl object-cover border border-[#EB1000]/40 shadow-sm"
                     />
@@ -852,17 +962,114 @@ export default function CreatorProfilePage() {
             {activeTab === 'payment' && (
               <div className={`p-6 rounded-3xl border space-y-5 shadow-xl animate-fade-in ${theme === 'light' ? 'bg-white border-[#E9ECEF]' : 'bg-[#13131A] border-[#1C1C26]'
                 }`}>
-                <div className={`border-b pb-4 ${theme === 'light' ? 'border-[#E9ECEF]' : 'border-[#1C1C26]'
+                <div className={`border-b pb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${theme === 'light' ? 'border-[#E9ECEF]' : 'border-[#1C1C26]'
                   }`}>
-                  <h3 className={`font-heading font-bold text-base flex items-center gap-2 ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'
-                    }`}>
-                    <CreditCard className="h-5 w-5 text-[#EB1000]" /> Bank Payout & UPI Destination Settings
-                  </h3>
-                  <p className={`text-xs mt-0.5 ${theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'
-                    }`}>
-                    Configure default UPI Virtual Payment Address (VPA) and direct bank account payout details.
-                  </p>
+                  <div>
+                    <h3 className={`font-heading font-bold text-base flex items-center gap-2 ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'
+                      }`}>
+                      <CreditCard className="h-5 w-5 text-[#EB1000]" /> Bank Payout & UPI Destination Settings
+                    </h3>
+                    <p className={`text-xs mt-0.5 ${theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'
+                      }`}>
+                      Configure default UPI Virtual Payment Address (VPA) and direct bank account payout details.
+                    </p>
+                  </div>
+
+                  {isPayoutLocked && (
+                    <span className="px-3 py-1 rounded-full bg-[#EB1000]/10 text-[#EB1000] border border-[#EB1000]/30 text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 shrink-0 self-start sm:self-auto">
+                      <Lock className="h-3 w-3" /> Details Locked (Filled Once Only)
+                    </span>
+                  )}
                 </div>
+
+                {/* Locked Banner Notice */}
+                {isPayoutLocked && (
+                  <div className={`p-4 rounded-2xl border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 transition-all ${
+                    theme === 'light'
+                      ? 'bg-[#FFF5F5] border-[#FEB2B2] text-[#9B2C2C]'
+                      : 'bg-[#1F1015] border-[#EB1000]/40 text-white'
+                  }`}>
+                    <div className="flex items-start sm:items-center gap-3">
+                      <div className="p-2.5 rounded-xl bg-[#EB1000]/20 text-[#EB1000] shrink-0 mt-0.5 sm:mt-0">
+                        <Lock className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <h4 className="text-xs font-bold flex items-center gap-2">
+                          Account details can be filled once only.
+                        </h4>
+                        <p className={`text-[11px] mt-0.5 ${theme === 'light' ? 'text-[#742A2A]' : 'text-[#8B8B96]'}`}>
+                          For security reasons, payout details cannot be modified directly. In case of changes required, please raise a support ticket.
+                        </p>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => setShowTicketModal(true)}
+                      className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-[#EB1000] to-[#CC0E00] text-white font-bold text-xs shrink-0 flex items-center gap-1.5 hover:opacity-95 shadow-md shadow-[#EB1000]/20 cursor-pointer"
+                    >
+                      <HelpCircle className="h-3.5 w-3.5 stroke-[2.5]" />
+                      <span>Raise a Ticket for Change</span>
+                    </button>
+                  </div>
+                )}
+
+                {/* My Raised Tickets Tracker List */}
+                {myTickets.length > 0 && (
+                  <div className={`p-4 rounded-2xl border space-y-3 ${
+                    theme === 'light' ? 'bg-[#F8F9FA] border-[#E9ECEF]' : 'bg-[#0A0A0F] border-[#1C1C26]'
+                  }`}>
+                    <div className="flex items-center justify-between">
+                      <h4 className={`text-xs font-bold flex items-center gap-2 ${
+                        theme === 'light' ? 'text-[#1A1D20]' : 'text-white'
+                      }`}>
+                        <Inbox className="h-4 w-4 text-[#EB1000]" /> My Raised Support Tickets ({myTickets.length})
+                      </h4>
+                      <span className="text-[10px] text-[#8B8B96]">Admin Review Status</span>
+                    </div>
+
+                    <div className="space-y-2 max-h-48 overflow-y-auto">
+                      {myTickets.map((t) => (
+                        <div key={t.id} className={`p-3 rounded-xl border text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-2 ${
+                          theme === 'light' ? 'bg-white border-[#DEE2E6]' : 'bg-[#13131A] border-[#1C1C26]'
+                        }`}>
+                          <div className="space-y-0.5 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <span className="font-mono text-[11px] font-extrabold text-[#EB1000]">{t.ticket_number || `#TCK-${t.id}`}</span>
+                              <span className={`font-bold truncate ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'}`}>
+                                {t.subject}
+                              </span>
+                            </div>
+                            <p className="text-[11px] text-[#8B8B96] line-clamp-1">{t.message}</p>
+                          </div>
+
+                          <div className="flex items-center justify-between sm:justify-end gap-3 shrink-0">
+                            <span className="text-[10px] text-[#8B8B96]">
+                              {new Date(t.created_at || t.createdAt || Date.now()).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
+                            </span>
+                            {t.status === 'unread' ? (
+                              <span className="px-2 py-0.5 rounded-full bg-[#EB1000]/15 text-[#EB1000] border border-[#EB1000]/30 text-[10px] font-bold">
+                                Pending Review
+                              </span>
+                            ) : t.status === 'read' ? (
+                              <span className="px-2 py-0.5 rounded-full bg-[#3B82F6]/15 text-[#60A5FA] border border-[#3B82F6]/30 text-[10px] font-bold">
+                                Under Verification
+                              </span>
+                            ) : t.status === 'replied' ? (
+                              <span className="px-2 py-0.5 rounded-full bg-[#10B981]/15 text-[#34D399] border border-[#10B981]/30 text-[10px] font-bold">
+                                ✓ Replied / Resolved
+                              </span>
+                            ) : (
+                              <span className="px-2 py-0.5 rounded-full bg-gray-500/20 text-gray-400 text-[10px] font-bold">
+                                {t.status}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 <div className="space-y-4">
                   <div>
@@ -885,17 +1092,23 @@ export default function CreatorProfilePage() {
                       <div className="relative flex-1">
                         <input
                           type="text"
-                          required
+                          required={!isPayoutLocked}
+                          disabled={isPayoutLocked}
+                          readOnly={isPayoutLocked}
                           value={bankAccount.upiId || ''}
                           onChange={(e) => {
+                            if (isPayoutLocked) return;
                             const val = e.target.value.replace(/\s/g, '');
                             setBankAccount(prev => ({ ...prev, upiId: val }));
                             setIsUpiVerified(false);
                           }}
                           placeholder="e.g. username@upi or carryminati@okicici"
-                          className={`w-full rounded-xl border px-3.5 py-2.5 text-xs focus:outline-none focus:border-[#EB1000] font-mono ${isUpiVerified
-                            ? 'border-[#EB1000] bg-[#EB1000]/5 text-[#EB1000] font-bold'
-                            : theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6] text-[#1A1D20] placeholder-[#A0A0A0]' : 'bg-[#0A0A0F] border-[#1C1C26] text-white placeholder-[#8B8B96]'
+                          className={`w-full rounded-xl border px-3.5 py-2.5 text-xs focus:outline-none focus:border-[#EB1000] font-mono ${
+                            isPayoutLocked
+                              ? theme === 'light' ? 'bg-[#E9ECEF] border-[#DEE2E6] text-[#6C757D] cursor-not-allowed' : 'bg-[#0A0A0F]/60 border-[#1C1C26] text-[#8B8B96] cursor-not-allowed'
+                              : isUpiVerified
+                              ? 'border-[#EB1000] bg-[#EB1000]/5 text-[#EB1000] font-bold'
+                              : theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6] text-[#1A1D20] placeholder-[#A0A0A0]' : 'bg-[#0A0A0F] border-[#1C1C26] text-white placeholder-[#8B8B96]'
                             }`}
                         />
                       </div>
@@ -903,10 +1116,13 @@ export default function CreatorProfilePage() {
                       <button
                         type="button"
                         onClick={() => handleVerifyUpi(bankAccount.upiId)}
-                        disabled={isVerifyingUpi || isUpiVerified}
-                        className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all shrink-0 flex items-center gap-1.5 ${isUpiVerified
-                          ? 'bg-[#EB1000]/15 text-[#EB1000] border border-[#EB1000]/40 cursor-default'
-                          : 'bg-gradient-to-r from-[#EB1000] to-[#CC0E00] text-white hover:opacity-90 shadow-md shadow-[#EB1000]/20 cursor-pointer'
+                        disabled={isVerifyingUpi || isUpiVerified || isPayoutLocked}
+                        className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all shrink-0 flex items-center gap-1.5 ${
+                          isPayoutLocked
+                            ? 'bg-[#1C1C26]/40 text-[#8B8B96] border border-[#1C1C26] cursor-not-allowed'
+                            : isUpiVerified
+                            ? 'bg-[#EB1000]/15 text-[#EB1000] border border-[#EB1000]/40 cursor-default'
+                            : 'bg-gradient-to-r from-[#EB1000] to-[#CC0E00] text-white hover:opacity-90 shadow-md shadow-[#EB1000]/20 cursor-pointer'
                           }`}
                       >
                         {isVerifyingUpi ? (
@@ -934,10 +1150,18 @@ export default function CreatorProfilePage() {
                         }`}>Account Holder Name</label>
                       <input
                         type="text"
+                        disabled={isPayoutLocked}
+                        readOnly={isPayoutLocked}
                         value={bankAccount.accountHolderName || ''}
-                        onChange={(e) => setBankAccount(prev => ({ ...prev, accountHolderName: e.target.value }))}
+                        onChange={(e) => {
+                          if (isPayoutLocked) return;
+                          setBankAccount(prev => ({ ...prev, accountHolderName: e.target.value }));
+                        }}
                         placeholder="e.g. Abhishek Kumar"
-                        className={`w-full rounded-xl border px-3.5 py-2.5 text-xs focus:outline-none focus:border-[#EB1000] ${theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6] text-[#1A1D20] placeholder-[#A0A0A0]' : 'bg-[#0A0A0F] border-[#1C1C26] text-white placeholder-[#8B8B96]'
+                        className={`w-full rounded-xl border px-3.5 py-2.5 text-xs focus:outline-none focus:border-[#EB1000] ${
+                          isPayoutLocked
+                            ? theme === 'light' ? 'bg-[#E9ECEF] border-[#DEE2E6] text-[#6C757D] cursor-not-allowed' : 'bg-[#0A0A0F]/60 border-[#1C1C26] text-[#8B8B96] cursor-not-allowed'
+                            : theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6] text-[#1A1D20] placeholder-[#A0A0A0]' : 'bg-[#0A0A0F] border-[#1C1C26] text-white placeholder-[#8B8B96]'
                           }`}
                       />
                     </div>
@@ -947,10 +1171,18 @@ export default function CreatorProfilePage() {
                         }`}>Bank Name</label>
                       <input
                         type="text"
+                        disabled={isPayoutLocked}
+                        readOnly={isPayoutLocked}
                         value={bankAccount.bankName || ''}
-                        onChange={(e) => setBankAccount(prev => ({ ...prev, bankName: e.target.value }))}
+                        onChange={(e) => {
+                          if (isPayoutLocked) return;
+                          setBankAccount(prev => ({ ...prev, bankName: e.target.value }));
+                        }}
                         placeholder="e.g. HDFC Bank / ICICI Bank"
-                        className={`w-full rounded-xl border px-3.5 py-2.5 text-xs focus:outline-none focus:border-[#EB1000] ${theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6] text-[#1A1D20] placeholder-[#A0A0A0]' : 'bg-[#0A0A0F] border-[#1C1C26] text-white placeholder-[#8B8B96]'
+                        className={`w-full rounded-xl border px-3.5 py-2.5 text-xs focus:outline-none focus:border-[#EB1000] ${
+                          isPayoutLocked
+                            ? theme === 'light' ? 'bg-[#E9ECEF] border-[#DEE2E6] text-[#6C757D] cursor-not-allowed' : 'bg-[#0A0A0F]/60 border-[#1C1C26] text-[#8B8B96] cursor-not-allowed'
+                            : theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6] text-[#1A1D20] placeholder-[#A0A0A0]' : 'bg-[#0A0A0F] border-[#1C1C26] text-white placeholder-[#8B8B96]'
                           }`}
                       />
                     </div>
@@ -964,13 +1196,19 @@ export default function CreatorProfilePage() {
                         type="text"
                         inputMode="numeric"
                         pattern="[0-9]*"
+                        disabled={isPayoutLocked}
+                        readOnly={isPayoutLocked}
                         value={bankAccount.accountNumber || ''}
                         onChange={(e) => {
+                          if (isPayoutLocked) return;
                           const digitsOnly = e.target.value.replace(/\D/g, '');
                           setBankAccount(prev => ({ ...prev, accountNumber: digitsOnly }));
                         }}
                         placeholder="e.g. 50100298410294"
-                        className={`w-full rounded-xl border px-3.5 py-2.5 text-xs focus:outline-none focus:border-[#EB1000] font-mono ${theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6] text-[#1A1D20] placeholder-[#A0A0A0]' : 'bg-[#0A0A0F] border-[#1C1C26] text-white placeholder-[#8B8B96]'
+                        className={`w-full rounded-xl border px-3.5 py-2.5 text-xs focus:outline-none focus:border-[#EB1000] font-mono ${
+                          isPayoutLocked
+                            ? theme === 'light' ? 'bg-[#E9ECEF] border-[#DEE2E6] text-[#6C757D] cursor-not-allowed' : 'bg-[#0A0A0F]/60 border-[#1C1C26] text-[#8B8B96] cursor-not-allowed'
+                            : theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6] text-[#1A1D20] placeholder-[#A0A0A0]' : 'bg-[#0A0A0F] border-[#1C1C26] text-white placeholder-[#8B8B96]'
                           }`}
                       />
                     </div>
@@ -982,18 +1220,24 @@ export default function CreatorProfilePage() {
                         type="text"
                         inputMode="numeric"
                         pattern="[0-9]*"
+                        disabled={isPayoutLocked}
+                        readOnly={isPayoutLocked}
                         value={bankAccount.confirmAccountNumber || ''}
                         onChange={(e) => {
+                          if (isPayoutLocked) return;
                           const digitsOnly = e.target.value.replace(/\D/g, '');
                           setBankAccount(prev => ({ ...prev, confirmAccountNumber: digitsOnly }));
                         }}
                         placeholder="Re-enter account number"
-                        className={`w-full rounded-xl border px-3.5 py-2.5 text-xs focus:outline-none focus:border-[#EB1000] font-mono ${bankAccount.confirmAccountNumber && bankAccount.accountNumber !== bankAccount.confirmAccountNumber
-                          ? 'border-[#FF3D71] bg-[#FF3D71]/10 text-[#FF3D71]'
-                          : theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6] text-[#1A1D20] placeholder-[#A0A0A0]' : 'bg-[#0A0A0F] border-[#1C1C26] text-white placeholder-[#8B8B96]'
+                        className={`w-full rounded-xl border px-3.5 py-2.5 text-xs focus:outline-none focus:border-[#EB1000] font-mono ${
+                          isPayoutLocked
+                            ? theme === 'light' ? 'bg-[#E9ECEF] border-[#DEE2E6] text-[#6C757D] cursor-not-allowed' : 'bg-[#0A0A0F]/60 border-[#1C1C26] text-[#8B8B96] cursor-not-allowed'
+                            : bankAccount.confirmAccountNumber && bankAccount.accountNumber !== bankAccount.confirmAccountNumber
+                            ? 'border-[#FF3D71] bg-[#FF3D71]/10 text-[#FF3D71]'
+                            : theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6] text-[#1A1D20] placeholder-[#A0A0A0]' : 'bg-[#0A0A0F] border-[#1C1C26] text-white placeholder-[#8B8B96]'
                           }`}
                       />
-                      {bankAccount.confirmAccountNumber && bankAccount.accountNumber !== bankAccount.confirmAccountNumber && (
+                      {!isPayoutLocked && bankAccount.confirmAccountNumber && bankAccount.accountNumber !== bankAccount.confirmAccountNumber && (
                         <span className="text-[10px] text-[#FF3D71] block mt-1 font-semibold">
                           Account Number and Confirmation Account Number do not match.
                         </span>
@@ -1008,15 +1252,23 @@ export default function CreatorProfilePage() {
                       type="text"
                       maxLength={11}
                       pattern="[A-Za-z]{4}0[A-Za-z0-9]{6}"
+                      disabled={isPayoutLocked}
+                      readOnly={isPayoutLocked}
                       value={bankAccount.ifscCode || ''}
-                      onChange={(e) => setBankAccount(prev => ({ ...prev, ifscCode: e.target.value.toUpperCase().slice(0, 11) }))}
+                      onChange={(e) => {
+                        if (isPayoutLocked) return;
+                        setBankAccount(prev => ({ ...prev, ifscCode: e.target.value.toUpperCase().slice(0, 11) }));
+                      }}
                       placeholder="e.g. SBIN0001234"
-                      className={`w-full rounded-xl border px-3.5 py-2.5 text-xs focus:outline-none focus:border-[#EB1000] font-mono uppercase ${bankAccount.ifscCode && !/^[A-Z]{4}0[A-Z0-9]{6}$/.test(bankAccount.ifscCode.trim().toUpperCase())
-                        ? 'border-[#FF3D71] bg-[#FF3D71]/10 text-[#FF3D71]'
-                        : theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6] text-[#1A1D20] placeholder-[#A0A0A0]' : 'bg-[#0A0A0F] border-[#1C1C26] text-white placeholder-[#8B8B96]'
+                      className={`w-full rounded-xl border px-3.5 py-2.5 text-xs focus:outline-none focus:border-[#EB1000] font-mono uppercase ${
+                        isPayoutLocked
+                          ? theme === 'light' ? 'bg-[#E9ECEF] border-[#DEE2E6] text-[#6C757D] cursor-not-allowed' : 'bg-[#0A0A0F]/60 border-[#1C1C26] text-[#8B8B96] cursor-not-allowed'
+                          : bankAccount.ifscCode && !/^[A-Z]{4}0[A-Z0-9]{6}$/.test(bankAccount.ifscCode.trim().toUpperCase())
+                          ? 'border-[#FF3D71] bg-[#FF3D71]/10 text-[#FF3D71]'
+                          : theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6] text-[#1A1D20] placeholder-[#A0A0A0]' : 'bg-[#0A0A0F] border-[#1C1C26] text-white placeholder-[#8B8B96]'
                         }`}
                     />
-                    {bankAccount.ifscCode && !/^[A-Z]{4}0[A-Z0-9]{6}$/.test(bankAccount.ifscCode.trim().toUpperCase()) && (
+                    {!isPayoutLocked && bankAccount.ifscCode && !/^[A-Z]{4}0[A-Z0-9]{6}$/.test(bankAccount.ifscCode.trim().toUpperCase()) && (
                       <span className="text-[10px] text-[#FF3D71] block mt-1 font-semibold">
                         Invalid IFSC Code format. Must be 11 characters starting with 4 letters, 5th character 0, followed by 6 alphanumeric characters (e.g. SBIN0001234).
                       </span>
@@ -1028,6 +1280,90 @@ export default function CreatorProfilePage() {
           </form>
         </main>
       </div>
+
+      {/* Raise Ticket for Payout Changes Modal */}
+      {showTicketModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
+          <div className={`w-full max-w-lg rounded-3xl border p-6 space-y-5 shadow-2xl relative ${
+            theme === 'light' ? 'bg-white border-[#E9ECEF] text-[#1A1D20]' : 'bg-[#13131A] border-[#1C1C26] text-white'
+          }`}>
+            <div className="flex items-center justify-between border-b pb-4 border-inherit">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-xl bg-[#EB1000]/10 text-[#EB1000]">
+                  <HelpCircle className="h-5 w-5" />
+                </div>
+                <div>
+                  <h3 className="font-heading font-bold text-base">Raise Payout Details Change Ticket</h3>
+                  <p className="text-xs text-[#8B8B96]">Request modifications to your locked bank account or UPI ID</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowTicketModal(false)}
+                className="p-1.5 rounded-xl hover:bg-gray-500/10 transition text-[#8B8B96] hover:text-white"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleRaiseTicket} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold mb-1 text-[#8B8B96]">Current Registered Payout Account</label>
+                <input
+                  type="text"
+                  readOnly
+                  value={`UPI: ${bankAccount.upiId || 'N/A'} | Bank: ${bankAccount.bankName || 'N/A'} (${bankAccount.accountNumber || 'N/A'})`}
+                  className="w-full rounded-xl border px-3.5 py-2 text-xs bg-gray-500/10 border-gray-500/20 text-gray-400 font-mono"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold mb-1 text-[#8B8B96]">Reason for Change &amp; New Details Required *</label>
+                <textarea
+                  rows={4}
+                  required
+                  value={ticketReason}
+                  onChange={(e) => setTicketReason(e.target.value)}
+                  placeholder="Explain why changes are needed and list your new Bank Name, Account Number, IFSC Code, or UPI ID..."
+                  className={`w-full rounded-xl border p-3 text-xs focus:outline-none focus:border-[#EB1000] ${
+                    theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6] text-[#1A1D20]' : 'bg-[#0A0A0F] border-[#1C1C26] text-white'
+                  }`}
+                />
+              </div>
+
+              <div className="p-3 rounded-xl bg-[#EB1000]/5 border border-[#EB1000]/20 text-[11px] text-[#8B8B96] space-y-1">
+                <p className="font-bold text-[#EB1000]">⚠️ Verification Requirement:</p>
+                <p>For security against unauthorized account changes, support managers will verify your request before updating details.</p>
+              </div>
+
+              <div className="flex items-center justify-end gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowTicketModal(false)}
+                  className="px-4 py-2.5 rounded-xl text-xs font-bold border border-gray-500/30 text-gray-400 hover:text-white transition"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmittingTicket}
+                  className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#EB1000] to-[#CC0E00] text-white font-bold text-xs shadow-md shadow-[#EB1000]/30 hover:opacity-95 transition flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                >
+                  {isSubmittingTicket ? (
+                    <>
+                      <RefreshCw className="h-3.5 w-3.5 animate-spin" /> Submitting...
+                    </>
+                  ) : (
+                    <>
+                      <Send className="h-3.5 w-3.5" /> Submit Support Ticket
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </>
   );
 }

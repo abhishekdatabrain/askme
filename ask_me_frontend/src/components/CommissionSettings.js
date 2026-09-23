@@ -204,7 +204,7 @@ export default function CommissionSettings({ activeSubTab }) {
           <div className="flex justify-end">
             <button
               type="submit"
-              className="px-6 py-2.5 rounded-xl bg-brand-gradient text-white font-bold text-xs shadow-lg shadow-[#00F5D4]/20 flex items-center gap-2"
+              className="px-6 py-2.5 rounded-xl bg-brand-gradient text-white font-bold text-xs shadow-lg shadow-[#EB1000]/25 flex items-center gap-2"
             >
               <Save className="h-4 w-4" /> Save Commission Settings
             </button>
@@ -216,7 +216,7 @@ export default function CommissionSettings({ activeSubTab }) {
           {historyLogs.map((log) => (
             <div key={log.id} className="p-4 rounded-xl bg-[#0A0A0F] border border-[#1C1C26] flex items-center justify-between gap-4">
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-[#1C1C26] text-[#00F5D4]">
+                <div className="p-2 rounded-lg bg-[#1C1C26] text-[#EB1000]">
                   <History className="h-4 w-4" />
                 </div>
                 <div>

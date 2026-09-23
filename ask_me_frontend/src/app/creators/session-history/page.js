@@ -191,8 +191,8 @@ export default function CreatorSessionHistoryPage() {
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Search by title, category, code..."
                     className={`w-full pl-10 pr-9 py-2.5 rounded-xl text-xs border outline-none font-medium transition-all duration-200 ${theme === 'light'
-                        ? 'bg-white border-[#E2E8F0] text-[#0F172A] placeholder-[#94A3B8] focus:border-[#EB1000] focus:ring-1 focus:ring-[#EB1000]'
-                        : 'bg-[#12121C] border-[#222236] text-white placeholder-[#6E6E82] focus:border-[#EB1000] focus:ring-1 focus:ring-[#EB1000]'
+                      ? 'bg-white border-[#E2E8F0] text-[#0F172A] placeholder-[#94A3B8] focus:border-[#EB1000] focus:ring-1 focus:ring-[#EB1000]'
+                      : 'bg-[#12121C] border-[#222236] text-white placeholder-[#6E6E82] focus:border-[#EB1000] focus:ring-1 focus:ring-[#EB1000]'
                       }`}
                   />
                   {searchQuery && (
@@ -217,8 +217,8 @@ export default function CreatorSessionHistoryPage() {
                       value={startDate}
                       onChange={(e) => setStartDate(e.target.value)}
                       className={`px-3 py-2 rounded-xl text-xs border outline-none font-medium transition-all duration-200 ${theme === 'light'
-                          ? 'bg-white border-[#E2E8F0] text-[#0F172A] focus:border-[#EB1000]'
-                          : 'bg-[#12121C] border-[#222236] text-white focus:border-[#EB1000]'
+                        ? 'bg-white border-[#E2E8F0] text-[#0F172A] focus:border-[#EB1000]'
+                        : 'bg-[#12121C] border-[#222236] text-white focus:border-[#EB1000]'
                         }`}
                     />
                   </div>
@@ -230,8 +230,8 @@ export default function CreatorSessionHistoryPage() {
                       value={endDate}
                       onChange={(e) => setEndDate(e.target.value)}
                       className={`px-3 py-2 rounded-xl text-xs border outline-none font-medium transition-all duration-200 ${theme === 'light'
-                          ? 'bg-white border-[#E2E8F0] text-[#0F172A] focus:border-[#EB1000]'
-                          : 'bg-[#12121C] border-[#222236] text-white focus:border-[#EB1000]'
+                        ? 'bg-white border-[#E2E8F0] text-[#0F172A] focus:border-[#EB1000]'
+                        : 'bg-[#12121C] border-[#222236] text-white focus:border-[#EB1000]'
                         }`}
                     />
                   </div>

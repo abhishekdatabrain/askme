@@ -61,7 +61,7 @@ const SupportTicket = sequelize.define(
   {
     timestamps: true,
     tableName: "support_tickets",
-    schema: "Abhishek",
+    schema: process.env.SCHEMA,
     underscored: true,
   }
 );

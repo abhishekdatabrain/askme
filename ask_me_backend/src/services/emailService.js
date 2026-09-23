@@ -4,7 +4,7 @@ const nodemailer = require("nodemailer");
  * Configure Nodemailer Transport from environment variables with fallback
  */
 const getTransporter = () => {
-  // const host = process.env.SMTP_HOST || process.env.MAIL_HOST;
+  const host = process.env.SMTP_HOST || process.env.MAIL_HOST;
   const port = process.env.SMTP_PORT;
   const user = process.env.SMTP_USER;
   const pass = process.env.SMTP_PASS;

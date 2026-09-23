@@ -53,10 +53,17 @@ const registerViewer = async (req, res, next) => {
     if (existingUser) {
       return res.status(400).json({
         status: 'fail',
-        message: 'A viewer account with this email address already exists. Please login instead.',
+        message: 'A viewer account with this email address already exists. Please try another email.',
       });
     }
-
+    // Check if user with phone already exists
+    const existingphone = await User.findOne({ where: { phone: mobile } }).catch(() => null);
+    if (existingphone) {
+      return res.status(400).json({
+        status: 'fail',
+        message: 'A viewer account with this phone number already exists.',
+      });
+    }
     // Create Viewer User Record (userModel automatically hashes password via beforeCreate hook)
 
     const newUser = await User.create({

@@ -1197,7 +1197,7 @@ function InnerAuthModal({ isOpen, onClose, initialRole = 'viewer', initialMode =
                             maxLength={6}
                             value={regWaOtp}
                             onChange={(e) => setRegWaOtp(e.target.value.replace(/\D/g, ''))}
-                            placeholder="123456"
+                            placeholder="******"
                             className="w-full py-1.5 px-3 rounded-xl border border-emerald-300 text-xs text-center font-mono font-bold tracking-widest text-black outline-none focus:border-[#25D366]"
                           />
                           <button

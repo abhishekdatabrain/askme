@@ -31,10 +31,6 @@ const verifyStoredOtp = (phone, inputOtp) => {
   }
 
   // Master demo bypass for instant testing
-  if (codeStr === '123456') {
-    otpMap.delete(cleanPhone);
-    return { valid: true };
-  }
 
   if (!record) {
     return { valid: false, message: 'No active OTP request found. Please request a new code.' };

@@ -2913,7 +2913,7 @@ export default function Home() {
 
               {/* SUBTITLE */}
               <p className="text-[15px] sm:text-[17px] text-[#8B8B9E] max-w-2xl font-medium leading-relaxed">
-                Scan, tap, or submit priority super-questions directly inside creator studio monitors. Guaranteed on-stream answer .
+                Scan, tap, or submit priority super-questions directly inside creator studio monitors.
               </p>
             </div>
 

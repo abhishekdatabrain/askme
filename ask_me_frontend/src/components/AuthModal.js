@@ -1524,7 +1524,7 @@ function InnerAuthModal({ isOpen, onClose, initialRole = 'viewer', initialMode =
                               maxLength={6}
                               value={regWaOtp}
                               onChange={(e) => setRegWaOtp(e.target.value.replace(/\D/g, ''))}
-                              placeholder="123456"
+                              placeholder="******"
                               className="w-full py-1.5 px-3 rounded-xl border border-emerald-300 text-xs text-center font-mono font-bold tracking-widest bg-white text-black outline-none focus:border-[#25D366]"
                             />
                             <button
@@ -1768,16 +1768,16 @@ function InnerAuthModal({ isOpen, onClose, initialRole = 'viewer', initialMode =
                     type="text"
                     maxLength={6}
                     required
-                    placeholder="123456"
+                    placeholder="******"
                     value={waOtp}
                     onChange={(e) => setWaOtp(e.target.value.replace(/[^0-9]/g, '').slice(0, 6))}
                     className="w-full text-center tracking-[0.5em] py-2.5 rounded-xl border border-gray-200 text-base font-black text-gray-900 focus:border-[#25D366] outline-none font-mono"
                   />
-                  {waDebugOtp && (
+                  {/* {waDebugOtp && (
                     <p className="text-[11px] text-emerald-600 font-mono mt-1 text-center">
                       [Demo OTP: <strong>{waDebugOtp}</strong>]
                     </p>
-                  )}
+                  )} */}
                 </div>
 
                 <button

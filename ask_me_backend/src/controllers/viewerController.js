@@ -1244,44 +1244,44 @@ const verifyWhatsAppOtpViewer = async (req, res, next) => {
 
     const tenDigit = targetPhone.slice(-10);
 
-    let user = await User.findOne({
-      where: {
-        [Op.or]: [
-          { phone: targetPhone },
-          { phone: tenDigit },
-          { email: `${targetPhone}@whatsapp.user` },
-          { email: `${tenDigit}@whatsapp.user` },
-        ],
-      },
-    }).catch(() => null);
+    // let user = await User.findOne({
+    //   where: {
+    //     [Op.or]: [
+    //       { phone: targetPhone },
+    //       { phone: tenDigit },
+    //       { email: `${targetPhone}@whatsapp.user` },
+    //       { email: `${tenDigit}@whatsapp.user` },
+    //     ],
+    //   },
+    // }).catch(() => null);
 
-    if (!user) {
-      // Auto-register new viewer
-      const randomPassword = await bcrypt.hash(`wa_${Date.now()}_${Math.random()}`, 10);
-      user = await User.create({
-        name: `Viewer ${tenDigit.slice(-4)}`,
-        email: `${targetPhone}@whatsapp.user`,
-        phone: targetPhone,
-        password: randomPassword,
-        role: 'user', // Viewer role in users table
-      });
-    }
+    // if (!user) {
+    //   // Auto-register new viewer
+    //   const randomPassword = await bcrypt.hash(`wa_${Date.now()}_${Math.random()}`, 10);
+    //   user = await User.create({
+    //     name: `Viewer ${tenDigit.slice(-4)}`,
+    //     email: `${targetPhone}@whatsapp.user`,
+    //     phone: targetPhone,
+    //     password: randomPassword,
+    //     role: 'user', // Viewer role in users table
+    //   });
+    // }
 
-    const token = generateToken(user.id, user.role || 'user');
+    //const token = generateToken(user.id, user.role || 'user');
 
     return res.status(200).json({
       status: 'success',
       message: 'WhatsApp authentication successful!',
-      data: {
-        token,
-        user: {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          phone: user.phone,
-          role: user.role,
-        },
-      },
+      // data: {
+      //   token,
+      //   user: {
+      //     id: user.id,
+      //     name: user.name,
+      //     email: user.email,
+      //     phone: user.phone,
+      //     role: user.role,
+      //   },
+      // },
     });
   } catch (error) {
     console.error('VERIFY WHATSAPP OTP VIEWER ERROR:', error);

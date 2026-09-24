@@ -121,7 +121,6 @@ const buildWelcomeEmailHtml = ({ name, role }) => {
     <div class="container">
       <div class="header">
         <h1>Welcome to AskMe!</h1>
-        <p>Your Favorite Creators &amp; Live Streams</p>
       </div>
       <div class="body">
         <div class="greeting">Welcome aboard, ${recipientName}! 👋</div>

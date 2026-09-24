@@ -780,84 +780,84 @@ const verifyWhatsAppOtpCreatorService = async (data) => {
   if (targetPhone.length === 10) targetPhone = `91${targetPhone}`;
   const tenDigit = targetPhone.slice(-10);
 
-  let creator = await CreatorsModel.findOne({
-    where: {
-      [Op.or]: [
-        { mobile: targetPhone },
-        { mobile: tenDigit },
-        { email: `${targetPhone}@whatsapp.creator` },
-        { email: `${tenDigit}@whatsapp.creator` },
-      ],
-    },
-  });
+  // let creator = await CreatorsModel.findOne({
+  //   where: {
+  //     [Op.or]: [
+  //       { mobile: targetPhone },
+  //       { mobile: tenDigit },
+  //       { email: `${targetPhone}@whatsapp.creator` },
+  //       { email: `${tenDigit}@whatsapp.creator` },
+  //     ],
+  //   },
+  // });
 
-  if (!creator) {
-    const transaction = await sequelize.transaction();
-    try {
-      const cleanUsername = `creator_${tenDigit.slice(-6)}_${Math.floor(100 + Math.random() * 900)}`;
-      const hashedPassword = await bcrypt.hash(`wa_${Date.now()}_${Math.random()}`, 10);
-      const creatorName = `Creator ${tenDigit.slice(-4)}`;
+  // if (!creator) {
+  //   const transaction = await sequelize.transaction();
+  //   try {
+  //     const cleanUsername = `creator_${tenDigit.slice(-6)}_${Math.floor(100 + Math.random() * 900)}`;
+  //     const hashedPassword = await bcrypt.hash(`wa_${Date.now()}_${Math.random()}`, 10);
+  //     const creatorName = `Creator ${tenDigit.slice(-4)}`;
 
-      creator = await CreatorsModel.create(
-        {
-          role: "creator",
-          full_name: creatorName,
-          username: cleanUsername,
-          email: `${targetPhone}@whatsapp.creator`,
-          mobile: targetPhone,
-          password: hashedPassword,
-          status: "active",
-        },
-        { transaction }
-      );
+  //     creator = await CreatorsModel.create(
+  //       {
+  //         role: "creator",
+  //         full_name: creatorName,
+  //         username: cleanUsername,
+  //         email: `${targetPhone}@whatsapp.creator`,
+  //         mobile: targetPhone,
+  //         password: hashedPassword,
+  //         status: "active",
+  //       },
+  //       { transaction }
+  //     );
 
-      await CreatorProfile.create(
-        {
-          creator_id: creator.id,
-          display_name: creatorName,
-          bio: "Creator on AskMe",
-          kyc_status: "approved",
-          is_payment_enabled: true,
-        },
-        { transaction }
-      );
+  //     await CreatorProfile.create(
+  //       {
+  //         creator_id: creator.id,
+  //         display_name: creatorName,
+  //         bio: "Creator on AskMe",
+  //         kyc_status: "approved",
+  //         is_payment_enabled: true,
+  //       },
+  //       { transaction }
+  //     );
 
-      await Wallet.create(
-        {
-          creator_id: creator.id,
-          total_earnings: 0,
-          available_balance: 0,
-          pending_balance: 0,
-          withdrawn_amount: 0,
-        },
-        { transaction }
-      );
+  //     await Wallet.create(
+  //       {
+  //         creator_id: creator.id,
+  //         total_earnings: 0,
+  //         available_balance: 0,
+  //         pending_balance: 0,
+  //         withdrawn_amount: 0,
+  //       },
+  //       { transaction }
+  //     );
 
-      await transaction.commit();
-    } catch (createErr) {
-      await transaction.rollback();
-      throw createErr;
-    }
-  }
+  //     await transaction.commit();
+  //   } catch (createErr) {
+  //     await transaction.rollback();
+  //     throw createErr;
+  //   }
+  // }
 
-  const token = generateToken(creator.id, "creator");
+  // const token = generateToken(creator.id, "creator");
 
-  const profile = await CreatorProfile.findOne({ where: { creator_id: creator.id } });
+  // const profile = await CreatorProfile.findOne({ where: { creator_id: creator.id } });
 
-  return {
-    token,
-    creator: {
-      id: creator.id,
-      role: creator.role,
-      fullName: creator.full_name,
-      full_name: creator.full_name,
-      username: creator.username,
-      cleanUsername: creator.username,
-      email: creator.email,
-      mobile: creator.mobile,
-      kycStatus: profile?.kyc_status || "approved",
-    },
-  };
+  // return {
+  //   token,
+  //   creator: {
+  //     id: creator.id,
+  //     role: creator.role,
+  //     fullName: creator.full_name,
+  //     full_name: creator.full_name,
+  //     username: creator.username,
+  //     cleanUsername: creator.username,
+  //     email: creator.email,
+  //     mobile: creator.mobile,
+  //     kycStatus: profile?.kyc_status || "approved",
+  //   },
+  // };
 };
 
 /**

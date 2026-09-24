@@ -1592,12 +1592,12 @@ export default function Home() {
                   <div className="flex items-center gap-3">
                     <img
                       src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&q=80"
-                      alt="TechBurner Live"
+                      alt="AskMe Live"
                       className="w-10 h-10 rounded-full object-cover border border-[#EB1000]/60 shrink-0"
                     />
                     <div>
                       <div className="flex items-center gap-2">
-                        <span className="text-white font-extrabold text-sm sm:text-base">TechBurner Live</span>
+                        <span className="text-white font-extrabold text-sm sm:text-base">AskMe Live</span>
                         <span className="h-2.5 w-2.5 rounded-full bg-[#EB1000] animate-pulse"></span>
                       </div>
                       <div className="text-[10px] font-mono font-extrabold text-[#EB1000] uppercase tracking-wider">

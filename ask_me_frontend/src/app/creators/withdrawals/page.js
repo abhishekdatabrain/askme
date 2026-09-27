@@ -370,7 +370,7 @@ export default function CreatorWithdrawalsPage() {
                 ₹{walletData.pendingAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
               </div>
               <span className={`text-[11px] ${theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'
-                }`}>Under Admin Verification</span>
+                }`}>Under Monthly payout settlement</span>
             </div>
 
             {/* Total Withdrawn */}
@@ -433,7 +433,7 @@ export default function CreatorWithdrawalsPage() {
                   <span className="whitespace-nowrap">Withdrawal Requests History ({withdrawals.length})</span>
                 </button>
 
-                <button
+                {/* <button
                   type="button"
                   onClick={() => setActiveTab('bank')}
                   className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap cursor-pointer shrink-0 ${activeTab === 'bank'
@@ -443,7 +443,7 @@ export default function CreatorWithdrawalsPage() {
                 >
                   <Building2 className="h-4 w-4 shrink-0" />
                   <span className="whitespace-nowrap">Saved Bank Account Details</span>
-                </button>
+                </button> */}
               </div>
 
               <div className="flex items-center gap-2">

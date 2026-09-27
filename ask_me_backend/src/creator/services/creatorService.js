@@ -367,7 +367,7 @@ const googleAuthCreatorService = async ({ idToken, credential, token: bodyToken,
         {
           creator_id: creator.id,
           display_name: verifiedName,
-          bio: "Tech & Media Creator",
+          bio: "Tech Creator",
           kyc_status: "not_submitted",
           is_payment_enabled: false,
         },

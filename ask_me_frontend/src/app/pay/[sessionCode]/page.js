@@ -524,8 +524,13 @@ function ViewerPaymentContent() {
       return;
     }
 
-    // Open Payment Gateway Testing Mode Payment Gateway directly for everyone!
-    setShowRazorpayModal(true);
+    // Launch Native Razorpay Payment Gateway directly
+    try {
+      await launchNativeRazorpay();
+    } catch (err) {
+      console.warn('Native Razorpay error, using embedded checkout fallback:', err);
+      setShowRazorpayModal(true);
+    }
   };
 
   // Complete Payment Process (called by Razorpay Test Gateway or Native Popup)
@@ -584,13 +589,13 @@ function ViewerPaymentContent() {
   const launchNativeRazorpay = async () => {
     const isLoaded = await loadRazorpayScript();
     if (!isLoaded) {
-      alert('Razorpay SDK failed to load.');
+      setShowRazorpayModal(true);
       return;
     }
 
     const currentUser = viewerUser || getViewerUser();
     const numericAmount = parseFloat(amount);
-    const razorpayKey = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || 'rzp_test_1DP5mmOlF5G5ag';
+    const razorpayKey = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
 
     const options = {
       key: razorpayKey,
@@ -601,23 +606,29 @@ function ViewerPaymentContent() {
       image: creatorData?.profileImage || undefined,
       prefill: {
         name: isAnonymous ? 'Anonymous Supporter' : (viewerName || currentUser?.name || 'Supporter'),
-        email: currentUser?.email || 'supporter@askme.live',
-        contact: currentUser?.mobile || '9876543210',
+        email: viewerEmail || currentUser?.email || 'supporter@askme.live',
+        contact: viewerPhone || currentUser?.mobile || currentUser?.phone || '9876543210',
       },
-      theme: { color: '#f52500ff' },
+      theme: { color: '#EB1000' },
       handler: function (response) {
         executePaymentSuccess(response.razorpay_payment_id, paymentMethod);
       },
+      modal: {
+        ondismiss: function () {
+          console.log('Razorpay payment modal closed by viewer.');
+        }
+      }
     };
 
     try {
       const rzp = new window.Razorpay(options);
       rzp.on('payment.failed', function (resp) {
-        alert(`Payment Failed: ${resp.error?.description || 'Failed'}`);
+        alert(`Payment Failed: ${resp.error?.description || 'Payment failed or cancelled'}`);
       });
       rzp.open();
     } catch (e) {
       console.warn('Native Razorpay notice:', e.message);
+      setShowRazorpayModal(true);
     }
   };
 

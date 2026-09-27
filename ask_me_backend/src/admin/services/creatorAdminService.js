@@ -3,6 +3,7 @@ const { NotFoundError } = require('../../errors/AppError');
 const { parsePagination, buildPaginationMeta } = require('../../utils/pagination');
 const { CREATOR_ACCOUNT_STATUS, KYC_STATUS } = require('../../constants');
 const { Op } = require('sequelize');
+const { Donation } = require('../../models');
 
 class CreatorAdminService {
   mapCreatorRecord(c) {
@@ -100,7 +101,27 @@ class CreatorAdminService {
     if (!creatorRecord) {
       throw new NotFoundError('Creator not found');
     }
-    return this.mapCreatorRecord(creatorRecord);
+    const creatorData = this.mapCreatorRecord(creatorRecord);
+
+    try {
+      const totalQuestions = await Donation.count({
+        where: { creator_id: id, payment_status: 'success', status: 'not_read' }
+      });
+      const questionsAnswered = await Donation.count({
+        where: {
+          creator_id: id,
+          payment_status: 'success',
+          status: 'read'
+        }
+      });
+      creatorData.totalQuestions = totalQuestions;
+      creatorData.questionsAnswered = questionsAnswered;
+    } catch (err) {
+      creatorData.totalQuestions = 0;
+      creatorData.questionsAnswered = 0;
+    }
+
+    return creatorData;
   }
 
   async toggleBlockCreator(id, adminId, req) {

@@ -6,12 +6,12 @@ import Logo from './Logo';
 
 export default function LandingFooter() {
   return (
-    <footer className="bg-[#07070C] border-t border-[#1C1C28] pt-14 pb-10 text-[#8B8B9E]">
+    <footer className="bg-[#07070C] border-t border-[#1C1C28] pt-10 pb-10 text-[#8B8B9E]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
         {/* Main Footer Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-8 items-start">
           {/* Left Brand & Socials Column */}
-          <div className="lg:col-span-5 space-y-5 text-left">
+          <div className="lg:col-span-4 space-y-5 text-left">
             <Link href="/" className="inline-block">
               <Logo size="lg" />
             </Link>
@@ -73,14 +73,19 @@ export default function LandingFooter() {
             </div>
           </div>
 
-          {/* Right Links Columns with Vertical Dividers */}
-          <div className="lg:col-span-7 grid grid-cols-1 sm:grid-cols-3 gap-8 sm:gap-6 pt-2">
-            {/* Column 1: Platform */}
-            <div className="space-y-4 text-left sm:border-r border-[#1C1C2A] sm:pr-6">
+          {/* Right Links Columns */}
+          <div className="lg:col-span-8 grid grid-cols-2 sm:grid-cols-4 gap-8 pt-2">
+            {/* Column 1: Company */}
+            <div className="space-y-4 text-left sm:border-r border-[#1C1C2A] sm:pr-4">
               <h4 className="font-heading font-bold text-base text-white tracking-wide">
-                Platform
+                Company
               </h4>
-              <ul className="space-y-3 text-sm text-[#9E9EB2] font-medium">
+              <ul className="space-y-2.5 text-xs sm:text-sm text-[#9E9EB2] font-medium">
+                <li>
+                  <a href="#origin" className="hover:text-white transition-colors">
+                    About
+                  </a>
+                </li>
                 <li>
                   <a href="#how-it-works" className="hover:text-white transition-colors">
                     How It Works
@@ -88,51 +93,135 @@ export default function LandingFooter() {
                 </li>
                 <li>
                   <Link href="/creators/register" className="hover:text-white transition-colors">
-                    As a Creator
+                    For Creators
                   </Link>
-                </li>
-                <li>
-                  <Link href="/viewers/login" className="hover:text-white transition-colors">
-                    As a Viewer
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/live-streams" className="hover:text-white transition-colors">
-                    Live Streams
-                  </Link>
-                </li>
-              </ul>
-            </div>
-
-            {/* Column 2: Resources */}
-            <div className="space-y-4 text-left sm:border-r border-[#1C1C2A] sm:pr-6">
-              <h4 className="font-heading font-bold text-base text-white tracking-wide">
-                Resources
-              </h4>
-              <ul className="space-y-3 text-sm text-[#9E9EB2] font-medium">
-                <li>
-                  <a href="#faq" className="hover:text-white transition-colors">
-                    FAQ
-                  </a>
-                </li>
-              </ul>
-            </div>
-
-            {/* Column 3: Company */}
-            <div className="space-y-4 text-left">
-              <h4 className="font-heading font-bold text-base text-white tracking-wide">
-                Company
-              </h4>
-              <ul className="space-y-3 text-sm text-[#9E9EB2] font-medium">
-                <li>
-                  <a href="#origin" className="hover:text-white transition-colors">
-                    About Ask Me
-                  </a>
                 </li>
                 <li>
                   <Link href="/contact" className="hover:text-white transition-colors">
-                    Contact Us
+                    Contact
                   </Link>
+                </li>
+              </ul>
+            </div>
+
+            {/* Column 2: Support */}
+            <div className="space-y-4 text-left sm:border-r border-[#1C1C2A] sm:pr-4">
+              <h4 className="font-heading font-bold text-base text-white tracking-wide">
+                Support
+              </h4>
+              <ul className="space-y-2.5 text-xs sm:text-sm text-[#9E9EB2] font-medium">
+                <li>
+                  <Link href="/contact" className="hover:text-white transition-colors">
+                    Help Centre
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/contact" className="hover:text-white transition-colors">
+                    Support
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/contact" className="hover:text-white transition-colors">
+                    Report a Problem
+                  </Link>
+                </li>
+                <li>
+                  <a href="#safety" className="hover:text-white transition-colors">
+                    Safety
+                  </a>
+                </li>
+              </ul>
+            </div>
+
+            {/* Column 3: Legal */}
+            <div className="space-y-4 text-left sm:border-r border-[#1C1C2A] sm:pr-4">
+              <h4 className="font-heading font-bold text-base text-white tracking-wide">
+                Legal
+              </h4>
+              <ul className="space-y-2 text-xs text-[#9E9EB2] font-medium">
+                <li>
+                  <Link href="/eula" className="hover:text-white transition-colors">
+                    EULA
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/privacy-policy" className="hover:text-white transition-colors">
+                    Privacy Policy
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/cookie-policy" className="hover:text-white transition-colors">
+                    Cookie Policy
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/refund-policy" className="hover:text-white transition-colors">
+                    Refund Policy
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/community-guidelines" className="hover:text-white transition-colors">
+                    Community Guidelines
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/creator-terms" className="hover:text-white transition-colors">
+                    Creator Terms
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/payment-policy" className="hover:text-white transition-colors">
+                    Payment Policy
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/gst-tax-policy" className="hover:text-white transition-colors">
+                    GST and Tax Policy
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/international-payment-policy" className="hover:text-white transition-colors">
+                    International Payments Policy
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/copyright-policy" className="hover:text-white transition-colors">
+                    Copyright Policy
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/grievance-policy" className="hover:text-white transition-colors">
+                    Grievance Policy
+                  </Link>
+                </li>
+              </ul>
+            </div>
+
+            {/* Column 4: Contact */}
+            <div className="space-y-4 text-left">
+              <h4 className="font-heading font-bold text-base text-white tracking-wide">
+                Contact
+              </h4>
+              <ul className="space-y-2.5 text-xs text-[#9E9EB2] font-medium">
+                <li>
+                  <a href="mailto:support@ask-me.live" className="hover:text-white transition-colors block break-all">
+                    support@ask-me.live
+                  </a>
+                </li>
+                <li>
+                  <a href="mailto:grievance@ask-me.live" className="hover:text-white transition-colors block break-all">
+                    grievance@ask-me.live
+                  </a>
+                </li>
+                <li>
+                  <a href="mailto:legal@ask-me.live" className="hover:text-white transition-colors block break-all">
+                    legal@ask-me.live
+                  </a>
+                </li>
+                <li>
+                  <a href="mailto:security@ask-me.live" className="hover:text-white transition-colors block break-all">
+                    security@ask-me.live
+                  </a>
                 </li>
               </ul>
             </div>
@@ -148,3 +237,4 @@ export default function LandingFooter() {
     </footer>
   );
 }
+

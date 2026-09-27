@@ -15,17 +15,32 @@ class WalletService {
     const { search } = query;
 
     const where = {};
+    let creatorWhere = null;
+    let isSearching = false;
+
     if (search && search.trim()) {
+      isSearching = true;
       const q = `%${search.trim()}%`;
-      where[Op.or] = [
-        { '$creator.full_name$': { [Op.iLike]: q } },
-        { '$creator.username$': { [Op.iLike]: q } },
-        { '$creator.email$': { [Op.iLike]: q } },
+      const isNum = !isNaN(search.trim());
+
+      const orConditions = [
+        { full_name: { [Op.iLike]: q } },
+        { username: { [Op.iLike]: q } },
+        { email: { [Op.iLike]: q } }
       ];
+      if (isNum) {
+        orConditions.push({ id: parseInt(search.trim(), 10) });
+      }
+
+      creatorWhere = {
+        [Op.or]: orConditions
+      };
     }
 
     const { count, rows } = await walletRepository.findAndCountAllWallets({
       where,
+      creatorWhere,
+      isSearching,
       limit,
       offset,
       order: [['id', 'DESC']],
@@ -43,14 +58,29 @@ class WalletService {
         const rawPending = parseFloat(w.pending_balance || 0);
 
         let gross = 0;
+        let totalQuestions = 0;
+        let questionsAnswered = 0;
         try {
           const { Donation } = require('../../models');
           const creatorDonations = (await Donation.sum('amount', {
             where: { creator_id: creatorId, payment_status: 'success' }
           })) || 0;
           gross = parseFloat(creatorDonations);
+
+          totalQuestions = await Donation.count({
+            where: { creator_id: creatorId, payment_status: 'success', status: 'not_read' }
+          });
+
+          questionsAnswered = await Donation.count({
+            where: {
+              creator_id: creatorId,
+              payment_status: 'success',
+              status: 'read'
+
+            }
+          });
         } catch (err) {
-          gross = 0;
+          console.log(err, "error fetching earning count")
         }
 
         // If no donation rows, infer gross raised from stored net earnings/pending (storedNet = gross * 0.85)
@@ -82,6 +112,8 @@ class WalletService {
           grossEarnings: gross,
           platformCommission: platformCut,
           netCreatorShare: creatorNet,
+          totalQuestions,
+          questionsAnswered,
           withdrawnTotal: withdrawn,
           withdrawnAmount: withdrawn,
           availableBalance: avail,

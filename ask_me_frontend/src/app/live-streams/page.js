@@ -288,7 +288,7 @@ export default function PublicLiveStreamsPage() {
           <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
             {/* Search Input Box */}
             <div className="relative flex-1">
-              <Search className="h-4 w-4 text-[#7A7A8E] absolute left-4 top-1/2 -translate-y-1/2" />
+              <Search className="h-4 w-4 text-[#EB1000] absolute left-4 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
                 placeholder="Search live creators by name, handle, category..."

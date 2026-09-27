@@ -54,8 +54,20 @@ const validateUPI = (upiId) => {
 
 const validatePAN = (pan) => {
   if (!pan) return true;
+  let cleaned = String(pan).toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 10);
+  if (cleaned.length === 10) {
+    let chars = cleaned.split('');
+    for (let i = 0; i < 5; i++) {
+      if (chars[i] === '0') chars[i] = 'O';
+    }
+    for (let i = 5; i < 9; i++) {
+      if (chars[i] === 'O') chars[i] = '0';
+    }
+    if (chars[9] === '0') chars[9] = 'O';
+    cleaned = chars.join('');
+  }
   const panRegex = /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/;
-  return panRegex.test(String(pan).trim().toUpperCase());
+  return panRegex.test(cleaned);
 };
 
 module.exports = {

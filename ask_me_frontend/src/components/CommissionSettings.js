@@ -155,7 +155,7 @@ export default function CommissionSettings({ activeSubTab }) {
           </div>
 
           {/* Minimum Withdrawal Limit Control matching requirement #21 */}
-          <div className="p-4 rounded-xl bg-[#0A0A0F] border border-[#1C1C26] space-y-3">
+          {/* <div className="p-4 rounded-xl bg-[#0A0A0F] border border-[#1C1C26] space-y-3">
             <div className="flex items-center justify-between">
               <label className="text-xs font-bold text-white flex items-center gap-1.5">
                 <Wallet className="h-4 w-4 text-[#FFD60A]" />
@@ -174,10 +174,10 @@ export default function CommissionSettings({ activeSubTab }) {
             <p className="text-[11px] text-[#8B8B96]">
               Creators cannot request payout withdrawals until their available wallet balance exceeds <span className="text-[#FFD60A] font-bold">₹{minWithdrawalLimit}</span>.
             </p>
-          </div>
+          </div> */}
 
           {/* VIP Override Control */}
-          <div className="p-4 rounded-xl bg-[#0A0A0F] border border-[#1C1C26] space-y-3">
+          {/* <div className="p-4 rounded-xl bg-[#0A0A0F] border border-[#1C1C26] space-y-3">
             <div className="flex items-center justify-between">
               <label className="text-xs font-bold text-white flex items-center gap-1.5">
                 <Crown className="h-4 w-4 text-[#FFD60A]" />
@@ -199,7 +199,7 @@ export default function CommissionSettings({ activeSubTab }) {
               <span>VIP Creator Keeps: <strong className="text-[#00E676]">{100 - vipCut}%</strong></span>
               <span>Platform Revenue: <strong className="text-[#FFD60A]">{vipCut}%</strong></span>
             </div>
-          </div>
+          </div> */}
 
           <div className="flex justify-end">
             <button

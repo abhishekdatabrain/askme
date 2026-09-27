@@ -182,6 +182,7 @@ export default function Home() {
     setVipModalCreator(creator);
   };
   const [calcAmount, setCalcAmount] = useState(250000); // Default ₹2,50,000
+  const [platformCommissionPercent, setPlatformCommissionPercent] = useState(15); // Dynamic from database commission_settings
   const [copiedObsUrl, setCopiedObsUrl] = useState(false);
   const [howItWorksTab, setHowItWorksTab] = useState('viewer');
   const [selectedFaqTab, setSelectedFaqTab] = useState('All Questions');
@@ -192,19 +193,19 @@ export default function Home() {
   const initialLiveStreams = [
     {
       id: 'live-1',
-      creatorName: 'Riya',
+      // creatorName: 'Riya',
       username: '@riya',
       category: 'TECH & AI SYSTEMS',
-      subscribers: '420K',
+      // subscribers: '420K',
       avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=800&q=80',
-      title: 'Riya is Live',
+      title: 'Live',
       streamTitle: '"AI Coding, Autonomous Agents & Next-Gen Developer Stack Q&A Session"',
       broadcastingTo: 'YouTube & Twitch',
-      watchingCount: '14,280',
+      // watchingCount: '14,280',
       latency: '0.4s',
       queueCount: 4,
-      minFee: '$10',
-      sessionCode: 'prince-live-01',
+      minFee: '₹10',
+      sessionCode: 'askme-live-01',
       isLive: true,
     },
 
@@ -215,6 +216,27 @@ export default function Home() {
   const [followedCreators, setFollowedCreators] = useState({});
   const [isAutoRotating, setIsAutoRotating] = useState(true);
   const [streamModalCreator, setStreamModalCreator] = useState(null);
+
+  // Fetch dynamic commission settings from database for the calculator
+  useEffect(() => {
+    const fetchCommission = async () => {
+      try {
+        const res = await fetch(API_ENDPOINTS.CREATORS.COMMISSION_SETTINGS);
+        if (res.ok) {
+          const data = await res.json();
+          const percent = data.data?.platformCommissionPercent !== undefined
+            ? data.data.platformCommissionPercent
+            : data.data?.commission_percentage;
+          if (percent !== undefined && percent !== null && !isNaN(Number(percent))) {
+            setPlatformCommissionPercent(Number(percent));
+          }
+        }
+      } catch (err) {
+        console.warn('Using default commission for calculator:', err);
+      }
+    };
+    fetchCommission();
+  }, []);
 
   // Fetch live streams from Backend API dynamically with 4s real-time polling (Server-Side Filtering)
   useEffect(() => {
@@ -248,7 +270,7 @@ export default function Home() {
               creatorName: item.fullName || item.name || item.username || 'Live Creator',
               username: item.username || `@${item.cleanUsername || 'creator'}`,
               category: (item.session?.category || item.category || 'LIVE BROADCAST').toUpperCase(),
-              subscribers: `${item.followersCount || '100K'} Followers`,
+              subscribers: `${item.followersCount} Followers`,
               avatar: item.session?.thumbnail || item.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=800&q=80',
               title: item.session?.title ? `${item.fullName || item.username} - ${item.session.title}` : `${item.fullName || item.username} is Live`,
               streamTitle: item.session?.description ? `"${item.session.description}"` : `"${item.bio || 'Live Q&A & Audience SuperChat Session'}"`,
@@ -456,7 +478,7 @@ export default function Home() {
     {
       id: '1',
       creatorId: '1',
-      name: 'Prince Live',
+      name: 'Live',
       handle: '@prince_raj',
       cleanUsername: 'prince_raj',
       avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80',
@@ -510,12 +532,10 @@ export default function Home() {
     (creatorPageIndex + 1) * itemsPerPage
   );
 
-  // Dynamic fee calculation for creator earnings estimator
-  const askmeFee = calcAmount * 0.15;
-  const gatewayFee = calcAmount * 0.02;
-  const gstTdsFee = calcAmount * 0.037;
-  const netEarnings = calcAmount - askmeFee - gatewayFee - gstTdsFee;
-  const netPercentage = ((netEarnings / calcAmount) * 100).toFixed(1);
+  // Dynamic fee calculation for creator earnings estimator (Dynamic percentage from database)
+  const askmeFee = Math.round(calcAmount * (platformCommissionPercent / 100));
+  const netEarnings = Math.max(0, calcAmount - askmeFee);
+  const netPercentage = ((netEarnings / (calcAmount || 1)) * 100).toFixed(1);
   const extraVsOthers = Math.round(calcAmount * 0.28);
 
   // Section 10 Comparison Table Filter Data
@@ -573,7 +593,7 @@ export default function Home() {
     {
       id: 'r7',
       category: 'Revenue & Payouts',
-      askme: '100% Protection if Unanswered',
+      askme: 'If a creator does not respond to your question, this alone does not qualify you for a refund',
       yt: 'No automatic refund policy',
       twitch: 'Non-refundable digital tokens',
     },
@@ -606,7 +626,7 @@ export default function Home() {
       answer:
         'Unlike standard live chats that fly by at hundreds of messages a second, AskMe places your question in a dedicated creator queue. The creator has an interactive OBS/PC dashboard where every paid question stays visible until they explicitly mark it as answered or highlight it on stream.',
       highlights: [
-        '100% visible queue guaranteed — never gets buried in chat spam',
+        'All visible queue never gets buried in chat spam',
         'Real-time status updates: In-Queue, On-Screen Broadcasted, and Answered',
         'Automatic refund protection if your question cannot be reached',
       ],
@@ -656,14 +676,14 @@ export default function Home() {
       answer:
         'Simply copy your unique OBS Browser Source URL from your AskMe Creator Dashboard, paste it as a Browser Source in OBS/Streamlabs/vMix, and set resolution to 1920x1080. It renders transparently in real time.',
     },
-    {
-      id: 'q7',
-      category: 'For Creators',
-      categoryTag: 'FOR CREATORS',
-      question: 'How does Gemini AI spam filtering and moderation protect my stream?',
-      answer:
-        'Our built-in Gemini AI filter automatically scans incoming questions for abusive language, hate speech, spam links, and inappropriate words before they ever appear on your studio monitor or OBS overlay.',
-    },
+    // {
+    //   id: 'q7',
+    //   category: 'For Creators',
+    //   categoryTag: 'FOR CREATORS',
+    //   question: 'How does Gemini AI spam filtering and moderation protect my stream?',
+    //   answer:
+    //     'Our built-in Gemini AI filter automatically scans incoming questions for abusive language, hate speech, spam links, and inappropriate words before they ever appear on your studio monitor or OBS overlay.',
+    // },
     {
       id: 'q8',
       category: 'For Creators',
@@ -771,7 +791,7 @@ export default function Home() {
 
                   {/* Subtitle Body Text */}
                   <p className="text-[16px] sm:text-[18px] lg:text-[20px] text-[#9A9AB0] max-w-3xl mx-auto font-medium leading-relaxed">
-                    Connect directly with top creators during live streams and offline. Meaningful questions get a guaranteed place in a dedicated creator queue — never buried in chat noise.
+                    Connect directly with top creators during live streams and offline. Meaningful questions get a place in a dedicated creator queue — never buried in chat noise.
                   </p>
 
                   {/* 3 CTA Buttons */}
@@ -887,8 +907,8 @@ export default function Home() {
                   <div className="pt-6 max-w-4xl mx-auto">
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                       <div className="p-4 rounded-2xl bg-[#12121C] border border-[#222232] text-center space-y-1">
-                        <span className="text-[13px] font-black text-[#EB1000] uppercase tracking-wider block">100% SEEN</span>
-                        <span className="text-[13px] text-[#8B8B9E] font-medium block">Guaranteed creator spotlight queue</span>
+                        <span className="text-[13px] font-black text-[#EB1000] uppercase tracking-wider block">Delivered to the creator's AskMe queue</span>
+                        <span className="text-[13px] text-[#8B8B9E] font-medium block">creator spotlight queue</span>
                       </div>
                       <div className="p-4 rounded-2xl bg-[#12121C] border border-[#222232] text-center space-y-1">
                         <span className="text-[13px] font-black text-[#00F5D4] uppercase tracking-wider block">0% DIRECT FEE</span>
@@ -936,7 +956,7 @@ export default function Home() {
                         <span className="text-[#EB1000]">SCAN.</span>
                         <span className="text-white">ASK.</span>
                         <span className="text-[#FF9500]">SCOOT.</span>
-                        <span className="text-[#10B981]">GET ANSWERED.</span>
+                        <span className="text-[#10B981]">Submit Paid Question.</span>
                       </div>
 
                       {/* CTA Buttons */}
@@ -976,195 +996,292 @@ export default function Home() {
 
                     {/* RIGHT COLUMN: INTERACTIVE VIDEO & FEATURE SLIDER MOCKUP */}
                     <div className="lg:col-span-6 relative">
-                      <div className="rounded-3xl bg-[#0D0D14] border border-[#222234] shadow-[0_25px_90px_rgba(0,0,0,0.85)] p-4 sm:p-5 relative overflow-hidden space-y-4">
-
-                        {/* Slider Content Panel */}
-                        {heroSlideIndex === 0 && (
-                          <div className="relative aspect-video sm:aspect-[16/10] rounded-2xl overflow-hidden border border-[#222234] bg-[#12121B] shadow-inner group">
-                            <img
-                              src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=1000&q=80"
-                              alt="Prince Live"
-                              className="w-full h-full object-cover opacity-85"
-                            />
-
-                            {/* Top Video Overlay Bar */}
-                            <div className="absolute top-3 left-3 right-3 flex items-center justify-between">
-                              <div className="flex items-center gap-2">
-                                <span className="px-2.5 py-1 rounded-lg bg-[#EB1000] text-white text-[10px] sm:text-[11px] font-black tracking-wider flex items-center gap-1 shadow-md">
-                                  <span className="h-1.5 w-1.5 rounded-full bg-white animate-pulse"></span>
-                                  LIVE
-                                </span>
-                                <span className="px-2.5 py-1 rounded-lg bg-black/60 backdrop-blur-md text-white text-[10px] sm:text-[11px] font-bold border border-white/10 flex items-center gap-1">
-                                  👁️ 14,820
-                                </span>
-                                <span className="px-2.5 py-1 rounded-lg bg-black/60 backdrop-blur-md text-white text-[10px] sm:text-[11px] font-bold border border-white/10 hidden sm:inline-block">
-                                  Technology &amp; AI
-                                </span>
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <span className="p-1 rounded-lg bg-black/60 backdrop-blur-md text-white border border-white/10">
-                                  <Volume2 className="h-3.5 w-3.5" />
-                                </span>
-                                <span className="px-2.5 py-1 rounded-lg bg-emerald-950/80 text-emerald-400 text-[10px] sm:text-[11px] font-mono font-bold border border-emerald-500/40">
-                                  1080p60
-                                </span>
-                              </div>
+                      <div className="relative rounded-[26px] sm:rounded-[28px] overflow-hidden bg-neutral-950 aspect-[16/10] sm:aspect-[16/10.5] flex flex-col justify-between text-white shadow-inner">
+                        <div className="absolute inset-0 z-0 overflow-hidden">
+                          <img
+                            alt="Live Creator Streaming"
+                            className="w-full h-full object-cover object-center transition-all duration-700 scale-100"
+                            src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=1200&auto=format&fit=crop&q=85"
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-black/60 pointer-events-none" />
+                          <div className="absolute top-4 right-4 flex items-end gap-1 h-5 pointer-events-none opacity-80">
+                            <span className="w-1 bg-[#EB1000] rounded-full animate-[pulse_0.8s_infinite] h-3" />
+                            <span className="w-1 bg-[#EB1000] rounded-full animate-[pulse_0.6s_infinite] h-5" />
+                            <span className="w-1 bg-[#EB1000] rounded-full animate-[pulse_0.9s_infinite] h-2.5" />
+                            <span className="w-1 bg-[#EB1000] rounded-full animate-[pulse_0.7s_infinite] h-4" />
+                          </div>
+                        </div>
+                        <div className="relative z-10 p-3 sm:p-4 flex items-center justify-between">
+                          <div className="flex items-center gap-2 sm:gap-2.5">
+                            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#EB1000] text-white text-[10px] sm:text-xs font-black tracking-wider uppercase shadow-lg shadow-red-600/40">
+                              <span className="w-2 h-2 rounded-full bg-white animate-ping" />
+                              <span>LIVE</span>
                             </div>
-
-                            {/* Center Floating Banner */}
-                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-11/12 max-w-sm p-4 rounded-2xl bg-[#140608]/90 border border-[#EB1000] backdrop-blur-md space-y-2 text-left shadow-2xl">
-                              <div className="flex items-center gap-2 text-[#EB1000] font-black text-xs uppercase tracking-wider">
-                                <Bell className="h-4 w-4 animate-bounce shrink-0" />
-                                <span>ASKME IS READING &amp; ANSWERING YOUR QUESTION ON AIR!</span>
-                              </div>
-                              <div className="text-white text-xs font-semibold italic">
-                                &quot;What camera do you use?&quot;
-                              </div>
-                            </div>
-
-                            {/* Streamer Info Bar at Bottom */}
-                            <div className="absolute bottom-3 left-3 right-3 p-2.5 rounded-xl bg-black/80 backdrop-blur-md border border-white/10 flex items-center justify-between gap-2">
-                              <div className="flex items-center gap-2.5">
-                                <img
-                                  src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=100&auto=format&fit=crop&q=80"
-                                  alt="Prince Lin"
-                                  className="w-8 h-8 rounded-full object-cover border border-[#EB1000]"
-                                />
-                                <div>
-                                  <div className="text-xs font-extrabold text-white flex items-center gap-1">
-                                    Askme <span className="text-[#00F5D4] text-[10px]">✔</span>
-                                  </div>
-                                  <div className="text-[10px] text-[#A0A0B2]">
-                                    Streaming on YouTube &amp; Twitch
-                                  </div>
-                                </div>
-                              </div>
-
-                              <Link
-                                href="/"
-                                className="px-3.5 py-1.5 rounded-full bg-[#200A0C] border border-[#EB1000]/60 text-white hover:bg-[#EB1000] text-xs font-bold transition-all flex items-center gap-1.5 shrink-0"
+                            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md border border-white/10 text-white/90 text-[10px] sm:text-xs font-semibold">
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                width={24}
+                                height={24}
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth={2}
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                className="lucide lucide-eye w-3 h-3 text-red-400"
+                                aria-hidden="true"
                               >
-                                <MessageCircle className="h-3.5 w-3.5 text-[#EB1000] group-hover:text-white" />
-                                <span>Askme</span>
-                              </Link>
+                                <path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0" />
+                                <circle cx={12} cy={12} r={3} />
+                              </svg>
+                            </div>
+                            <span className="hidden sm:inline-block px-2.5 py-1 rounded-full bg-black/40 backdrop-blur-md border border-white/10 text-[10px] text-neutral-300 font-medium">
+                              Technology &amp; AI
+                            </span>
+                          </div>
+                          {/* <div className="flex items-center gap-2">
+                            <button
+                              className="p-1.5 rounded-full bg-black/50 hover:bg-black/80 backdrop-blur-md border border-white/10 text-white/80 hover:text-white transition-colors cursor-pointer"
+                              title="Unmute stream"
+                            >
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                width={24}
+                                height={24}
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth={2}
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                className="lucide lucide-volume-x w-3.5 h-3.5"
+                                aria-hidden="true"
+                              >
+                                <path d="M11 4.702a.705.705 0 0 0-1.203-.498L6.413 7.587A1.4 1.4 0 0 1 5.416 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.416a1.4 1.4 0 0 1 .997.413l3.383 3.384A.705.705 0 0 0 11 19.298z" />
+                                <line x1={22} x2={16} y1={9} y2={15} />
+                                <line x1={16} x2={22} y1={9} y2={15} />
+                              </svg>
+                            </button>
+                            <div className="px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md border border-white/10 text-[10px] font-bold text-white flex items-center gap-1">
+                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                              <span>1080px</span>
+                            </div>
+                          </div> */}
+                        </div>
+                        <div className="relative z-10 flex-1 flex items-center justify-center p-3">
+                          <div
+                            className="absolute right-3 sm:right-6 bottom-14 sm:bottom-16 bg-white/95 text-neutral-900 rounded-2xl sm:rounded-3xl p-3 sm:p-3.5 shadow-2xl border border-white/80 flex flex-col items-center text-center max-w-[150px] sm:max-w-[170px]"
+                            style={{
+                              opacity: 1,
+                              transform: "translateY(-6.18019px) scale(0.907297)"
+                            }}
+                          >
+                            <div className="relative overflow-hidden rounded-xl border border-neutral-200 bg-white p-1 flex items-center justify-center">
+                              <OriginalScannerImage className="h-full w-auto object-contain shadow-md rounded-xl" />
+                              <div
+                                className="absolute left-0 right-0 h-1 bg-[#EB1000] shadow-[0_0_8px_#EB1000]"
+                                style={{ top: "97.0748%" }}
+                              />
+                            </div>
+                            <div className="mt-2 space-y-0.5">
+                              <span className="inline-block text-[10px] font-black uppercase tracking-wider text-[#EB1000] bg-red-50 px-2 py-0.5 rounded-full">
+                                SCANNING...
+                              </span>
+                              <p className="text-[10px] text-neutral-500 font-medium">
+                                Point phone camera
+                              </p>
                             </div>
                           </div>
-                        )}
-
-                        {heroSlideIndex === 1 && (
-                          <div className="aspect-video sm:aspect-[16/10] rounded-2xl bg-[#09090E] border border-[#EB1000]/60 p-6 flex flex-col justify-between shadow-2xl relative">
-                            <div className="flex items-center justify-between text-xs">
-                              <span className="px-3 py-1 rounded-md bg-[#FFD60A]/15 text-[#FFD60A] font-mono font-black uppercase tracking-wider border border-[#FFD60A]/30">
-                                100% SEEN • GUARANTEED SPOTLIGHT QUEUE
-                              </span>
-                              <span className="text-[#00F5D4] font-bold">🟢 Confirmed</span>
-                            </div>
-                            <div className="p-5 rounded-2xl bg-[#14141E] border border-[#242436] space-y-2 text-left">
-                              <div className="text-xs text-[#8E8E9F] font-semibold">
-                                Live Question Spotlight
+                          <div
+                            className="w-full max-w-sm bg-white/95 dark:bg-neutral-900/95 text-neutral-900 dark:text-white rounded-2xl sm:rounded-3xl p-4 sm:p-5 shadow-2xl border border-neutral-200/90 dark:border-neutral-700/80 backdrop-blur-xl"
+                            style={{ opacity: 0, transform: "translateY(2.20381px) scale(0.983471)" }}
+                          >
+                            <div className="flex items-center justify-between pb-2 border-b border-neutral-200 dark:border-neutral-800 text-xs">
+                              <div className="flex items-center gap-2">
+                                <span className="w-2 h-2 rounded-full bg-[#EB1000]" />
+                                <span className="font-extrabold text-neutral-900 dark:text-white">
+                                  Ask
+                                </span>
                               </div>
-                              <p className="text-white font-extrabold text-sm sm:text-base leading-relaxed">
-                                &quot;What was your production chain for the vocal reverb on track 3? Can you break down the EQ?&quot;
-                              </p>
-                            </div>
-                            <div className="flex items-center justify-between text-xs text-[#8E8E9F] border-t border-[#1E1E2C] pt-3">
-                              <span>from @audiogeek • 120s spotlight</span>
-                              <span className="px-3 py-1 rounded-lg bg-[#FFD60A]/10 text-[#FFD60A] font-bold border border-[#FFD60A]/20">
-                                $50.00 Bounty
+                              <span className="text-[10px] font-bold text-neutral-600 dark:text-neutral-300">
+                                Live Q&amp;A
                               </span>
                             </div>
-                          </div>
-                        )}
-
-                        {heroSlideIndex === 2 && (
-                          <div className="aspect-video sm:aspect-[16/10] rounded-2xl bg-[#080B09] border border-[#059669]/60 p-6 flex flex-col justify-between shadow-2xl text-left relative">
-                            <div className="flex items-center justify-between text-xs">
-                              <span className="px-3 py-1 rounded-md bg-emerald-950/80 text-[#00E599] font-mono font-black uppercase tracking-wider border border-emerald-500/40">
-                                0% DIRECT FEE • WEB &amp; QR PAYMENTS
-                              </span>
-                              <span className="text-white font-bold">Instant UPI &amp; Cards</span>
-                            </div>
-                            <div className="p-5 rounded-2xl bg-[#131716] border border-[#222E29] space-y-2">
-                              <div className="text-xs text-[#00E599] font-bold">Direct Web Payout Engine</div>
-                              <p className="text-white font-extrabold text-sm sm:text-base">
-                                Keep 85% of audience support with zero Apple 30% tax or app store holds.
-                              </p>
-                            </div>
-                            <div className="flex items-center justify-between text-xs text-[#8E8E9F] border-t border-[#1C2622] pt-3">
-                              <span>Direct to Creator Wallet</span>
-                              <span className="text-[#00E599] font-bold">Automated Instant Settlement</span>
-                            </div>
-                          </div>
-                        )}
-
-                        {heroSlideIndex === 3 && (
-                          <div className="aspect-video sm:aspect-[16/10] rounded-2xl bg-[#0A0A12] border border-[#6366F1]/60 p-6 flex flex-col justify-between shadow-2xl text-left relative">
-                            <div className="flex items-center justify-between text-xs">
-                              <span className="px-3 py-1 rounded-md bg-indigo-950/80 text-[#A5B4FC] font-mono font-black uppercase tracking-wider border border-indigo-500/40">
-                                STREAM QR WIDGET • MULTI-PLATFORM SYNC
-                              </span>
-                              <span className="text-white font-bold">YouTube, Twitch &amp; Kick</span>
-                            </div>
-                            <div className="p-5 rounded-2xl bg-[#121220] border border-[#22223D] space-y-2">
-                              <div className="text-xs text-[#A5B4FC] font-bold">OBS Studio &amp; Streamlabs Overlay</div>
-                              <p className="text-white font-extrabold text-sm sm:text-base">
-                                Instant zero-friction QR scan widget overlay on your broadcast stream.
-                              </p>
-                            </div>
-                            <div className="flex items-center justify-between text-xs text-[#8E8E9F] border-t border-[#1E1E34] pt-3">
-                              <span>Zero Stream Interruption</span>
-                              <span className="text-indigo-400 font-bold">Live Synced Dashboard</span>
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Navigation Footer Bar inside Mockup Box */}
-                        <div className="flex items-center justify-between pt-1 border-t border-[#1C1C2A] text-xs">
-                          {/* Status indicator */}
-                          <div className="flex items-center gap-2 text-[#8E8E9F] font-mono">
-                            <span className="h-2 w-2 rounded-full bg-[#EB1000]"></span>
-                            <span>{heroSlideIndex + 1}. Notified</span>
-                            <Bell className="h-3 w-3 text-[#EB1000]" />
-                          </div>
-
-                          {/* Navigation Controls: Arrows + Dots */}
-                          <div className="flex items-center gap-3">
-                            {/* Dots Pagination */}
-                            <div className="flex items-center gap-1.5">
-                              {[0, 1, 2, 3].map((idx) => (
+                            <form className="mt-3 space-y-3">
+                              <div className="relative">
+                                <input
+                                  placeholder="Type your question..."
+                                  className="w-full bg-neutral-100 dark:bg-neutral-800 text-neutral-900 dark:text-white text-xs sm:text-sm rounded-xl px-3 py-2.5 pr-8 border border-neutral-200 dark:border-neutral-700 focus:outline-none focus:ring-2 focus:ring-[#EB1000]/30 font-medium"
+                                  type="text"
+                                  defaultValue="What camera do you use?"
+                                />
+                                <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  width={24}
+                                  height={24}
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth={2}
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  className="lucide lucide-sparkles absolute right-2.5 top-3 w-4 h-4 text-amber-500 opacity-70"
+                                  aria-hidden="true"
+                                >
+                                  <path d="M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z" />
+                                  <path d="M20 2v4" />
+                                  <path d="M22 4h-4" />
+                                  <circle cx={4} cy={20} r={2} />
+                                </svg>
+                              </div>
+                              <div className="flex items-center justify-between gap-2">
+                                <span className="text-[10px] text-neutral-500 dark:text-neutral-400">
+                                  Priority queue enabled
+                                </span>
                                 <button
-                                  key={idx}
-                                  type="button"
-                                  onClick={() => setHeroSlideIndex(idx)}
-                                  className={`h-2 rounded-full transition-all cursor-pointer ${heroSlideIndex === idx
-                                    ? 'w-5 bg-[#EB1000]'
-                                    : 'w-2 bg-[#28283C] hover:bg-white/40'
-                                    }`}
-                                />
-                              ))}
+                                  type="submit"
+                                  className="px-4 py-2 rounded-xl bg-[#EB1000] hover:bg-[#CC0E00] text-white text-xs font-black flex items-center gap-1.5 shadow-md shadow-red-600/30 transition-all cursor-pointer"
+                                >
+                                  <span>SEND QUESTION</span>
+                                  <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    width={24}
+                                    height={24}
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth={2}
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    className="lucide lucide-send w-3 h-3"
+                                    aria-hidden="true"
+                                  >
+                                    <path d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z" />
+                                    <path d="m21.854 2.147-10.94 10.939" />
+                                  </svg>
+                                </button>
+                              </div>
+                            </form>
+                          </div>
+                        </div>
+                        <div className="relative z-10 p-3 sm:p-4 bg-gradient-to-t from-black via-black/70 to-transparent flex items-center justify-between">
+                          <div className="flex items-center gap-2.5">
+                            <img
+                              alt="riya"
+                              className="w-8 h-8 sm:w-9 sm:h-9 rounded-full object-cover border-2 border-[#EB1000]"
+                              src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80"
+                            />
+                            <div>
+                              <div className="flex items-center gap-1.5">
+                                <span className="font-bold text-xs sm:text-sm text-white">
+                                  Riya
+                                </span>
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                              </div>
+                              <p className="text-[10px] text-neutral-400">
+                                Streaming on YouTube &amp; Twitch
+                              </p>
                             </div>
+                          </div>
+                          <button className="px-3 sm:px-3.5 py-1.5 rounded-xl bg-white/15 hover:bg-white/25 border border-white/20 text-white text-[10px] sm:text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer backdrop-blur-md">
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              width={24}
+                              height={24}
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth={2}
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              className="lucide lucide-message-circle w-3 h-3 text-[#EB1000]"
+                              aria-hidden="true"
+                            >
+                              <path d="M2.992 16.342a2 2 0 0 1 .094 1.167l-1.065 3.29a1 1 0 0 0 1.236 1.168l3.413-.998a2 2 0 0 1 1.099.092 10 10 0 1 0-4.777-4.719" />
+                            </svg>
+                            <span>Ask </span>
+                          </button>
+                        </div>
+                      </div>
 
-                            {/* Previous / Next Arrow Buttons */}
-                            <div className="flex items-center gap-1 pl-2 border-l border-[#222234]">
-                              <button
-                                type="button"
-                                onClick={() => setHeroSlideIndex((prev) => (prev > 0 ? prev - 1 : 3))}
-                                className="w-7 h-7 rounded-full bg-[#181824] hover:bg-[#28283C] text-white flex items-center justify-center border border-[#262638] transition-colors cursor-pointer"
-                              >
-                                <ChevronLeft className="h-4 w-4" />
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => setHeroSlideIndex((prev) => (prev < 3 ? prev + 1 : 0))}
-                                className="w-7 h-7 rounded-full bg-[#181824] hover:bg-[#28283C] text-white flex items-center justify-center border border-[#262638] transition-colors cursor-pointer"
-                              >
-                                <ChevronRight className="h-4 w-4" />
-                              </button>
-                            </div>
+                    </div>
+                  </div>
+                  {/* Showcase Browser Frame */}
+                  <div className="pt-8 max-w-6xl mx-auto">
+                    <div className="rounded-3xl bg-[#0D0D14] border border-[#222234] shadow-[0_25px_90px_rgba(0,0,0,0.85)] overflow-hidden p-4 sm:p-6 text-left relative">
+
+                      {/* Top Window Bar */}
+                      <div className="flex items-center justify-between border-b border-[#1E1E2D] pb-4 mb-4 gap-4 flex-wrap">
+                        <div className="flex items-center gap-2">
+                          <span className="h-3 w-3 rounded-full bg-[#FF5F56]"></span>
+                          <span className="h-3 w-3 rounded-full bg-[#FFBD2E]"></span>
+                          <span className="h-3 w-3 rounded-full bg-[#27C93F]"></span>
+                          <div className="ml-3 px-4 py-1 rounded-md bg-[#161622] border border-[#27273A] text-[13px] font-mono text-[#8B8B9E] hidden sm:inline-block">
+                            askme.live
                           </div>
                         </div>
 
+                        <div className="flex items-center gap-3 text-[13px]">
+                          <div className="px-3 py-1 rounded-full bg-[#00F5D4]/10 border border-[#00F5D4]/30 text-[#00F5D4] font-bold flex items-center gap-1.5">
+                            <span className="h-1.5 w-1.5 rounded-full bg-[#00F5D4] animate-ping"></span>
+                            <span>Ultra low Latency 0.4s</span>
+                          </div>
+                          <span className="text-[#6B6B7F] font-medium hidden md:inline-block">
+                            Stream Sync: <span className="text-white font-semibold">Active</span>
+                          </span>
+                        </div>
                       </div>
+
+                      {/* Inner Window Box */}
+                      <div className="max-w-4xl mx-auto">
+                        <div className="relative aspect-video rounded-2xl overflow-hidden border border-[#222234] bg-[#12121B] shadow-inner">
+                          <img
+                            src="https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=1000&q=80"
+                            alt="Live Stream Preview"
+                            className="w-full h-full object-cover opacity-80"
+                          />
+
+                          <div className="absolute top-3 left-3 right-3 flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <span className="px-2.5 py-1 rounded-lg bg-[#EB1000] text-white text-[11px] font-black tracking-wider flex items-center gap-1 shadow-md">
+                                <span className="h-1.5 w-1.5 rounded-full bg-white animate-pulse"></span>
+                                LIVE
+                              </span>
+                              <span className="px-2.5 py-1 rounded-lg bg-black/60 backdrop-blur-md text-white text-[11px] font-bold border border-white/10">
+                                👁️ 12.4K watching
+                              </span>
+                            </div>
+                            <span className="px-2.5 py-1 rounded-lg bg-[#FF9500]/20 backdrop-blur-md text-[#FF9500] text-[11px] font-bold border border-[#FF9500]/30">
+                              🔥 Trending #1 in Music
+                            </span>
+                          </div>
+
+                          {/* Chat Overlays */}
+                          <div className="absolute bottom-16 right-3 space-y-2 text-[13px]">
+                            <div className="px-3 py-1.5 rounded-full bg-gradient-to-r from-[#FF8C00] to-[#FF4500] text-white font-bold text-[13px] flex items-center gap-1.5 shadow-xl animate-bounce">
+                              <span>Liam tipped $25.00</span>
+                            </div>
+                            <div className="px-3.5 py-2 rounded-2xl bg-[#EB1000]/80 backdrop-blur-md border border-[#FF4D3E]/40 text-white font-medium text-[13px] shadow-xl max-w-xs">
+                              ❤️ &quot;Play your unreleased track!&quot;
+                            </div>
+                          </div>
+
+                          {/* Streamer Bar */}
+                          <div className="absolute bottom-3 left-3 right-3 p-2.5 rounded-xl bg-black/75 backdrop-blur-md border border-white/10 flex items-center justify-between gap-3">
+                            <div className="flex items-center gap-2.5">
+                              <div>
+                                <div className="text-[13px] font-bold text-white flex items-center gap-1">
+                                  AskMe Live <span className="text-[#00F5D4] text-[11px]">✔</span>
+                                </div>
+                                <div className="text-[11px] text-[#A0A0B2]">
+                                  Acoustic Sessions &amp; Songwriting AMA
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
                     </div>
                   </div>
                 </div>
@@ -1459,14 +1576,14 @@ export default function Home() {
                 <img
                   src={
                     activeStepIndex === 0
-                      ? 'https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=1400&q=80'
+                      ? '/step1_ask.jpg'
                       : activeStepIndex === 1
-                        ? 'https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&w=1400&q=80'
+                        ? '/step2_sent.jpg'
                         : activeStepIndex === 2
-                          ? 'https://images.unsplash.com/photo-1598550476439-6847785fcea6?auto=format&fit=crop&w=1400&q=80'
+                          ? '/step3_scoot.jpg'
                           : activeStepIndex === 3
-                            ? 'https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?auto=format&fit=crop&w=1400&q=80'
-                            : 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1400&q=80'
+                            ? '/step4_keep_watching.jpg'
+                            : '/step5_answer.jpg'
                   }
                   alt="Live Stream Setup"
                   className="absolute inset-0 w-full h-full object-cover opacity-60 group-hover/player:scale-105 transition-transform duration-700"
@@ -1548,8 +1665,7 @@ export default function Home() {
           {/* Header */}
           <div className="text-center space-y-4">
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#180A0C] border border-[#EB1000]/60 text-[#EB1000] text-[11px] sm:text-[12px] font-mono font-bold tracking-widest uppercase shadow-[0_0_15px_rgba(235,16,0,0.25)]">
-              GUARANTEED VISIBILITY
-            </div>
+              Get your question noticed            </div>
             <h2 className="text-3xl sm:text-5xl lg:text-[55px] xl:text-[60px] font-heading font-black text-white tracking-tight leading-[1.15] max-w-4xl mx-auto uppercase">
               YOUR QUESTION DOESN'T DISAPPEAR INTO THE CHAT.
             </h2>
@@ -1784,7 +1900,7 @@ export default function Home() {
                 </div>
                 <div className="space-y-1 pt-1">
                   <div className="font-semibold text-white text-xs">"Your question has been answered."</div>
-                  <div className="text-[11px] text-[#7A7A8E]">Prince • Live Q&A session</div>
+                  <div className="text-[11px] text-[#7A7A8E]">Live Q&A session</div>
                 </div>
               </div>
             </div>
@@ -2126,9 +2242,12 @@ export default function Home() {
 
             {/* CENTER CORE: ASKME GLOWING RED NODE */}
             <div className="relative z-30 flex flex-col items-center justify-center">
-              <div className="w-20 h-20 sm:w-28 sm:h-28 rounded-full bg-gradient-to-br from-[#FF2A1A] via-[#EB1000] to-[#900600] text-white flex flex-col items-center justify-center shadow-[0_0_70px_rgba(235,16,0,0.9)] border-2 border-white/40 transition-transform duration-300 hover:scale-110 cursor-pointer">
-                <Logo size="sm" />
-                {/* <span className="text-[10px] sm:text-[12px] font-black tracking-widest uppercase mt-1">ASKME</span> */}
+              <div className="w-20 h-20 sm:w-28 sm:h-28 rounded-full bg-gradient-to-br from-[#FF2A1A] via-[#EB1000] to-[#900600] text-white flex flex-col items-center justify-center shadow-[0_0_70px_rgba(235,16,0,0.9)] border-2 border-white/40 transition-transform duration-300 hover:scale-110 cursor-pointer overflow-hidden p-0">
+                <img
+                  src="/logo.png"
+                  alt="AskMe Logo"
+                  className="w-full h-full object-cover rounded-full"
+                />
               </div>
             </div>
 
@@ -2305,7 +2424,6 @@ export default function Home() {
                   <img className="inline-block h-7 w-7 rounded-full ring-2 ring-[#0A0A0F]" src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=100&q=80" alt="Avatar" />
                 </div>
                 <span className="text-xs text-[#8E8E9F] font-medium">
-                  <strong className="text-white font-bold">3,400+</strong> creators live now
                 </span>
               </div>
               <Link
@@ -2349,7 +2467,6 @@ export default function Home() {
             <div className="p-3 rounded-xl bg-[#0B0B12] border border-[#202030] flex flex-wrap items-center justify-between gap-3 text-xs">
               <div className="flex flex-wrap items-center gap-4">
                 <span className="px-3 py-1 rounded-lg bg-[#0D2418] border border-[#10B981]/40 text-[#10B981] font-extrabold flex items-center gap-1.5">
-                  <DollarSign className="h-3.5 w-3.5" /> ₹18,420 <span className="font-normal text-[11px] text-[#80C0A0]">Earned Tonight</span>
                 </span>
                 <span className="text-[#8E8E9F] font-semibold flex items-center gap-1.5">
                   <span className="h-2 w-2 rounded-full bg-[#9146FF]"></span> <strong className="text-white">72</strong> Incoming Asks
@@ -2527,10 +2644,7 @@ export default function Home() {
                       <span className="text-white block font-extrabold text-[10px]">100%</span>
                       Audience Kept
                     </div>
-                    <div className="p-2 rounded-lg bg-[#0E0E16] border border-[#202030]">
-                      <span className="text-[#00F5D4] block font-extrabold text-[10px]">Instant</span>
-                      UPI / Stripe
-                    </div>
+
                     <div className="p-2 rounded-lg bg-[#0E0E16] border border-[#202030]">
                       <span className="text-[#EB1000] block font-extrabold text-[10px]">0% Tax</span>
                       Zero App Stores
@@ -2774,17 +2888,17 @@ export default function Home() {
                   </div>
                 </div>
                 <div className="flex items-center justify-between text-[#8E8E9F] font-medium">
-                  <span>AskMe Fee (15%)</span>
-                  <span className="text-[#EB1000] font-bold">- ₹{Math.round(calcAmount * 0.15).toLocaleString('en-IN')}</span>
+                  <span>AskMe Fee Including GST ({platformCommissionPercent}%)</span>
+                  <span className="text-[#EB1000] font-bold">- ₹{askmeFee.toLocaleString('en-IN')}</span>
                 </div>
-                <div className="flex items-center justify-between text-[#8E8E9F] font-medium">
+                {/* <div className="flex items-center justify-between text-[#8E8E9F] font-medium">
                   <span>Gateway Charges (~2%)</span>
                   <span className="text-[#EB1000] font-bold">- ₹{Math.round(calcAmount * 0.02).toLocaleString('en-IN')}</span>
                 </div>
                 <div className="flex items-center justify-between text-[#8E8E9F] font-medium">
                   <span>GST + TDS (~3.7%)</span>
                   <span className="text-[#EB1000] font-bold">- ₹{Math.round(calcAmount * 0.037).toLocaleString('en-IN')}</span>
-                </div>
+                </div> */}
               </div>
 
               {/* Result Payout Box */}
@@ -2794,9 +2908,9 @@ export default function Home() {
                     Your Estimated Payout <span className="text-[#EB1000] ml-1 font-extrabold">Instant Transfer</span>
                   </span>
                   <div className="text-2xl font-black text-white mt-0.5">
-                    ₹{Math.round(calcAmount * 0.793).toLocaleString('en-IN')}{' '}
+                    ₹{netEarnings.toLocaleString('en-IN')}{' '}
                     <span className="text-xs font-bold text-[#EB1000] bg-[#280A0A] px-2 py-0.5 rounded-full border border-[#EB1000]/40 ml-1">
-                      ~79.3%
+                      ~{netPercentage}%
                     </span>
                   </div>
                 </div>
@@ -2842,7 +2956,7 @@ export default function Home() {
                   <div className="grid grid-cols-12 p-3 border-b border-[#1E1E2C] items-center font-medium">
                     <div className="col-span-4 text-white font-bold">Creator Share</div>
                     <div className="col-span-4 text-center font-extrabold text-[#EB1000] text-sm">
-                      Up to 85%
+                      Up to 82%
                     </div>
                     <div className="col-span-4 text-right text-[#7A7A8E]">~35–70%</div>
                   </div>
@@ -2921,7 +3035,7 @@ export default function Home() {
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
               {/* Search Box Input for Creator Name and Category */}
               <div className="relative">
-                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[#7A7A8E]" />
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[#EB1000]" />
                 <input
                   type="text"
                   placeholder="Search creator name or category..."
@@ -3226,7 +3340,6 @@ export default function Home() {
                   <div className="w-4 h-4 rounded-full bg-[#EB1000]/20 text-[#EB1000] flex items-center justify-center text-[10px] shrink-0 font-black border border-[#EB1000]/30 mt-0.5">
                     ✓
                   </div>
-                  <span>100% security & automatic refund if missed</span>
                 </div>
               </div>
 
@@ -3275,10 +3388,6 @@ export default function Home() {
               <div className="flex flex-wrap items-center justify-center gap-3 pt-1 text-xs text-[#A0A0B5] font-semibold">
                 <span className="flex items-center gap-1.5">
                   <span className="h-1.5 w-1.5 rounded-full bg-[#10B981]"></span> Zero Stream Interruption
-                </span>
-                <span className="text-[#333348]">•</span>
-                <span className="flex items-center gap-1.5">
-                  <span className="h-1.5 w-1.5 rounded-full bg-[#EB1000]"></span> Over $4.2M Distributed to Creators
                 </span>
                 <span className="text-[#333348]">•</span>
                 <span className="flex items-center gap-1.5">
@@ -3375,7 +3484,7 @@ export default function Home() {
 
                     <div className="pt-2 border-t border-[#1C1C2A] flex items-center gap-2 text-[11px] text-[#8E8E9F] font-normal">
                       <span className="h-1.5 w-1.5 rounded-full bg-[#10B981] shrink-0"></span>
-                      <span>Auto-refund if unanswered</span>
+                      <span>No refund if unanswered</span>
                     </div>
                   </div>
 
@@ -3468,7 +3577,7 @@ export default function Home() {
 
             {/* Search Input Box */}
             {/* <div className="relative shrink-0">
-              <Search className="h-3.5 w-3.5 text-[#7A7A8E] absolute left-3.5 top-1/2 -translate-y-1/2" />
+              <Search className="h-3.5 w-3.5 text-[#EB1000] absolute left-3.5 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
                 placeholder="Search questions, OBS, UPI..."
@@ -3556,7 +3665,7 @@ export default function Home() {
             </div>
 
             <Link
-              href="/creators/login"
+              href="/contact"
               className="px-6 py-2.5 rounded-full bg-white text-black hover:bg-gray-200 font-bold text-xs transition-colors shrink-0 shadow-lg block text-center"
             >
               Contact Support
@@ -3580,7 +3689,7 @@ export default function Home() {
             </h2>
 
             <p className="text-[15px] sm:text-[17px] text-[#8B8B9E] max-w-2xl mx-auto font-medium leading-relaxed">
-              See how verified creators across tech, finance, gaming, and education use AskMe to monetize audience engagement with 100% seen questions and 0% Apple Tax.
+              See how verified creators across tech, finance, gaming, and education use AskMe to monetize audience engagement with “Delivered to the creator's AskMe queue.” questions and 0% Apple Tax.
             </p>
           </div>
 
@@ -3911,7 +4020,7 @@ export default function Home() {
                   Designed for Viewers
                 </h3>
                 <p className="text-xs text-[#8E8E9F] font-medium leading-relaxed">
-                  Guaranteed recognition, queue tracking, priority support, and instant refund protection if a question goes unanswered.
+                  Recognition, queue tracking, priority support, and instant refund protection if a question goes unanswered.
                 </p>
               </div>
 

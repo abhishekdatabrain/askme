@@ -158,7 +158,7 @@ export default function LiveChatBox({ sessionId = 1, userType = 'viewer', userId
 
   return (
     <div className="flex flex-col h-[460px] bg-[#13131A] border border-[#1C1C26] rounded-3xl overflow-hidden shadow-2xl font-sans">
-      
+
       {/* Live Chat Room Header */}
       <div className="p-3.5 bg-[#0A0A0F]/90 border-b border-[#1C1C26] flex items-center justify-between">
         <div className="flex items-center gap-2">
@@ -181,7 +181,7 @@ export default function LiveChatBox({ sessionId = 1, userType = 'viewer', userId
           <div className="h-full flex flex-col items-center justify-center text-center p-6 space-y-2 text-[#8B8B96]">
             <MessageSquare className="h-8 w-8 stroke-1 text-[#8B8B96]/60" />
             <p className="text-xs font-semibold">No chat messages yet.</p>
-            <p className="text-[11px]">Be the first to send a message or support with a donation!</p>
+            <p className="text-[11px]">Be the first to send a message or support with a Paid Question!</p>
           </div>
         ) : (
           messages.map((msg, index) => {
@@ -196,14 +196,14 @@ export default function LiveChatBox({ sessionId = 1, userType = 'viewer', userId
 
             return (
               <div key={msg.id || index} className="space-y-1 animate-fade-in">
-                
+
                 {/* DONATION MESSAGE (Highlight Card) */}
                 {isDonation && (
                   <div className="p-3.5 rounded-2xl bg-gradient-to-r from-[#FFD60A]/15 via-[#13131A] to-[#00E676]/10 border-2 border-[#FFD60A]/40 space-y-2 shadow-lg relative glow-pay">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <span className="px-2 py-0.5 rounded-md bg-[#FFD60A] text-[#0A0A0F] font-black text-[11px] shadow-sm flex items-center gap-1">
-                          <DollarSign className="h-3 w-3" /> DONATION
+                          <DollarSign className="h-3 w-3" /> Paid Question
                         </span>
                         <span className="font-bold text-xs text-white">
                           {msg.senderName || 'Supporter'}
@@ -232,7 +232,7 @@ export default function LiveChatBox({ sessionId = 1, userType = 'viewer', userId
                           }}
                           className="px-2.5 py-1 rounded-xl bg-[#00F5D4]/20 border border-[#00F5D4]/40 text-[#00F5D4] text-[10px] font-bold hover:bg-[#00F5D4]/30 transition flex items-center gap-1"
                         >
-                          <CornerDownRight className="h-3 w-3" /> Reply to Donation
+                          <CornerDownRight className="h-3 w-3" /> Reply to Paid Question
                         </button>
                       </div>
                     )}
@@ -255,11 +255,10 @@ export default function LiveChatBox({ sessionId = 1, userType = 'viewer', userId
 
                 {/* NORMAL CHAT MESSAGE */}
                 {!isDonation && !isDonationReply && (
-                  <div className={`p-2.5 rounded-2xl text-xs space-y-0.5 ${
-                    isCreator
-                      ? 'bg-[#00F5D4]/10 border border-[#00F5D4]/30 ml-4'
-                      : 'bg-[#1A1A26] border border-[#1C1C26]'
-                  }`}>
+                  <div className={`p-2.5 rounded-2xl text-xs space-y-0.5 ${isCreator
+                    ? 'bg-[#00F5D4]/10 border border-[#00F5D4]/30 ml-4'
+                    : 'bg-[#1A1A26] border border-[#1C1C26]'
+                    }`}>
                     <div className="flex items-center gap-1.5">
                       <span className={`font-bold text-[11px] ${isCreator ? 'text-[#00F5D4]' : 'text-white'}`}>
                         {msg.senderName || (isCreator ? 'Creator Host' : 'Viewer')}
@@ -285,7 +284,7 @@ export default function LiveChatBox({ sessionId = 1, userType = 'viewer', userId
         <div className="p-3 bg-[#7B2FFF]/15 border-t border-[#7B2FFF]/30 space-y-2">
           <div className="flex items-center justify-between text-xs text-white">
             <span className="font-bold flex items-center gap-1">
-              <CornerDownRight className="h-3.5 w-3.5 text-[#00F5D4]" /> Replying to {replyingToDonation.senderName}'s donation
+              <CornerDownRight className="h-3.5 w-3.5 text-[#00F5D4]" /> Replying to {replyingToDonation.senderName}'s Paid Question
             </span>
             <button
               onClick={() => setReplyingToDonation(null)}

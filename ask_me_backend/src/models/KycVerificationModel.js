@@ -48,8 +48,41 @@ const KycVerification = sequelize.define(
             type: DataTypes.STRING(20),
         },
 
+        pan_holder_name: {
+            type: DataTypes.STRING(150),
+        },
+
+        pan_status: {
+            type: DataTypes.STRING(50),
+        },
+
+        pan_reference_id: {
+            type: DataTypes.STRING(100),
+        },
+
+        aadhaar_masked: {
+            type: DataTypes.STRING(20),
+        },
+
+        aadhaar_name: {
+            type: DataTypes.STRING(150),
+        },
+
+        aadhaar_dob: {
+            type: DataTypes.STRING(50),
+        },
+
+        aadhaar_reference_id: {
+            type: DataTypes.STRING(100),
+        },
+
+        identity_match_status: {
+            type: DataTypes.STRING(50),
+            defaultValue: "pending",
+        },
+
         status: {
-            type: DataTypes.ENUM("pending", "approved", "rejected"),
+            type: DataTypes.STRING(50),
             defaultValue: "pending",
         },
 

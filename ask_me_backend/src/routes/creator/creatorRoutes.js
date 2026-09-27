@@ -16,6 +16,7 @@ const {
   getLiveSessions,
   closeLiveSession,
   startLiveSessionById,
+  updateSessionQrStatus,
   getPublicSessionDetails,
   processViewerDonation,
   getOverlayData,
@@ -40,8 +41,18 @@ const {
   deleteCreatorMembershipPlan,
   getCreatorSubscribers,
   verifyPanController,
+  sendAadhaarOtpController,
+  verifyAadhaarOtpController,
+  verifyAadhaarController,
+  matchIdentityController,
   verifyBankController,
+  getPublicCommissionSettings,
 } = require('../../creator/controllers/creatorController');
+
+/**
+ * Public Dynamic Commission Settings (for landing page calculator)
+ */
+router.get('/commission-settings', getPublicCommissionSettings);
 
 /**
  * Public Authentication Routes
@@ -68,6 +79,10 @@ router.post('/verify-upi', verifyCreatorUpi);
  * Cashfree KYC Instant Verification Routes
  */
 router.post('/kyc/verify-pan', verifyPanController);
+router.post('/kyc/verify-aadhaar/send-otp', sendAadhaarOtpController);
+router.post('/kyc/verify-aadhaar/verify-otp', verifyAadhaarOtpController);
+router.post('/kyc/verify-aadhaar', verifyAadhaarController);
+router.post('/kyc/match-identity', matchIdentityController);
 router.post('/kyc/verify-bank', verifyBankController);
 
 /**
@@ -97,6 +112,8 @@ router.patch('/live-sessions/:id/close', protect, closeLiveSession);
 router.patch('/live-sessions/:id', protect, closeLiveSession);
 router.delete('/live-sessions/:id', protect, closeLiveSession);
 router.put('/live-sessions/:id/start', protect, startLiveSessionById);
+router.put('/live-sessions/:id/qr-status', protect, updateSessionQrStatus);
+router.patch('/live-sessions/:id/qr-status', protect, updateSessionQrStatus);
 router.get('/live-sessions/:sessionId/questions', protect, getSessionQuestions);
 router.post('/live-sessions/chat/reply', protect, replyToDonation);
 

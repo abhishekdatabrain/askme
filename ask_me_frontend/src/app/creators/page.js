@@ -304,7 +304,7 @@ export default function AllCreatorsPage() {
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full py-3 pl-11 pr-10 rounded-2xl bg-[#0D0D14] border border-[#222234] text-sm text-white placeholder-[#6E6E80] focus:outline-none focus:border-[#EB1000] focus:ring-1 focus:ring-[#EB1000] transition-all shadow-inner"
               />
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[#7A7A8E]" />
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[#EB1000]" />
               {searchQuery && (
                 <button
                   type="button"
@@ -537,7 +537,7 @@ export default function AllCreatorsPage() {
               {/* Amount Selection */}
               <div>
                 <label className="block text-xs font-bold text-[#A0A0B2] mb-1.5">
-                  Support Amount (Min ₹{askModalCreator.minFee})
+                  Question Amount (Min ₹{askModalCreator.minFee})
                 </label>
                 <div className="flex items-center gap-2">
                   {[askModalCreator.minFee || 100, 250, 500, 1000].map((amt) => (

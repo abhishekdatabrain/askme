@@ -5,7 +5,7 @@ import Link from 'next/link';
 import CreatorSidebar from '@/components/CreatorSidebar';
 import CreatorNotificationDropdown from '@/components/CreatorNotificationDropdown';
 import { useToast } from '@/context/ToastContext';
-import { getCreatorToken, getCreatorUser } from '@/utils/cookies';
+import { getCreatorToken, getCreatorUser, setCookie, getCookie } from '@/utils/cookies';
 import {
   Radio,
   Copy,
@@ -20,7 +20,8 @@ import {
   MessageSquare,
   Sparkles,
   QrCode,
-  Download
+  Download,
+  Ban
 } from 'lucide-react';
 import { API_ENDPOINTS } from '@/config/api';
 import BrandedQrCode from '@/components/BrandedQrCode';
@@ -33,6 +34,53 @@ export default function CreatorActiveSessionPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [timeRemaining, setTimeRemaining] = useState('');
   const [theme, setTheme] = useState('dark');
+  const [isQrDisabled, setIsQrDisabled] = useState(false);
+
+  // Sync isQrDisabled state from cookie or activeSession data
+  useEffect(() => {
+    if (activeSession?.id) {
+      const savedCookie = getCookie(`askme_qr_disabled_${activeSession.id}`);
+      if (savedCookie !== null) {
+        setIsQrDisabled(savedCookie === 'true');
+      } else if (activeSession.qrStatus === 'expired' || activeSession.isQrExpired) {
+        setIsQrDisabled(true);
+      }
+    }
+  }, [activeSession?.id, activeSession?.qrStatus, activeSession?.isQrExpired]);
+
+  const toggleQrDisabled = async () => {
+    const nextState = !isQrDisabled;
+    const targetStatus = nextState ? 'expired' : 'active';
+    setIsQrDisabled(nextState);
+
+    if (activeSession?.id) {
+      setCookie(`askme_qr_disabled_${activeSession.id}`, String(nextState), 7);
+      if (activeSession.sessionCode) {
+        setCookie(`askme_qr_disabled_${activeSession.sessionCode}`, String(nextState), 7);
+      }
+
+      // Server-side API call to update QR Code status in DB
+      try {
+        const token = getCreatorToken();
+        await fetch(`${API_ENDPOINTS.CREATORS.LIVE_SESSIONS}/${activeSession.id}/qr-status`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {})
+          },
+          body: JSON.stringify({ status: targetStatus, isQrDisabled: nextState }),
+        });
+      } catch (err) {
+        console.warn('Backend QR status update API notice:', err.message);
+      }
+    }
+
+    if (nextState) {
+      toast.warning('UPI QR Code & Payment Link disabled for this live session.', 'QR Code Disabled');
+    } else {
+      toast.success('UPI QR Code & Payment Link re-enabled.', 'QR Code Active');
+    }
+  };
 
   const downloadQrCode = async () => {
     if (!activeSession) return;
@@ -77,6 +125,9 @@ export default function CreatorActiveSessionPage() {
         const active = data.data.sessions.find(s => s.status === 'active');
         if (active) {
           const origin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000';
+          if (active.qrStatus === 'expired' || active.isQrExpired) {
+            setIsQrDisabled(true);
+          }
           setActiveSession({
             ...active,
             paymentLink: active.paymentLink || `${origin}/pay/${active.sessionCode}?creatorId=${uId}&sessionId=${active.id}`,
@@ -211,34 +262,75 @@ export default function CreatorActiveSessionPage() {
                   </div>
                 </div>
 
-                <button
-                  onClick={handleEndSession}
-                  className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#EB1000] to-[#CC0E00] text-white font-black text-xs shadow-lg shadow-[#EB1000]/30 hover:opacity-95 transition-all flex items-center gap-2 shrink-0 cursor-pointer"
-                >
-                  <StopCircle className="h-4 w-4" /> End Live Session
-                </button>
+                <div className="flex flex-wrap items-center gap-3 shrink-0">
+                  <button
+                    type="button"
+                    onClick={toggleQrDisabled}
+                    className={`px-5 py-2.5 rounded-xl text-xs font-black border transition-all flex items-center gap-2 cursor-pointer shadow-md ${
+                      isQrDisabled
+                        ? 'bg-gradient-to-r from-[#00E676] to-[#00C853] text-black border-[#00E676] hover:brightness-110 shadow-[#00E676]/20'
+                        : 'bg-[#12121C] text-[#FF3B30] border-[#FF3B30]/60 hover:bg-[#FF3B30]/10 hover:border-[#FF3B30]'
+                    }`}
+                  >
+                    {isQrDisabled ? (
+                      <>
+                        <CheckCircle2 className="h-4 w-4" /> Enable QR Code
+                      </>
+                    ) : (
+                      <>
+                        <Ban className="h-4 w-4 text-[#FF3B30]" /> Disable QR Code
+                      </>
+                    )}
+                  </button>
+
+                  <button
+                    onClick={handleEndSession}
+                    className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#EB1000] to-[#CC0E00] text-white font-black text-xs shadow-lg shadow-[#EB1000]/30 hover:opacity-95 transition-all flex items-center gap-2 shrink-0 cursor-pointer"
+                  >
+                    <StopCircle className="h-4 w-4" /> End Live Session
+                  </button>
+                </div>
               </div>
 
               {/* Generated Outputs Grid */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
                 {/* QR & Payment Link Card */}
-                <div className={`p-5 rounded-2xl border flex flex-col sm:flex-row items-center sm:items-start gap-4 transition-all ${theme === 'light' ? 'bg-[#F8FAFC] border-[#E2E8F0]' : 'bg-[#181826] border-[#2A2A3E]'}`}>
-                  <BrandedQrCode qrUrl={activeSession.qrCodeUrl} size="md" showBrandHeader={false} />
+                <div className={`p-5 rounded-2xl border flex flex-col sm:flex-row items-center sm:items-start gap-4 transition-all relative overflow-hidden ${theme === 'light' ? 'bg-[#F8FAFC] border-[#E2E8F0]' : 'bg-[#181826] border-[#2A2A3E]'}`}>
+                  {/* QR Code Container */}
+                  <div className="relative shrink-0">
+                    <BrandedQrCode qrUrl={activeSession.qrCodeUrl} size="md" showBrandHeader={false} />
+                  </div>
+
                   <div className="space-y-2 min-w-0 flex-1 w-full text-center sm:text-left">
-                    <span className="text-[10px] font-black text-[#EB1000] uppercase tracking-wider block">Instant UPI Payment Link & QR</span>
-                    <p className={`text-xs font-mono truncate px-3 py-2 rounded-xl border ${theme === 'light' ? 'bg-white border-[#E2E8F0] text-[#0F172A]' : 'bg-[#12121C] border-[#222236] text-white'}`}>
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <span className="text-[10px] font-black text-[#EB1000] uppercase tracking-wider block">Instant UPI Payment Link & QR</span>
+                      {isQrDisabled ? (
+                        <span className="px-2.5 py-0.5 rounded-full bg-[#FF3B30]/10 text-[#FF3B30] border border-[#FF3B30]/30 text-[9px] font-black uppercase flex items-center gap-1">
+                          <span className="h-1.5 w-1.5 rounded-full bg-[#FF3B30]" /> Payments Paused
+                        </span>
+                      ) : (
+                        <span className="px-2.5 py-0.5 rounded-full bg-[#00E676]/10 text-[#00E676] border border-[#00E676]/30 text-[9px] font-black uppercase flex items-center gap-1">
+                          <span className="h-1.5 w-1.5 rounded-full bg-[#00E676] animate-pulse" /> Active
+                        </span>
+                      )}
+                    </div>
+
+                    <p className={`text-xs font-mono truncate px-3 py-2 rounded-xl border transition-all ${
+                      theme === 'light' ? 'bg-white border-[#E2E8F0] text-[#0F172A]' : 'bg-[#12121C] border-[#222236] text-white'
+                    }`}>
                       {activeSession.paymentLink}
                     </p>
+
                     <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 pt-1">
                       <button
                         onClick={() => copyText(activeSession.paymentLink, 'Payment Link')}
-                        className="px-4 py-2 rounded-xl bg-gradient-to-r from-[#EB1000] to-[#CC0E00] text-white font-black text-xs shadow-md shadow-[#EB1000]/20 hover:opacity-90 transition flex items-center gap-1.5 cursor-pointer"
+                        className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-[#EB1000] to-[#CC0E00] text-white font-black text-xs shadow-md shadow-[#EB1000]/20 hover:opacity-90 transition flex items-center gap-1.5 cursor-pointer"
                       >
                         <Copy className="h-3.5 w-3.5" /> Copy Link
                       </button>
                       <button
                         onClick={downloadQrCode}
-                        className={`px-4 py-2 rounded-xl text-xs font-extrabold border transition flex items-center gap-1.5 cursor-pointer ${theme === 'light' ? 'bg-white text-[#EB1000] border-[#EB1000]/40 hover:bg-[#EB1000]/10' : 'bg-[#12121C] text-[#EB1000] border-[#EB1000]/40 hover:bg-[#EB1000]/20'}`}
+                        className={`px-3.5 py-2 rounded-xl text-xs font-extrabold border transition flex items-center gap-1.5 cursor-pointer ${theme === 'light' ? 'bg-white text-[#EB1000] border-[#EB1000]/40 hover:bg-[#EB1000]/10' : 'bg-[#12121C] text-[#EB1000] border-[#EB1000]/40 hover:bg-[#EB1000]/20'}`}
                       >
                         <Download className="h-3.5 w-3.5" /> Download QR
                       </button>

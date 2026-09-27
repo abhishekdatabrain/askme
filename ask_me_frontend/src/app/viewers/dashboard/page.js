@@ -93,8 +93,6 @@ function ViewerDashboardContent() {
 
         window.location.href = "/";
     };
-
-
     // Feed Data
     const [creators, setCreators] = useState([]);
     const [categories, setCategories] = useState([
@@ -136,25 +134,25 @@ function ViewerDashboardContent() {
 
 
     // Trigger Google YouTube Subscribe button rendering when creators list loads
-    useEffect(() => {
-        const renderYtWidgets = () => {
-            if (typeof window !== 'undefined' && window.gapi && window.gapi.ytsubscribe) {
-                try {
-                    window.gapi.ytsubscribe.go();
-                } catch (err) {
-                    console.warn('gapi render error:', err);
-                }
-            }
-        };
+    // useEffect(() => {
+    //     const renderYtWidgets = () => {
+    //         if (typeof window !== 'undefined' && window.gapi && window.gapi.ytsubscribe) {
+    //             try {
+    //                 window.gapi.ytsubscribe.go();
+    //             } catch (err) {
+    //                 console.warn('gapi render error:', err);
+    //             }
+    //         }
+    //     };
 
-        renderYtWidgets();
-        const timer1 = setTimeout(renderYtWidgets, 300);
-        const timer2 = setTimeout(renderYtWidgets, 1000);
-        return () => {
-            clearTimeout(timer1);
-            clearTimeout(timer2);
-        };
-    }, [creators, loading]);
+    //     renderYtWidgets();
+    //     const timer1 = setTimeout(renderYtWidgets, 300);
+    //     const timer2 = setTimeout(renderYtWidgets, 1000);
+    //     return () => {
+    //         clearTimeout(timer1);
+    //         clearTimeout(timer2);
+    //     };
+    // }, [creators, loading]);
 
     // Fetch Dynamic Categories on Mount
     useEffect(() => {
@@ -400,18 +398,13 @@ function ViewerDashboardContent() {
                     <div>
                         <h1 className={`font-heading font-black text-xl mt-1 ${theme === 'light' ? 'text-[#0F172A]' : 'text-white'}`}>
                             {activeTab === 'home' && 'Live Feed & Broadcast Discovery'}
-                            {activeTab === 'live-sessions' && 'Active Live Broadcast Sessions'}
-                            {activeTab === 'categories' && 'Category Filter & Channels'}
-                            {activeTab === 'search' && 'Search & Discover Creators'}
-                            {activeTab === 'creators' && 'Public Creator Directory'}
-                            {activeTab === 'following' && 'Followed Creators'}
                         </h1>
                     </div>
 
-                    <div className="flex items-center gap-3">
+                    <div className="items-center">
                         {/* Top Search Input */}
                         <div className="relative max-w-sm w-full">
-                            <Search className="absolute left-3.5 top-2.5 h-4 w-4 text-[#8B8B96]" />
+                            <Search className="absolute left-3.5 top-2.5 h-4 w-4 text-[#EB1000]" />
                             <input
                                 type="text"
                                 value={searchQuery}
@@ -534,17 +527,13 @@ function ViewerDashboardContent() {
 
                                                         <div className={`flex items-center justify-between gap-3 border-b pb-3.5 ${theme === 'light' ? 'border-[#E9ECEF]' : 'border-[#22222E]'
                                                             }`}>
-                                                            {/* Avatar & Name Info (Clickable link to Creator Profile) */}
-                                                            <Link
-                                                                href={`/creator/${creator.cleanUsername}`}
-                                                                className="flex items-center gap-3 min-w-0 group hover:opacity-90 transition cursor-pointer"
-                                                                title={`View ${creator.fullName}'s Profile`}
-                                                            >
+                                                            {/* Avatar & Name Info */}
+                                                            <div className="flex items-center gap-3 min-w-0">
                                                                 <div className="relative shrink-0">
                                                                     <img
                                                                         src={getMediaUrl(creator.avatar) || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80'}
                                                                         alt={creator.fullName}
-                                                                        className={`h-12 w-12 rounded-full object-cover border transition ${theme === 'light' ? 'border-[#DEE2E6] group-hover:border-[#EB1000]' : 'border-[#2A2A3A] group-hover:border-[#00F5D4]'
+                                                                        className={`h-12 w-12 rounded-full object-cover border ${theme === 'light' ? 'border-[#DEE2E6]' : 'border-[#2A2A3A]'
                                                                             }`}
                                                                     />
                                                                     <span className={`absolute -bottom-1 -right-1 h-4 w-4 rounded-full bg-[#EB1000] text-white text-[9px] font-bold flex items-center justify-center border ${theme === 'light' ? 'border-white' : 'border-[#13131A]'
@@ -553,38 +542,36 @@ function ViewerDashboardContent() {
                                                                     </span>
                                                                 </div>
                                                                 <div className="min-w-0">
-                                                                    <h4 className={`font-heading font-black text-base truncate leading-tight transition ${theme === 'light' ? 'text-[#1A1D20] group-hover:text-[#EB1000]' : 'text-white group-hover:text-[#00F5D4]'
+                                                                    <h4 className={`font-heading font-black text-base truncate leading-tight ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'
                                                                         }`}>
                                                                         {creator.fullName}
                                                                     </h4>
-                                                                    <p className={`text-xs font-mono truncate mt-0.5 ${theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'
-                                                                        }`}>
-                                                                        {creator.username}
-                                                                    </p>
                                                                 </div>
-                                                            </Link>
-
-                                                            {/* Follow Button */}
-                                                            <div className="flex items-center gap-2 shrink-0">
-                                                                <button
-                                                                    onClick={() => handleToggleFollow(creator.creatorId)}
-                                                                    className={`px-3 py-1.5 rounded-full text-xs font-bold transition flex items-center gap-1.5 border ${isFollowing
-                                                                        ? 'bg-[#00E676]/10 text-[#00E676] border-[#00E676]/30'
-                                                                        : 'bg-[#00E676]/10 text-[#00E676] border-[#00E676]/30 hover:bg-[#00E676]/20'
-                                                                        }`}
-                                                                >
-                                                                    <Bell className="h-3.5 w-3.5" />
-                                                                    {isFollowing ? 'Following' : '+ Follow'}
-                                                                </button>
                                                             </div>
                                                         </div>
 
-                                                        {/* STREAM DESCRIPTION */}
-                                                        <div className="space-y-1.5">
-                                                            <p className={`text-xs line-clamp-2 leading-relaxed ${theme === 'light' ? 'text-[#495057]' : 'text-[#8B8B96]'
-                                                                }`}>
-                                                                {creator.session?.description || creator.bio || 'Pro Esports player streaming & answering live questions. Ask about settings, sensitivity & pro tips!'}
-                                                            </p>
+                                                        {/* Follow & Profile Buttons */}
+                                                        <div className="flex items-center justify-between gap-2 shrink-0">
+                                                            <button
+                                                                onClick={() => handleToggleFollow(creator.creatorId)}
+                                                                className={`px-3 py-1.5 rounded-full text-xs font-bold transition flex items-center gap-1.5 border ${isFollowing
+                                                                    ? 'bg-[#00E676]/10 text-[#00E676] border-[#00E676]/30'
+                                                                    : 'bg-[#00E676]/10 text-[#00E676] border-[#00E676]/30 hover:bg-[#00E676]/20'
+                                                                    }`}
+                                                            >
+                                                                <Bell className="h-3.5 w-3.5" />
+                                                                {isFollowing ? 'Following' : '+ Follow'}
+                                                            </button>
+                                                            <Link
+                                                                href={`/creator/${creator.cleanUsername}`}
+                                                                className={`px-3 py-1.5 rounded-full text-xs font-bold transition flex items-center gap-1.5 border ${theme === 'light'
+                                                                    ? 'bg-[#F1F3F5] text-[#495057] border-[#DEE2E6] hover:bg-[#E9ECEF]'
+                                                                    : 'bg-[#1C1C26] text-white border-[#2A2A3A] hover:bg-[#2A2A3A] hover:border-[#00F5D4]/50'
+                                                                    }`}
+                                                            >
+                                                                <User className="h-3.5 w-3.5 text-[#00F5D4]" />
+                                                                Profile
+                                                            </Link>
                                                         </div>
 
                                                         {/* Divider */}

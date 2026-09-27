@@ -169,13 +169,13 @@ export default function CreatorManagement({ activeSubTab }) {
 
       {/* Search Input */}
       <div className="relative">
-        <Search className="absolute left-3.5 top-2.5 h-4 w-4 text-[#8B8B96]" />
+        <Search className="absolute left-3.5 top-2.5 h-4 w-4 text-[#EB1000]" />
         <input
           type="text"
           placeholder="Search creator name, email or handle..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full pl-10 pr-4 py-2 bg-[#0A0A0F] border border-[#1C1C26] rounded-xl text-xs text-white placeholder-[#8B8B96] focus:outline-none focus:border-[#00F5D4]"
+          className="w-full pl-10 pr-4 py-2 bg-[#0A0A0F] border border-[#1C1C26] rounded-xl text-xs text-white placeholder-[#8B8B96] focus:outline-none focus:border-[#EB1000]"
         />
       </div>
 

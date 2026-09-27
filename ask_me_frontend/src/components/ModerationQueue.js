@@ -16,17 +16,17 @@ export default function ModerationQueue() {
       riskScore: 'Low (0.04)',
       timestamp: '2 mins ago',
     },
-    {
-      id: 'MOD-9022',
-      viewer: 'CryptoKing_X',
-      creator: 'FinCal Strategy',
-      platform: 'x',
-      amount: '₹500',
-      question: 'Guaranteed 100x return token presale link here: http://bit.ly/fake-link-claim-now!!',
-      status: 'flagged',
-      riskScore: 'High (0.96 - Spam Link)',
-      timestamp: '5 mins ago',
-    },
+    // {
+    //   id: 'MOD-9022',
+    //   viewer: 'CryptoKing_X',
+    //   creator: 'FinCal Strategy',
+    //   platform: 'x',
+    //   amount: '₹500',
+    //   question: 'Guaranteed 100x return token presale link here: http://bit.ly/fake-link-claim-now!!',
+    //   status: 'flagged',
+    //   riskScore: 'High (0.96 - Spam Link)',
+    //   timestamp: '5 mins ago',
+    // },
     {
       id: 'MOD-9023',
       viewer: 'DevStudent_22',
@@ -95,12 +95,12 @@ export default function ModerationQueue() {
             <div
               key={item.id}
               className={`p-4 rounded-xl border transition-all ${isApproved
-                  ? 'bg-[#00E676]/5 border-[#00E676]/30'
-                  : isRejected
-                    ? 'bg-[#FF5252]/5 border-[#FF5252]/30 opacity-60'
-                    : isHighRisk
-                      ? 'bg-[#FF3D71]/10 border-[#FF3D71]/40'
-                      : 'bg-[#0A0A0F] border-[#1C1C26] hover:border-[#00F5D4]/30'
+                ? 'bg-[#00E676]/5 border-[#00E676]/30'
+                : isRejected
+                  ? 'bg-[#FF5252]/5 border-[#FF5252]/30 opacity-60'
+                  : isHighRisk
+                    ? 'bg-[#FF3D71]/10 border-[#FF3D71]/40'
+                    : 'bg-[#0A0A0F] border-[#1C1C26] hover:border-[#00F5D4]/30'
                 }`}
             >
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">

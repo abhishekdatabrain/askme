@@ -224,7 +224,7 @@ export default function ViewerPastStreamsPage() {
           <div className={`p-4 rounded-3xl border space-y-4 shadow-xl transition ${theme === 'light' ? 'bg-white border-[#E9ECEF]' : 'bg-[#13131A] border-[#1C1C26]'
             }`}>
             <form onSubmit={handleSearchSubmit} className="relative w-full">
-              <Search className="h-4 w-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#8B8B96]" />
+              <Search className="h-4 w-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#EB1000]" />
               <input
                 type="text"
                 placeholder="Search past streams by title or creator..."

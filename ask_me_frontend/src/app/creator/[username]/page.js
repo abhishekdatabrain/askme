@@ -276,7 +276,7 @@ export default function CreatorPublicProfilePage({ params: paramsPromise }) {
             {/* Creator Actions (YouTube Subscribe, Share & Ask Question CTA) */}
             <div className="flex items-center gap-2.5 w-full sm:w-auto shrink-0 flex-wrap">
               {/* Watch Now Button */}
-              {(() => {
+              {/* {(() => {
                 const watchUrl =
                   creator?.session?.streamUrl ||
                   creator?.session?.stream_url ||
@@ -295,7 +295,7 @@ export default function CreatorPublicProfilePage({ params: paramsPromise }) {
                     <Tv className="h-4 w-4 shrink-0" /> Watch Now
                   </a>
                 );
-              })()}
+              })()} */}
 
               <button
                 onClick={handleShareProfile}
@@ -415,7 +415,7 @@ export default function CreatorPublicProfilePage({ params: paramsPromise }) {
                   key={session.id}
                   className="p-4 sm:p-5 rounded-2xl bg-[#0A0A0F] border border-[#1C1C26] flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:border-[#EB1000]/40 transition-all duration-200"
                 >
-                  <div className="space-y-1">
+                  <div className="space-y-1.5">
                     <div className="flex items-center gap-2">
                       <span className="px-2.5 py-0.5 rounded-full bg-[#EB1000]/10 text-[#EB1000] text-[10px] font-bold border border-[#EB1000]/20">
                         {session.category || 'General'}
@@ -427,18 +427,18 @@ export default function CreatorPublicProfilePage({ params: paramsPromise }) {
                     <h4 className="font-heading font-bold text-sm text-white">
                       {session.title}
                     </h4>
-                    <p className="text-[10px] text-[#8B8B96]">
-                      Session Code: <span className="font-mono text-[#FF4D4D]">{session.sessionCode}</span>
-                    </p>
                   </div>
 
-                  <div className="shrink-0">
-                    <Link
-                      href={`/pay/${session.sessionCode}`}
-                      className="px-4 py-2 rounded-xl bg-[#1C1C26] text-white text-xs font-bold border border-[#1C1C26] hover:border-[#EB1000]/60 hover:text-[#EB1000] transition inline-flex items-center gap-1.5"
-                    >
-                      View Session Page
-                    </Link>
+                  {/* Session Questions & Answered Stats */}
+                  <div className="flex items-center gap-3 text-xs shrink-0 pt-1 sm:pt-0">
+                    <span className="flex items-center gap-1.5 font-bold text-[#8B8B96] bg-[#13131A] px-3 py-1.5 rounded-xl border border-[#1C1C26]">
+                      <MessageSquare className="h-3.5 w-3.5 text-[#EB1000]" />
+                      <span className="text-white">{session.totalQuestions || 0}</span> Asked
+                    </span>
+                    <span className="flex items-center gap-1.5 font-bold text-[#8B8B96] bg-[#13131A] px-3 py-1.5 rounded-xl border border-[#1C1C26]">
+                      <CheckCircle2 className="h-3.5 w-3.5 text-[#00E676]" />
+                      <span className="text-white">{session.answeredCount || 0}</span> Answered
+                    </span>
                   </div>
                 </div>
               ))}

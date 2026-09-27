@@ -162,7 +162,9 @@ function CreatorDashboardContent() {
   const [walletMetrics, setWalletMetrics] = useState({
     totalEarnings: 0,
     availableBalance: 0,
+    totalQuestionsAskedCount: 0,
     questionsAnsweredCount: 0,
+    subscriptionEarnings: 0,
     pendingAmount: 0,
     withdrawnAmount: 0,
   });
@@ -273,10 +275,23 @@ function CreatorDashboardContent() {
             const w = dataWallet.data.wallet || {};
             const txs = dataWallet.data.transactions || [];
             const successfulCount = txs.filter(t => t.payment_status === 'Successful' || t.payment_status === 'success').length;
+            const totalAsked = typeof w.totalQuestionsAskedCount === 'number'
+              ? w.totalQuestionsAskedCount
+              : (typeof dataWallet.data?.totalQuestionsAskedCount === 'number' ? dataWallet.data.totalQuestionsAskedCount : successfulCount);
+            const answeredCount = typeof w.questionsAnsweredCount === 'number'
+              ? w.questionsAnsweredCount
+              : (typeof dataWallet.data?.questionsAnsweredCount === 'number' ? dataWallet.data.questionsAnsweredCount : 0);
+
+            const subEarn = typeof w.subscriptionEarnings === 'number'
+              ? w.subscriptionEarnings
+              : (typeof dataWallet.data?.subscriptionEarnings === 'number' ? dataWallet.data.subscriptionEarnings : 0);
+
             setWalletMetrics({
               totalEarnings: parseFloat(w.totalEarnings || 0),
               availableBalance: parseFloat(w.availableBalance || 0),
-              questionsAnsweredCount: successfulCount || (parseFloat(w.totalEarnings || 0) > 0 ? Math.max(1, Math.round(parseFloat(w.totalEarnings || 0) / 100)) : 0),
+              totalQuestionsAskedCount: totalAsked,
+              questionsAnsweredCount: answeredCount,
+              subscriptionEarnings: subEarn,
               pendingAmount: parseFloat(w.pendingAmount || 0),
               withdrawnAmount: parseFloat(w.withdrawnAmount || 0),
             });
@@ -355,7 +370,7 @@ function CreatorDashboardContent() {
             ...prev,
             totalEarnings: prev.totalEarnings + netShare,
             availableBalance: prev.availableBalance + netShare,
-            questionsAnsweredCount: prev.questionsAnsweredCount + 1,
+            totalQuestionsAskedCount: prev.totalQuestionsAskedCount + 1,
           }));
         }
       };
@@ -746,10 +761,16 @@ function CreatorDashboardContent() {
 
                 <div className={`p-5 rounded-2xl border space-y-2 ${theme === 'light' ? 'bg-white border-[#E9ECEF]' : 'bg-[#13131A] border-[#1C1C26]'}`}>
                   <span className="text-xs font-bold text-[#8B8B96] flex items-center gap-1.5">
-                    <MessageSquare className="h-4 w-4 text-[#EB1000]" /> Questions Answered
+                    <MessageSquare className="h-4 w-4 text-[#EB1000]" /> Total Questions Asked
                   </span>
-                  <div className="font-heading font-extrabold text-2xl text-[#EB1000]">{walletMetrics.questionsAnsweredCount} Paid Qs</div>
-                  <span className="text-[11px] text-[#8B8B96]">Min Fee: ₹10</span>
+                  <div className="font-heading font-extrabold text-2xl text-[#EB1000]">{walletMetrics.totalQuestionsAskedCount} Paid Qs</div>
+                </div>
+
+                <div className={`p-5 rounded-2xl border space-y-2 ${theme === 'light' ? 'bg-white border-[#E9ECEF]' : 'bg-[#13131A] border-[#1C1C26]'}`}>
+                  <span className="text-xs font-bold text-[#8B8B96] flex items-center gap-1.5">
+                    <CheckCircle2 className="h-4 w-4 text-[#10B981]" /> Questions Answered
+                  </span>
+                  <div className="font-heading font-extrabold text-2xl text-[#10B981]">{walletMetrics.questionsAnsweredCount} Answered</div>
                 </div>
 
                 <div className={`p-5 rounded-2xl border space-y-2 ${theme === 'light' ? 'bg-white border-[#E9ECEF]' : 'bg-[#13131A] border-[#1C1C26]'}`}>
@@ -771,6 +792,17 @@ function CreatorDashboardContent() {
                     {(activeSubscribersCount ?? 0)} Members
                   </div>
                   <span className="text-[11px] text-[#8B8B96]">Recurring fans with VIP chat badges & perks.</span>
+                </div>
+
+                {/* SUBSCRIPTION EARNINGS */}
+                <div className={`p-5 rounded-2xl border space-y-2 ${theme === 'light' ? 'bg-white border-[#E9ECEF]' : 'bg-[#13131A] border-[#1C1C26]'}`}>
+                  <span className="text-xs font-black text-[#FFD60A] uppercase tracking-wider flex items-center gap-1.5">
+                    <Sparkles className="h-4 w-4 text-[#FFD60A]" /> SUBSCRIPTION EARNINGS
+                  </span>
+                  <div className={`font-heading font-extrabold text-2xl ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'}`}>
+                    ₹{walletMetrics.subscriptionEarnings.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </div>
+                  <span className="text-[11px] text-[#FFD60A] font-semibold">Earned from VIP fan memberships</span>
                 </div>
 
                 <div className={`p-5 rounded-2xl border space-y-2 ${theme === 'light' ? 'bg-white border-[#E9ECEF]' : 'bg-[#13131A] border-[#1C1C26]'}`}>

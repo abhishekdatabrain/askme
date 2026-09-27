@@ -537,6 +537,11 @@ const getCreatorPublicProfile = async (req, res, next) => {
         creator_id: creator.id,
       },
     }).catch(() => 0);
+    const creatorDonations = await Donation.findAll({
+      where: { creator_id: creator.id },
+      raw: true,
+    }).catch(() => []);
+
     const activeSession = sessions.find(s => s.status === 'active');
     const pastSessions = sessions
       .filter(s => s.status !== 'active')
@@ -568,15 +573,25 @@ const getCreatorPublicProfile = async (req, res, next) => {
             startedAt: activeSession.started_at,
           } : null,
           socialLinks: socials.map(s => ({ platform: s.platform, url: s.platform_url || s.url })),
-          pastSessions: pastSessions.map(s => ({
-            id: s.id,
-            sessionCode: s.session_code,
-            title: s.title,
-            category: s.category,
-            platform: s.platform || 'YouTube',
-            createdAt: s.created_at || s.createdAt,
-            status: s.status,
-          })),
+          pastSessions: pastSessions.map(s => {
+            const sessionDonations = creatorDonations.filter(d => String(d.session_id) === String(s.id));
+            const totalQuestions = sessionDonations.filter(d => d.status === 'not_read').length;
+            const answeredCount = sessionDonations.filter(d =>
+              (d.status === 'read')
+            ).length;
+
+            return {
+              id: s.id,
+              sessionCode: s.session_code,
+              title: s.title,
+              category: s.category,
+              platform: s.platform || 'YouTube',
+              createdAt: s.created_at || s.createdAt,
+              status: s.status,
+              totalQuestions,
+              answeredCount,
+            };
+          }),
         },
       },
     });

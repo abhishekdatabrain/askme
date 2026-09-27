@@ -9,12 +9,12 @@ export default function Logo({
   alt = 'AskMe Logo',
 }) {
   const sizeMap = {
-    xs: { container: 'h-7 w-7 rounded-lg p-1', imgClass: 'h-5 w-5' },
-    sm: { container: 'h-8 w-8 rounded-xl p-1', imgClass: 'h-6 w-6' },
-    md: { container: 'h-9 w-9 rounded-xl p-1.5', imgClass: 'h-7 w-7' },
-    lg: { container: 'h-10 w-10 rounded-2xl p-1.5', imgClass: 'h-8 w-8' },
-    xl: { container: 'h-14 w-14 rounded-2xl p-2.5', imgClass: 'h-10 w-10' },
-    '2xl': { container: 'h-20 w-20 rounded-3xl p-3.5', imgClass: 'h-14 w-14' },
+    xs: { container: 'h-7 w-7 rounded-lg', imgClass: 'h-full w-full' },
+    sm: { container: 'h-8 w-8 rounded-xl', imgClass: 'h-full w-full' },
+    md: { container: 'h-9 w-9 rounded-xl', imgClass: 'h-full w-full' },
+    lg: { container: 'h-10 w-10 rounded-2xl', imgClass: 'h-full w-full' },
+    xl: { container: 'h-14 w-14 rounded-2xl', imgClass: 'h-full w-full' },
+    '2xl': { container: 'h-20 w-20 rounded-3xl', imgClass: 'h-full w-full' },
   };
 
   const currentSize = sizeMap[size] || sizeMap.md;
@@ -24,19 +24,19 @@ export default function Logo({
       <img
         src="/logo.png"
         alt={alt}
-        className={`object-contain ${className || 'h-8 w-8'}`}
+        className={`object-contain rounded-xl ${className || 'h-8 w-8'}`}
       />
     );
   }
 
   return (
     <div
-      className={`relative inline-flex items-center justify-center bg-gradient-to-br from-[#EB1000] to-[#CC0E00] shadow-md shadow-[#EB1000]/30 border border-[#FF4D3E]/30 transition-transform duration-200 group-hover:scale-105 overflow-hidden shrink-0 ${currentSize.container} ${className}`}
+      className={`relative inline-flex items-center justify-center bg-black rounded-xl shadow-md shadow-[#EB1000]/25 border border-[#EB1000]/30 transition-transform duration-200 group-hover:scale-105 overflow-hidden shrink-0 ${currentSize.container} ${className}`}
     >
       <img
         src="/logo.png"
         alt={alt}
-        className={`object-contain brightness-0 invert ${currentSize.imgClass}`}
+        className={`object-cover w-full h-full ${currentSize.imgClass}`}
       />
     </div>
   );

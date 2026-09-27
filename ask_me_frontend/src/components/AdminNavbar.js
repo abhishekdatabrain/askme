@@ -205,7 +205,7 @@ export default function AdminNavbar({ activeView, setActiveView, onOpenAuthModal
         {/* Command Palette Search Container */}
         <div className="flex-1 max-w-md hidden sm:block relative" ref={searchRef}>
           <div className="relative">
-            <Search className={`absolute left-3 top-2.5 h-4 w-4 ${theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'}`} />
+            <Search className="absolute left-3 top-2.5 h-4 w-4 text-[#EB1000]" />
             <input
               ref={searchInputRef}
               type="text"
@@ -428,26 +428,7 @@ export default function AdminNavbar({ activeView, setActiveView, onOpenAuthModal
         <div className="flex items-center gap-3">
 
           {/* THEME TOGGLE BUTTON */}
-          <button
-            onClick={onToggleTheme}
-            title={theme === 'dark' ? 'Switch to Light Theme' : 'Switch to Dark Theme'}
-            className={`p-2.5 rounded-xl border font-bold text-xs transition-all flex items-center gap-1.5 ${theme === 'light'
-              ? 'bg-[#F1F3F5] text-[#212529] border-[#E9ECEF] hover:bg-[#E9ECEF]'
-              : 'bg-[#13131A] text-[#FFD60A] border-[#1C1C26] hover:border-[#FFD60A]/40'
-              }`}
-          >
-            {theme === 'dark' ? (
-              <>
-                <Sun className="h-4 w-4 text-[#FFD60A]" />
-                <span className="hidden lg:inline text-[11px] text-[#F5F5F7]">Light Mode</span>
-              </>
-            ) : (
-              <>
-                <Moon className="h-4 w-4 text-[#7B2FFF]" />
-                <span className="hidden lg:inline text-[11px] text-[#212529]">Dark Mode</span>
-              </>
-            )}
-          </button>
+
 
           {/* Login / Logout Controls */}
           {isLoggedIn ? (

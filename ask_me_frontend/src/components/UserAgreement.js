@@ -27,7 +27,7 @@ export default function UserAgreement({ activeSubTab }) {
 
       {/* Main Document Body */}
       <div className="space-y-5 text-xs leading-relaxed text-[#8B8B96]">
-        
+
         {/* Section 1: Revenue Split */}
         <div className="p-5 rounded-2xl bg-[#0A0A0F] border border-[#1C1C26] space-y-2.5 hover:border-[#EB1000]/30 transition">
           <div className="flex items-center gap-2 text-white font-bold text-sm">
@@ -66,7 +66,7 @@ export default function UserAgreement({ activeSubTab }) {
             All viewer payment transactions undergo real-time automated risk assessment. Transactions flagged for stolen card usage, unauthorized payments, or abusive chargeback disputes are subject to hold and review by the compliance team.
           </p>
           <p>
-            Creators found attempting fraudulent self-donations or money laundering activities will face immediate account termination and fund forfeiture.
+            Creators found attempting fraudulent self - Paid Question or money laundering activities will face immediate account termination and fund forfeiture.
           </p>
         </div>
 

@@ -219,7 +219,7 @@ export default function CreatorStartLivePage() {
               </div>
 
               <div>
-                <label className={`block text-xs font-extrabold mb-1.5 ${theme === 'light' ? 'text-[#0F172A]' : 'text-[#E2E8F0]'}`}>Duration Limit (Hours)</label>
+                <label className={`block text-xs font-extrabold mb-1.5 ${theme === 'light' ? 'text-[#0F172A]' : 'text-[#E2E8F0]'}`}>QR Code Duration Limit (Hours)</label>
                 <input
                   type="number"
                   min={1}

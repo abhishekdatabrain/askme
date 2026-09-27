@@ -243,7 +243,7 @@ const processViewerDonationService = async (data, authenticatedUser = null) => {
         amount: creatorEarnings,
         balance_before: balBefore,
         balance_after: balAfter,
-        description: `Donation received from ${donorDisplayName}`,
+        description: `Paid Question received from ${donorDisplayName}`,
         reference: donationRecord.donation_uuid,
       },
       { transaction }

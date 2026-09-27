@@ -70,9 +70,9 @@ export default function AskMePayTable() {
                 15% Net Platform Revenue
               </span>
             </div>
-            <p className="text-xs text-[#8B8B96] mt-0.5">
+            {/* <p className="text-xs text-[#8B8B96] mt-0.5">
               Guaranteed paid askMails, live session Q&A fees, and VIP recurring subscriptions.
-            </p>
+            </p> */}
           </div>
         </div>
 

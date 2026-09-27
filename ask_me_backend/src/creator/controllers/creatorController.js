@@ -27,6 +27,7 @@ const {
   getLiveSessionsService,
   closeLiveSessionService,
   startLiveSessionByIdService,
+  updateSessionQrStatusService,
   getPublicSessionDetailsService,
   getSessionQuestionsService,
 } = require("../services/liveSessionService");
@@ -222,7 +223,7 @@ const createLiveSession = async (req, res, next) => {
     const result = await createLiveSessionService(creatorId, req.body);
     return res.status(201).json({
       status: "success",
-      message: "Live Donation Session created successfully!",
+      message: "Live Paid Question Session created successfully!",
       data: result,
     });
   } catch (error) {
@@ -287,6 +288,29 @@ const startLiveSessionById = async (req, res, next) => {
     return res.status(200).json({
       status: "success",
       message: `Live session is now LIVE!`,
+      data: result,
+    });
+  } catch (error) {
+    if (error.statusCode) {
+      return res.status(error.statusCode).json({ status: "fail", message: error.message });
+    }
+    next(error);
+  }
+};
+
+/**
+ * Toggle / Update Live Session QR Code Status (expired vs active)
+ */
+const updateSessionQrStatus = async (req, res, next) => {
+  try {
+    const creatorId = getAuthenticatedCreatorId(req);
+    const { id } = req.params;
+    const { status, isQrDisabled } = req.body;
+    const targetStatus = status || (isQrDisabled ? 'expired' : 'active');
+    const result = await updateSessionQrStatusService(id, creatorId, targetStatus);
+    return res.status(200).json({
+      status: "success",
+      message: `QR code status updated to ${targetStatus} successfully`,
       data: result,
     });
   } catch (error) {
@@ -545,7 +569,7 @@ const replyToDonation = async (req, res, next) => {
     const result = await replyToDonationService(creatorId, req.body);
     return res.status(200).json({
       status: "success",
-      message: "Donation reply sent successfully!",
+      message: "Paid Question reply sent successfully!",
       data: result,
     });
   } catch (error) {
@@ -638,7 +662,7 @@ const updateDonationStatus = async (req, res, next) => {
     const result = await updateDonationStatusService(id, status, creatorId);
     return res.status(200).json({
       status: "success",
-      message: `Donation status updated to ${status}`,
+      message: `Paid Question status updated to ${status}`,
       data: result,
     });
   } catch (error) {
@@ -795,12 +819,86 @@ const verifyPanController = async (req, res, next) => {
 };
 
 /**
+ * Cashfree Aadhaar OKYC Step 1: Send OTP
+ */
+const sendAadhaarOtpController = async (req, res, next) => {
+  try {
+    const { aadhaarNumber } = req.body;
+    const result = (await cashfreeVerificationService.sendAadhaarOtp({ aadhaarNumber })) || {
+      success: false,
+      message: "Aadhaar OTP service returned empty response.",
+    };
+    return res.status(result.success ? 200 : 400).json({
+      status: result.success ? "success" : "fail",
+      message: result.message || "Aadhaar OTP processed.",
+      data: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Cashfree Aadhaar OKYC Step 2: Verify OTP
+ */
+const verifyAadhaarOtpController = async (req, res, next) => {
+  try {
+    const { otp, refId, aadhaarNumber, name } = req.body;
+    const result = (await cashfreeVerificationService.verifyAadhaarOtp({ otp, refId, aadhaarNumber, name })) || {
+      success: false,
+      message: "Aadhaar OTP verification service returned empty response.",
+    };
+    return res.status(result.success ? 200 : 400).json({
+      status: result.success ? "success" : "fail",
+      message: result.message || "Aadhaar verification processed.",
+      data: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const verifyAadhaarController = async (req, res, next) => {
+  try {
+    const { aadhaarNumber, name } = req.body;
+    const result = (await cashfreeVerificationService.verifyAadhaar({ aadhaarNumber, name })) || {
+      success: false,
+      message: "Aadhaar verification service returned empty response.",
+    };
+    return res.status(result.success ? 200 : 400).json({
+      status: result.success ? "success" : "fail",
+      message: result.message || "Aadhaar verification processed.",
+      data: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Backend PAN + Aadhaar Identity Match Controller
+ */
+const matchIdentityController = async (req, res, next) => {
+  try {
+    const { panName, aadhaarName, panDob, aadhaarDob } = req.body;
+    const result = cashfreeVerificationService.matchIdentity({ panName, aadhaarName, panDob, aadhaarDob });
+    return res.status(200).json({
+      status: "success",
+      message: result.message,
+      data: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
  * Verify Creator Bank Account via Cashfree Verification Suite (Penny Drop)
  */
 const verifyBankController = async (req, res, next) => {
   try {
-    const { accountNumber, ifscCode, name, phone } = req.body;
-    const result = (await cashfreeVerificationService.verifyBankAccount({ accountNumber, ifscCode, name, phone })) || {
+    const { accountNumber, ifscCode, name, phone, verifiedIdentityName } = req.body;
+    const result = (await cashfreeVerificationService.verifyBankAccount({ accountNumber, ifscCode, name, phone, verifiedIdentityName })) || {
       success: false,
       message: "Bank verification service returned empty response.",
     };
@@ -871,6 +969,22 @@ const truecallerAuthCreator = async (req, res, next) => {
   }
 };
 
+/**
+ * Public Dynamic Commission Settings Endpoint for Homepage Calculator & Widgets
+ */
+const getPublicCommissionSettings = async (req, res, next) => {
+  try {
+    const commissionService = require('../../admin/services/commissionService');
+    const settings = await commissionService.getCommissionSettings();
+    return res.status(200).json({
+      status: "success",
+      data: settings,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   registerCreator,
   loginCreator,
@@ -886,6 +1000,7 @@ module.exports = {
   getLiveSessions,
   closeLiveSession,
   startLiveSessionById,
+  updateSessionQrStatus,
   getPublicSessionDetails,
   processViewerDonation,
   getOverlayData,
@@ -911,5 +1026,10 @@ module.exports = {
   deleteCreatorMembershipPlan,
   getCreatorSubscribers,
   verifyPanController,
+  sendAadhaarOtpController,
+  verifyAadhaarOtpController,
+  verifyAadhaarController,
+  matchIdentityController,
   verifyBankController,
+  getPublicCommissionSettings,
 };

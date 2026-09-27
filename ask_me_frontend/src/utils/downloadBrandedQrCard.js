@@ -131,16 +131,60 @@ export const downloadBrandedQrCard = async ({
         // White background box with rounded corners and glowing border
         drawRoundedRect(qrBoxX, qrBoxY, qrBoxSize, qrBoxSize, 36, '#FFFFFF', '#EB1000', 2);
 
-        // Draw QR Image inside
+        // Draw QR Image inside with Navy-to-Red gradient transformation
         if (qrImgElement?.img) {
             const qrPadding = 20;
-            ctx.drawImage(
-                qrImgElement.img,
-                qrBoxX + qrPadding,
-                qrBoxY + qrPadding,
-                qrBoxSize - qrPadding * 2,
-                qrBoxSize - qrPadding * 2
-            );
+            const drawW = qrBoxSize - qrPadding * 2;
+            const drawH = qrBoxSize - qrPadding * 2;
+
+            // Offscreen canvas for gradient recoloring
+            const offCanvas = document.createElement('canvas');
+            offCanvas.width = drawW;
+            offCanvas.height = drawH;
+            const offCtx = offCanvas.getContext('2d');
+            offCtx.drawImage(qrImgElement.img, 0, 0, drawW, drawH);
+
+            try {
+                const imgData = offCtx.getImageData(0, 0, drawW, drawH);
+                const data = imgData.data;
+
+                for (let y = 0; y < drawH; y++) {
+                    for (let x = 0; x < drawW; x++) {
+                        const idx = (y * drawW + x) * 4;
+                        const lightness = (data[idx] + data[idx + 1] + data[idx + 2]) / 3;
+
+                        if (lightness > 180) {
+                            data[idx] = 255;
+                            data[idx + 1] = 255;
+                            data[idx + 2] = 255;
+                            data[idx + 3] = 255;
+                        } else {
+                            const t = x / drawW;
+                            let red, green, blue;
+                            if (t < 0.5) {
+                                const factor = t / 0.5;
+                                red = Math.round(16 + (107 - 16) * factor);
+                                green = Math.round(42 + (17 - 42) * factor);
+                                blue = Math.round(107 + (77 - 107) * factor);
+                            } else {
+                                const factor = (t - 0.5) / 0.5;
+                                red = Math.round(107 + (235 - 107) * factor);
+                                green = Math.round(17 + (16 - 17) * factor);
+                                blue = Math.round(77 + (0 - 77) * factor);
+                            }
+                            data[idx] = red;
+                            data[idx + 1] = green;
+                            data[idx + 2] = blue;
+                            data[idx + 3] = 255;
+                        }
+                    }
+                }
+                offCtx.putImageData(imgData, 0, 0);
+                ctx.drawImage(offCanvas, qrBoxX + qrPadding, qrBoxY + qrPadding);
+            } catch (e) {
+                ctx.drawImage(qrImgElement.img, qrBoxX + qrPadding, qrBoxY + qrPadding, drawW, drawH);
+            }
+
             if (qrImgElement.objectUrl) {
                 URL.revokeObjectURL(qrImgElement.objectUrl);
             }
@@ -163,13 +207,13 @@ export const downloadBrandedQrCard = async ({
             console.warn('AskMe logo image fetch notice:', e);
         }
 
-        // Draw Center Logo Overlay Box inside QR Code
+        // Draw Center Black Logo Overlay Box inside QR Code
         const logoBoxSize = 44;
         const logoX = (width - logoBoxSize) / 2;
         const logoY = qrBoxY + (qrBoxSize - logoBoxSize) / 2;
 
-        // White pill box with rounded corners and red border matching screenshot
-        drawRoundedRect(logoX, logoY, logoBoxSize, logoBoxSize, 12, '#FFFFFF', '#EB1000', 2);
+        // Black box with rounded corners and red border
+        drawRoundedRect(logoX, logoY, logoBoxSize, logoBoxSize, 12, '#000000', '#EB1000', 2);
 
         // Draw AskMe Red Logo Image inside white pill
         if (logoImgElement?.img) {

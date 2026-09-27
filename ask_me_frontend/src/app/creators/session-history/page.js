@@ -183,8 +183,7 @@ export default function CreatorSessionHistoryPage() {
               <form onSubmit={handleSearchSubmit} className="flex flex-col md:flex-row md:items-center justify-between gap-3 flex-wrap">
                 {/* Search Box */}
                 <div className="relative flex-1 min-w-[200px]">
-                  <Search className={`absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 ${theme === 'light' ? 'text-[#64748B]' : 'text-[#EB1000]'
-                    }`} />
+                  <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[#EB1000]" />
                   <input
                     type="text"
                     value={searchQuery}

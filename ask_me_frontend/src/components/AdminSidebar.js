@@ -152,12 +152,12 @@ export default function AdminSidebar({ activeTab: propsActiveTab, setActiveTab, 
     },
     {
       id: 'wallets',
-      label: 'Wallet',
+      label: 'Earnings',
       subtitle: 'Creator Balances & Settlements',
       icon: Wallet,
       path: '/admin/wallets',
       children: [
-        { id: 'wallets_creators', label: 'Creator Wallets', path: '/admin/wallets' },
+        { id: 'wallets_creators', label: 'Creator Earnings', path: '/admin/wallets' },
       ],
     },
     {

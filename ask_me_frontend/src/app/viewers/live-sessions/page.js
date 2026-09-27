@@ -381,7 +381,7 @@ function LiveSessionsContent() {
 
           {/* Search Input for Live Sessions */}
           <div className="relative max-w-sm w-full">
-            <Search className="absolute left-3.5 top-2.5 h-4 w-4 text-[#8B8B96]" />
+            <Search className="absolute left-3.5 top-2.5 h-4 w-4 text-[#EB1000]" />
             <input
               type="text"
               value={searchQuery}

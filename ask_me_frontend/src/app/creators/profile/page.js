@@ -667,7 +667,7 @@ export default function CreatorProfilePage() {
             {[
               { id: 'bio', label: 'Profile & Bio', icon: User },
               { id: 'social', label: 'Social Links', icon: Globe },
-              { id: 'streaming', label: 'Streaming Channels', icon: Radio },
+              //   { id: 'streaming', label: 'Streaming Channels', icon: Radio },
               { id: 'payment', label: 'Payment Information', icon: CreditCard },
             ].map(tab => {
               const Icon = tab.icon;
@@ -718,15 +718,16 @@ export default function CreatorProfilePage() {
                       className={`w-full rounded-xl border px-3.5 py-2.5 text-xs focus:outline-none focus:border-[#EB1000] transition-colors ${theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6] text-[#1A1D20] placeholder-[#A0A0A0]' : 'bg-[#0A0A0F] border-[#1C1C26] text-white placeholder-[#8B8B96]'
                         }`}
                       required
+                      readOnly
                     />
                   </div>
 
                   <div>
                     <label className={`block text-xs font-bold mb-1.5 ${theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'
-                      }`}>Username </label>
+                      }`}>Phone Number </label>
                     <input
                       type="text"
-                      value={profile.username || ''}
+                      value={profile.mobile || ''}
                       readOnly
                       className={`w-full rounded-xl border px-3.5 py-2.5 text-xs cursor-not-allowed ${theme === 'light' ? 'bg-[#E9ECEF] border-[#DEE2E6] text-[#6C757D]' : 'bg-[#0A0A0F]/60 border-[#1C1C26] text-[#8B8B96]'
                         }`}
@@ -984,11 +985,10 @@ export default function CreatorProfilePage() {
 
                 {/* Locked Banner Notice */}
                 {isPayoutLocked && (
-                  <div className={`p-4 rounded-2xl border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 transition-all ${
-                    theme === 'light'
-                      ? 'bg-[#FFF5F5] border-[#FEB2B2] text-[#9B2C2C]'
-                      : 'bg-[#1F1015] border-[#EB1000]/40 text-white'
-                  }`}>
+                  <div className={`p-4 rounded-2xl border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 transition-all ${theme === 'light'
+                    ? 'bg-[#FFF5F5] border-[#FEB2B2] text-[#9B2C2C]'
+                    : 'bg-[#1F1015] border-[#EB1000]/40 text-white'
+                    }`}>
                     <div className="flex items-start sm:items-center gap-3">
                       <div className="p-2.5 rounded-xl bg-[#EB1000]/20 text-[#EB1000] shrink-0 mt-0.5 sm:mt-0">
                         <Lock className="h-5 w-5" />
@@ -1016,13 +1016,11 @@ export default function CreatorProfilePage() {
 
                 {/* My Raised Tickets Tracker List */}
                 {myTickets.length > 0 && (
-                  <div className={`p-4 rounded-2xl border space-y-3 ${
-                    theme === 'light' ? 'bg-[#F8F9FA] border-[#E9ECEF]' : 'bg-[#0A0A0F] border-[#1C1C26]'
-                  }`}>
+                  <div className={`p-4 rounded-2xl border space-y-3 ${theme === 'light' ? 'bg-[#F8F9FA] border-[#E9ECEF]' : 'bg-[#0A0A0F] border-[#1C1C26]'
+                    }`}>
                     <div className="flex items-center justify-between">
-                      <h4 className={`text-xs font-bold flex items-center gap-2 ${
-                        theme === 'light' ? 'text-[#1A1D20]' : 'text-white'
-                      }`}>
+                      <h4 className={`text-xs font-bold flex items-center gap-2 ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'
+                        }`}>
                         <Inbox className="h-4 w-4 text-[#EB1000]" /> My Raised Support Tickets ({myTickets.length})
                       </h4>
                       <span className="text-[10px] text-[#8B8B96]">Admin Review Status</span>
@@ -1030,9 +1028,8 @@ export default function CreatorProfilePage() {
 
                     <div className="space-y-2 max-h-48 overflow-y-auto">
                       {myTickets.map((t) => (
-                        <div key={t.id} className={`p-3 rounded-xl border text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-2 ${
-                          theme === 'light' ? 'bg-white border-[#DEE2E6]' : 'bg-[#13131A] border-[#1C1C26]'
-                        }`}>
+                        <div key={t.id} className={`p-3 rounded-xl border text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-2 ${theme === 'light' ? 'bg-white border-[#DEE2E6]' : 'bg-[#13131A] border-[#1C1C26]'
+                          }`}>
                           <div className="space-y-0.5 min-w-0">
                             <div className="flex items-center gap-2">
                               <span className="font-mono text-[11px] font-extrabold text-[#EB1000]">{t.ticket_number || `#TCK-${t.id}`}</span>
@@ -1103,10 +1100,9 @@ export default function CreatorProfilePage() {
                             setIsUpiVerified(false);
                           }}
                           placeholder="e.g. username@upi or carryminati@okicici"
-                          className={`w-full rounded-xl border px-3.5 py-2.5 text-xs focus:outline-none focus:border-[#EB1000] font-mono ${
-                            isPayoutLocked
-                              ? theme === 'light' ? 'bg-[#E9ECEF] border-[#DEE2E6] text-[#6C757D] cursor-not-allowed' : 'bg-[#0A0A0F]/60 border-[#1C1C26] text-[#8B8B96] cursor-not-allowed'
-                              : isUpiVerified
+                          className={`w-full rounded-xl border px-3.5 py-2.5 text-xs focus:outline-none focus:border-[#EB1000] font-mono ${isPayoutLocked
+                            ? theme === 'light' ? 'bg-[#E9ECEF] border-[#DEE2E6] text-[#6C757D] cursor-not-allowed' : 'bg-[#0A0A0F]/60 border-[#1C1C26] text-[#8B8B96] cursor-not-allowed'
+                            : isUpiVerified
                               ? 'border-[#EB1000] bg-[#EB1000]/5 text-[#EB1000] font-bold'
                               : theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6] text-[#1A1D20] placeholder-[#A0A0A0]' : 'bg-[#0A0A0F] border-[#1C1C26] text-white placeholder-[#8B8B96]'
                             }`}
@@ -1117,10 +1113,9 @@ export default function CreatorProfilePage() {
                         type="button"
                         onClick={() => handleVerifyUpi(bankAccount.upiId)}
                         disabled={isVerifyingUpi || isUpiVerified || isPayoutLocked}
-                        className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all shrink-0 flex items-center gap-1.5 ${
-                          isPayoutLocked
-                            ? 'bg-[#1C1C26]/40 text-[#8B8B96] border border-[#1C1C26] cursor-not-allowed'
-                            : isUpiVerified
+                        className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all shrink-0 flex items-center gap-1.5 ${isPayoutLocked
+                          ? 'bg-[#1C1C26]/40 text-[#8B8B96] border border-[#1C1C26] cursor-not-allowed'
+                          : isUpiVerified
                             ? 'bg-[#EB1000]/15 text-[#EB1000] border border-[#EB1000]/40 cursor-default'
                             : 'bg-gradient-to-r from-[#EB1000] to-[#CC0E00] text-white hover:opacity-90 shadow-md shadow-[#EB1000]/20 cursor-pointer'
                           }`}
@@ -1158,10 +1153,9 @@ export default function CreatorProfilePage() {
                           setBankAccount(prev => ({ ...prev, accountHolderName: e.target.value }));
                         }}
                         placeholder="e.g. Abhishek Kumar"
-                        className={`w-full rounded-xl border px-3.5 py-2.5 text-xs focus:outline-none focus:border-[#EB1000] ${
-                          isPayoutLocked
-                            ? theme === 'light' ? 'bg-[#E9ECEF] border-[#DEE2E6] text-[#6C757D] cursor-not-allowed' : 'bg-[#0A0A0F]/60 border-[#1C1C26] text-[#8B8B96] cursor-not-allowed'
-                            : theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6] text-[#1A1D20] placeholder-[#A0A0A0]' : 'bg-[#0A0A0F] border-[#1C1C26] text-white placeholder-[#8B8B96]'
+                        className={`w-full rounded-xl border px-3.5 py-2.5 text-xs focus:outline-none focus:border-[#EB1000] ${isPayoutLocked
+                          ? theme === 'light' ? 'bg-[#E9ECEF] border-[#DEE2E6] text-[#6C757D] cursor-not-allowed' : 'bg-[#0A0A0F]/60 border-[#1C1C26] text-[#8B8B96] cursor-not-allowed'
+                          : theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6] text-[#1A1D20] placeholder-[#A0A0A0]' : 'bg-[#0A0A0F] border-[#1C1C26] text-white placeholder-[#8B8B96]'
                           }`}
                       />
                     </div>
@@ -1179,10 +1173,9 @@ export default function CreatorProfilePage() {
                           setBankAccount(prev => ({ ...prev, bankName: e.target.value }));
                         }}
                         placeholder="e.g. HDFC Bank / ICICI Bank"
-                        className={`w-full rounded-xl border px-3.5 py-2.5 text-xs focus:outline-none focus:border-[#EB1000] ${
-                          isPayoutLocked
-                            ? theme === 'light' ? 'bg-[#E9ECEF] border-[#DEE2E6] text-[#6C757D] cursor-not-allowed' : 'bg-[#0A0A0F]/60 border-[#1C1C26] text-[#8B8B96] cursor-not-allowed'
-                            : theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6] text-[#1A1D20] placeholder-[#A0A0A0]' : 'bg-[#0A0A0F] border-[#1C1C26] text-white placeholder-[#8B8B96]'
+                        className={`w-full rounded-xl border px-3.5 py-2.5 text-xs focus:outline-none focus:border-[#EB1000] ${isPayoutLocked
+                          ? theme === 'light' ? 'bg-[#E9ECEF] border-[#DEE2E6] text-[#6C757D] cursor-not-allowed' : 'bg-[#0A0A0F]/60 border-[#1C1C26] text-[#8B8B96] cursor-not-allowed'
+                          : theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6] text-[#1A1D20] placeholder-[#A0A0A0]' : 'bg-[#0A0A0F] border-[#1C1C26] text-white placeholder-[#8B8B96]'
                           }`}
                       />
                     </div>
@@ -1205,10 +1198,9 @@ export default function CreatorProfilePage() {
                           setBankAccount(prev => ({ ...prev, accountNumber: digitsOnly }));
                         }}
                         placeholder="e.g. 50100298410294"
-                        className={`w-full rounded-xl border px-3.5 py-2.5 text-xs focus:outline-none focus:border-[#EB1000] font-mono ${
-                          isPayoutLocked
-                            ? theme === 'light' ? 'bg-[#E9ECEF] border-[#DEE2E6] text-[#6C757D] cursor-not-allowed' : 'bg-[#0A0A0F]/60 border-[#1C1C26] text-[#8B8B96] cursor-not-allowed'
-                            : theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6] text-[#1A1D20] placeholder-[#A0A0A0]' : 'bg-[#0A0A0F] border-[#1C1C26] text-white placeholder-[#8B8B96]'
+                        className={`w-full rounded-xl border px-3.5 py-2.5 text-xs focus:outline-none focus:border-[#EB1000] font-mono ${isPayoutLocked
+                          ? theme === 'light' ? 'bg-[#E9ECEF] border-[#DEE2E6] text-[#6C757D] cursor-not-allowed' : 'bg-[#0A0A0F]/60 border-[#1C1C26] text-[#8B8B96] cursor-not-allowed'
+                          : theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6] text-[#1A1D20] placeholder-[#A0A0A0]' : 'bg-[#0A0A0F] border-[#1C1C26] text-white placeholder-[#8B8B96]'
                           }`}
                       />
                     </div>
@@ -1229,10 +1221,9 @@ export default function CreatorProfilePage() {
                           setBankAccount(prev => ({ ...prev, confirmAccountNumber: digitsOnly }));
                         }}
                         placeholder="Re-enter account number"
-                        className={`w-full rounded-xl border px-3.5 py-2.5 text-xs focus:outline-none focus:border-[#EB1000] font-mono ${
-                          isPayoutLocked
-                            ? theme === 'light' ? 'bg-[#E9ECEF] border-[#DEE2E6] text-[#6C757D] cursor-not-allowed' : 'bg-[#0A0A0F]/60 border-[#1C1C26] text-[#8B8B96] cursor-not-allowed'
-                            : bankAccount.confirmAccountNumber && bankAccount.accountNumber !== bankAccount.confirmAccountNumber
+                        className={`w-full rounded-xl border px-3.5 py-2.5 text-xs focus:outline-none focus:border-[#EB1000] font-mono ${isPayoutLocked
+                          ? theme === 'light' ? 'bg-[#E9ECEF] border-[#DEE2E6] text-[#6C757D] cursor-not-allowed' : 'bg-[#0A0A0F]/60 border-[#1C1C26] text-[#8B8B96] cursor-not-allowed'
+                          : bankAccount.confirmAccountNumber && bankAccount.accountNumber !== bankAccount.confirmAccountNumber
                             ? 'border-[#FF3D71] bg-[#FF3D71]/10 text-[#FF3D71]'
                             : theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6] text-[#1A1D20] placeholder-[#A0A0A0]' : 'bg-[#0A0A0F] border-[#1C1C26] text-white placeholder-[#8B8B96]'
                           }`}
@@ -1260,10 +1251,9 @@ export default function CreatorProfilePage() {
                         setBankAccount(prev => ({ ...prev, ifscCode: e.target.value.toUpperCase().slice(0, 11) }));
                       }}
                       placeholder="e.g. SBIN0001234"
-                      className={`w-full rounded-xl border px-3.5 py-2.5 text-xs focus:outline-none focus:border-[#EB1000] font-mono uppercase ${
-                        isPayoutLocked
-                          ? theme === 'light' ? 'bg-[#E9ECEF] border-[#DEE2E6] text-[#6C757D] cursor-not-allowed' : 'bg-[#0A0A0F]/60 border-[#1C1C26] text-[#8B8B96] cursor-not-allowed'
-                          : bankAccount.ifscCode && !/^[A-Z]{4}0[A-Z0-9]{6}$/.test(bankAccount.ifscCode.trim().toUpperCase())
+                      className={`w-full rounded-xl border px-3.5 py-2.5 text-xs focus:outline-none focus:border-[#EB1000] font-mono uppercase ${isPayoutLocked
+                        ? theme === 'light' ? 'bg-[#E9ECEF] border-[#DEE2E6] text-[#6C757D] cursor-not-allowed' : 'bg-[#0A0A0F]/60 border-[#1C1C26] text-[#8B8B96] cursor-not-allowed'
+                        : bankAccount.ifscCode && !/^[A-Z]{4}0[A-Z0-9]{6}$/.test(bankAccount.ifscCode.trim().toUpperCase())
                           ? 'border-[#FF3D71] bg-[#FF3D71]/10 text-[#FF3D71]'
                           : theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6] text-[#1A1D20] placeholder-[#A0A0A0]' : 'bg-[#0A0A0F] border-[#1C1C26] text-white placeholder-[#8B8B96]'
                         }`}
@@ -1284,9 +1274,8 @@ export default function CreatorProfilePage() {
       {/* Raise Ticket for Payout Changes Modal */}
       {showTicketModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
-          <div className={`w-full max-w-lg rounded-3xl border p-6 space-y-5 shadow-2xl relative ${
-            theme === 'light' ? 'bg-white border-[#E9ECEF] text-[#1A1D20]' : 'bg-[#13131A] border-[#1C1C26] text-white'
-          }`}>
+          <div className={`w-full max-w-lg rounded-3xl border p-6 space-y-5 shadow-2xl relative ${theme === 'light' ? 'bg-white border-[#E9ECEF] text-[#1A1D20]' : 'bg-[#13131A] border-[#1C1C26] text-white'
+            }`}>
             <div className="flex items-center justify-between border-b pb-4 border-inherit">
               <div className="flex items-center gap-2.5">
                 <div className="p-2 rounded-xl bg-[#EB1000]/10 text-[#EB1000]">
@@ -1325,9 +1314,8 @@ export default function CreatorProfilePage() {
                   value={ticketReason}
                   onChange={(e) => setTicketReason(e.target.value)}
                   placeholder="Explain why changes are needed and list your new Bank Name, Account Number, IFSC Code, or UPI ID..."
-                  className={`w-full rounded-xl border p-3 text-xs focus:outline-none focus:border-[#EB1000] ${
-                    theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6] text-[#1A1D20]' : 'bg-[#0A0A0F] border-[#1C1C26] text-white'
-                  }`}
+                  className={`w-full rounded-xl border p-3 text-xs focus:outline-none focus:border-[#EB1000] ${theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6] text-[#1A1D20]' : 'bg-[#0A0A0F] border-[#1C1C26] text-white'
+                    }`}
                 />
               </div>
 

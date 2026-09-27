@@ -1,20 +1,25 @@
 const { Wallet, WalletTransaction, Creator } = require('../../models');
 
 class WalletRepository {
-  async findAndCountAllWallets({ where = {}, limit = 10, offset = 0, order = [['id', 'DESC']] }) {
+  async findAndCountAllWallets({ where = {}, creatorWhere = null, isSearching = false, limit = 10, offset = 0, order = [['id', 'DESC']] }) {
+    const creatorInclude = {
+      model: Creator,
+      as: 'creator',
+      attributes: ['id', 'full_name', 'username', 'email', 'status'],
+      required: isSearching ? true : false,
+    };
+    if (creatorWhere) {
+      creatorInclude.where = creatorWhere;
+    }
+
     return await Wallet.findAndCountAll({
       where,
       limit,
       offset,
       order,
-      include: [
-        {
-          model: Creator,
-          as: 'creator',
-          attributes: ['id', 'full_name', 'username', 'email', 'status'],
-          required: false,
-        },
-      ],
+      subQuery: false,
+      distinct: true,
+      include: [creatorInclude],
     });
   }
 

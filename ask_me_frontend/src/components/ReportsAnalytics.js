@@ -142,7 +142,7 @@ export default function ReportsAnalytics({ activeSubTab }) {
         rows.push([tf, item.gross || 0, item.commission || 0, item.creatorNet || 0, `${item.growth || 0}%`]);
       });
     } else if (activeReportSection === 'creator') {
-      rows.push(['Rank', 'Creator Name', 'Handle', 'Total Donations (INR)', 'Questions Answered']);
+      rows.push(['Rank', 'Creator Name', 'Handle', 'Total Paid Question (INR)', 'Questions Answered']);
       topCreators.forEach(c => {
         rows.push([c.rank || 0, `"${(c.name || '').replace(/"/g, '""')}"`, c.handle || '', c.totalDonations || 0, c.questionsAnswered || 0]);
       });
@@ -232,8 +232,8 @@ export default function ReportsAnalytics({ activeSubTab }) {
                 key={tf}
                 onClick={() => setReportTimeframe(tf)}
                 className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${reportTimeframe === tf
-                    ? 'bg-[#1C1C26] text-[#EB1000]'
-                    : 'text-[#8B8B96] hover:text-white'
+                  ? 'bg-[#1C1C26] text-[#EB1000]'
+                  : 'text-[#8B8B96] hover:text-white'
                   }`}
               >
                 {tf}
@@ -323,7 +323,7 @@ export default function ReportsAnalytics({ activeSubTab }) {
                     <Award className="h-5 w-5 text-[#FFD60A]" />
                     Creator Performance Report ({reportTimeframe})
                   </h3>
-                  <p className="text-xs text-[#8B8B96]">Top creators ranked by audience donations ({reportTimeframe.toLowerCase()}).</p>
+                  <p className="text-xs text-[#8B8B96]">Top creators ranked by audience Paid Question ({reportTimeframe.toLowerCase()}).</p>
                 </div>
                 <span className="text-xs font-bold text-[#FFD60A] bg-[#FFD60A]/10 px-2.5 py-1 rounded-full border border-[#FFD60A]/30">
                   Top Creators ({reportTimeframe})
@@ -520,13 +520,12 @@ export default function ReportsAnalytics({ activeSubTab }) {
                         </div>
                         <div className="text-right">
                           <span className="font-mono text-xs font-bold text-[#FFD60A] block">{formatCurrency(req.amount)}</span>
-                          <span className={`text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-full inline-block mt-0.5 ${
-                            req.status === 'completed' || req.status === 'approved' || req.status === 'paid'
-                              ? 'bg-[#00E676]/10 text-[#00E676] border border-[#00E676]/30'
-                              : req.status === 'rejected'
+                          <span className={`text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-full inline-block mt-0.5 ${req.status === 'completed' || req.status === 'approved' || req.status === 'paid'
+                            ? 'bg-[#00E676]/10 text-[#00E676] border border-[#00E676]/30'
+                            : req.status === 'rejected'
                               ? 'bg-[#FF5252]/10 text-[#FF5252] border border-[#FF5252]/30'
                               : 'bg-[#FFD60A]/10 text-[#FFD60A] border border-[#FFD60A]/30'
-                          }`}>
+                            }`}>
                             {req.status}
                           </span>
                         </div>

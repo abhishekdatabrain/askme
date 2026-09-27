@@ -419,7 +419,7 @@ export default function ViewerFollowingPage() {
 
             {/* SEARCH INPUT */}
             <form onSubmit={handleSearchSubmit} className="relative w-full sm:w-72">
-              <Search className="h-4 w-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#8B8B96]" />
+              <Search className="h-4 w-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#EB1000]" />
               <input
                 type="text"
                 placeholder="Search followed creators..."

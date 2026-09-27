@@ -95,7 +95,6 @@ const createLiveSessionService = async (creatorId, data) => {
 
     await transaction.commit();
 
-    console.log(`[LiveSessionService] Creator ID ${creatorId} launched live session ID ${newSession.id} ("${newSession.title}")`);
 
     // Trigger Mass Follower Notification (In-App + WhatsApp)
     triggerGoLiveBroadcast({
@@ -319,6 +318,63 @@ const closeLiveSessionService = async (sessionId, creatorId) => {
   return {
     sessionId: session.id,
     status: "closed",
+  };
+};
+
+/**
+ * Toggle / Update Session QR Code Status (active <-> expired)
+ */
+const updateSessionQrStatusService = async (sessionId, creatorId, status) => {
+  if (!sessionId) {
+    const err = new Error("Session ID is required.");
+    err.statusCode = 400;
+    throw err;
+  }
+
+  const session = await DonationSession.findByPk(sessionId);
+  if (!session) {
+    const err = new Error("Live session not found.");
+    err.statusCode = 404;
+    throw err;
+  }
+
+  if (creatorId && String(session.creator_id) !== String(creatorId)) {
+    const err = new Error("Unauthorized to update this session.");
+    err.statusCode = 403;
+    throw err;
+  }
+
+  const targetStatus = status === 'active' ? 'active' : 'expired';
+
+  let qrCodeRecord = await QrCode.findOne({ where: { session_id: session.id } });
+
+  await qrCodeRecord.update({ status: targetStatus });
+
+
+  // Socket.IO Real-time Broadcast to viewers in room
+  try {
+    const { getIO } = require("../../config/socket");
+    const io = getIO();
+    if (io) {
+      const roomName = `live_session_${session.id}`;
+      io.to(roomName).emit('qr_status_changed', {
+        sessionId: session.id,
+        qrStatus: targetStatus,
+        isQrExpired: targetStatus === 'expired',
+        message: targetStatus === 'expired'
+          ? 'QR payment session has been disabled by creator.'
+          : 'QR payment session has been re-enabled by creator.',
+      });
+    }
+  } catch (socketErr) {
+    console.warn("Notice: Socket.IO emit error during QR status update:", socketErr.message);
+  }
+
+  return {
+    sessionId: session.id,
+    sessionCode: session.session_code,
+    qrStatus: targetStatus,
+    isQrExpired: targetStatus === 'expired',
   };
 };
 
@@ -655,6 +711,7 @@ module.exports = {
   getLiveSessionsService,
   closeLiveSessionService,
   startLiveSessionByIdService,
+  updateSessionQrStatusService,
   getPublicSessionDetailsService,
   getSessionQuestionsService,
 };

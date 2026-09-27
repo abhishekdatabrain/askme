@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Check, ArrowLeft, Shield, Sparkles, CreditCard, Smartphone, Building, Wallet, CheckCircle2, Loader2 } from 'lucide-react';
 import { API_ENDPOINTS } from '@/config/api';
-import { getViewerToken, getCookie } from '@/utils/cookies';
+import { getViewerToken, getViewerUser, getCookie } from '@/utils/cookies';
 
 export default function VipMembershipModal({ isOpen, onClose, creator, onSuccess }) {
   const [step, setStep] = useState(1); // 1: Choose Plan, 2: Checkout, 3: Gateway Processing, 4: Payment Success, 5: Subscription Created
@@ -13,8 +13,7 @@ export default function VipMembershipModal({ isOpen, onClose, creator, onSuccess
   const [txnDetails, setTxnDetails] = useState(null);
 
   // Dynamic Plans State
-  const [plans, setPlans] = useState([
-  ]);
+  const [plans, setPlans] = useState([]);
   const [selectedPlan, setSelectedPlan] = useState(plans[0]);
   const [loadingPlans, setLoadingPlans] = useState(false);
 
@@ -53,7 +52,6 @@ export default function VipMembershipModal({ isOpen, onClose, creator, onSuccess
   const creatorName = creator.fullName || creator.name || 'Creator';
   const cleanUsername = String(creator.username || creator.cleanUsername || 'creator').replace(/^@+/, '');
 
-
   // Helper to load Razorpay Checkout Script
   const loadRazorpayScript = () => {
     return new Promise((resolve) => {
@@ -70,15 +68,11 @@ export default function VipMembershipModal({ isOpen, onClose, creator, onSuccess
     });
   };
 
-  const handleStartCheckout = () => {
-    setStep(2);
-  };
-
-  const executeVipSubscribeSuccess = async (generatedTxnId) => {
+  const executeVipSubscribeSuccess = async (generatedTxnId, payMethod = 'Razorpay') => {
     setProcessing(true);
     setStep(3);
 
-    const planAmount = selectedPlan?.price;
+    const planAmount = parseFloat(selectedPlan?.price || 0);
     const planName = selectedPlan?.name;
     const interval = selectedPlan?.interval;
     const duration = selectedPlan?.duration;
@@ -99,38 +93,33 @@ export default function VipMembershipModal({ isOpen, onClose, creator, onSuccess
           duration: duration,
           interval: interval,
           transactionId: generatedTxnId,
-          paymentMethod: selectedPayMethod,
+          paymentMethod: payMethod || selectedPayMethod,
         }),
       });
 
       const data = await res.json();
-      const getNextBillingDate = (duration) => {
+
+      const getNextBillingDate = (dur) => {
         const nextBilling = new Date();
-
-        const match = duration.match(/(\d+)\s*(Day|Days|Month|Months|Year|Years)/i);
-
+        const match = String(dur).match(/(\d+)\s*(Day|Days|Month|Months|Year|Years)/i);
         if (!match) {
-          throw new Error("Invalid duration format");
+          nextBilling.setDate(nextBilling.getDate() + 30);
+          return nextBilling;
         }
-
         const value = parseInt(match[1]);
         const unit = match[2].toLowerCase();
-
         if (unit.startsWith("day")) {
           nextBilling.setDate(nextBilling.getDate() + value);
-        }
-        else if (unit.startsWith("month")) {
+        } else if (unit.startsWith("month")) {
           nextBilling.setMonth(nextBilling.getMonth() + value);
-        }
-        else if (unit.startsWith("year")) {
+        } else if (unit.startsWith("year")) {
           nextBilling.setFullYear(nextBilling.getFullYear() + value);
         }
-
-        return nextBilling.toISOString().split("T")[0];
+        return nextBilling;
       };
-      const nextBillingStr = getNextBillingDate(duration);
 
-      const dateFormatted = nextBillingStr.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+      const nextBillingDateObj = getNextBillingDate(duration);
+      const dateFormatted = nextBillingDateObj.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
 
       const details = {
         txnId: generatedTxnId,
@@ -149,93 +138,45 @@ export default function VipMembershipModal({ isOpen, onClose, creator, onSuccess
       }
     } catch (err) {
       console.warn('VIP Subscription error:', err.message);
+      setProcessing(false);
     }
   };
 
-  const handleProcessPayment = async () => {
-    const planAmount = selectedPlan?.price;
-    const planName = selectedPlan?.name;
-
-    setProcessing(true);
-    setStep(3);
-
-    let isLiveMode = false;
-    let serverOrderId = null;
-    let serverKeyId = null;
-
-    // 1. Try pre-creating gateway order from backend
-    try {
-      const orderRes = await fetch(`${API_ENDPOINTS.BASE_URL}/creators/pay/create-order`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          amount: planAmount,
-          currency: 'INR',
-          gateway: 'Razorpay',
-          notes: {
-            creatorId: creator?.creatorId || creator?.id,
-            planName: planName,
-            type: 'vip_membership',
-          },
-        }),
-      });
-      const orderData = await orderRes.json();
-      if (orderRes.ok && orderData.data) {
-        if (
-          orderData.data.mode === 'live' &&
-          orderData.data.orderId &&
-          !orderData.data.orderId.startsWith('order_mock_') &&
-          orderData.data.keyId &&
-          !orderData.data.keyId.startsWith('rzp_test_')
-        ) {
-          isLiveMode = true;
-          serverOrderId = orderData.data.orderId;
-          serverKeyId = orderData.data.keyId;
-        }
-      }
-    } catch (e) {
-      console.warn('VIP pre-order creation notice:', e.message);
-    }
-
-    // 2. If NOT in live production mode with active Razorpay credentials, perform instant VIP membership activation
-    if (!isLiveMode) {
-      setTimeout(async () => {
-        const generatedTxnId = `pay_vip_${selectedPayMethod || 'upi'}_${Date.now()}`;
-        await executeVipSubscribeSuccess(generatedTxnId);
-      }, 750);
-      return;
-    }
-
-    // 3. Load Razorpay SDK Script for Live mode
+  // Launch Native Razorpay Payment Gateway directly
+  const launchNativeRazorpay = async () => {
     const isLoaded = await loadRazorpayScript();
-    if (!isLoaded || typeof window === 'undefined' || !window.Razorpay) {
-      await executeVipSubscribeSuccess(`pay_vip_direct_${Date.now()}`);
+    if (!isLoaded) {
+      setStep(2);
       return;
     }
+
+    const viewerUser = getViewerUser();
+    const planAmount = parseFloat(selectedPlan?.price || 299);
+    const planName = selectedPlan?.name;
+    const razorpayKey = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
 
     const options = {
-      key: serverKeyId,
+      key: razorpayKey,
       amount: Math.round(planAmount * 100),
       currency: 'INR',
-      name: 'AskMe VIP Membership',
+      name: `AskMe - ${planName}`,
       description: `${planName} - ${creatorName}`,
-      order_id: serverOrderId,
+      image: creator?.profileImage || creator?.profile_image || undefined,
       prefill: {
-        name: 'Supporter',
-        email: 'supporter@askme.live',
-        contact: '9876543210',
+        name: viewerUser?.name,
+        email: viewerUser?.email,
+        contact: viewerUser?.mobile || viewerUser?.phone,
       },
       theme: {
-        color: '#FFD60A',
+        color: '#FF5722',
       },
       handler: async function (response) {
         const generatedTxnId = response.razorpay_payment_id || `pay_vip_${Date.now()}`;
-        await executeVipSubscribeSuccess(generatedTxnId);
+        await executeVipSubscribeSuccess(generatedTxnId, 'Razorpay');
       },
       modal: {
         ondismiss: function () {
-          setProcessing(false);
-          setStep(2);
+          console.log('Razorpay modal closed by user');
         },
       },
     };
@@ -243,13 +184,30 @@ export default function VipMembershipModal({ isOpen, onClose, creator, onSuccess
     try {
       const rzp = new window.Razorpay(options);
       rzp.on('payment.failed', function (resp) {
-        console.warn('Razorpay payment notice:', resp.error?.description);
-        executeVipSubscribeSuccess(`pay_vip_sim_${Date.now()}`);
+        console.warn('Razorpay payment failed:', resp.error?.description);
+        alert(`Payment Failed: ${resp.error?.description || 'Payment Failed'}`);
       });
       rzp.open();
     } catch (err) {
       console.error('Razorpay open error:', err);
-      await executeVipSubscribeSuccess(`pay_vip_sim_${Date.now()}`);
+      setStep(2);
+    }
+  };
+
+  const handleStartCheckout = async () => {
+    try {
+      await launchNativeRazorpay();
+    } catch (err) {
+      setStep(2);
+    }
+  };
+
+  const handleProcessPayment = async () => {
+    try {
+      await launchNativeRazorpay();
+    } catch (err) {
+      const generatedTxnId = `pay_vip_${selectedPayMethod || 'upi'}_${Date.now()}`;
+      await executeVipSubscribeSuccess(generatedTxnId, selectedPayMethod);
     }
   };
 

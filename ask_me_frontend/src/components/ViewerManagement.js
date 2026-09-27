@@ -140,7 +140,7 @@ export default function ViewerManagement() {
             Viewer Management
           </h2>
           <p className="text-xs text-[#8B8B96] mt-0.5">
-            Manage platform viewers, monitor supporter contributions, view donation history & VIP memberships.
+            Manage platform viewers, monitor supporter contributions, view Paid Question history & VIP memberships.
           </p>
         </div>
 
@@ -151,8 +151,8 @@ export default function ViewerManagement() {
               key={st}
               onClick={() => setSelectedStatus(st)}
               className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${selectedStatus === st
-                  ? 'bg-brand-gradient text-white shadow-sm'
-                  : 'text-[#8B8B96] hover:text-white'
+                ? 'bg-brand-gradient text-white shadow-sm'
+                : 'text-[#8B8B96] hover:text-white'
                 }`}
             >
               {st}
@@ -163,7 +163,7 @@ export default function ViewerManagement() {
 
       {/* Search Input Toolbar */}
       <div className="relative">
-        <Search className="absolute left-3.5 top-2.5 h-4 w-4 text-[#8B8B96]" />
+        <Search className="absolute left-3.5 top-2.5 h-4 w-4 text-[#EB1000]" />
         <input
           type="text"
           placeholder="Search viewer by name or email address..."
@@ -228,8 +228,8 @@ export default function ViewerManagement() {
                   <td className="py-3.5 px-3">
                     <span
                       className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${v.status === 'Active'
-                          ? 'bg-[#00E676]/10 text-[#00E676] border border-[#00E676]/30'
-                          : 'bg-[#FF3D71]/10 text-[#FF3D71] border border-[#FF3D71]/30'
+                        ? 'bg-[#00E676]/10 text-[#00E676] border border-[#00E676]/30'
+                        : 'bg-[#FF3D71]/10 text-[#FF3D71] border border-[#FF3D71]/30'
                         }`}
                     >
                       {v.status}
@@ -252,8 +252,8 @@ export default function ViewerManagement() {
                         onClick={() => handleToggleBlock(v.id, v.status)}
                         title={v.status === 'Blocked' ? 'Unblock Viewer' : 'Block Viewer'}
                         className={`p-1.5 rounded-lg transition ${v.status === 'Blocked'
-                            ? 'bg-[#FFD60A]/10 text-[#FFD60A]'
-                            : 'bg-[#1C1C26] text-[#8B8B96] hover:text-[#FF3D71] hover:bg-[#FF3D71]/10'
+                          ? 'bg-[#FFD60A]/10 text-[#FFD60A]'
+                          : 'bg-[#1C1C26] text-[#8B8B96] hover:text-[#FF3D71] hover:bg-[#FF3D71]/10'
                           }`}
                       >
                         <Ban className="h-3.5 w-3.5" />
@@ -307,8 +307,8 @@ export default function ViewerManagement() {
                   {viewerDetail?.name || 'Viewer Profile'}
                   <span
                     className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${viewerDetail?.status === 'Active'
-                        ? 'bg-[#00E676]/10 text-[#00E676] border border-[#00E676]/30'
-                        : 'bg-[#FF3D71]/10 text-[#FF3D71] border border-[#FF3D71]/30'
+                      ? 'bg-[#00E676]/10 text-[#00E676] border border-[#00E676]/30'
+                      : 'bg-[#FF3D71]/10 text-[#FF3D71] border border-[#FF3D71]/30'
                       }`}
                   >
                     {viewerDetail?.status || 'Active'}
@@ -380,8 +380,8 @@ export default function ViewerManagement() {
                   <button
                     onClick={() => setActiveModalTab('history')}
                     className={`pb-2.5 font-bold text-xs border-b-2 transition ${activeModalTab === 'history'
-                        ? 'border-[#EB1000] text-[#EB1000]'
-                        : 'border-transparent text-[#8B8B96] hover:text-white'
+                      ? 'border-[#EB1000] text-[#EB1000]'
+                      : 'border-transparent text-[#8B8B96] hover:text-white'
                       }`}
                   >
                     Question History ({viewerDetail.donations?.length || 0})
@@ -389,8 +389,8 @@ export default function ViewerManagement() {
                   <button
                     onClick={() => setActiveModalTab('vip')}
                     className={`pb-2.5 font-bold text-xs border-b-2 transition ${activeModalTab === 'vip'
-                        ? 'border-[#EB1000] text-[#EB1000]'
-                        : 'border-transparent text-[#8B8B96] hover:text-white'
+                      ? 'border-[#EB1000] text-[#EB1000]'
+                      : 'border-transparent text-[#8B8B96] hover:text-white'
                       }`}
                   >
                     VIP Memberships ({viewerDetail.vipMemberships?.length || 0})
@@ -402,7 +402,7 @@ export default function ViewerManagement() {
                   <div className="space-y-3">
                     {!viewerDetail.donations || viewerDetail.donations.length === 0 ? (
                       <div className="py-6 text-center text-[#8B8B96] bg-[#0A0A0F] rounded-xl border border-[#1C1C26]">
-                        No question or donation history recorded for this viewer.
+                        No question or Paid Question history recorded for this viewer.
                       </div>
                     ) : (
                       <div className="overflow-x-auto">
@@ -434,10 +434,10 @@ export default function ViewerManagement() {
                                 <td className="py-2.5 px-2">
                                   <span
                                     className={`px-2 py-0.5 rounded text-[10px] font-bold ${d.paymentStatus === 'SUCCESS' || d.paymentStatus === 'SUCCESSFUL'
-                                        ? 'bg-[#00E676]/10 text-[#00E676]'
-                                        : d.paymentStatus === 'FAILED'
-                                          ? 'bg-[#FF3D71]/10 text-[#FF3D71]'
-                                          : 'bg-[#FFD60A]/10 text-[#FFD60A]'
+                                      ? 'bg-[#00E676]/10 text-[#00E676]'
+                                      : d.paymentStatus === 'FAILED'
+                                        ? 'bg-[#FF3D71]/10 text-[#FF3D71]'
+                                        : 'bg-[#FFD60A]/10 text-[#FFD60A]'
                                       }`}
                                   >
                                     {d.paymentStatus}

@@ -16,17 +16,24 @@ import {
   XCircle,
   HelpCircle,
   Download,
-  Calendar
+  Search,
+  X
 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { API_ENDPOINTS } from '@/config/api';
 import { useToast } from '@/context/ToastContext';
 import { getAdminToken } from '@/utils/cookies';
 
 export default function WalletManagement({ activeSubTab }) {
+  const router = useRouter();
   const { toast } = useToast();
   const [activeView, setActiveView] = useState('wallets');
   const [isLoading, setIsLoading] = useState(true);
   const [creatorWallets, setCreatorWallets] = useState([]);
+
+  // Server-Side Search & Filter State
+  const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
 
   // Modal for editing creator balance
   const [selectedWalletModal, setSelectedWalletModal] = useState(null);
@@ -39,11 +46,23 @@ export default function WalletManagement({ activeSubTab }) {
   const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
 
-  const fetchWallets = async (pageParam = currentPage) => {
+  // Debounce search input (400ms delay)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  const fetchWallets = async (pageParam = currentPage, searchParam = debouncedSearch) => {
     try {
       setIsLoading(true);
       const token = getAdminToken();
-      const res = await fetch(`${API_ENDPOINTS.ADMIN.WALLETS}?page=${pageParam}&limit=10`, {
+      let url = `${API_ENDPOINTS.ADMIN.WALLETS}?page=${pageParam}&limit=10`;
+      if (searchParam && searchParam.trim()) {
+        url += `&search=${encodeURIComponent(searchParam.trim())}`;
+      }
+      const res = await fetch(url, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
       const data = await res.json();
@@ -68,8 +87,12 @@ export default function WalletManagement({ activeSubTab }) {
   };
 
   useEffect(() => {
-    fetchWallets(currentPage);
-  }, [currentPage]);
+    fetchWallets(currentPage, debouncedSearch);
+  }, [currentPage, debouncedSearch]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [debouncedSearch]);
 
   useEffect(() => {
     if (activeSubTab === 'wallets_ledger') {
@@ -278,20 +301,42 @@ export default function WalletManagement({ activeSubTab }) {
 
       {/* 2. CREATOR WISE REVENUE TABLE & BALANCE MANAGEMENT */}
       <div className="p-6 rounded-3xl bg-[#13131A] border border-[#1C1C26] space-y-4 shadow-xl">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#1C1C26] pb-3">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-[#1C1C26] pb-4">
           <div>
             <h3 className="font-heading font-bold text-base text-white flex items-center gap-2">
               <TrendingUp className="h-5 w-5 text-[#EB1000]" /> Creator Wise Revenue & Wallet Balances
             </h3>
-            <p className="text-xs text-[#8B8B96] mt-0.5">
+            <p className="text-xs text-[#8B8B96] mt-0.5 max-w-xl">
               Overview of creator revenue earnings, platform commissions, and monthly wallet balance settlements.
             </p>
           </div>
-          <div className="flex flex-wrap items-center gap-2.5">
+
+          <div className="flex items-center gap-3 shrink-0">
+            {/* Server-side Search Input Box */}
+            <div className="relative w-64 sm:w-72">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#EB1000]" />
+              <input
+                type="text"
+                placeholder="Search creator, handle, email..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-9 pr-8 py-2.5 rounded-xl bg-[#0A0A0F] border border-[#2A2A3A] text-white text-xs placeholder-[#8B8B96] focus:outline-none focus:border-[#EB1000] focus:ring-1 focus:ring-[#EB1000] transition shadow-inner"
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#8B8B96] hover:text-white transition"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              )}
+            </div>
+
             <button
               onClick={handleDownloadCSV}
               title="Download Creator Wallets CSV Report"
-              className="px-3.5 py-1.5 rounded-xl bg-brand-gradient text-white font-bold text-xs hover:opacity-90 transition flex items-center gap-1.5 shadow-sm"
+              className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#EB1000] to-[#FF3B00] text-white font-bold text-xs hover:brightness-110 active:scale-95 transition flex items-center gap-2 shadow-lg shadow-[#EB1000]/20 shrink-0"
             >
               <Download className="h-4 w-4" />
               <span>Download CSV</span>
@@ -300,54 +345,78 @@ export default function WalletManagement({ activeSubTab }) {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {creatorWallets.map((w) => (
-            <div key={w.creatorId} className="p-5 rounded-2xl bg-[#0A0A0F] border border-[#1C1C26] space-y-4 hover:border-[#EB1000]/40 transition">
-              <div className="flex items-center justify-between border-b border-[#1C1C26] pb-3">
-                <div>
-                  <h4 className="font-heading font-black text-base text-white">{w.creatorName}</h4>
-                  <span className="text-xs text-[#EB1000] font-semibold">{w.handle}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  {w.settlementStatus ? (
-                    <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase ${w.settlementStatus === 'Settled' ? 'bg-[#00E676]/10 text-[#00E676] border border-[#00E676]/30' : 'bg-[#FFD60A]/10 text-[#FFD60A] border border-[#FFD60A]/30'
-                      }`}>
-                      {w.settlementStatus}
-                    </span>
-                  ) : null}
-                </div>
-              </div>
-
-              {/* Creator 6-Metric Grid */}
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 text-xs">
-                <div className="p-2.5 rounded-xl bg-[#13131A] border border-[#1C1C26]">
-                  <span className="text-[10px] text-[#8B8B96] block font-semibold">Gross Raised</span>
-                  <span className="font-heading font-black text-white text-sm">₹{(w.grossEarnings || 0).toLocaleString('en-IN')}</span>
-                </div>
-                <div className="p-2.5 rounded-xl bg-[#13131A] border border-[#1C1C26]">
-                  <span className="text-[10px] text-[#8B8B96] block font-semibold">Fee (15%)</span>
-                  <span className="font-heading font-black text-[#FFD60A] text-sm">₹{(w.platformCommission || 0).toLocaleString('en-IN')}</span>
-                </div>
-                <div className="p-2.5 rounded-xl bg-[#13131A] border border-[#1C1C26]">
-                  <span className="text-[10px] text-[#8B8B96] block font-semibold">Net Share (85%)</span>
-                  <span className="font-heading font-black text-[#00E676] text-sm">₹{(w.netCreatorShare || 0).toLocaleString('en-IN')}</span>
-                </div>
-                <div className="p-2.5 rounded-xl bg-[#13131A] border border-[#00E676]/30 bg-[#00E676]/5">
-                  <span className="text-[10px] text-[#00E676] block font-bold">Available Bal</span>
-                  <span className="font-heading font-black text-[#00E676] text-sm">₹{(w.availableBalance || 0).toLocaleString('en-IN')}</span>
-                </div>
-                <div className="p-2.5 rounded-xl bg-[#13131A] border border-[#FFD60A]/30 bg-[#FFD60A]/5">
-                  <span className="text-[10px] text-[#FFD60A] block font-bold">Pending Bal</span>
-                  <span className="font-heading font-black text-[#FFD60A] text-sm">₹{(w.pendingBalance || 0).toLocaleString('en-IN')}</span>
-                </div>
-                <div className="p-2.5 rounded-xl bg-[#13131A] border border-[#1C1C26]">
-                  <span className="text-[10px] text-[#8B8B96] block font-semibold">Withdrawn</span>
-                  <span className="font-heading font-black text-[#00E676] text-sm">₹{(w.withdrawnAmount || w.withdrawnTotal || 0).toLocaleString('en-IN')}</span>
-                </div>
-              </div>
-
-
+          {isLoading ? (
+            <div className="col-span-full py-12 text-center text-xs text-[#8B8B96]">
+              <RefreshCw className="h-6 w-6 animate-spin mx-auto text-[#EB1000] mb-2" />
+              Searching creator wallets...
             </div>
-          ))}
+          ) : creatorWallets.length === 0 ? (
+            <div className="col-span-full py-12 text-center text-xs text-[#8B8B96] space-y-2">
+              <p className="font-bold text-sm text-white">No creator wallets found</p>
+              <p>{debouncedSearch ? `No records matching "${debouncedSearch}".` : 'No wallet data available.'}</p>
+            </div>
+          ) : (
+            creatorWallets.map((w) => (
+              <div
+                key={w.creatorId}
+                onClick={() => router.push(`/admin/wallets/${w.creatorId}`)}
+                className="p-5 rounded-2xl bg-[#0A0A0F] border border-[#1C1C26] space-y-4 hover:border-[#EB1000]/60 transition cursor-pointer group shadow-lg"
+              >
+                <div className="flex items-center justify-between border-b border-[#1C1C26] pb-3">
+                  <div>
+                    <h4 className="font-heading font-black text-base text-white group-hover:text-[#EB1000] transition flex items-center gap-1.5">
+                      {w.creatorName}
+                      <ArrowUpRight className="h-4 w-4 opacity-0 group-hover:opacity-100 transition text-[#EB1000]" />
+                    </h4>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {w.settlementStatus ? (
+                      <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase ${w.settlementStatus === 'Settled' ? 'bg-[#00E676]/10 text-[#00E676] border border-[#00E676]/30' : 'bg-[#FFD60A]/10 text-[#FFD60A] border border-[#FFD60A]/30'
+                        }`}>
+                        {w.settlementStatus}
+                      </span>
+                    ) : null}
+                  </div>
+                </div>
+
+                {/* Creator 6-Metric Grid */}
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 text-xs">
+                  <div className="p-2.5 rounded-xl bg-[#13131A] border border-[#1C1C26]">
+                    <span className="text-[10px] text-[#8B8B96] block font-semibold">Total Earnings</span>
+                    <span className="font-heading font-black text-white text-sm">₹{(w.grossEarnings).toLocaleString('en-IN')}</span>
+                  </div>
+                  <div className="p-2.5 rounded-xl bg-[#13131A] border border-[#1C1C26]">
+                    <span className="text-[10px] text-[#8B8B96] block font-semibold">Fee (15%)</span>
+                    <span className="font-heading font-black text-[#FFD60A] text-sm">₹{(w.platformCommission || 0).toLocaleString('en-IN')}</span>
+                  </div>
+                  <div className="p-2.5 rounded-xl bg-[#13131A] border border-[#1C1C26]">
+                    <span className="text-[10px] text-[#8B8B96] block font-semibold">Net Share (85%)</span>
+                    <span className="font-heading font-black text-[#00E676] text-sm">₹{(w.netCreatorShare || 0).toLocaleString('en-IN')}</span>
+                  </div>
+                  <div className="p-2.5 rounded-xl bg-[#13131A] border border-[#00E676]/30 bg-[#00E676]/5">
+                    <span className="text-[10px] text-[#00E676] block font-bold">Available Bal</span>
+                    <span className="font-heading font-black text-[#00E676] text-sm">₹{(w.availableBalance || 0).toLocaleString('en-IN')}</span>
+                  </div>
+                  <div className="p-2.5 rounded-xl bg-[#13131A] border border-[#FFD60A]/30 bg-[#FFD60A]/5">
+                    <span className="text-[10px] text-[#FFD60A] block font-bold">Pending Bal</span>
+                    <span className="font-heading font-black text-[#FFD60A] text-sm">₹{(w.pendingBalance || 0).toLocaleString('en-IN')}</span>
+                  </div>
+                  <div className="p-2.5 rounded-xl bg-[#13131A] border border-[#1C1C26]">
+                    <span className="text-[10px] text-[#8B8B96] block font-semibold">Withdrawn</span>
+                    <span className="font-heading font-black text-[#00E676] text-sm">₹{(w.withdrawnAmount || w.withdrawnTotal || 0).toLocaleString('en-IN')}</span>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between pt-2 border-t border-[#1C1C26]/80 text-xs">
+                  <span className="text-[11px] text-[#EB1000] font-bold group-hover:underline flex items-center gap-1">
+                    View Full Creator Details <ArrowUpRight className="h-3.5 w-3.5" />
+                  </span>
+
+                </div>
+
+              </div>
+            ))
+          )}
         </div>
 
         {/* PAGINATION CONTROLS BAR */}

@@ -242,8 +242,7 @@ export default function DedicatedSessionQuestionsPage() {
               <form onSubmit={handleSearchSubmit} className="flex items-center gap-2.5 w-full overflow-x-auto no-scrollbar py-0.5">
                 {/* Search Box */}
                 <div className="relative min-w-[160px] flex-1">
-                  <Search className={`absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 ${theme === 'light' ? 'text-[#64748B]' : 'text-[#EB1000]'
-                    }`} />
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[#EB1000]" />
                   <input
                     type="text"
                     value={searchQuery}

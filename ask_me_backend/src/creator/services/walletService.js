@@ -121,6 +121,36 @@ const getCreatorWalletDetailsService = async (creatorId, queryParams = {}) => {
     where: { creator_id: String(creatorId), status: "active" },
   }).catch(() => 0);
 
+  const subscriptionMemberships = await VipMembership.findAll({
+    where: {
+      creator_id: String(creatorId),
+      status: { [Op.ne]: "cancelled" },
+    },
+    attributes: ["amount"],
+  }).catch(() => []);
+
+  const subscriptionGrossEarnings = subscriptionMemberships.reduce(
+    (acc, m) => acc + parseFloat(m.amount || 0),
+    0
+  );
+  const subscriptionEarnings = subscriptionGrossEarnings * netSharePercent;
+
+  const totalQuestionsAskedCount = await Donation.count({
+    where: { creator_id: String(creatorId), payment_status: "success" },
+  }).catch(() => transactions.filter((t) => t.payment_status === "Successful").length);
+
+  const questionsAnsweredCount = await Donation.count({
+    where: {
+      creator_id: String(creatorId),
+      payment_status: "success",
+      [Op.or]: [
+        { status: { [Op.in]: ["read"] } },
+        { answered_at: { [Op.ne]: null } },
+        { answer_text: { [Op.ne]: null } },
+      ],
+    },
+  }).catch(() => 0);
+
   return {
     wallet: {
       totalEarnings,
@@ -128,9 +158,17 @@ const getCreatorWalletDetailsService = async (creatorId, queryParams = {}) => {
       pendingAmount,
       withdrawnAmount,
       activeSubscribersCount,
+      totalQuestionsAskedCount,
+      questionsAnsweredCount,
+      subscriptionEarnings,
+      subscriptionGrossEarnings,
     },
     currentSettlement: latestSettlement,
     activeSubscribersCount,
+    totalQuestionsAskedCount,
+    questionsAnsweredCount,
+    subscriptionEarnings,
+    subscriptionGrossEarnings,
     transactions,
     settlements,
     pagination,

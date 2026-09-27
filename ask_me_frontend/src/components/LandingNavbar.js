@@ -73,6 +73,10 @@ export default function LandingNavbar() {
 
             {/* Desktop Navigation Links WITH VERTICAL SEPARATORS */}
             <nav className="hidden lg:flex items-center gap-3.5 text-[13px] font-semibold text-[#A0A0B2]">
+              <Link href="/" className="hover:text-white transition-colors">
+                Home
+              </Link>
+              <span className="h-3.5 w-[1px] bg-[#222234]"></span>
               <Link href="/discover-creators" className="hover:text-white transition-colors">
                 Discover
               </Link>
@@ -88,14 +92,17 @@ export default function LandingNavbar() {
               </a>
               <span className="h-3.5 w-[1px] bg-[#222234]"></span>
 
-              <Link href="/live-streams" className="hover:text-white transition-colors flex items-center gap-1.5 text-white font-bold">
+              <Link href="/live-streams" className="hover:text-white transition-colors flex items-center gap-1.5 text-white">
                 <span className="h-2 w-2 rounded-full bg-[#EB1000] animate-pulse"></span>
                 Live Streams
               </Link>
               <span className="h-3.5 w-[1px] bg-[#222234]"></span>
-
+              <Link href="/about" className="hover:text-white transition-colors flex items-center gap-1.5">
+                About
+              </Link>
+              <span className="h-3.5 w-[1px] bg-[#222234]"></span>
               <Link href="/contact" className="hover:text-white transition-colors">
-                Contact Us
+                Help
               </Link>
             </nav>
 

@@ -603,7 +603,7 @@ export default function AdminMembershipsManager({ activeSubTab = 'overview', the
             <h2 className="font-heading font-black text-xl text-white">Assign Membership Plans to Creators</h2>
 
             <div className="w-full sm:w-72 relative">
-              <Search className="h-4 w-4 absolute left-3.5 top-3 text-[#8B8B96]" />
+              <Search className="h-4 w-4 absolute left-3.5 top-3 text-[#EB1000]" />
               <input
                 type="text"
                 placeholder="Search creator name..."
@@ -684,7 +684,7 @@ export default function AdminMembershipsManager({ activeSubTab = 'overview', the
             </div>
 
             <div className="w-full sm:w-72 relative">
-              <Search className="h-4 w-4 absolute left-3.5 top-3 text-[#8B8B96]" />
+              <Search className="h-4 w-4 absolute left-3.5 top-3 text-[#EB1000]" />
               <input
                 type="text"
                 placeholder="Search viewer or creator..."

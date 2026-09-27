@@ -118,7 +118,7 @@ export default function LiveSessionManagement({ activeSubTab }) {
             Live Session Management & Stream QR Overlays
           </h2>
           <p className="text-xs text-[#8B8B96] mt-0.5">
-            View active sessions, creator details, generated QR codes, donation activity, and disable suspicious sessions.
+            View active sessions, creator details, generated QR codes, paid question activity, and disable suspicious sessions.
           </p>
         </div>
       </div>
@@ -158,7 +158,7 @@ export default function LiveSessionManagement({ activeSubTab }) {
 
               <div className="flex-1 space-y-2 text-xs">
                 <div className="p-2.5 rounded-lg bg-[#13131A] border border-[#1C1C26]">
-                  <span className="text-[10px] text-[#8B8B96] block">Donation Activity</span>
+                  <span className="text-[10px] text-[#8B8B96] block">Paid Question Activity</span>
                   <span className="font-bold text-[#00F5D4]">{session.questionsCount} Qs ({session.donationsTotal})</span>
                 </div>
               </div>

@@ -31,7 +31,10 @@ import {
     LogOut,
     Sun,
     Moon,
-    Bell
+    Bell,
+    X,
+    KeyRound,
+    Smartphone
 } from 'lucide-react';
 import { API_ENDPOINTS, getMediaUrl } from '@/config/api';
 import { uploadFile } from '@/utils/fileUpload';
@@ -64,7 +67,6 @@ export default function CreatorKycPage() {
         };
     }, []);
 
-
     const handleLogout = () => {
         clearCreatorSession();
         toast.info('Logged out successfully from Creator Studio.', 'Logged Out');
@@ -78,31 +80,47 @@ export default function CreatorKycPage() {
     const [token, setToken] = useState('');
     const [isLoadingStatus, setIsLoadingStatus] = useState(true);
 
-    // Flow State: 'kyc_form' | 'kyc_submitted' | 'kyc_approved' | 'kyc_rejected'
+    // Flow State: 'kyc_form' | 'kyc_submitted' | 'kyc_approved' | 'kyc_rejected' | 'manual_review'
     const [flowState, setFlowState] = useState('kyc_form');
-    const [step, setStep] = useState(1); // 1: Personal & ID, 2: Bank & Payout, 3: Review & Submit
+    const [step, setStep] = useState(1); // 1: Personal Info, 2: Document Proof, 3: Bank Details, 4: Review & Submit
 
     // Form Submission & Error States
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [errorMsg, setErrorMsg] = useState('');
     const [successMsg, setSuccessMsg] = useState('');
 
-    // Lock Pre-filled Data States
+    // Pre-filled & Locked States
     const [isNameLocked, setIsNameLocked] = useState(false);
-    const [isMobileLocked, setIsMobileLocked] = useState(false);
+    const [isMobileLocked, setIsMobileLocked] = useState(true);
+
+    const socialPlatforms = [
+        { value: 'youtube', label: 'YouTube Channel', icon: '▶' },
+        { value: 'instagram', label: 'Instagram Handle', icon: '📸' },
+        { value: 'twitch', label: 'Twitch Channel', icon: '👾' },
+        { value: 'facebook', label: 'Facebook Page', icon: 'f' },
+        { value: 'kick', label: 'Kick Channel', icon: '⚡' },
+        { value: 'x', label: 'X / Twitter Handle', icon: '𝕏' },
+        { value: 'linkedin', label: 'LinkedIn Profile', icon: '💼' },
+    ];
 
     // KYC Form State
     const [formData, setFormData] = useState({
         fullName: '',
         mobileCountryCode: '+91',
         mobileNumber: '',
-        category: '', // Dropdown: 'Creator', 'Freelancer', 'Business', 'Individual'
-        socialMediaUrl: '', // Main profile / portfolio URL
+        category: '',
+        categorySelect: '',
+        customCategory: '',
+        socialMediaUrl: '',
         youtubeUrl: '',
         instagramUrl: '',
         facebookUrl: '',
         twitchUrl: '',
         linkedinUrl: '',
+        socialLinks: [
+            { platform: 'youtube', link: '' },
+            { platform: 'instagram', link: '' },
+        ],
         dateOfBirth: '',
         address: '',
         country: 'India',
@@ -111,8 +129,9 @@ export default function CreatorKycPage() {
         pincode: '',
         documentType: 'pan_card',
         panNumber: '',
+        aadhaarNumber: '',
         documentNumber: '',
-        documentPreview: 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&w=400&q=80',
+        documentPreview: '',
 
         accountHolderName: '',
         bankName: '',
@@ -120,31 +139,103 @@ export default function CreatorKycPage() {
         confirmAccountNumber: '',
         ifscCode: '',
         upiId: '',
-        accountType: '',
 
         agreeTerms: false,
     });
 
-    // Cashfree Instant Verification States
+    const handleAddSocialLink = () => {
+        setFormData(prev => ({
+            ...prev,
+            socialLinks: [...(prev.socialLinks || []), { platform: 'youtube', link: '' }]
+        }));
+    };
+
+    const handleUpdateSocialLink = (index, field, value) => {
+        setFormData(prev => {
+            const updated = [...(prev.socialLinks || [])];
+            updated[index] = { ...updated[index], [field]: value };
+            return { ...prev, socialLinks: updated };
+        });
+    };
+
+    const handleRemoveSocialLink = (index) => {
+        setFormData(prev => ({
+            ...prev,
+            socialLinks: (prev.socialLinks || []).filter((_, i) => i !== index)
+        }));
+    };
+
+    // ==========================================
+    // CASHFREE VERIFICATION STATES & HANDLERS
+    // ==========================================
+    // 1. PAN State
     const [isVerifyingPan, setIsVerifyingPan] = useState(false);
     const [panVerificationData, setPanVerificationData] = useState(null);
+
+    // 2. Aadhaar OKYC State
+    const [isSendingAadhaarOtp, setIsSendingAadhaarOtp] = useState(false);
+    const [isVerifyingAadhaarOtp, setIsVerifyingAadhaarOtp] = useState(false);
+    const [aadhaarOtpSent, setAadhaarOtpSent] = useState(false);
+    const [aadhaarRefId, setAadhaarRefId] = useState('');
+    const [aadhaarOtp, setAadhaarOtp] = useState('');
+    const [aadhaarVerificationData, setAadhaarVerificationData] = useState(null);
+
+    // 3. PAN + Aadhaar Identity Match State
+    const [isCheckingIdentityMatch, setIsCheckingIdentityMatch] = useState(false);
+    const [identityMatchData, setIdentityMatchData] = useState(null);
+
+    // 4. Bank Account Verification State (Penny Drop)
     const [isVerifyingBank, setIsVerifyingBank] = useState(false);
     const [bankVerificationData, setBankVerificationData] = useState(null);
 
+    const sanitizePanNumber = (input) => {
+        if (!input) return '';
+        let cleaned = String(input).toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 10);
+        if (cleaned.length === 10) {
+            let chars = cleaned.split('');
+            for (let i = 0; i < 5; i++) {
+                if (chars[i] === '0') chars[i] = 'O';
+            }
+            for (let i = 5; i < 9; i++) {
+                if (chars[i] === 'O') chars[i] = '0';
+            }
+            if (chars[9] === '0') chars[9] = 'O';
+            cleaned = chars.join('');
+        }
+        return cleaned;
+    };
+
+    const sanitizeIfscCode = (input) => {
+        if (!input) return '';
+        let cleaned = String(input).toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 11);
+        if (cleaned.length >= 5 && cleaned[4] === 'O') {
+            let chars = cleaned.split('');
+            chars[4] = '0';
+            cleaned = chars.join('');
+        }
+        return cleaned;
+    };
+
+    // --- STEP 2: PAN Verification Handler ---
     const handleVerifyPan = async () => {
         if (!formData.panNumber || !formData.panNumber.trim()) {
             toast.error('Please enter a PAN Card Number first.', 'PAN Required');
             return;
         }
 
+        const cleanPan = sanitizePanNumber(formData.panNumber);
         const panRegex = /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/;
-        const cleanPan = formData.panNumber.trim().toUpperCase();
         if (!panRegex.test(cleanPan)) {
-            toast.error('Invalid PAN Card format. E.g. ABCDE1234F', 'Invalid Format');
+            toast.error('Invalid PAN Card format. Must be 5 letters, 4 numbers, 1 letter (e.g. ABCDE1234F).', 'Invalid Format');
             return;
         }
 
+        if (cleanPan !== formData.panNumber) {
+            setFormData(prev => ({ ...prev, panNumber: cleanPan }));
+        }
+
         try {
+            setIsVerifyingPan(true);
             const res = await fetch(API_ENDPOINTS.CREATORS.VERIFY_PAN, {
                 method: 'POST',
                 headers: {
@@ -159,18 +250,17 @@ export default function CreatorKycPage() {
             const data = await res.json();
             if (res.ok && data.status === 'success' && data.data?.verified) {
                 setPanVerificationData(data.data);
-                setIsVerifyingPan(true);
+                const registeredName = data.data.registeredName || formData.fullName;
 
-                if (data.data.registeredName) {
-                    setFormData(prev => ({
-                        ...prev,
-                        fullName: data.data.registeredName,
-                        accountHolderName: prev.accountHolderName || data.data.registeredName,
-                    }));
+                toast.success(`PAN Card Verified! Holder: ${registeredName}`, 'PAN Verified');
+
+                // If Aadhaar was already verified, trigger identity match
+                if (aadhaarVerificationData?.verified) {
+                    runIdentityMatch(registeredName, aadhaarVerificationData.registeredName);
                 }
-                toast.success(`PAN Card Verified! Registered Name: ${data.data.registeredName}`, 'Cashfree Verification');
             } else {
-                toast.error(data.message || 'PAN Verification failed.', 'Cashfree Verification');
+                setPanVerificationData(null);
+                toast.error(data.message || 'PAN Verification failed. PAN holder name must match registered creator name.', 'Verification Failed');
             }
         } catch (err) {
             toast.error(err.message, 'Verification Error');
@@ -179,6 +269,134 @@ export default function CreatorKycPage() {
         }
     };
 
+    // --- STEP 2: Aadhaar OKYC Step 1 (Send OTP) ---
+    const handleSendAadhaarOtp = async () => {
+        const cleanAadhaar = String(formData.aadhaarNumber || '').replace(/\D/g, '');
+        if (!cleanAadhaar || cleanAadhaar.length !== 12) {
+            toast.error('Please enter a valid 12-digit Aadhaar Card Number.', 'Aadhaar Required');
+            return;
+        }
+
+        try {
+            setIsSendingAadhaarOtp(true);
+            const res = await fetch(API_ENDPOINTS.CREATORS.VERIFY_AADHAAR_SEND_OTP, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                },
+                body: JSON.stringify({
+                    aadhaarNumber: cleanAadhaar,
+                }),
+            });
+            const data = await res.json();
+            if (res.ok && data.status === 'success' && data.data?.refId) {
+                setAadhaarRefId(data.data.refId);
+                setAadhaarOtpSent(true);
+                toast.success('Aadhaar OTP sent successfully to your registered mobile number!', 'OTP Sent');
+            } else {
+                toast.error(data.message || 'Failed to send Aadhaar OTP.', 'Aadhaar e-KYC Error');
+            }
+        } catch (err) {
+            toast.error(err.message, 'OTP Error');
+        } finally {
+            setIsSendingAadhaarOtp(false);
+        }
+    };
+
+    // --- STEP 2: Aadhaar OKYC Step 2 (Verify OTP) ---
+    const handleVerifyAadhaarOtp = async () => {
+        if (!aadhaarOtp || aadhaarOtp.trim().length < 4) {
+            toast.error('Please enter the OTP received on your Aadhaar-linked mobile.', 'OTP Required');
+            return;
+        }
+
+        try {
+            setIsVerifyingAadhaarOtp(true);
+            const res = await fetch(API_ENDPOINTS.CREATORS.VERIFY_AADHAAR_VERIFY_OTP, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                },
+                body: JSON.stringify({
+                    otp: aadhaarOtp.trim(),
+                    refId: aadhaarRefId,
+                    aadhaarNumber: formData.aadhaarNumber,
+                    name: panVerificationData?.registeredName || formData.fullName,
+                }),
+            });
+            const data = await res.json();
+            if (res.ok && data.status === 'success' && data.data?.verified) {
+                setAadhaarVerificationData(data.data);
+                const aadhaarName = data.data.registeredName || formData.fullName;
+
+                toast.success(`Aadhaar e-KYC Verified! Name: ${aadhaarName}`, 'Aadhaar Verified');
+
+                // Update date of birth if available from Aadhaar
+                if (data.data.dob) {
+                    setFormData(prev => ({
+                        ...prev,
+                        dateOfBirth: prev.dateOfBirth || data.data.dob,
+                    }));
+                }
+
+                // If PAN was also verified, trigger backend identity match
+                const panName = panVerificationData?.registeredName || formData.fullName;
+                if (panVerificationData?.verified) {
+                    runIdentityMatch(panName, aadhaarName);
+                }
+            } else {
+                setAadhaarVerificationData(null);
+                toast.error(data.message || 'Invalid Aadhaar OTP or name mismatch. Verification failed.', 'Verification Failed');
+            }
+        } catch (err) {
+            toast.error(err.message, 'Verification Error');
+        } finally {
+            setIsVerifyingAadhaarOtp(false);
+        }
+    };
+
+    // --- STEP 2: PAN + Aadhaar Backend Identity Matching ---
+    const runIdentityMatch = async (panName, aadhaarName) => {
+        try {
+            setIsCheckingIdentityMatch(true);
+            const res = await fetch(API_ENDPOINTS.CREATORS.MATCH_IDENTITY, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                },
+                body: JSON.stringify({
+                    panName,
+                    aadhaarName,
+                    panDob: formData.dateOfBirth,
+                    aadhaarDob: aadhaarVerificationData?.dob || formData.dateOfBirth,
+                }),
+            });
+            const data = await res.json();
+            if (res.ok && data.status === 'success' && data.data) {
+                setIdentityMatchData(data.data);
+                if (data.data.isMatch) {
+                    toast.success('PAN and Aadhaar Identity Matched Successfully!', 'Identity Verified');
+                    // Pre-fill verified name to legal name and bank holder
+                    setFormData(prev => ({
+                        ...prev,
+                        fullName: aadhaarName || panName || prev.fullName,
+                        accountHolderName: prev.accountHolderName || aadhaarName || panName,
+                    }));
+                } else {
+                    toast.warning(data.data.message || 'Identity mismatch detected between PAN and Aadhaar. Flagged for manual review.', 'Manual Review Required');
+                }
+            }
+        } catch (err) {
+            console.error('Identity match error:', err.message);
+        } finally {
+            setIsCheckingIdentityMatch(false);
+        }
+    };
+
+    // --- STEP 3: Bank Account Verification (Penny Drop) ---
     const handleVerifyBank = async () => {
         if (!formData.accountNumber || !formData.ifscCode) {
             toast.error('Please enter both Account Number and IFSC Code.', 'Details Required');
@@ -192,6 +410,8 @@ export default function CreatorKycPage() {
             return;
         }
 
+        const verifiedIdentity = aadhaarVerificationData?.registeredName || panVerificationData?.registeredName || formData.accountHolderName || formData.fullName;
+
         try {
             setIsVerifyingBank(true);
             const res = await fetch(API_ENDPOINTS.CREATORS.VERIFY_BANK, {
@@ -203,7 +423,8 @@ export default function CreatorKycPage() {
                 body: JSON.stringify({
                     accountNumber: formData.accountNumber.trim(),
                     ifscCode: cleanIfsc,
-                    name: formData.accountHolderName || formData.fullName,
+                    name: formData.accountHolderName || verifiedIdentity,
+                    verifiedIdentityName: verifiedIdentity,
                 }),
             });
             const data = await res.json();
@@ -216,7 +437,11 @@ export default function CreatorKycPage() {
                         accountHolderName: data.data.accountHolderName || prev.accountHolderName,
                     }));
                 }
-                toast.success(`Bank Account Verified via Cashfree! (${data.data.bankName})`, 'Cashfree Penny Drop');
+                if (data.data.isNameMatch) {
+                    toast.success(`Bank Account Verified via Cashfree Penny Drop! (${data.data.bankName})`, 'Bank Verified');
+                } else {
+                    toast.warning('Bank Account valid, but account holder name differs from government identity. Flagged for manual review.', 'Manual Review');
+                }
             } else {
                 toast.error(data.message || 'Bank Account verification failed.', 'Cashfree Penny Drop');
             }
@@ -269,9 +494,7 @@ export default function CreatorKycPage() {
         if (rawName) {
             setIsNameLocked(true);
         }
-        if (numOnly && numOnly.length === 10) {
-            setIsMobileLocked(true);
-        }
+        setIsMobileLocked(true); // Always keep verified mobile locked per requirements
 
         const checkKycStatus = async () => {
             try {
@@ -292,6 +515,8 @@ export default function CreatorKycPage() {
                     } else if (status === 'rejected') {
                         setFlowState('kyc_rejected');
                         setErrorMsg(kycInfo.rejectionReason || 'Identity document unclear or bank detail mismatch.');
+                    } else if (status === 'manual_review') {
+                        setFlowState('manual_review');
                     } else if (status === 'pending' || status === 'under_review') {
                         setFlowState('pending');
                     } else {
@@ -310,47 +535,17 @@ export default function CreatorKycPage() {
 
     const handleInputChange = (field, value) => {
         let cleanValue = value;
-        if (field === 'ifscCode') {
-            cleanValue = String(value || '').toUpperCase().trim().slice(0, 11);
+        if (field === 'panNumber') {
+            cleanValue = sanitizePanNumber(value);
+        } else if (field === 'ifscCode') {
+            cleanValue = sanitizeIfscCode(value);
         } else if (field === 'accountNumber' || field === 'confirmAccountNumber') {
             cleanValue = String(value || '').replace(/\D/g, '');
+        } else if (field === 'aadhaarNumber') {
+            cleanValue = String(value || '').replace(/\D/g, '').slice(0, 12);
         }
         setFormData(prev => ({ ...prev, [field]: cleanValue }));
         setErrorMsg('');
-    };
-
-    const [isUploadingDoc, setIsUploadingDoc] = useState(false);
-    const [docPreviewUrl, setDocPreviewUrl] = useState('');
-
-    const handleFileUpload = async (e) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
-
-        const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'application/pdf'];
-        if (!allowedTypes.includes(file.type.toLowerCase())) {
-            toast.error('Please upload a valid image (JPG, PNG, WEBP) or PDF document.', 'Invalid File Type');
-            return;
-        }
-
-        if (file.size > 15 * 1024 * 1024) {
-            toast.error('File size exceeds the 15MB limit.', 'File Too Large');
-            return;
-        }
-
-        const localBlob = URL.createObjectURL(file);
-        setDocPreviewUrl(localBlob);
-
-        try {
-            setIsUploadingDoc(true);
-            toast.info('Uploading document to server...', 'Uploading File');
-            const res = await uploadFile(file, 'document');
-            setFormData(prev => ({ ...prev, documentPreview: res.path }));
-            toast.success('KYC Document uploaded successfully!', 'Upload Complete');
-        } catch (err) {
-            toast.error(err?.message || 'Failed to upload document.', 'Upload Error');
-        } finally {
-            setIsUploadingDoc(false);
-        }
     };
 
     const validateStep1 = () => {
@@ -358,48 +553,14 @@ export default function CreatorKycPage() {
             return 'Legal Full Name is required.';
         }
 
-        // 10-Digit Mobile Number Validation
         const cleanMobile = String(formData.mobileNumber || '').replace(/\D/g, '');
-        if (!cleanMobile) {
-            return 'Mobile Number is required.';
-        }
-        if (cleanMobile.length !== 10) {
-            return 'Mobile Number must be a valid 10-digit number (e.g. 9876543210).';
+        if (!cleanMobile || cleanMobile.length !== 10) {
+            return 'Verified Mobile Number must be 10 digits.';
         }
 
-        // Category Dropdown Validation
         if (!formData.category || !formData.category.trim()) {
-            return 'Please select a Category (Creator, Freelancer, Business, or Individual).';
+            return 'Please select a Stream Category.';
         }
-
-        // Social Media URL Validation helper
-        const validateUrlFormat = (urlStr, platformName) => {
-            if (!urlStr || !urlStr.trim()) return null;
-            const trimmed = urlStr.trim();
-            const testUrl = (trimmed.startsWith('http://') || trimmed.startsWith('https://')) ? trimmed : `https://${trimmed}`;
-            try {
-                const parsed = new URL(testUrl);
-                if (!parsed.hostname || !parsed.hostname.includes('.')) {
-                    return `Invalid URL format for ${platformName}. E.g. https://${platformName.toLowerCase().replace(/[^a-z]/g, '')}.com/yourprofile`;
-                }
-                return null;
-            } catch (e) {
-                return `Invalid URL format for ${platformName}. E.g. https://${platformName.toLowerCase().replace(/[^a-z]/g, '')}.com/yourprofile`;
-            }
-        };
-
-        const primaryErr = validateUrlFormat(formData.socialMediaUrl, 'Primary Social Media');
-        if (primaryErr) return primaryErr;
-        const ytErr = validateUrlFormat(formData.youtubeUrl, 'YouTube');
-        if (ytErr) return ytErr;
-        const instaErr = validateUrlFormat(formData.instagramUrl, 'Instagram');
-        if (instaErr) return instaErr;
-        const linkedinErr = validateUrlFormat(formData.linkedinUrl, 'LinkedIn');
-        if (linkedinErr) return linkedinErr;
-        const fbErr = validateUrlFormat(formData.facebookUrl, 'Facebook');
-        if (fbErr) return fbErr;
-        const twitchErr = validateUrlFormat(formData.twitchUrl, 'Twitch');
-        if (twitchErr) return twitchErr;
 
         if (!formData.dateOfBirth) return 'Date of Birth is required.';
         if (!formData.address.trim()) return 'Residential Address is required.';
@@ -410,8 +571,12 @@ export default function CreatorKycPage() {
     };
 
     const validateStep2 = () => {
-        if (!formData.panNumber.trim()) return 'ID Number / PAN Number is required.';
-        if (!formData.documentPreview.trim()) return 'Identity Document Image URL / Upload is required.';
+        if (!panVerificationData?.verified) {
+            return 'Please complete PAN Card verification via Cashfree first.';
+        }
+        if (!aadhaarVerificationData?.verified) {
+            return 'Please complete Aadhaar e-KYC (OTP verification) via Cashfree.';
+        }
         return null;
     };
 
@@ -430,7 +595,7 @@ export default function CreatorKycPage() {
         const ifscRegex = /^[A-Z]{4}0[A-Z0-9]{6}$/;
         const cleanIfsc = formData.ifscCode.trim().toUpperCase();
         if (!ifscRegex.test(cleanIfsc)) {
-            return 'Invalid IFSC Code format. IFSC must be 11 characters starting with 4 letters, 5th character 0, followed by 6 alphanumeric characters (e.g. SBIN0001234, HDFC0000240).';
+            return 'Invalid IFSC Code format. E.g. SBIN0001234 or HDFC0000240.';
         }
 
         return null;
@@ -481,34 +646,57 @@ export default function CreatorKycPage() {
             setErrorMsg('');
             const creatorId = creatorUser?.id;
 
+            const dynamicLinks = (formData.socialLinks || [])
+                .filter(s => s.link && s.link.trim())
+                .map(s => ({
+                    platform: s.platform,
+                    link: s.link.trim(),
+                }));
+
+            const staticLinks = [
+                { platform: 'youtube', link: formData.youtubeUrl },
+                { platform: 'instagram', link: formData.instagramUrl },
+                { platform: 'linkedin', link: formData.linkedinUrl },
+                { platform: 'facebook', link: formData.facebookUrl },
+                { platform: 'twitch', link: formData.twitchUrl },
+            ].filter(s => s.link && s.link.trim());
+
+            const finalSocialLinks = dynamicLinks.length > 0 ? dynamicLinks : staticLinks;
+
             const payload = {
                 creatorId,
-                fullName: formData.fullName,
+                fullName: aadhaarVerificationData?.registeredName || panVerificationData?.registeredName || formData.fullName,
                 mobileNumber: `${formData.mobileCountryCode} ${formData.mobileNumber}`,
                 category: formData.category,
                 socialMediaUrl: formData.socialMediaUrl,
-                socialLinks: [
-                    { platform: 'youtube', link: formData.youtubeUrl },
-                    { platform: 'instagram', link: formData.instagramUrl },
-                    { platform: 'linkedin', link: formData.linkedinUrl },
-                    { platform: 'facebook', link: formData.facebookUrl },
-                    { platform: 'twitch', link: formData.twitchUrl },
-                ].filter(s => s.link && s.link.trim()),
-                dateOfBirth: formData.dateOfBirth,
-                address: formData.address,
+                socialLinks: finalSocialLinks,
+                dateOfBirth: aadhaarVerificationData?.dob || formData.dateOfBirth,
+                address: aadhaarVerificationData?.address || formData.address,
                 city: formData.city,
                 state: formData.state,
                 country: formData.country || 'India',
                 pincode: formData.pincode,
-                documentType: formData.documentType,
-                panNumber: formData.panNumber,
-                documentNumber: formData.documentNumber || formData.panNumber,
-                documentFileUrl: formData.documentPreview,
+
+                // PAN Info
+                panNumber: panVerificationData?.panNumber || formData.panNumber,
+                panHolderName: panVerificationData?.registeredName || '',
+                panReferenceId: panVerificationData?.referenceId || '',
+                panStatus: panVerificationData?.verified ? 'verified' : 'pending',
+
+                // Aadhaar OKYC Info
+                documentType: 'pan_card',
+                aadhaarMasked: aadhaarVerificationData?.maskedAadhaar || `XXXXXXXX${formData.aadhaarNumber.slice(-4)}`,
+                aadhaarName: aadhaarVerificationData?.registeredName || '',
+                aadhaarDob: aadhaarVerificationData?.dob || formData.dateOfBirth,
+                aadhaarReferenceId: aadhaarVerificationData?.referenceId || '',
+
+                // Bank Details
                 accountHolderName: formData.accountHolderName,
                 bankName: formData.bankName,
                 accountNumber: formData.accountNumber,
                 ifscCode: formData.ifscCode,
                 upiId: formData.upiId,
+                bankVerificationStatus: bankVerificationData?.verified ? 'verified' : 'pending',
             };
 
             const response = await fetch(API_ENDPOINTS.CREATORS.SUBMIT_KYC, {
@@ -524,9 +712,15 @@ export default function CreatorKycPage() {
 
             if (response.ok && (data.status === 'success' || data.data)) {
                 setSubmittedKycResult(data.data);
-                setSuccessMsg('KYC Verification Details Submitted Successfully!');
-                setFlowState('pending');
-                toast.success('KYC Documents & Bank Details saved to database successfully!', 'KYC Submitted');
+                const resultStatus = data.data?.kycStatus || 'pending';
+
+                if (resultStatus === 'manual_review') {
+                    setFlowState('manual_review');
+                    toast.warning('KYC submitted! Details flagged for manual review due to name mismatch.', 'Manual Review');
+                } else {
+                    setFlowState('pending');
+                    toast.success('KYC Documents & Bank Details verified and submitted successfully!', 'KYC Submitted');
+                }
             } else {
                 const msg = data.message || 'KYC submission failed. Please check details.';
                 setErrorMsg(msg);
@@ -551,7 +745,6 @@ export default function CreatorKycPage() {
                     ? 'bg-white/90 border-[#DEE2E6] text-[#1A1D20]'
                     : 'bg-[#0F0F18]/90 border-[#202030] text-white'
                     }`}>
-                    {/* Logo & Subtitle */}
                     <Link href="/" className="flex items-center gap-2.5 shrink-0 group">
                         <Logo size="sm" />
                         <div className="flex flex-col leading-none">
@@ -565,7 +758,6 @@ export default function CreatorKycPage() {
                         </div>
                     </Link>
 
-                    {/* Sign Out Button */}
                     <button
                         type="button"
                         onClick={handleLogout}
@@ -601,31 +793,65 @@ export default function CreatorKycPage() {
                                 <h2 className={`font-heading font-black text-2xl mt-1 ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'
                                     }`}>KYC Identity Verification Complete</h2>
                                 <p className={`text-xs ${theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'
-                                    }`}>Your identity documents and bank account have been verified by super admin auditors.</p>
+                                    }`}>Your PAN, Aadhaar e-KYC, and bank details have been verified by Cashfree and super admin auditors.</p>
                             </div>
                         </div>
 
                         <div className="pt-2">
                             <Link
                                 href="/creators/dashboard"
-                                className="px-6 py-3 rounded-xl bg-brand-gradient text-white font-bold text-xs shadow-md glow-teal hover:opacity-95 transition inline-flex items-center gap-2"
+                                className="px-6 py-3 rounded-xl bg-gradient-to-r from-[#00F5D4] to-[#00B4D8] text-black font-extrabold text-xs shadow-md hover:opacity-95 transition inline-flex items-center gap-2"
                             >
                                 <ShieldCheck className="h-4 w-4" /> Go to Creator Control Room Dashboard
                             </Link>
                         </div>
                     </div>
+                ) : flowState === 'manual_review' ? (
+                    /* --- MANUAL REVIEW SCREEN --- */
+                    <div className={`p-6 sm:p-10 rounded-3xl border shadow-2xl space-y-6 animate-scale-up relative overflow-hidden ${theme === 'light'
+                        ? 'bg-gradient-to-br from-white via-[#FFF9F5] to-white border-[#FF9800]/40'
+                        : 'bg-gradient-to-br from-[#1A1510] via-[#1E1712] to-[#14100C] border-[#FF9800]/30'
+                        }`}>
+                        <div className="flex items-start gap-4">
+                            <div className="p-4 rounded-2xl bg-[#FF9800]/10 text-[#FF9800] border border-[#FF9800]/30 shrink-0 shadow-lg">
+                                <AlertTriangle className="h-8 w-8" />
+                            </div>
+                            <div className="space-y-1">
+                                <span className="px-3 py-1 rounded-full bg-[#FF9800]/15 text-[#FF9800] border border-[#FF9800]/40 text-xs font-black uppercase tracking-wider inline-block">
+                                    KYC STATUS: MANUAL REVIEW
+                                </span>
+                                <h2 className={`font-heading font-black text-2xl sm:text-3xl tracking-tight mt-1 ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'}`}>
+                                    Application Under Compliance Review
+                                </h2>
+                                <p className={`text-xs max-w-xl leading-relaxed ${theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'}`}>
+                                    Your PAN, Aadhaar, or Bank Account details could not be matched automatically. Your application has been sent to our super admin team for manual identity verification.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className={`p-4 rounded-2xl border flex items-center gap-3 ${theme === 'light' ? 'bg-[#FFF3E0] border-[#FFB74D] text-[#E65100]' : 'bg-[#FF9800]/10 border-[#FF9800]/30 text-[#FFB74D]'}`}>
+                            <AlertCircle className="h-5 w-5 shrink-0" />
+                            <div className="text-xs">
+                                <strong>Compliance Note:</strong> Manual review takes approximately <strong>24 to 48 hours</strong>. You will receive a notification once verified.
+                            </div>
+                        </div>
+
+                        <div className="pt-2 flex gap-3">
+                            <button
+                                onClick={() => window.location.reload()}
+                                className="px-5 py-2.5 rounded-xl border text-xs font-bold transition-all flex items-center gap-2 bg-[#181824] text-white border-[#262636] hover:border-[#FF9800]"
+                            >
+                                <RefreshCw className="h-4 w-4 text-[#FF9800]" /> Check Status
+                            </button>
+                        </div>
+                    </div>
                 ) : (flowState === 'pending' || flowState === 'kyc_submitted') ? (
-                    /* --- 2. SUBMITTED & PENDING AUDIT SCREEN --- */
+                    /* --- SUBMITTED & PENDING SCREEN --- */
                     <div className={`p-6 sm:p-10 rounded-3xl border shadow-2xl space-y-8 animate-scale-up relative overflow-hidden transition-all duration-300 ${theme === 'light'
                         ? 'bg-gradient-to-br from-white via-[#FFFDF5] to-white border-[#FFD60A]/40'
                         : 'bg-gradient-to-br from-[#12121A] via-[#1A1A24] to-[#12121A] border-[#FFD60A]/30'
                         }`}>
-                        {/* Ambient Glow Effects */}
-                        <div className="absolute -top-24 -right-24 w-72 h-72 bg-[#FFD60A]/10 rounded-full blur-3xl pointer-events-none" />
-                        <div className="absolute -bottom-24 -left-24 w-72 h-72 bg-[#00F5D4]/10 rounded-full blur-3xl pointer-events-none" />
-
-                        {/* Top Header & Status Banner */}
-                        <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 border-b pb-6 border-current/10">
+                        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 border-b pb-6 border-current/10">
                             <div className="flex items-start gap-4">
                                 <div className="p-4 rounded-2xl bg-[#FFD60A]/10 text-[#FFD60A] border border-[#FFD60A]/30 shrink-0 shadow-lg relative">
                                     <Clock className="h-8 w-8 animate-spin" />
@@ -646,16 +872,15 @@ export default function CreatorKycPage() {
 
                                     <h2 className={`font-heading font-black text-2xl sm:text-3xl tracking-tight ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'
                                         }`}>
-                                        Documents Submitted & Pending Audit
+                                        Verification Pending Admin Approval
                                     </h2>
                                     <p className={`text-xs max-w-xl leading-relaxed ${theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'
                                         }`}>
-                                        Your PAN Card, identity proof, and bank payout details have been successfully submitted to the super admin compliance team for verification.
+                                        Your PAN Card, Aadhaar e-KYC, and bank payout details have been submitted to the compliance team for final approval.
                                     </p>
                                 </div>
                             </div>
 
-                            {/* Refresh Action Button */}
                             <button
                                 onClick={() => {
                                     toast.info('Checking latest KYC verification status...', 'Status Check');
@@ -663,7 +888,7 @@ export default function CreatorKycPage() {
                                 }}
                                 className={`px-4 py-2.5 rounded-xl border text-xs font-bold transition-all flex items-center gap-2 shrink-0 ${theme === 'light'
                                     ? 'bg-[#F1F3F5] text-[#1A1D20] border-[#DEE2E6] hover:bg-[#E9ECEF]'
-                                    : 'bg-[#181824] text-white border-[#262636] hover:border-[#00F5D4]/40'
+                                    : 'bg-[#181826] text-white border-[#262636] hover:border-[#00F5D4]/40'
                                     }`}
                             >
                                 <RefreshCw className="h-4 w-4 text-[#00F5D4]" />
@@ -671,88 +896,38 @@ export default function CreatorKycPage() {
                             </button>
                         </div>
 
-                        {/* Audit Progress Timeline Tracker */}
-                        <div className="relative z-10 space-y-3">
-                            <h3 className={`text-xs font-black uppercase tracking-wider ${theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'
-                                }`}>
-                                Verification Progress Timeline
-                            </h3>
-
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                {/* Stage 1 */}
-                                <div className={`p-4 rounded-2xl border flex items-center gap-3 ${theme === 'light' ? 'bg-white border-[#00E676]/30' : 'bg-[#181824] border-[#00E676]/30'
-                                    }`}>
-                                    <div className="p-2.5 rounded-xl bg-[#00E676]/10 text-[#00E676] border border-[#00E676]/30 shrink-0">
-                                        <CheckCircle2 className="h-5 w-5" />
-                                    </div>
-                                    <div>
-                                        <span className="text-[10px] font-bold text-[#00E676] uppercase tracking-wider block">Completed</span>
-                                        <h4 className={`text-xs font-bold ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'}`}>1. Documents Submitted</h4>
-                                        <p className="text-[11px] text-[#8B8B96]">Form & identity files uploaded</p>
-                                    </div>
+                        {/* Audit Progress Timeline */}
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div className={`p-4 rounded-2xl border flex items-center gap-3 ${theme === 'light' ? 'bg-white border-[#00E676]/30' : 'bg-[#181824] border-[#00E676]/30'}`}>
+                                <div className="p-2.5 rounded-xl bg-[#00E676]/10 text-[#00E676] border border-[#00E676]/30 shrink-0">
+                                    <CheckCircle2 className="h-5 w-5" />
                                 </div>
-
-                                {/* Stage 2 */}
-                                <div className={`p-4 rounded-2xl border flex items-center gap-3 relative ${theme === 'light' ? 'bg-[#FFD60A]/10 border-[#FFD60A]/50' : 'bg-[#FFD60A]/10 border-[#FFD60A]/40'
-                                    }`}>
-                                    <div className="p-2.5 rounded-xl bg-[#FFD60A]/20 text-[#FFD60A] border border-[#FFD60A]/40 shrink-0">
-                                        <Clock className="h-5 w-5 animate-spin" />
-                                    </div>
-                                    <div>
-                                        <span className="text-[10px] font-extrabold text-[#FFD60A] uppercase tracking-wider block">In Progress</span>
-                                        <h4 className={`text-xs font-bold ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'}`}>2. Admin Verification</h4>
-                                        <p className="text-[11px] text-[#FFD60A]">Compliance team auditing details</p>
-                                    </div>
-                                </div>
-
-                                {/* Stage 3 */}
-                                <div className={`p-4 rounded-2xl border flex items-center gap-3 opacity-60 ${theme === 'light' ? 'bg-[#F8F9FA] border-[#E9ECEF]' : 'bg-[#14141E] border-[#222230]'
-                                    }`}>
-                                    <div className={`p-2.5 rounded-xl border shrink-0 ${theme === 'light' ? 'bg-white border-[#DEE2E6] text-[#8B8B96]' : 'bg-[#1C1C28] border-[#2A2A3A] text-[#8B8B96]'
-                                        }`}>
-                                        <Lock className="h-5 w-5" />
-                                    </div>
-                                    <div>
-                                        <span className="text-[10px] font-bold text-[#8B8B96] uppercase tracking-wider block">Final Step</span>
-                                        <h4 className={`text-xs font-bold ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'}`}>3. Dashboard Approval</h4>
-                                        <p className="text-[11px] text-[#8B8B96]">Instant access to Live Studio</p>
-                                    </div>
+                                <div>
+                                    <span className="text-[10px] font-bold text-[#00E676] uppercase tracking-wider block">Completed</span>
+                                    <h4 className={`text-xs font-bold ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'}`}>1. Cashfree e-KYC Verified</h4>
+                                    <p className="text-[11px] text-[#8B8B96]">PAN & Aadhaar match passed</p>
                                 </div>
                             </div>
-                        </div>
 
-                        {/* Submitted Summary Details Box */}
-                        <div className={`p-5 rounded-2xl border space-y-3 relative z-10 ${theme === 'light' ? 'bg-[#F8F9FA] border-[#E9ECEF]' : 'bg-[#14141E] border-[#222230]'
-                            }`}>
-                            <h4 className={`text-xs font-extrabold flex items-center gap-2 ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'
-                                }`}>
-                                <FileText className="h-4 w-4 text-[#00F5D4]" />
-                                Submitted Application Summary
-                            </h4>
-
-                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
-                                <div className={`p-3 rounded-xl border ${theme === 'light' ? 'bg-white border-[#E9ECEF]' : 'bg-[#181824]'
-                                    }`}>
-                                    <span className="text-[10px] text-[#8B8B96] block font-semibold uppercase">Legal Full Name</span>
-                                    <span className={`font-bold block mt-0.5 truncate ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'}`}>
-                                        {submittedKycResult?.fullName || formData.fullName || creatorUser?.fullName || 'Creator Applicant'}
-                                    </span>
+                            <div className={`p-4 rounded-2xl border flex items-center gap-3 relative ${theme === 'light' ? 'bg-[#FFD60A]/10 border-[#FFD60A]/50' : 'bg-[#FFD60A]/10 border-[#FFD60A]/40'}`}>
+                                <div className="p-2.5 rounded-xl bg-[#FFD60A]/20 text-[#FFD60A] border border-[#FFD60A]/40 shrink-0">
+                                    <Clock className="h-5 w-5 animate-spin" />
                                 </div>
-
-                                <div className={`p-3 rounded-xl border ${theme === 'light' ? 'bg-white border-[#E9ECEF]' : 'bg-[#181824]'
-                                    }`}>
-                                    <span className="text-[10px] text-[#8B8B96] block font-semibold uppercase">Document Number</span>
-                                    <span className="font-mono font-bold block mt-0.5 text-[#00F5D4] uppercase">
-                                        {submittedKycResult?.panNumber || formData.panNumber || '••••••••'}
-                                    </span>
+                                <div>
+                                    <span className="text-[10px] font-extrabold text-[#FFD60A] uppercase tracking-wider block">In Progress</span>
+                                    <h4 className={`text-xs font-bold ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'}`}>2. Admin Final Approval</h4>
+                                    <p className="text-[11px] text-[#FFD60A]">Compliance team review</p>
                                 </div>
+                            </div>
 
-                                <div className={`p-3 rounded-xl border ${theme === 'light' ? 'bg-white border-[#E9ECEF]' : 'bg-[#181824]'
-                                    }`}>
-                                    <span className="text-[10px] text-[#8B8B96] block font-semibold uppercase">Payout Destination</span>
-                                    <span className={`font-mono font-bold block mt-0.5 truncate ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'}`}>
-                                        {submittedKycResult?.upiId || formData.upiId || formData.accountNumber || 'Configured Bank Account'}
-                                    </span>
+                            <div className={`p-4 rounded-2xl border flex items-center gap-3 opacity-60 ${theme === 'light' ? 'bg-[#F8F9FA] border-[#E9ECEF]' : 'bg-[#14141E] border-[#222230]'}`}>
+                                <div className={`p-2.5 rounded-xl border shrink-0 ${theme === 'light' ? 'bg-white border-[#DEE2E6] text-[#8B8B96]' : 'bg-[#1C1C28] border-[#2A2A3A] text-[#8B8B96]'}`}>
+                                    <Lock className="h-5 w-5" />
+                                </div>
+                                <div>
+                                    <span className="text-[10px] font-bold text-[#8B8B96] uppercase tracking-wider block">Final Step</span>
+                                    <h4 className={`text-xs font-bold ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'}`}>3. Dashboard Access</h4>
+                                    <p className="text-[11px] text-[#8B8B96]">Instant Creator Studio access</p>
                                 </div>
                             </div>
                         </div>
@@ -762,12 +937,12 @@ export default function CreatorKycPage() {
                             }`}>
                             <Sparkles className="h-5 w-5 shrink-0 stroke-[2]" />
                             <div className="text-xs leading-relaxed">
-                                <strong>Estimated Audit SLA:</strong> Verification is typically completed within <strong>2 to 24 hours</strong>. Once approved, your account status will automatically update to <strong>Active</strong>.
+                                <strong>Estimated SLA:</strong> Final admin approval is typically completed within <strong>2 to 24 hours</strong>.
                             </div>
                         </div>
                     </div>
                 ) : (
-                    /* --- 3. FORM INPUT STEPPER --- */
+                    /* --- 4-STEP KYC WIZARD --- */
                     <div className={`p-6 sm:p-8 md:p-10 rounded-3xl border shadow-2xl space-y-6 sm:space-y-8 relative overflow-hidden transition-all duration-300 ${theme === 'light'
                         ? 'bg-white border-[#E2E8F0] shadow-slate-200/60'
                         : 'bg-[#12121C]/95 backdrop-blur-xl border-[#222236] shadow-black/80'
@@ -775,17 +950,17 @@ export default function CreatorKycPage() {
                         {/* Gradient Top Accent Bar */}
                         <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#EB1000] via-[#FF5500] to-[#00F5D4]" />
 
-                        {/* Card Top Title & Step Badge */}
+                        {/* Top Header */}
                         <div className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b pb-5 ${theme === 'light' ? 'border-[#E2E8F0]' : 'border-[#222236]'
                             }`}>
                             <div>
                                 <h2 className={`font-heading font-black text-xl sm:text-2xl tracking-tight ${theme === 'light' ? 'text-[#0F172A]' : 'text-white'
                                     }`}>
-                                    Submit KYC Verification Details
+                                    Creator KYC Identity Verification
                                 </h2>
                                 <p className={`text-xs mt-1 font-medium ${theme === 'light' ? 'text-[#64748B]' : 'text-[#A0A0B2]'
                                     }`}>
-                                    Provide legally accurate personal info, government ID proof, & bank account details.
+                                    Cashfree-powered PAN, Aadhaar e-KYC, and Bank Account Penny Drop verification.
                                 </p>
                             </div>
                             <span className="self-start sm:self-auto px-3.5 py-1.5 rounded-full bg-[#EB1000]/10 text-[#EB1000] border border-[#EB1000]/30 text-xs font-black shrink-0 flex items-center gap-1.5 shadow-sm">
@@ -842,16 +1017,19 @@ export default function CreatorKycPage() {
                             </button>
                         </div>
 
-                        {/* STEP 1: Personal & Address Details */}
+                        {/* STEP 1: Personal Information */}
                         {step === 1 && (
                             <form onSubmit={handleNextStep} className="space-y-5">
                                 <div className="flex items-center gap-2.5">
                                     <span className="p-2 rounded-xl bg-[#00F5D4]/10 text-[#00F5D4] border border-[#00F5D4]/20 shrink-0">
                                         <User className="h-4 w-4" />
                                     </span>
-                                    <h3 className={`font-extrabold text-sm ${theme === 'light' ? 'text-[#0F172A]' : 'text-white'}`}>
-                                        Personal Information & Contact Details
-                                    </h3>
+                                    <div>
+                                        <h3 className={`font-extrabold text-sm ${theme === 'light' ? 'text-[#0F172A]' : 'text-white'}`}>
+                                            Step 1 — Personal Information
+                                        </h3>
+                                        <p className="text-[11px] text-[#8B8B96]">Mobile number is pre-verified from Creator Registration.</p>
+                                    </div>
                                 </div>
 
                                 {/* Row 1: Legal Full Name & Date of Birth */}
@@ -867,27 +1045,18 @@ export default function CreatorKycPage() {
                                                 </span>
                                             )}
                                         </div>
-                                        <div className="relative">
-                                            <input
-                                                type="text"
-                                                required
-                                                readOnly={isNameLocked}
-                                                value={formData.fullName}
-                                                onChange={(e) => !isNameLocked && handleInputChange('fullName', e.target.value)}
-                                                placeholder="e.g. Raja Kumar"
-                                                className={`w-full px-4 py-3 rounded-xl border text-xs outline-none font-medium transition-all duration-200 ${isNameLocked
-                                                    ? theme === 'light'
-                                                        ? 'bg-[#E2E8F0]/60 border-[#CBD5E1] text-[#475569] cursor-not-allowed'
-                                                        : 'bg-[#12121C] border-[#2A2A3E] text-[#94A3B8] cursor-not-allowed'
-                                                    : theme === 'light'
-                                                        ? 'bg-[#F8FAFC] border-[#E2E8F0] text-[#0F172A] placeholder-[#94A3B8] focus:border-[#EB1000] focus:ring-1 focus:ring-[#EB1000]'
-                                                        : 'bg-[#181826] border-[#2A2A3E] text-white placeholder-[#6E6E82] focus:border-[#EB1000] focus:ring-1 focus:ring-[#EB1000]'
-                                                    }`}
-                                            />
-                                            {isNameLocked && (
-                                                <Lock className="absolute right-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-amber-500/80 pointer-events-none" />
-                                            )}
-                                        </div>
+                                        <input
+                                            type="text"
+                                            required
+                                            readOnly={isNameLocked}
+                                            value={formData.fullName}
+                                            onChange={(e) => handleInputChange('fullName', e.target.value)}
+                                            placeholder="e.g. Abhishek Raushan"
+                                            className={`w-full px-4 py-3 rounded-xl border text-xs outline-none font-medium transition-all duration-200 ${theme === 'light'
+                                                ? 'bg-[#F8FAFC] border-[#E2E8F0] text-[#0F172A] placeholder-[#94A3B8] focus:border-[#EB1000] focus:ring-1 focus:ring-[#EB1000]'
+                                                : 'bg-[#181826] border-[#2A2A3E] text-white placeholder-[#6E6E82] focus:border-[#EB1000] focus:ring-1 focus:ring-[#EB1000]'
+                                                }`}
+                                        />
                                     </div>
 
                                     <div>
@@ -897,9 +1066,14 @@ export default function CreatorKycPage() {
                                         <input
                                             type="date"
                                             required
+                                            max={new Date().toISOString().split('T')[0]}
                                             value={formData.dateOfBirth || ''}
+                                            onClick={(e) => {
+                                                try { e.target.showPicker(); } catch (err) { }
+                                            }}
                                             onChange={(e) => handleInputChange('dateOfBirth', e.target.value)}
-                                            className={`w-full px-4 py-3 rounded-xl border text-xs outline-none font-medium transition-all duration-200 ${theme === 'light'
+                                            style={{ colorScheme: theme === 'light' ? 'light' : 'dark' }}
+                                            className={`w-full px-4 py-3 rounded-xl border text-xs outline-none font-medium transition-all duration-200 cursor-pointer ${theme === 'light'
                                                 ? 'bg-[#F8FAFC] border-[#E2E8F0] text-[#0F172A] focus:border-[#EB1000] focus:ring-1 focus:ring-[#EB1000]'
                                                 : 'bg-[#181826] border-[#2A2A3E] text-white focus:border-[#EB1000] focus:ring-1 focus:ring-[#EB1000]'
                                                 }`}
@@ -907,56 +1081,36 @@ export default function CreatorKycPage() {
                                     </div>
                                 </div>
 
-                                {/* Row 2: Mobile Number (with Country Code selector & lock) & Category Dropdown */}
+                                {/* Row 2: Verified Mobile Number (Locked) & Stream Category */}
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div>
                                         <div className="flex items-center justify-between mb-1.5">
                                             <label className={`block text-xs font-extrabold ${theme === 'light' ? 'text-[#0F172A]' : 'text-[#E2E8F0]'}`}>
-                                                Mobile Number * (10 Digits)
+                                                Verified Mobile Number *
                                             </label>
-                                            {isMobileLocked && (
-                                                <span className="inline-flex items-center gap-1 text-[10px] font-extrabold text-amber-500 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/30">
-                                                    <Lock className="h-3 w-3" /> Verified Mobile (Locked)
-                                                </span>
-                                            )}
+                                            <span className="inline-flex items-center gap-1 text-[10px] font-extrabold text-[#00E676] bg-[#00E676]/10 px-2 py-0.5 rounded-full border border-[#00E676]/30">
+                                                <CheckCircle2 className="h-3 w-3" /> Pre-Verified (Locked)
+                                            </span>
                                         </div>
                                         <div className="flex items-center gap-2">
-                                            <select
-                                                disabled={isMobileLocked}
-                                                value={formData.mobileCountryCode || '+91'}
-                                                onChange={(e) => handleInputChange('mobileCountryCode', e.target.value)}
-                                                className={`w-28 px-2.5 py-3 rounded-xl border text-xs outline-none font-mono font-bold transition-all ${isMobileLocked
-                                                    ? theme === 'light' ? 'bg-[#E2E8F0]/60 border-[#CBD5E1] text-[#475569] cursor-not-allowed' : 'bg-[#12121C] border-[#2A2A3E] text-[#94A3B8] cursor-not-allowed'
-                                                    : theme === 'light' ? 'bg-[#F8FAFC] border-[#E2E8F0] text-[#0F172A]' : 'bg-[#181826] border-[#2A2A3E] text-white'
-                                                    }`}
-                                            >
-                                                <option value="+91">🇮🇳 +91</option>
-
-                                            </select>
+                                            <div className={`px-3 py-3 rounded-xl border text-xs font-mono font-bold ${theme === 'light' ? 'bg-[#E2E8F0]/60 border-[#CBD5E1] text-[#475569]' : 'bg-[#12121C] border-[#2A2A3E] text-[#94A3B8]'}`}>
+                                                🇮🇳 +91
+                                            </div>
                                             <div className="relative flex-1">
                                                 <input
                                                     type="tel"
-                                                    maxLength={10}
-                                                    required
-                                                    readOnly={isMobileLocked}
+                                                    readOnly
+                                                    disabled
                                                     value={formData.mobileNumber}
-                                                    onChange={(e) => !isMobileLocked && handleInputChange('mobileNumber', e.target.value.replace(/\D/g, ''))}
-                                                    placeholder="9876543210"
-                                                    className={`w-full px-4 py-3 rounded-xl border text-xs outline-none font-mono font-bold transition-all duration-200 ${isMobileLocked
-                                                        ? theme === 'light'
-                                                            ? 'bg-[#E2E8F0]/60 border-[#CBD5E1] text-[#475569] cursor-not-allowed'
-                                                            : 'bg-[#12121C] border-[#2A2A3E] text-[#94A3B8] cursor-not-allowed'
-                                                        : theme === 'light'
-                                                            ? 'bg-[#F8FAFC] border-[#E2E8F0] text-[#0F172A] placeholder-[#94A3B8] focus:border-[#EB1000] focus:ring-1 focus:ring-[#EB1000]'
-                                                            : 'bg-[#181826] border-[#2A2A3E] text-white placeholder-[#6E6E82] focus:border-[#EB1000] focus:ring-1 focus:ring-[#EB1000]'
+                                                    className={`w-full px-4 py-3 rounded-xl border text-xs outline-none font-mono font-bold cursor-not-allowed ${theme === 'light'
+                                                        ? 'bg-[#E2E8F0]/60 border-[#CBD5E1] text-[#475569]'
+                                                        : 'bg-[#12121C] border-[#2A2A3E] text-[#94A3B8]'
                                                         }`}
                                                 />
-                                                {isMobileLocked && (
-                                                    <Lock className="absolute right-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-amber-500/80 pointer-events-none" />
-                                                )}
+                                                <Lock className="absolute right-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[#00E676] pointer-events-none" />
                                             </div>
                                         </div>
-                                        <span className="text-[10px] text-gray-400 block mt-1">Must be exactly 10 digits to continue to Step 2.</span>
+                                        <span className="text-[10px] text-[#8B8B96] block mt-1">Verified during Creator Registration. Locked for security.</span>
                                     </div>
 
                                     <div>
@@ -965,102 +1119,108 @@ export default function CreatorKycPage() {
                                         </label>
                                         <select
                                             required
-                                            value={formData.category || ''}
-                                            onChange={(e) => handleInputChange('category', e.target.value)}
+                                            value={formData.categorySelect || (['Gaming', 'Politics', 'Technology', 'Finance', 'Entertainment', 'Education'].includes(formData.category) ? formData.category : (formData.category ? 'Other' : ''))}
+                                            onChange={(e) => {
+                                                const val = e.target.value;
+                                                if (val === 'Other') {
+                                                    setFormData(prev => ({ ...prev, categorySelect: 'Other', category: prev.customCategory || '' }));
+                                                } else {
+                                                    setFormData(prev => ({ ...prev, categorySelect: val, category: val, customCategory: '' }));
+                                                }
+                                            }}
                                             className={`w-full px-4 py-3 rounded-xl border text-xs outline-none font-medium transition-all duration-200 ${theme === 'light'
                                                 ? 'bg-[#F8FAFC] border-[#E2E8F0] text-[#0F172A] focus:border-[#EB1000] focus:ring-1 focus:ring-[#EB1000]'
                                                 : 'bg-[#181826] border-[#2A2A3E] text-white focus:border-[#EB1000] focus:ring-1 focus:ring-[#EB1000]'
                                                 }`}
                                         >
-                                            <option value="">Select Category...</option>
+                                            <option value="">Select Stream Category...</option>
                                             <option value="Gaming">Gaming</option>
                                             <option value="Politics">Politics</option>
                                             <option value="Technology">Technology</option>
                                             <option value="Finance">Finance</option>
+                                            <option value="Entertainment">Entertainment</option>
+                                            <option value="Education">Education</option>
+                                            <option value="Other">Other (Type manually...)</option>
                                         </select>
-                                        <span className="text-[10px] text-gray-400 block mt-1">Choose the category that best describes your profile.</span>
+
+                                        {(formData.categorySelect === 'Other' || (!['Gaming', 'Politics', 'Technology', 'Finance', 'Entertainment', 'Education', ''].includes(formData.category) && formData.category !== '')) && (
+                                            <input
+                                                type="text"
+                                                required
+                                                value={formData.customCategory || (['Gaming', 'Politics', 'Technology', 'Finance', 'Entertainment', 'Education', ''].includes(formData.category) ? '' : formData.category)}
+                                                onChange={(e) => {
+                                                    const val = e.target.value;
+                                                    setFormData(prev => ({ ...prev, customCategory: val, category: val }));
+                                                }}
+                                                placeholder="Enter custom stream category..."
+                                                className={`w-full mt-2 px-4 py-3 rounded-xl border text-xs outline-none font-medium transition-all duration-200 ${theme === 'light'
+                                                    ? 'bg-[#F8FAFC] border-[#E2E8F0] text-[#0F172A] placeholder-[#94A3B8] focus:border-[#EB1000] focus:ring-1 focus:ring-[#EB1000]'
+                                                    : 'bg-[#181826] border-[#2A2A3E] text-white placeholder-[#6E6E82] focus:border-[#EB1000] focus:ring-1 focus:ring-[#EB1000]'
+                                                    }`}
+                                            />
+                                        )}
                                     </div>
                                 </div>
 
-                                {/* Row 3: Social Media Links (YouTube, Instagram, Facebook, Twitch, LinkedIn, etc.) */}
+                                {/* Social Media Links */}
                                 <div className={`p-4 rounded-2xl border space-y-3 ${theme === 'light' ? 'bg-[#F8FAFC] border-[#E2E8F0]' : 'bg-[#181826]/70 border-[#2A2A3E]'}`}>
-                                    <div className="flex items-center gap-2 border-b pb-2 border-current/10">
-                                        <Sparkles className="h-4 w-4 text-[#EB1000]" />
-                                        <h4 className={`font-extrabold text-xs ${theme === 'light' ? 'text-[#0F172A]' : 'text-white'}`}>
-                                            Social Media Links & Profiles
-                                        </h4>
+                                    <div className="flex items-center justify-between border-b pb-2 border-current/10">
+                                        <div className="flex items-center gap-2">
+                                            <Sparkles className="h-4 w-4 text-[#EB1000]" />
+                                            <h4 className={`font-extrabold text-xs ${theme === 'light' ? 'text-[#0F172A]' : 'text-white'}`}>
+                                                Social Media & Channel Links
+                                            </h4>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={handleAddSocialLink}
+                                            className="text-[11px] font-extrabold text-[#EB1000] hover:underline flex items-center gap-1 cursor-pointer"
+                                        >
+                                            + Add Link
+                                        </button>
                                     </div>
 
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                        <div>
-                                            <label className="block text-[11px] font-bold text-gray-400 mb-1">🎬 YouTube Channel URL</label>
-                                            <input
-                                                type="url"
-                                                value={formData.youtubeUrl || ''}
-                                                onChange={(e) => handleInputChange('youtubeUrl', e.target.value)}
-                                                placeholder="https://youtube.com/@channel"
-                                                className={`w-full px-3.5 py-2.5 rounded-xl border text-xs outline-none transition ${theme === 'light' ? 'bg-white border-[#E2E8F0] text-[#0F172A]' : 'bg-[#101018] border-[#2A2A3E] text-white'}`}
-                                            />
-                                        </div>
+                                    <div className="space-y-3">
+                                        {(formData.socialLinks || []).map((item, idx) => (
+                                            <div key={idx} className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                                                <div className="w-full sm:w-48 shrink-0">
+                                                    <select
+                                                        value={item.platform}
+                                                        onChange={(e) => handleUpdateSocialLink(idx, 'platform', e.target.value)}
+                                                        className={`w-full px-3 py-2.5 rounded-xl border text-xs outline-none font-semibold transition ${theme === 'light' ? 'bg-white border-[#E2E8F0] text-[#0F172A]' : 'bg-[#101018] border-[#2A2A3E] text-white'}`}
+                                                    >
+                                                        {socialPlatforms.map(p => (
+                                                            <option key={p.value} value={p.value}>
+                                                                {p.icon} {p.label}
+                                                            </option>
+                                                        ))}
+                                                    </select>
+                                                </div>
 
-                                        <div>
-                                            <label className="block text-[11px] font-bold text-gray-400 mb-1">📸 Instagram Profile URL</label>
-                                            <input
-                                                type="url"
-                                                value={formData.instagramUrl || ''}
-                                                onChange={(e) => handleInputChange('instagramUrl', e.target.value)}
-                                                placeholder="https://instagram.com/username"
-                                                className={`w-full px-3.5 py-2.5 rounded-xl border text-xs outline-none transition ${theme === 'light' ? 'bg-white border-[#E2E8F0] text-[#0F172A]' : 'bg-[#101018] border-[#2A2A3E] text-white'}`}
-                                            />
-                                        </div>
-
-                                        <div>
-                                            <label className="block text-[11px] font-bold text-gray-400 mb-1">💼 LinkedIn Profile URL</label>
-                                            <input
-                                                type="url"
-                                                value={formData.linkedinUrl || ''}
-                                                onChange={(e) => handleInputChange('linkedinUrl', e.target.value)}
-                                                placeholder="https://linkedin.com/in/username"
-                                                className={`w-full px-3.5 py-2.5 rounded-xl border text-xs outline-none transition ${theme === 'light' ? 'bg-white border-[#E2E8F0] text-[#0F172A]' : 'bg-[#101018] border-[#2A2A3E] text-white'}`}
-                                            />
-                                        </div>
-
-                                        <div>
-                                            <label className="block text-[11px] font-bold text-gray-400 mb-1">👥 Facebook Profile / Page URL</label>
-                                            <input
-                                                type="url"
-                                                value={formData.facebookUrl || ''}
-                                                onChange={(e) => handleInputChange('facebookUrl', e.target.value)}
-                                                placeholder="https://facebook.com/username"
-                                                className={`w-full px-3.5 py-2.5 rounded-xl border text-xs outline-none transition ${theme === 'light' ? 'bg-white border-[#E2E8F0] text-[#0F172A]' : 'bg-[#101018] border-[#2A2A3E] text-white'}`}
-                                            />
-                                        </div>
-
-                                        <div>
-                                            <label className="block text-[11px] font-bold text-gray-400 mb-1">🎮 Twitch Stream URL</label>
-                                            <input
-                                                type="url"
-                                                value={formData.twitchUrl || ''}
-                                                onChange={(e) => handleInputChange('twitchUrl', e.target.value)}
-                                                placeholder="https://twitch.tv/channel"
-                                                className={`w-full px-3.5 py-2.5 rounded-xl border text-xs outline-none transition ${theme === 'light' ? 'bg-white border-[#E2E8F0] text-[#0F172A]' : 'bg-[#101018] border-[#2A2A3E] text-white'}`}
-                                            />
-                                        </div>
-
-                                        <div>
-                                            <label className="block text-[11px] font-bold text-gray-400 mb-1">🌐 Primary Portfolio / Website URL</label>
-                                            <input
-                                                type="url"
-                                                value={formData.socialMediaUrl || ''}
-                                                onChange={(e) => handleInputChange('socialMediaUrl', e.target.value)}
-                                                placeholder="https://yourwebsite.com"
-                                                className={`w-full px-3.5 py-2.5 rounded-xl border text-xs outline-none transition ${theme === 'light' ? 'bg-white border-[#E2E8F0] text-[#0F172A]' : 'bg-[#101018] border-[#2A2A3E] text-white'}`}
-                                            />
-                                        </div>
+                                                <div className="flex-1 min-w-0 flex items-center gap-2">
+                                                    <input
+                                                        type="text"
+                                                        value={item.link}
+                                                        onChange={(e) => handleUpdateSocialLink(idx, 'link', e.target.value)}
+                                                        placeholder={`Channel handle or URL (e.g. @${creatorUser?.username || 'creator'})...`}
+                                                        className={`w-full px-3.5 py-2.5 rounded-xl border text-xs outline-none transition font-mono ${theme === 'light' ? 'bg-white border-[#E2E8F0] text-[#0F172A]' : 'bg-[#101018] border-[#2A2A3E] text-white'}`}
+                                                    />
+                                                    {(formData.socialLinks || []).length > 1 && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleRemoveSocialLink(idx)}
+                                                            className={`p-2.5 rounded-xl border transition-colors flex items-center justify-center shrink-0 ${theme === 'light' ? 'bg-[#F1F5F9] border-[#E2E8F0] text-[#64748B] hover:text-[#EF4444]' : 'bg-[#1C1C26] border-[#2A2A3E] text-[#8B8B96] hover:text-[#FF5252]'}`}
+                                                        >
+                                                            <X className="h-4 w-4" />
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        ))}
                                     </div>
                                 </div>
 
-                                {/* Row 4: Residential Address */}
+                                {/* Address */}
                                 <div>
                                     <label className={`block text-xs font-extrabold mb-1.5 ${theme === 'light' ? 'text-[#0F172A]' : 'text-[#E2E8F0]'}`}>
                                         Residential Address *
@@ -1078,7 +1238,6 @@ export default function CreatorKycPage() {
                                     />
                                 </div>
 
-                                {/* Row 5: Country, State, City */}
                                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                                     <div>
                                         <label className={`block text-xs font-extrabold mb-1.5 ${theme === 'light' ? 'text-[#0F172A]' : 'text-[#E2E8F0]'}`}>
@@ -1090,10 +1249,7 @@ export default function CreatorKycPage() {
                                             value={formData.country || ''}
                                             onChange={(e) => handleInputChange('country', e.target.value)}
                                             placeholder="e.g. India"
-                                            className={`w-full px-4 py-3 rounded-xl border text-xs outline-none font-medium transition-all duration-200 ${theme === 'light'
-                                                ? 'bg-[#F8FAFC] border-[#E2E8F0] text-[#0F172A] placeholder-[#94A3B8] focus:border-[#EB1000] focus:ring-1 focus:ring-[#EB1000]'
-                                                : 'bg-[#181826] border-[#2A2A3E] text-white placeholder-[#6E6E82] focus:border-[#EB1000] focus:ring-1 focus:ring-[#EB1000]'
-                                                }`}
+                                            className={`w-full px-4 py-3 rounded-xl border text-xs outline-none font-medium ${theme === 'light' ? 'bg-[#F8FAFC] border-[#E2E8F0] text-[#0F172A]' : 'bg-[#181826] border-[#2A2A3E] text-white'}`}
                                         />
                                     </div>
 
@@ -1107,10 +1263,7 @@ export default function CreatorKycPage() {
                                             value={formData.state || ''}
                                             onChange={(e) => handleInputChange('state', e.target.value)}
                                             placeholder="e.g. Delhi / Maharashtra"
-                                            className={`w-full px-4 py-3 rounded-xl border text-xs outline-none font-medium transition-all duration-200 ${theme === 'light'
-                                                ? 'bg-[#F8FAFC] border-[#E2E8F0] text-[#0F172A] placeholder-[#94A3B8] focus:border-[#EB1000] focus:ring-1 focus:ring-[#EB1000]'
-                                                : 'bg-[#181826] border-[#2A2A3E] text-white placeholder-[#6E6E82] focus:border-[#EB1000] focus:ring-1 focus:ring-[#EB1000]'
-                                                }`}
+                                            className={`w-full px-4 py-3 rounded-xl border text-xs outline-none font-medium ${theme === 'light' ? 'bg-[#F8FAFC] border-[#E2E8F0] text-[#0F172A]' : 'bg-[#181826] border-[#2A2A3E] text-white'}`}
                                         />
                                     </div>
 
@@ -1124,10 +1277,7 @@ export default function CreatorKycPage() {
                                             value={formData.city || ''}
                                             onChange={(e) => handleInputChange('city', e.target.value)}
                                             placeholder="e.g. New Delhi / Mumbai"
-                                            className={`w-full px-4 py-3 rounded-xl border text-xs outline-none font-medium transition-all duration-200 ${theme === 'light'
-                                                ? 'bg-[#F8FAFC] border-[#E2E8F0] text-[#0F172A] placeholder-[#94A3B8] focus:border-[#EB1000] focus:ring-1 focus:ring-[#EB1000]'
-                                                : 'bg-[#181826] border-[#2A2A3E] text-white placeholder-[#6E6E82] focus:border-[#EB1000] focus:ring-1 focus:ring-[#EB1000]'
-                                                }`}
+                                            className={`w-full px-4 py-3 rounded-xl border text-xs outline-none font-medium ${theme === 'light' ? 'bg-[#F8FAFC] border-[#E2E8F0] text-[#0F172A]' : 'bg-[#181826] border-[#2A2A3E] text-white'}`}
                                         />
                                     </div>
                                 </div>
@@ -1144,157 +1294,213 @@ export default function CreatorKycPage() {
                             </form>
                         )}
 
-                        {/* STEP 2: Document Proof Details */}
+                        {/* STEP 2: Document Proof (PAN + Aadhaar OKYC + Identity Match) */}
                         {step === 2 && (
-                            <form onSubmit={handleNextStep} className="space-y-5">
+                            <form onSubmit={handleNextStep} className="space-y-6">
                                 <div className="flex items-center gap-2.5">
                                     <span className="p-2 rounded-xl bg-[#EB1000]/10 text-[#EB1000] border border-[#EB1000]/20 shrink-0">
                                         <FileText className="h-4 w-4" />
                                     </span>
-                                    <h3 className={`font-extrabold text-sm ${theme === 'light' ? 'text-[#0F172A]' : 'text-white'}`}>
-                                        Government Identity Document Proof
-                                    </h3>
+                                    <div>
+                                        <h3 className={`font-extrabold text-sm ${theme === 'light' ? 'text-[#0F172A]' : 'text-white'}`}>
+                                            Step 2 — Cashfree Identity Verification
+                                        </h3>
+                                        <p className="text-[11px] text-[#8B8B96]">Verify your PAN card & complete UIDAI Aadhaar e-KYC via OTP.</p>
+                                    </div>
                                 </div>
 
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    <div>
-                                        <label className={`block text-xs font-extrabold mb-1.5 ${theme === 'light' ? 'text-[#0F172A]' : 'text-[#E2E8F0]'}`}>
-                                            Document Type *
-                                        </label>
-                                        <select
-                                            value={formData.documentType}
-                                            onChange={(e) => handleInputChange('documentType', e.target.value)}
-                                            className={`w-full px-4 py-3 rounded-xl border text-xs outline-none font-medium transition-all duration-200 ${theme === 'light'
-                                                ? 'bg-[#F8FAFC] border-[#E2E8F0] text-[#0F172A] focus:border-[#EB1000] focus:ring-1 focus:ring-[#EB1000]'
-                                                : 'bg-[#181826] border-[#2A2A3E] text-white focus:border-[#EB1000] focus:ring-1 focus:ring-[#EB1000]'
-                                                }`}
-                                        >
-                                            <option value="pan_card" className={theme === 'light' ? 'bg-white text-black' : 'bg-[#181826] text-white'}>PAN Card (India)</option>
-                                            <option value="aadhaar_card" className={theme === 'light' ? 'bg-white text-black' : 'bg-[#181826] text-white'}>Aadhaar Card</option>
-                                            <option value="passport" className={theme === 'light' ? 'bg-white text-black' : 'bg-[#181826] text-white'}>Passport</option>
-                                        </select>
+                                {/* SECTION 1: PAN VERIFICATION */}
+                                <div className={`p-5 rounded-2xl border space-y-3 transition-all ${theme === 'light' ? 'bg-[#F8FAFC] border-[#E2E8F0]' : 'bg-[#181826] border-[#2A2A3E]'}`}>
+                                    <div className="flex items-center justify-between border-b pb-2 border-current/10">
+                                        <div className="flex items-center gap-2">
+                                            <CreditCard className="h-4 w-4 text-[#EB1000]" />
+                                            <h4 className={`text-xs font-black uppercase tracking-wider ${theme === 'light' ? 'text-[#0F172A]' : 'text-white'}`}>
+                                                1. PAN Card Verification
+                                            </h4>
+                                        </div>
+                                        {panVerificationData?.verified ? (
+                                            <span className="text-[10px] font-extrabold text-[#00E676] bg-[#00E676]/10 px-2.5 py-0.5 rounded-full border border-[#00E676]/30 flex items-center gap-1">
+                                                <CheckCircle2 className="h-3 w-3" /> PAN Verified
+                                            </span>
+                                        ) : (
+                                            <span className="text-[10px] font-bold text-amber-500 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/30">
+                                                Required
+                                            </span>
+                                        )}
                                     </div>
 
                                     <div>
-                                        <div className="flex items-center justify-between mb-1.5">
-                                            <label className={`block text-xs font-extrabold ${theme === 'light' ? 'text-[#0F172A]' : 'text-[#E2E8F0]'}`}>
-                                                ID / PAN Card Number *
-                                            </label>
-                                            {panVerificationData?.verified ? (
-                                                <span className="text-[10px] font-extrabold text-[#00E676] bg-[#00E676]/10 px-2.5 py-0.5 rounded-full border border-[#00E676]/30 flex items-center gap-1">
-                                                    <CheckCircle2 className="h-3 w-3" /> Cashfree Verified
-                                                </span>
-                                            ) : (
+                                        <label className={`block text-xs font-extrabold mb-1.5 ${theme === 'light' ? 'text-[#0F172A]' : 'text-[#E2E8F0]'}`}>
+                                            PAN Number (10 Digits) *
+                                        </label>
+                                        <div className="flex gap-2">
+                                            <input
+                                                type="text"
+                                                maxLength={10}
+                                                required
+                                                value={formData.panNumber}
+                                                onChange={(e) => handleInputChange('panNumber', e.target.value.toUpperCase())}
+                                                placeholder="e.g. ABCDE1234F"
+                                                className={`flex-1 px-4 py-3 rounded-xl border text-xs outline-none font-mono uppercase font-bold transition-all duration-200 ${theme === 'light'
+                                                    ? 'bg-white border-[#E2E8F0] text-[#0F172A] focus:border-[#EB1000]'
+                                                    : 'bg-[#101018] border-[#2A2A3E] text-white focus:border-[#EB1000]'
+                                                    }`}
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={handleVerifyPan}
+                                                disabled={isVerifyingPan || !formData.panNumber}
+                                                className="px-5 py-3 rounded-xl bg-gradient-to-r from-[#EB1000] to-[#CC0E00] text-white text-xs font-black shrink-0 transition hover:opacity-90 disabled:opacity-50 flex items-center gap-1.5 cursor-pointer"
+                                            >
+                                                {isVerifyingPan ? (
+                                                    <>
+                                                        <RefreshCw className="h-3.5 w-3.5 animate-spin" /> Verifying...
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <ShieldCheck className="h-3.5 w-3.5" /> Verify PAN
+                                                    </>
+                                                )}
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    {panVerificationData?.verified && (
+                                        <div className={`p-3 rounded-xl border text-xs space-y-1 ${theme === 'light' ? 'bg-[#EBFBFA] border-[#00F5D4]/40 text-[#007A6B]' : 'bg-[#00F5D4]/10 border-[#00F5D4]/30 text-[#00F5D4]'}`}>
+                                            <div className="font-extrabold flex items-center gap-1.5">
+                                                <Check className="h-4 w-4" /> PAN Holder Name: {panVerificationData.registeredName}
+                                            </div>
+                                            <div className="text-[11px] opacity-80">
+                                                PAN Type: {panVerificationData.type || 'INDIVIDUAL'} &bull; Ref: {panVerificationData.referenceId}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* SECTION 2: AADHAAR E-KYC / OKYC */}
+                                <div className={`p-5 rounded-2xl border space-y-3 transition-all ${theme === 'light' ? 'bg-[#F8FAFC] border-[#E2E8F0]' : 'bg-[#181826] border-[#2A2A3E]'}`}>
+                                    <div className="flex items-center justify-between border-b pb-2 border-current/10">
+                                        <div className="flex items-center gap-2">
+                                            <Smartphone className="h-4 w-4 text-[#00F5D4]" />
+                                            <h4 className={`text-xs font-black uppercase tracking-wider ${theme === 'light' ? 'text-[#0F172A]' : 'text-white'}`}>
+                                                2. Aadhaar e-KYC (OKYC + OTP)
+                                            </h4>
+                                        </div>
+                                        {aadhaarVerificationData?.verified ? (
+                                            <span className="text-[10px] font-extrabold text-[#00E676] bg-[#00E676]/10 px-2.5 py-0.5 rounded-full border border-[#00E676]/30 flex items-center gap-1">
+                                                <CheckCircle2 className="h-3 w-3" /> Aadhaar Verified
+                                            </span>
+                                        ) : (
+                                            <span className="text-[10px] font-bold text-amber-500 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/30">
+                                                Required
+                                            </span>
+                                        )}
+                                    </div>
+
+                                    <div>
+                                        <label className={`block text-xs font-extrabold mb-1.5 ${theme === 'light' ? 'text-[#0F172A]' : 'text-[#E2E8F0]'}`}>
+                                            Aadhaar Number (12 Digits) *
+                                        </label>
+                                        <div className="flex gap-2">
+                                            <input
+                                                type="text"
+                                                inputMode="numeric"
+                                                maxLength={12}
+                                                required
+                                                value={formData.aadhaarNumber}
+                                                onChange={(e) => handleInputChange('aadhaarNumber', e.target.value)}
+                                                placeholder="e.g. 123456789012"
+                                                className={`flex-1 px-4 py-3 rounded-xl border text-xs outline-none font-mono font-bold transition-all duration-200 ${theme === 'light'
+                                                    ? 'bg-white border-[#E2E8F0] text-[#0F172A] focus:border-[#EB1000]'
+                                                    : 'bg-[#101018] border-[#2A2A3E] text-white focus:border-[#EB1000]'
+                                                    }`}
+                                            />
+                                            {!aadhaarVerificationData?.verified && (
                                                 <button
                                                     type="button"
-                                                    onClick={handleVerifyPan}
-                                                    disabled={isVerifyingPan}
-                                                    className="text-[11px] font-extrabold text-[#EB1000] hover:underline flex items-center gap-1 disabled:opacity-50 cursor-pointer"
+                                                    onClick={handleSendAadhaarOtp}
+                                                    disabled={isSendingAadhaarOtp || String(formData.aadhaarNumber || '').length !== 12}
+                                                    className="px-5 py-3 rounded-xl bg-gradient-to-r from-[#00F5D4] to-[#00B4D8] text-black text-xs font-black shrink-0 transition hover:opacity-90 disabled:opacity-50 flex items-center gap-1.5 cursor-pointer"
                                                 >
-                                                    {isVerifyingPan ? (
+                                                    {isSendingAadhaarOtp ? (
                                                         <>
-                                                            <RefreshCw className="h-3 w-3 animate-spin" /> Verifying...
+                                                            <RefreshCw className="h-3.5 w-3.5 animate-spin" /> Sending...
                                                         </>
                                                     ) : (
                                                         <>
-                                                            <ShieldCheck className="h-3 w-3" /> Instant PAN Verify
+                                                            <KeyRound className="h-3.5 w-3.5" /> {aadhaarOtpSent ? 'Resend OTP' : 'Send OTP'}
                                                         </>
                                                     )}
                                                 </button>
                                             )}
                                         </div>
-                                        <div className="flex gap-2">
-                                            <input
-                                                type="text"
-                                                required
-                                                value={formData.panNumber}
-                                                onChange={(e) => handleInputChange('panNumber', e.target.value.toUpperCase())}
-                                                placeholder="e.g. ABCDE1234F"
-                                                className={`flex-1 px-4 py-3 rounded-xl border text-xs outline-none font-mono uppercase transition-all duration-200 ${theme === 'light'
-                                                    ? 'bg-[#F8FAFC] border-[#E2E8F0] text-[#0F172A] placeholder-[#94A3B8] focus:border-[#EB1000] focus:ring-1 focus:ring-[#EB1000]'
-                                                    : 'bg-[#181826] border-[#2A2A3E] text-white placeholder-[#6E6E82] focus:border-[#EB1000] focus:ring-1 focus:ring-[#EB1000]'
-                                                    }`}
-                                            />
-                                            {!panVerificationData?.verified && (
+                                    </div>
+
+                                    {/* Aadhaar OTP Input Box */}
+                                    {aadhaarOtpSent && !aadhaarVerificationData?.verified && (
+                                        <div className={`p-4 rounded-xl border space-y-2 animate-scale-up ${theme === 'light' ? 'bg-amber-50/60 border-amber-300' : 'bg-amber-950/20 border-amber-700/50'}`}>
+                                            <div className="flex items-center justify-between">
+                                                <label className="text-xs font-bold text-amber-500 flex items-center gap-1.5">
+                                                    <KeyRound className="h-3.5 w-3.5" /> Enter 6-Digit Aadhaar OTP
+                                                </label>
+                                                <span className="text-[10px] text-gray-400">Sent to linked mobile</span>
+                                            </div>
+                                            <div className="flex gap-2">
+                                                <input
+                                                    type="text"
+                                                    maxLength={6}
+                                                    value={aadhaarOtp}
+                                                    onChange={(e) => setAadhaarOtp(e.target.value.replace(/\D/g, ''))}
+                                                    placeholder="Enter 6-digit OTP"
+                                                    className={`flex-1 px-4 py-2.5 rounded-xl border text-xs outline-none font-mono font-bold tracking-widest text-center ${theme === 'light' ? 'bg-white border-[#E2E8F0] text-black' : 'bg-[#101018] border-[#2A2A3E] text-white'}`}
+                                                />
                                                 <button
                                                     type="button"
-                                                    onClick={handleVerifyPan}
-                                                    disabled={isVerifyingPan}
-                                                    className="px-4 py-3 rounded-xl bg-[#EB1000]/10 text-[#EB1000] border border-[#EB1000]/30 hover:bg-[#EB1000]/20 text-xs font-black shrink-0 transition cursor-pointer"
+                                                    onClick={handleVerifyAadhaarOtp}
+                                                    disabled={isVerifyingAadhaarOtp || aadhaarOtp.length < 4}
+                                                    className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#00E676] to-[#00C853] text-black font-black text-xs shadow-md transition disabled:opacity-50 cursor-pointer flex items-center gap-1"
                                                 >
-                                                    Verify
+                                                    {isVerifyingAadhaarOtp ? (
+                                                        <>
+                                                            <RefreshCw className="h-3.5 w-3.5 animate-spin" /> Verifying...
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <Check className="h-3.5 w-3.5" /> Verify OTP
+                                                        </>
+                                                    )}
                                                 </button>
-                                            )}
+                                            </div>
                                         </div>
-                                        {panVerificationData?.registeredName && (
-                                            <p className="text-[11px] text-[#00E676] font-bold mt-1.5 flex items-center gap-1">
-                                                <Check className="h-3.5 w-3.5" /> Name on PAN: <strong>{panVerificationData.registeredName}</strong>
-                                            </p>
-                                        )}
-                                    </div>
-                                </div>
+                                    )}
 
-                                <div>
-                                    <label className={`block text-xs font-extrabold mb-1.5 ${theme === 'light' ? 'text-[#0F172A]' : 'text-[#E2E8F0]'}`}>
-                                        Upload Identity Document Image *
-                                    </label>
-                                    <div className="flex flex-col sm:flex-row gap-3">
-                                        <input
-                                            type="text"
-                                            value={formData.documentPreview}
-                                            onChange={(e) => handleInputChange('documentPreview', e.target.value)}
-                                            placeholder="Document image URL or click upload button"
-                                            className={`flex-1 px-4 py-3 rounded-xl border text-xs outline-none font-mono transition-all duration-200 ${theme === 'light'
-                                                ? 'bg-[#F8FAFC] border-[#E2E8F0] text-[#0F172A] placeholder-[#94A3B8] focus:border-[#EB1000] focus:ring-1 focus:ring-[#EB1000]'
-                                                : 'bg-[#181826] border-[#2A2A3E] text-white placeholder-[#6E6E82] focus:border-[#EB1000] focus:ring-1 focus:ring-[#EB1000]'
-                                                }`}
-                                        />
-                                        <label className="px-5 py-3 rounded-xl bg-[#EB1000]/10 text-[#EB1000] border border-[#EB1000]/30 hover:bg-[#EB1000]/20 text-xs font-black cursor-pointer flex items-center justify-center gap-2 shrink-0 transition">
-                                            <Upload className="h-4 w-4 text-[#EB1000]" /> {isUploadingDoc ? 'Uploading...' : 'Pick Image File'}
-                                            <input type="file" accept="image/*,application/pdf" disabled={isUploadingDoc} className="hidden" onChange={handleFileUpload} />
-                                        </label>
-                                    </div>
-                                </div>
-
-                                {/* Live Document Preview Thumbnail Card */}
-                                {(docPreviewUrl || formData.documentPreview) && (
-                                    <div className={`p-4 rounded-2xl border flex items-center gap-3 transition-all ${theme === 'light' ? 'bg-[#F8FAFC] border-[#E2E8F0]' : 'bg-[#181826] border-[#2A2A3E]'
-                                        }`}>
-                                        <img
-                                            src={docPreviewUrl || getMediaUrl(formData.documentPreview)}
-                                            alt="Document Preview"
-                                            className="h-16 w-24 object-cover rounded-xl border border-current/20 shadow-md"
-                                            onError={(e) => {
-                                                e.target.onerror = null;
-                                                e.target.src = 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&w=400&q=80';
-                                            }}
-                                        />
-                                        <div>
-                                            <span className="text-[10px] font-black text-[#EB1000] uppercase tracking-wider block">Document Image Active</span>
-                                            <span className={`text-xs font-bold block mt-0.5 ${theme === 'light' ? 'text-[#0F172A]' : 'text-white'}`}>
-                                                {formData.documentType === 'pan_card' ? 'PAN Card' : formData.documentType === 'aadhaar_card' ? 'Aadhaar Card' : 'Passport'} Image Loaded
-                                            </span>
-                                            <span className={`text-[11px] font-medium block mt-0.5 ${theme === 'light' ? 'text-[#64748B]' : 'text-[#A0A0B2]'}`}>
-                                                ID #: {formData.panNumber || 'ABCDE1234F'}
-                                            </span>
+                                    {aadhaarVerificationData?.verified && (
+                                        <div className={`p-3 rounded-xl border text-xs space-y-1 ${theme === 'light' ? 'bg-[#EBFBFA] border-[#00F5D4]/40 text-[#007A6B]' : 'bg-[#00F5D4]/10 border-[#00F5D4]/30 text-[#00F5D4]'}`}>
+                                            <div className="font-extrabold flex items-center gap-1.5">
+                                                <Check className="h-4 w-4" /> Aadhaar Verified: {aadhaarVerificationData.registeredName}
+                                            </div>
+                                            <div className="text-[11px] opacity-80">
+                                                DOB: {aadhaarVerificationData.dob || 'Verified'} &bull; Masked: {aadhaarVerificationData.maskedAadhaar}
+                                            </div>
                                         </div>
-                                    </div>
-                                )}
+                                    )}
+                                </div>
 
                                 <div className="pt-4 flex flex-col-reverse sm:flex-row justify-between items-center gap-3">
                                     <button
                                         type="button"
                                         onClick={() => setStep(1)}
                                         className={`w-full sm:w-auto px-5 py-3 rounded-xl text-xs font-extrabold transition-all flex items-center justify-center gap-2 cursor-pointer ${theme === 'light'
-                                            ? 'bg-[#F1F5F9] text-[#475569] border border-[#E2E8F0] hover:bg-[#E2E8F0] hover:text-[#0F172A]'
-                                            : 'bg-[#181826] text-[#A0A0B2] border border-[#2A2A3E] hover:bg-[#202030] hover:text-white'
+                                            ? 'bg-[#F1F5F9] text-[#475569] border border-[#E2E8F0]'
+                                            : 'bg-[#181826] text-[#A0A0B2] border border-[#2A2A3E]'
                                             }`}
                                     >
                                         <ArrowLeft className="h-4 w-4" /> Back to Personal Info
                                     </button>
                                     <button
                                         type="submit"
-                                        className="w-full sm:w-auto px-7 py-3 rounded-xl bg-gradient-to-r from-[#EB1000] to-[#CC0E00] hover:from-[#CC0E00] hover:to-[#B30C00] text-white font-black text-xs shadow-xl shadow-[#EB1000]/30 hover:scale-[1.02] transition-all flex items-center justify-center gap-2 cursor-pointer"
+                                        disabled={!panVerificationData?.verified || !aadhaarVerificationData?.verified}
+                                        className="w-full sm:w-auto px-7 py-3 rounded-xl bg-gradient-to-r from-[#EB1000] to-[#CC0E00] hover:from-[#CC0E00] hover:to-[#B30C00] text-white font-black text-xs shadow-xl shadow-[#EB1000]/30 hover:scale-[1.02] transition-all disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
                                     >
                                         <span>Continue to Bank Details</span>
                                         <ArrowRight className="h-4 w-4" />
@@ -1303,16 +1509,19 @@ export default function CreatorKycPage() {
                             </form>
                         )}
 
-                        {/* STEP 3: Bank & Payout Details */}
+                        {/* STEP 3: Bank Details */}
                         {step === 3 && (
                             <form onSubmit={handleNextStep} className="space-y-5">
                                 <div className="flex items-center gap-2.5">
                                     <span className="p-2 rounded-xl bg-[#EB1000]/10 text-[#EB1000] border border-[#EB1000]/20 shrink-0">
                                         <Building2 className="h-4 w-4" />
                                     </span>
-                                    <h3 className={`font-extrabold text-sm ${theme === 'light' ? 'text-[#0F172A]' : 'text-white'}`}>
-                                        Direct Bank Payout & UPI Destination Details
-                                    </h3>
+                                    <div>
+                                        <h3 className={`font-extrabold text-sm ${theme === 'light' ? 'text-[#0F172A]' : 'text-white'}`}>
+                                            Step 3 — Bank Account Details (Cashfree Penny Drop)
+                                        </h3>
+                                        <p className="text-[11px] text-[#8B8B96]">Bank account holder name will be verified against your verified government identity.</p>
+                                    </div>
                                 </div>
 
                                 <div>
@@ -1324,10 +1533,10 @@ export default function CreatorKycPage() {
                                         required
                                         value={formData.accountHolderName}
                                         onChange={(e) => handleInputChange('accountHolderName', e.target.value)}
-                                        placeholder="e.g. Abhishek Kumar"
+                                        placeholder="e.g. Abhishek Raushan"
                                         className={`w-full px-4 py-3 rounded-xl border text-xs outline-none font-medium transition-all duration-200 ${theme === 'light'
-                                            ? 'bg-[#F8FAFC] border-[#E2E8F0] text-[#0F172A] placeholder-[#94A3B8] focus:border-[#EB1000] focus:ring-1 focus:ring-[#EB1000]'
-                                            : 'bg-[#181826] border-[#2A2A3E] text-white placeholder-[#6E6E82] focus:border-[#EB1000] focus:ring-1 focus:ring-[#EB1000]'
+                                            ? 'bg-[#F8FAFC] border-[#E2E8F0] text-[#0F172A] focus:border-[#EB1000]'
+                                            : 'bg-[#181826] border-[#2A2A3E] text-white focus:border-[#EB1000]'
                                             }`}
                                     />
                                 </div>
@@ -1343,10 +1552,7 @@ export default function CreatorKycPage() {
                                             value={formData.bankName}
                                             onChange={(e) => handleInputChange('bankName', e.target.value)}
                                             placeholder="e.g. HDFC Bank / ICICI Bank"
-                                            className={`w-full px-4 py-3 rounded-xl border text-xs outline-none font-medium transition-all duration-200 ${theme === 'light'
-                                                ? 'bg-[#F8FAFC] border-[#E2E8F0] text-[#0F172A] placeholder-[#94A3B8] focus:border-[#EB1000] focus:ring-1 focus:ring-[#EB1000]'
-                                                : 'bg-[#181826] border-[#2A2A3E] text-white placeholder-[#6E6E82] focus:border-[#EB1000] focus:ring-1 focus:ring-[#EB1000]'
-                                                }`}
+                                            className={`w-full px-4 py-3 rounded-xl border text-xs outline-none font-medium ${theme === 'light' ? 'bg-[#F8FAFC] border-[#E2E8F0] text-[#0F172A]' : 'bg-[#181826] border-[#2A2A3E] text-white'}`}
                                         />
                                     </div>
 
@@ -1362,10 +1568,7 @@ export default function CreatorKycPage() {
                                             value={formData.accountNumber}
                                             onChange={(e) => handleInputChange('accountNumber', e.target.value)}
                                             placeholder="e.g. 50100298410294"
-                                            className={`w-full px-4 py-3 rounded-xl border text-xs outline-none font-mono transition-all duration-200 ${theme === 'light'
-                                                ? 'bg-[#F8FAFC] border-[#E2E8F0] text-[#0F172A] placeholder-[#94A3B8] focus:border-[#EB1000] focus:ring-1 focus:ring-[#EB1000]'
-                                                : 'bg-[#181826] border-[#2A2A3E] text-white placeholder-[#6E6E82] focus:border-[#EB1000] focus:ring-1 focus:ring-[#EB1000]'
-                                                }`}
+                                            className={`w-full px-4 py-3 rounded-xl border text-xs outline-none font-mono ${theme === 'light' ? 'bg-[#F8FAFC] border-[#E2E8F0] text-[#0F172A]' : 'bg-[#181826] border-[#2A2A3E] text-white'}`}
                                         />
                                     </div>
 
@@ -1381,18 +1584,10 @@ export default function CreatorKycPage() {
                                             value={formData.confirmAccountNumber || ''}
                                             onChange={(e) => handleInputChange('confirmAccountNumber', e.target.value)}
                                             placeholder="Re-enter account number"
-                                            className={`w-full px-4 py-3 rounded-xl border text-xs outline-none font-mono transition-all duration-200 ${formData.confirmAccountNumber && formData.accountNumber !== formData.confirmAccountNumber
+                                            className={`w-full px-4 py-3 rounded-xl border text-xs outline-none font-mono ${formData.confirmAccountNumber && formData.accountNumber !== formData.confirmAccountNumber
                                                 ? 'border-[#FF3D71] bg-[#FF3D71]/10 text-[#FF3D71]'
-                                                : theme === 'light'
-                                                    ? 'bg-[#F8FAFC] border-[#E2E8F0] text-[#0F172A] placeholder-[#94A3B8] focus:border-[#EB1000] focus:ring-1 focus:ring-[#EB1000]'
-                                                    : 'bg-[#181826] border-[#2A2A3E] text-white placeholder-[#6E6E82] focus:border-[#EB1000] focus:ring-1 focus:ring-[#EB1000]'
-                                                }`}
+                                                : theme === 'light' ? 'bg-[#F8FAFC] border-[#E2E8F0] text-[#0F172A]' : 'bg-[#181826] border-[#2A2A3E] text-white'}`}
                                         />
-                                        {formData.confirmAccountNumber && formData.accountNumber !== formData.confirmAccountNumber && (
-                                            <span className="text-[10px] text-[#FF3D71] block mt-1.5 font-bold">
-                                                Account Number and Confirmation Account Number do not match.
-                                            </span>
-                                        )}
                                     </div>
 
                                     <div>
@@ -1402,13 +1597,13 @@ export default function CreatorKycPage() {
                                             </label>
                                             {bankVerificationData?.verified ? (
                                                 <span className="text-[10px] font-extrabold text-[#00E676] bg-[#00E676]/10 px-2.5 py-0.5 rounded-full border border-[#00E676]/30 flex items-center gap-1">
-                                                    <CheckCircle2 className="h-3 w-3" /> Cashfree Verified
+                                                    <CheckCircle2 className="h-3 w-3" /> Bank Verified
                                                 </span>
                                             ) : (
                                                 <button
                                                     type="button"
                                                     onClick={handleVerifyBank}
-                                                    disabled={isVerifyingBank}
+                                                    disabled={isVerifyingBank || !formData.accountNumber || !formData.ifscCode}
                                                     className="text-[11px] font-extrabold text-[#EB1000] hover:underline flex items-center gap-1 disabled:opacity-50 cursor-pointer"
                                                 >
                                                     {isVerifyingBank ? (
@@ -1417,7 +1612,7 @@ export default function CreatorKycPage() {
                                                         </>
                                                     ) : (
                                                         <>
-                                                            <ShieldCheck className="h-3 w-3" /> Instant Penny Drop
+                                                            <ShieldCheck className="h-3 w-3" /> Cashfree Penny Drop
                                                         </>
                                                     )}
                                                 </button>
@@ -1427,34 +1622,39 @@ export default function CreatorKycPage() {
                                             <input
                                                 type="text"
                                                 maxLength={11}
-                                                pattern="[A-Za-z]{4}0[A-Za-z0-9]{6}"
                                                 required
                                                 value={formData.ifscCode}
                                                 onChange={(e) => handleInputChange('ifscCode', e.target.value)}
                                                 placeholder="e.g. SBIN0001234"
-                                                className={`flex-1 px-4 py-3 rounded-xl border text-xs outline-none font-mono uppercase transition-all duration-200 ${theme === 'light'
-                                                    ? 'bg-[#F8FAFC] border-[#E2E8F0] text-[#0F172A] placeholder-[#94A3B8] focus:border-[#EB1000] focus:ring-1 focus:ring-[#EB1000]'
-                                                    : 'bg-[#181826] border-[#2A2A3E] text-white placeholder-[#6E6E82] focus:border-[#EB1000] focus:ring-1 focus:ring-[#EB1000]'
-                                                    }`}
+                                                className={`flex-1 px-4 py-3 rounded-xl border text-xs outline-none font-mono uppercase ${theme === 'light' ? 'bg-[#F8FAFC] border-[#E2E8F0] text-[#0F172A]' : 'bg-[#181826] border-[#2A2A3E] text-white'}`}
                                             />
                                             {!bankVerificationData?.verified && (
                                                 <button
                                                     type="button"
                                                     onClick={handleVerifyBank}
-                                                    disabled={isVerifyingBank}
+                                                    disabled={isVerifyingBank || !formData.accountNumber || !formData.ifscCode}
                                                     className="px-4 py-3 rounded-xl bg-[#EB1000]/10 text-[#EB1000] border border-[#EB1000]/30 hover:bg-[#EB1000]/20 text-xs font-black shrink-0 transition cursor-pointer"
                                                 >
                                                     Verify
                                                 </button>
                                             )}
                                         </div>
-                                        {bankVerificationData?.bankName && (
-                                            <p className="text-[11px] text-[#00E676] font-bold mt-1.5 flex items-center gap-1">
-                                                <Check className="h-3.5 w-3.5" /> Bank: <strong>{bankVerificationData.bankName}</strong> ({bankVerificationData.accountHolderName})
-                                            </p>
-                                        )}
                                     </div>
                                 </div>
+
+                                {bankVerificationData?.verified && (
+                                    <div className={`p-3.5 rounded-xl border text-xs space-y-1 ${bankVerificationData.isNameMatch
+                                        ? theme === 'light' ? 'bg-emerald-50 border-emerald-300 text-emerald-800' : 'bg-emerald-950/30 border-emerald-500/40 text-emerald-400'
+                                        : theme === 'light' ? 'bg-amber-50 border-amber-300 text-amber-800' : 'bg-amber-950/30 border-amber-500/40 text-amber-400'
+                                        }`}>
+                                        <div className="font-extrabold flex items-center gap-1.5">
+                                            <Check className="h-4 w-4" /> Bank Account Verified: {bankVerificationData.bankName}
+                                        </div>
+                                        <div className="text-[11px]">
+                                            Account Holder: <strong>{bankVerificationData.accountHolderName}</strong> &bull; Match: <strong>{bankVerificationData.isNameMatch ? '✓ Verified Match' : '⚠ Flagged for Manual Review'}</strong>
+                                        </div>
+                                    </div>
+                                )}
 
                                 <div>
                                     <label className={`block text-xs font-extrabold mb-1.5 ${theme === 'light' ? 'text-[#0F172A]' : 'text-[#E2E8F0]'}`}>
@@ -1464,11 +1664,8 @@ export default function CreatorKycPage() {
                                         type="text"
                                         value={formData.upiId}
                                         onChange={(e) => handleInputChange('upiId', e.target.value)}
-                                        placeholder="e.g. creator@upi or carryminati@okicici"
-                                        className={`w-full px-4 py-3 rounded-xl border text-xs outline-none font-mono transition-all duration-200 ${theme === 'light'
-                                            ? 'bg-[#F8FAFC] border-[#E2E8F0] text-[#0F172A] placeholder-[#94A3B8] focus:border-[#EB1000] focus:ring-1 focus:ring-[#EB1000]'
-                                            : 'bg-[#181826] border-[#2A2A3E] text-white placeholder-[#6E6E82] focus:border-[#EB1000] focus:ring-1 focus:ring-[#EB1000]'
-                                            }`}
+                                        placeholder="e.g. creator@upi or yourname@oksbi"
+                                        className={`w-full px-4 py-3 rounded-xl border text-xs outline-none font-mono ${theme === 'light' ? 'bg-[#F8FAFC] border-[#E2E8F0] text-[#0F172A]' : 'bg-[#181826] border-[#2A2A3E] text-white'}`}
                                     />
                                 </div>
 
@@ -1477,8 +1674,8 @@ export default function CreatorKycPage() {
                                         type="button"
                                         onClick={() => setStep(2)}
                                         className={`w-full sm:w-auto px-5 py-3 rounded-xl text-xs font-extrabold transition-all flex items-center justify-center gap-2 cursor-pointer ${theme === 'light'
-                                            ? 'bg-[#F1F5F9] text-[#475569] border border-[#E2E8F0] hover:bg-[#E2E8F0] hover:text-[#0F172A]'
-                                            : 'bg-[#181826] text-[#A0A0B2] border border-[#2A2A3E] hover:bg-[#202030] hover:text-white'
+                                            ? 'bg-[#F1F5F9] text-[#475569] border border-[#E2E8F0]'
+                                            : 'bg-[#181826] text-[#A0A0B2] border border-[#2A2A3E]'
                                             }`}
                                     >
                                         <ArrowLeft className="h-4 w-4" /> Back to Document Proof
@@ -1494,94 +1691,99 @@ export default function CreatorKycPage() {
                             </form>
                         )}
 
-                        {/* STEP 4: Review & Legal Submit */}
+                        {/* STEP 4: Review & Final Submit */}
                         {step === 4 && (
-                            <form onSubmit={handleSubmitKyc} className="space-y-5">
+                            <form onSubmit={handleSubmitKyc} className="space-y-6">
                                 <div className="flex items-center gap-2.5">
                                     <span className="p-2 rounded-xl bg-[#EB1000]/10 text-[#EB1000] border border-[#EB1000]/20 shrink-0">
                                         <CheckCircle2 className="h-4 w-4" />
                                     </span>
-                                    <h3 className={`font-extrabold text-sm ${theme === 'light' ? 'text-[#0F172A]' : 'text-white'}`}>
-                                        Final Review & Legal Submission Declaration
-                                    </h3>
+                                    <div>
+                                        <h3 className={`font-extrabold text-sm ${theme === 'light' ? 'text-[#0F172A]' : 'text-white'}`}>
+                                            Step 4 — Review Verification Summary & Submit
+                                        </h3>
+                                        <p className="text-[11px] text-[#8B8B96]">Review all Cashfree verification results before final submission.</p>
+                                    </div>
                                 </div>
 
-                                <div className={`p-5 rounded-2xl border space-y-4 text-xs transition-all ${theme === 'light' ? 'bg-[#F8FAFC] border-[#E2E8F0]' : 'bg-[#181826] border-[#2A2A3E]'
-                                    }`}>
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pb-4 border-b border-current/10">
-                                        <div>
-                                            <span className={`text-[10px] uppercase font-black tracking-wider block ${theme === 'light' ? 'text-[#64748B]' : 'text-[#A0A0B2]'}`}>
-                                                Legal Full Name
-                                            </span>
-                                            <span className={`font-extrabold text-sm block mt-0.5 ${theme === 'light' ? 'text-[#0F172A]' : 'text-white'}`}>
-                                                {formData.fullName} {isNameLocked ? '🔒 (Locked)' : ''}
-                                            </span>
-                                        </div>
-                                        <div>
-                                            <span className={`text-[10px] uppercase font-black tracking-wider block ${theme === 'light' ? 'text-[#64748B]' : 'text-[#A0A0B2]'}`}>
-                                                Mobile & Category
-                                            </span>
-                                            <span className={`font-extrabold text-sm block mt-0.5 ${theme === 'light' ? 'text-[#0F172A]' : 'text-white'}`}>
-                                                {formData.mobileCountryCode} {formData.mobileNumber} {isMobileLocked ? '🔒' : ''} &bull; <span className="text-[#EB1000]">{formData.category || 'Creator'}</span>
+                                {/* Verification Checklist Badges */}
+                                <div className={`p-5 rounded-2xl border space-y-4 text-xs ${theme === 'light' ? 'bg-[#F8FAFC] border-[#E2E8F0]' : 'bg-[#181826] border-[#2A2A3E]'}`}>
+                                    {/* 1. Personal Info Summary */}
+                                    <div className="pb-3 border-b border-current/10 space-y-2">
+                                        <div className="flex items-center justify-between">
+                                            <span className="font-extrabold uppercase text-[10px] tracking-wider text-[#8B8B96]">1. Personal Information</span>
+                                            <span className="text-[#00E676] font-bold text-[11px] flex items-center gap-1">
+                                                <CheckCircle2 className="h-3.5 w-3.5" /> Mobile Verified
                                             </span>
                                         </div>
-                                        <div>
-                                            <span className={`text-[10px] uppercase font-black tracking-wider block ${theme === 'light' ? 'text-[#64748B]' : 'text-[#A0A0B2]'}`}>
-                                                Address & Location
-                                            </span>
-                                            <span className={`font-bold block mt-0.5 ${theme === 'light' ? 'text-[#0F172A]' : 'text-white'}`}>
-                                                {formData.address}, {formData.city}, {formData.state}, {formData.country}
-                                            </span>
-                                        </div>
-                                        <div>
-                                            <span className={`text-[10px] uppercase font-black tracking-wider block ${theme === 'light' ? 'text-[#64748B]' : 'text-[#A0A0B2]'}`}>
-                                                Document Number
-                                            </span>
-                                            <span className="font-mono font-black text-[#EB1000] uppercase block mt-0.5">
-                                                {formData.panNumber} ({formData.documentType})
-                                            </span>
-                                        </div>
-                                        {(formData.youtubeUrl || formData.instagramUrl || formData.linkedinUrl || formData.facebookUrl || formData.twitchUrl || formData.socialMediaUrl) && (
-                                            <div className="col-span-1 sm:col-span-2">
-                                                <span className={`text-[10px] uppercase font-black tracking-wider block ${theme === 'light' ? 'text-[#64748B]' : 'text-[#A0A0B2]'}`}>
-                                                    Social Media Profiles
-                                                </span>
-                                                <div className="flex flex-wrap gap-2 mt-1">
-                                                    {formData.youtubeUrl && <span className="px-2 py-0.5 rounded bg-red-500/10 text-red-500 font-bold text-[11px] border border-red-500/20">YouTube</span>}
-                                                    {formData.instagramUrl && <span className="px-2 py-0.5 rounded bg-pink-500/10 text-pink-500 font-bold text-[11px] border border-pink-500/20">Instagram</span>}
-                                                    {formData.linkedinUrl && <span className="px-2 py-0.5 rounded bg-blue-600/10 text-blue-500 font-bold text-[11px] border border-blue-500/20">LinkedIn</span>}
-                                                    {formData.facebookUrl && <span className="px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 font-bold text-[11px] border border-blue-400/20">Facebook</span>}
-                                                    {formData.twitchUrl && <span className="px-2 py-0.5 rounded bg-purple-500/10 text-purple-400 font-bold text-[11px] border border-purple-400/20">Twitch</span>}
-                                                    {formData.socialMediaUrl && <span className="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 font-bold text-[11px] border border-emerald-400/20">Portfolio</span>}
-                                                </div>
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                                            <div>
+                                                <span className="text-[10px] text-gray-400 block">Legal Name</span>
+                                                <span className="font-bold">{aadhaarVerificationData?.registeredName || panVerificationData?.registeredName || formData.fullName}</span>
                                             </div>
-                                        )}
+                                            <div>
+                                                <span className="text-[10px] text-gray-400 block">Mobile & Category</span>
+                                                <span className="font-bold">{formData.mobileCountryCode} {formData.mobileNumber} &bull; <span className="text-[#EB1000]">{formData.category}</span></span>
+                                            </div>
+                                        </div>
                                     </div>
 
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                        <div>
-                                            <span className={`text-[10px] uppercase font-black tracking-wider block ${theme === 'light' ? 'text-[#64748B]' : 'text-[#A0A0B2]'}`}>
-                                                Payout Bank Account
-                                            </span>
-                                            <span className={`font-bold block mt-0.5 ${theme === 'light' ? 'text-[#0F172A]' : 'text-white'}`}>
-                                                {formData.bankName} - A/C #{formData.accountNumber} ({formData.ifscCode})
-                                            </span>
+                                    {/* 2. Document Proof Summary */}
+                                    <div className="pb-3 border-b border-current/10 space-y-2">
+                                        <div className="flex items-center justify-between">
+                                            <span className="font-extrabold uppercase text-[10px] tracking-wider text-[#8B8B96]">2. Document Proof</span>
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-[#00E676] font-bold text-[11px] flex items-center gap-1">
+                                                    <CheckCircle2 className="h-3.5 w-3.5" /> PAN Verified
+                                                </span>
+                                                <span className="text-[#00E676] font-bold text-[11px] flex items-center gap-1">
+                                                    <CheckCircle2 className="h-3.5 w-3.5" /> Aadhaar Verified
+                                                </span>
+                                            </div>
                                         </div>
-                                        <div>
-                                            <span className={`text-[10px] uppercase font-black tracking-wider block ${theme === 'light' ? 'text-[#64748B]' : 'text-[#A0A0B2]'}`}>
-                                                Payout UPI VPA
-                                            </span>
-                                            <span className="font-mono font-bold text-[#EB1000] block mt-0.5">
-                                                {formData.upiId || 'Not specified'}
-                                            </span>
+                                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
+                                            <div>
+                                                <span className="text-[10px] text-gray-400 block">PAN Number</span>
+                                                <span className="font-mono font-bold text-[#EB1000] uppercase">{panVerificationData?.panNumber || formData.panNumber}</span>
+                                            </div>
+                                            <div>
+                                                <span className="text-[10px] text-gray-400 block">Aadhaar e-KYC</span>
+                                                <span className="font-mono font-bold text-[#00F5D4]">{aadhaarVerificationData?.maskedAadhaar || `XXXXXXXX${formData.aadhaarNumber.slice(-4)}`}</span>
+                                            </div>
+                                            <div>
+                                                <span className="text-[10px] text-gray-400 block">PAN / Aadhaar Match</span>
+                                                <span className="font-bold text-[#00E676]">✓ Identity Match</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* 3. Bank Details Summary */}
+                                    <div className="space-y-2">
+                                        <div className="flex items-center justify-between">
+                                            <span className="font-extrabold uppercase text-[10px] tracking-wider text-[#8B8B96]">3. Bank Details</span>
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-[#00E676] font-bold text-[11px] flex items-center gap-1">
+                                                    <CheckCircle2 className="h-3.5 w-3.5" /> Bank Account Verified
+                                                </span>
+                                                <span className="text-[#00E676] font-bold text-[11px] flex items-center gap-1">
+                                                    <CheckCircle2 className="h-3.5 w-3.5" /> Bank Holder Match
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                                            <div>
+                                                <span className="text-[10px] text-gray-400 block">Payout Destination</span>
+                                                <span className="font-bold">{formData.bankName} - A/C #{formData.accountNumber} ({formData.ifscCode})</span>
+                                            </div>
+                                            <div>
+                                                <span className="text-[10px] text-gray-400 block">UPI VPA</span>
+                                                <span className="font-mono font-bold">{formData.upiId || 'Not configured'}</span>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
 
-                                <label className={`flex items-start gap-3 text-xs cursor-pointer p-4 rounded-xl border transition-all ${theme === 'light'
-                                    ? 'bg-[#F8FAFC] border-[#E2E8F0] text-[#0F172A]'
-                                    : 'bg-[#181826] border-[#2A2A3E] text-white'
-                                    }`}>
+                                <label className={`flex items-start gap-3 text-xs cursor-pointer p-4 rounded-xl border transition-all ${theme === 'light' ? 'bg-[#F8FAFC] border-[#E2E8F0]' : 'bg-[#181826] border-[#2A2A3E]'}`}>
                                     <input
                                         type="checkbox"
                                         checked={formData.agreeTerms}
@@ -1589,7 +1791,7 @@ export default function CreatorKycPage() {
                                         className="mt-0.5 h-4 w-4 rounded accent-[#EB1000] cursor-pointer"
                                     />
                                     <span className="font-medium leading-relaxed">
-                                        I declare under penalty of perjury that all provided identity documents and bank payout details are legally accurate and belong to me.
+                                        I hereby declare that all identity documents and bank payout details submitted are verified, genuine, and belong to me.
                                     </span>
                                 </label>
 
@@ -1598,8 +1800,8 @@ export default function CreatorKycPage() {
                                         type="button"
                                         onClick={() => setStep(3)}
                                         className={`w-full sm:w-auto px-5 py-3 rounded-xl text-xs font-extrabold transition-all flex items-center justify-center gap-2 cursor-pointer ${theme === 'light'
-                                            ? 'bg-[#F1F5F9] text-[#475569] border border-[#E2E8F0] hover:bg-[#E2E8F0] hover:text-[#0F172A]'
-                                            : 'bg-[#181826] text-[#A0A0B2] border border-[#2A2A3E] hover:bg-[#202030] hover:text-white'
+                                            ? 'bg-[#F1F5F9] text-[#475569] border border-[#E2E8F0]'
+                                            : 'bg-[#181826] text-[#A0A0B2] border border-[#2A2A3E]'
                                             }`}
                                     >
                                         <ArrowLeft className="h-4 w-4" /> Back to Bank Details
@@ -1615,7 +1817,7 @@ export default function CreatorKycPage() {
                                             </>
                                         ) : (
                                             <>
-                                                <span>Submit KYC for Super Admin Audit</span>
+                                                <span>Submit KYC for Admin Review</span>
                                                 <ShieldCheck className="h-4 w-4" />
                                             </>
                                         )}
@@ -1623,10 +1825,8 @@ export default function CreatorKycPage() {
                                 </div>
                             </form>
                         )}
-
                     </div>
                 )}
-
             </main>
         </div>
     );

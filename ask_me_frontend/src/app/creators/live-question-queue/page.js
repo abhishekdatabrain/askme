@@ -340,7 +340,7 @@ export default function CreatorNotificationsPage() {
 
               {/* SEARCH BAR BY VIEWER NAME */}
               <div className="relative min-w-[240px] md:w-72">
-                <Search className={`absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 ${theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'}`} />
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[#EB1000]" />
                 <input
                   type="text"
                   placeholder="Search viewer name..."

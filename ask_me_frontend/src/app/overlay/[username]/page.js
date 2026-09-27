@@ -178,41 +178,21 @@ function StreamOverlayContent() {
 
       {/* 2. REAL-TIME FEATURED QUESTION ON STREAM OVERLAY */}
       {activeAlert && (
-        <div className="mt-4 max-w-md w-full p-4 rounded-3xl bg-[#0A0A0F]/95 backdrop-blur-xl border-2 border-[#00F5D4] text-white shadow-2xl space-y-2.5 animate-fadeIn glow-teal pointer-events-auto">
-          <div className="flex items-center justify-between border-b border-[#1C1C26] pb-2">
-            <div className="flex items-center gap-2">
-              <span className="px-2.5 py-0.5 rounded-full bg-[#00E676]/20 text-[#00E676] border border-[#00E676]/40 text-[10px] font-black uppercase tracking-wider flex items-center gap-1">
-                <span className="h-1.5 w-1.5 rounded-full bg-[#00E676] animate-ping" />
-                FEATURED QUESTION ON STREAM
-              </span>
-              {activeAlert.isVip && (
-                <span className="px-2 py-0.5 rounded-full bg-[#FFD60A] text-black text-[10px] font-black uppercase">
-                  👑 VIP Member
-                </span>
-              )}
-            </div>
+        <div className="mt-4 max-w-md w-full p-3 rounded-3xl bg-[#0A0A0F]/95 backdrop-blur-xl border-2 border-[#00F5D4] text-white shadow-2xl space-y-2.5 animate-fadeIn glow-teal pointer-events-auto">
 
-            {/* <button
-              onClick={() => setActiveAlert(null)}
-              className="text-[#8B8B96] hover:text-white text-xs font-bold px-1"
-              title="Hide Question Overlay"
-            >
-              ✕
-            </button> */}
-          </div>
 
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-2.5 min-w-0">
-              <div className="p-2 rounded-2xl bg-[#00F5D4]/10 text-[#00F5D4] border border-[#00F5D4]/30 shrink-0">
-                <Sparkles className="h-5 w-5" />
-              </div>
+
               <div className="min-w-0">
-                <h4 className="font-heading font-black text-sm text-white truncate">
+                <span className="font-heading font-black text-sm text-white truncate">
                   {activeAlert.viewerName}
-                </h4>
-                <span className="text-[10px] text-[#8B8B96] font-mono block">
-                  Viewer Supporter
                 </span>
+                {activeAlert.isVip && (
+                  <span className="px-2 py-0.5 rounded-full bg-[#FFD60A] text-black text-[10px] font-black uppercase ml-3">
+                    👑 VIP Member
+                  </span>
+                )}
               </div>
             </div>
 
@@ -220,17 +200,13 @@ function StreamOverlayContent() {
               <span className="font-heading font-black text-base text-[#00E676] block">
                 ₹{activeAlert.amount?.toFixed(2) || activeAlert.amount}
               </span>
-              <span className="text-[9px] text-[#8B8B96] block uppercase tracking-wider font-bold">
-                UPI Paid
-              </span>
+
             </div>
           </div>
 
           {activeAlert.message && (
             <div className="pt-1">
-              <span className="text-[10px] font-extrabold text-[#8B8B96] uppercase tracking-wider block mb-1">
-                Viewer Question / Message:
-              </span>
+
               <p className="p-3 rounded-2xl bg-[#13131A] text-[#00F5D4] text-xs italic font-semibold border border-[#252533]">
                 "{activeAlert.message}"
               </p>

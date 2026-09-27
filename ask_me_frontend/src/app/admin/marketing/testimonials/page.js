@@ -428,7 +428,7 @@ export default function AdminTestimonialsPage() {
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full py-2 pl-9 pr-8 rounded-xl bg-[#0A0A0F] border border-[#222232] text-xs text-white placeholder-[#6E6E80] focus:outline-none focus:border-[#00F5D4] transition-all"
           />
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[#6E6E80]" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[#EB1000]" />
           {searchQuery && (
             <button
               type="button"

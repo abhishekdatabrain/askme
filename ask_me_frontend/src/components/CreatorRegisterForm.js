@@ -764,7 +764,7 @@ export default function CreatorRegisterForm({ onClose, onComplete }) {
 
             <div className="text-center pt-3 border-t border-[#1C1C26]">
               <span className="text-xs text-[#8B8B96]">Already have a Creator account? </span>
-              <Link href="/creators/login" className="text-xs font-bold text-[#00F5D4] hover:underline">
+              <Link href="/" className="text-xs font-bold text-[#00F5D4] hover:underline">
                 Sign In to Creator Studio
               </Link>
             </div>

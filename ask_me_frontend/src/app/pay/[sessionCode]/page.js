@@ -1596,9 +1596,9 @@ function ViewerPaymentContent() {
         </div>
       )}
 
-      <footer className="border-t border-[#1C1C26] py-4 text-center text-xs text-[#8B8B96]">
-
-        AskMe PRO Payment Portal &copy; 2026 • Powered by 256-Bit SSL Instant UPI Settlement
+      <footer className="border-t border-[#1C1C26] py-4 text-center text-xs text-[#8B8B96] space-y-1">
+        <p>&copy; 2026 AskMe (Futurepast ventures LLP). All rights reserved.</p>
+        <p className="text-[11px] text-[#717182]">Creators keep 85% of eligible revenue, subject to applicable terms, fees, eligibility and payment conditions.</p>
       </footer>
     </div>
   );

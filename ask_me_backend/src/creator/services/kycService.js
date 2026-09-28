@@ -89,9 +89,8 @@ const submitKycService = async (creatorId, data) => {
     bankAccountHolderName: bankTargetName,
   });
 
-  // Determine KYC status based on Cashfree verification results
-  // If either PAN/Aadhaar identity mismatch or Bank Holder mismatch -> set MANUAL_REVIEW
-  let finalKycStatus = "pending";
+
+  let finalKycStatus = "approved";
   let rejectionReason = null;
 
 

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Link from 'next/link';
 import LandingNavbar from '@/components/LandingNavbar';
 import LandingFooter from '@/components/LandingFooter';
 import { useToast } from '@/context/ToastContext';
@@ -122,7 +123,7 @@ export default function ContactPage() {
           </h1>
 
           <p className="text-sm sm:text-base text-[#8E8E9F] leading-relaxed font-normal">
-            Have questions about live stream Q&A, OBS overlay integration, payouts, or partnerships? Our dedicated team is here to assist you around the clock.
+            Have questions about live stream Q&A, OBS overlay integration, payouts ? Our dedicated team is here to assist you around the clock.
           </p>
         </section>
 
@@ -134,7 +135,7 @@ export default function ContactPage() {
             </div>
             <div>
               <h3 className="text-base font-bold text-white">General Inquiries</h3>
-              <p className="text-xs text-[#8E8E9F] mt-1">support@askme.live</p>
+              <p className="text-xs text-[#8E8E9F] mt-1">support@ask-me.live</p>
             </div>
             <span className="text-[11px] text-[#00E599] font-medium flex items-center gap-1 pt-1">
               <span className="h-1.5 w-1.5 rounded-full bg-[#00E599] animate-pulse"></span>
@@ -148,7 +149,7 @@ export default function ContactPage() {
             </div>
             <div>
               <h3 className="text-base font-bold text-white">Creator Onboarding</h3>
-              <p className="text-xs text-[#8E8E9F] mt-1">creators@askme.live</p>
+              {/* <p className="text-xs text-[#8E8E9F] mt-1">creators@askme.live</p> */}
             </div>
             <span className="text-[11px] text-[#8E8E9F] font-medium pt-1 block">
               VIP Manager Allocation
@@ -273,6 +274,25 @@ export default function ContactPage() {
                   </>
                 )}
               </button>
+
+              {/* Contact Consent Disclaimer */}
+              <div className="pt-4 mt-2 border-t border-[#222234] space-y-2 text-[11px] text-[#8E8E9F] leading-relaxed">
+                <h4 className="font-semibold text-[#C4C4D4] text-xs">Contact Consent Disclaimer</h4>
+                <p>
+                  By providing your mobile number, email address, or other contact details to{' '}
+                  <Link href="https://ask-me.live" target="_blank" rel="noopener noreferrer" className="text-[#EB1000] hover:underline font-medium">
+                    Ask-me.live
+                  </Link>
+                  , you acknowledge and agree that{' '}
+                  <Link href="https://ask-me.live" target="_blank" rel="noopener noreferrer" className="text-[#EB1000] hover:underline font-medium">
+                    Ask-me.live
+                  </Link>{' '}
+                  and its authorized representatives may contact you through calls, SMS, WhatsApp, email, or other communication channels for service related, transactional, account, support, marketplace, promotional, and other legitimate business purposes.
+                </p>
+                <p>
+                  You may opt out of promotional communications at any time. Service and transactional communications may still be sent where necessary to provide or administer our services.
+                </p>
+              </div>
             </form>
           </div>
 
@@ -282,7 +302,7 @@ export default function ContactPage() {
             <div className="p-6 rounded-3xl bg-gradient-to-b from-[#1C090C] via-[#120B12] to-[#0D0D14] border border-[#EB1000]/40 space-y-4 shadow-xl">
               <div className="flex items-center gap-3 text-white font-bold text-lg">
                 <ShieldCheck className="h-6 w-6 text-[#EB1000]" />
-                <span>AskMe Support Promise</span>
+                <span>AskMe Support</span>
               </div>
               <p className="text-xs text-[#A0A0B2] leading-relaxed">
                 Whether you're running a live broadcast with 50,000 concurrent viewers or just starting out as a creator, our support team ensures zero downtime for your stream overlays and payment feeds.

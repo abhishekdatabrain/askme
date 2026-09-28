@@ -87,6 +87,101 @@ function InnerAuthModal({ isOpen, onClose, initialRole = 'viewer', initialMode =
   const [regWaSuccess, setRegWaSuccess] = useState('');
   const [regWaDebugOtp, setRegWaDebugOtp] = useState('');
 
+  // Registration Email OTP Verification State (10 Minute Expiry)
+  const [regEmailStep, setRegEmailStep] = useState('idle'); // 'idle' | 'otp_sent' | 'verified'
+  const [regEmailOtp, setRegEmailOtp] = useState('');
+  const [regEmailLoading, setRegEmailLoading] = useState(false);
+  const [regEmailError, setRegEmailError] = useState('');
+  const [regEmailSuccess, setRegEmailSuccess] = useState('');
+  const [regEmailDebugOtp, setRegEmailDebugOtp] = useState('');
+
+  const handleSendRegEmailOtp = async () => {
+    const cleanEmail = (email || '').trim().toLowerCase();
+    if (!cleanEmail || !cleanEmail.includes('@')) {
+      const errText = 'Please enter a valid email address.';
+      setRegEmailError(errText);
+      toast?.error(errText, 'Email Required');
+      return;
+    }
+    setRegEmailError('');
+    setRegEmailSuccess('');
+    try {
+      setRegEmailLoading(true);
+      const endpoint = role === 'viewer'
+        ? API_ENDPOINTS.VIEWERS.EMAIL_SEND_OTP
+        : API_ENDPOINTS.CREATORS.EMAIL_SEND_OTP;
+
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: cleanEmail }),
+      });
+
+      const data = await res.json();
+      if (res.ok && data.status === 'success') {
+        const msg = data.message || `Verification code sent to ${cleanEmail}`;
+        setRegEmailSuccess(msg);
+        toast?.success(msg, 'Email OTP Sent');
+        if (data.data?.debugOtp || data.debugOtp) {
+          setRegEmailDebugOtp(String(data.data?.debugOtp || data.debugOtp));
+        }
+        setRegEmailStep('otp_sent');
+      } else {
+        const errText = data.message || 'Failed to send verification code.';
+        setRegEmailError(errText);
+        toast?.error(errText, 'OTP Error');
+      }
+    } catch (err) {
+      const errText = 'Server error while sending Email OTP.';
+      setRegEmailError(errText);
+      toast?.error(errText, 'OTP Error');
+    } finally {
+      setRegEmailLoading(false);
+    }
+  };
+
+  const handleVerifyRegEmailOtp = async () => {
+    const cleanEmail = (email || '').trim().toLowerCase();
+    if (!regEmailOtp || regEmailOtp.length < 4) {
+      const errText = 'Please enter the 6-digit verification code sent to your email.';
+      setRegEmailError(errText);
+      toast?.error(errText, 'OTP Required');
+      return;
+    }
+    setRegEmailError('');
+    setRegEmailSuccess('');
+    try {
+      setRegEmailLoading(true);
+      const endpoint = role === 'viewer'
+        ? API_ENDPOINTS.VIEWERS.EMAIL_VERIFY_OTP
+        : API_ENDPOINTS.CREATORS.EMAIL_VERIFY_OTP;
+
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: cleanEmail, otp: regEmailOtp }),
+      });
+
+      const data = await res.json();
+      if (res.ok && data.status === 'success') {
+        const msg = 'Email address verified successfully!';
+        setRegEmailSuccess(msg);
+        toast?.success(msg, 'Email Verified!');
+        setRegEmailStep('verified');
+      } else {
+        const errText = data.message || 'Invalid verification code.';
+        setRegEmailError(errText);
+        toast?.error(errText, 'Verification Failed');
+      }
+    } catch (err) {
+      const errText = 'Server error verifying Email OTP.';
+      setRegEmailError(errText);
+      toast?.error(errText, 'Error');
+    } finally {
+      setRegEmailLoading(false);
+    }
+  };
+
   // Hybrid Login Flow State (Email or Phone Number + WhatsApp OTP)
   const [loginInput, setLoginInput] = useState('');
   const [loginOtpStep, setLoginOtpStep] = useState('idle'); // 'idle' | 'otp_sent'
@@ -421,11 +516,29 @@ function InnerAuthModal({ isOpen, onClose, initialRole = 'viewer', initialMode =
   };
 
   const handleRoleChange = (newRole) => {
+    if (newRole === role) return;
     setRole(newRole);
     setErrorMsg('');
     setSuccessMsg('');
     setLoginOtpStep('idle');
     setLoginOtp('');
+    // Reset fields so creator inputs do not pre-fill or spill into viewer form
+    setName('');
+    setFirstname('');
+    setLastname('');
+    setEmail('');
+    setMobile('');
+    setUsername('');
+    setPassword('');
+    setRegWaStep('idle');
+    setRegWaOtp('');
+    setRegWaError('');
+    setRegWaSuccess('');
+    setRegEmailStep('idle');
+    setRegEmailOtp('');
+    setRegEmailError('');
+    setRegEmailSuccess('');
+    setRegEmailDebugOtp('');
   };
 
   const handleModeToggle = () => {
@@ -504,6 +617,11 @@ function InnerAuthModal({ isOpen, onClose, initialRole = 'viewer', initialMode =
           if (!cleanMobile || cleanMobile.length !== 10) {
             const errText = 'Invalid mobile number. Please enter a valid 10-digit phone number.';
             toast?.error(errText, 'Registration Error');
+            throw new Error(errText);
+          }
+          if (regEmailStep !== 'verified') {
+            const errText = 'Please verify your email address via Email OTP before registering.';
+            toast?.error(errText, 'Email Verification Required');
             throw new Error(errText);
           }
           if (regWaStep !== 'verified') {
@@ -599,6 +717,11 @@ function InnerAuthModal({ isOpen, onClose, initialRole = 'viewer', initialMode =
           if (cleanMobile.length !== 10) {
             const errText = 'Mobile number must be exactly 10 digits.';
             toast?.error(errText, 'Registration Error');
+            throw new Error(errText);
+          }
+          if (regEmailStep !== 'verified') {
+            const errText = 'Please verify your email address via Email OTP before registering.';
+            toast?.error(errText, 'Email Verification Required');
             throw new Error(errText);
           }
           if (regWaStep !== 'verified') {
@@ -1126,18 +1249,96 @@ function InnerAuthModal({ isOpen, onClose, initialRole = 'viewer', initialMode =
                 {/* Email & Mobile Number */}
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-bold text-gray-700 mb-1">Email Address *</label>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="block text-xs font-bold text-gray-700">Email Address *</label>
+                      {regEmailStep === 'verified' && (
+                        <span className="text-[10px] font-extrabold text-emerald-600 flex items-center gap-1 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                          <Check className="h-3 w-3" /> Email Verified
+                        </span>
+                      )}
+                    </div>
                     <div className="relative">
                       <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                       <input
                         type="email"
                         required
+                        disabled={regEmailStep === 'verified'}
                         value={email}
-                        onChange={(e) => setEmail(e.target.value)}
+                        onChange={(e) => {
+                          setEmail(e.target.value);
+                          if (regEmailStep !== 'idle') setRegEmailStep('idle');
+                        }}
                         placeholder="creator@prince.in"
                         className="w-full pl-10 pr-3 py-2.5 rounded-2xl border border-gray-200 text-xs bg-gray-50/50 text-gray-900 placeholder-gray-400 focus:bg-white focus:border-[#EB1000] outline-none transition"
                       />
                     </div>
+
+                    {/* Send Email OTP Button */}
+                    {email && email.includes('@') && regEmailStep === 'idle' && (
+                      <button
+                        type="button"
+                        onClick={handleSendRegEmailOtp}
+                        disabled={regEmailLoading}
+                        className="mt-1.5 w-full py-2 px-3 rounded-xl bg-red-500 hover:bg-red-600 text-white text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-sm cursor-pointer disabled:opacity-50"
+                      >
+                        {regEmailLoading ? (
+                          <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          <>
+                            <Mail className="h-3.5 w-3.5" />
+                            <span>Send OTP to Verify Email</span>
+                          </>
+                        )}
+                      </button>
+                    )}
+
+                    {/* Enter Email OTP Box */}
+                    {regEmailStep === 'otp_sent' && (
+                      <div className="mt-2 p-2.5 rounded-2xl bg-gray-900 text-white space-y-2 shadow-md">
+                        <div className="flex items-center justify-between text-[11px] font-bold">
+                          <span>Code sent to {email}:</span>
+                          <button
+                            type="button"
+                            onClick={() => setRegEmailStep('idle')}
+                            className="text-[10px] text-red-400 hover:text-white underline cursor-pointer"
+                          >
+                            Change Email
+                          </button>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="text"
+                            maxLength={6}
+                            value={regEmailOtp}
+                            onChange={(e) => setRegEmailOtp(e.target.value.replace(/\D/g, ''))}
+                            placeholder="******"
+                            className="w-full py-1.5 px-3 rounded-xl border border-gray-700 bg-gray-800 text-xs text-center font-mono font-bold tracking-widest text-white outline-none focus:border-[#EB1000]"
+                          />
+                          <button
+                            type="button"
+                            onClick={handleVerifyRegEmailOtp}
+                            disabled={regEmailLoading || !regEmailOtp}
+                            className="px-3.5 py-1.5 rounded-xl bg-[#EB1000] hover:bg-[#CC0E00] text-white text-xs font-bold shrink-0 transition shadow-xs cursor-pointer disabled:opacity-50"
+                          >
+                            {regEmailLoading ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : 'Verify'}
+                          </button>
+                        </div>
+                        <div className="flex items-center justify-between text-[10px] text-gray-400">
+                          <span>Expires in 10 minutes</span>
+                          <button
+                            type="button"
+                            onClick={handleSendRegEmailOtp}
+                            disabled={regEmailLoading}
+                            className="text-[10px] font-bold text-[#EB1000] hover:underline cursor-pointer disabled:opacity-50"
+                          >
+                            Resend
+                          </button>
+                        </div>
+                        {regEmailError && (
+                          <p className="text-[10px] text-rose-400 font-medium">{regEmailError}</p>
+                        )}
+                      </div>
+                    )}
                   </div>
                   <div>
                     <div className="flex items-center justify-between mb-1">
@@ -1449,20 +1650,98 @@ function InnerAuthModal({ isOpen, onClose, initialRole = 'viewer', initialMode =
                     </div>
 
                     <div>
-                      <label className="block text-xs font-bold text-gray-700 mb-1">
-                        Email Address <span className="text-[#EB1000]">*</span>
-                      </label>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="block text-xs font-bold text-gray-700">
+                          Email Address <span className="text-[#EB1000]">*</span>
+                        </label>
+                        {regEmailStep === 'verified' && (
+                          <span className="text-[10px] font-extrabold text-emerald-600 flex items-center gap-1 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                            <Check className="h-3 w-3" /> Email Verified
+                          </span>
+                        )}
+                      </div>
                       <div className="relative">
                         <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                         <input
                           type="email"
                           required
+                          disabled={regEmailStep === 'verified'}
                           placeholder="rahul@example.com"
                           value={email}
-                          onChange={(e) => setEmail(e.target.value)}
+                          onChange={(e) => {
+                            setEmail(e.target.value);
+                            if (regEmailStep !== 'idle') setRegEmailStep('idle');
+                          }}
                           className="w-full pl-10 pr-4 py-2.5 rounded-2xl border border-gray-200 text-xs bg-gray-50/50 text-gray-900 placeholder-gray-400 focus:bg-white focus:border-[#EB1000] outline-none transition"
                         />
                       </div>
+
+                      {/* Send Email OTP Button */}
+                      {email && email.includes('@') && regEmailStep === 'idle' && (
+                        <button
+                          type="button"
+                          onClick={handleSendRegEmailOtp}
+                          disabled={regEmailLoading}
+                          className="mt-1.5 w-full py-2 px-3 rounded-xl bg-red-500 hover:bg-red-600 text-white text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-sm cursor-pointer disabled:opacity-50"
+                        >
+                          {regEmailLoading ? (
+                            <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                          ) : (
+                            <>
+                              <Mail className="h-3.5 w-3.5" />
+                              <span>Send OTP to Verify Email</span>
+                            </>
+                          )}
+                        </button>
+                      )}
+
+                      {/* Enter Email OTP Box */}
+                      {regEmailStep === 'otp_sent' && (
+                        <div className="mt-2 p-2.5 rounded-2xl bg-gray-900 text-white space-y-2 shadow-md">
+                          <div className="flex items-center justify-between text-[11px] font-bold">
+                            <span>Code sent to {email}:</span>
+                            <button
+                              type="button"
+                              onClick={() => setRegEmailStep('idle')}
+                              className="text-[10px] text-gray-400 hover:text-white underline cursor-pointer"
+                            >
+                              Change Email
+                            </button>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="text"
+                              maxLength={6}
+                              value={regEmailOtp}
+                              onChange={(e) => setRegEmailOtp(e.target.value.replace(/\D/g, ''))}
+                              placeholder="******"
+                              className="w-full py-1.5 px-3 rounded-xl border border-gray-700 bg-gray-800 text-xs text-center font-mono font-bold tracking-widest text-white outline-none focus:border-[#EB1000]"
+                            />
+                            <button
+                              type="button"
+                              onClick={handleVerifyRegEmailOtp}
+                              disabled={regEmailLoading || !regEmailOtp}
+                              className="px-3.5 py-1.5 rounded-xl bg-[#EB1000] hover:bg-[#CC0E00] text-white text-xs font-bold shrink-0 transition shadow-xs cursor-pointer disabled:opacity-50"
+                            >
+                              {regEmailLoading ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : 'Verify'}
+                            </button>
+                          </div>
+                          <div className="flex items-center justify-between text-[10px] text-gray-400">
+                            <span>Expires in 10 minutes</span>
+                            <button
+                              type="button"
+                              onClick={handleSendRegEmailOtp}
+                              disabled={regEmailLoading}
+                              className="text-[10px] font-bold text-[#EB1000] hover:underline cursor-pointer disabled:opacity-50"
+                            >
+                              Resend
+                            </button>
+                          </div>
+                          {regEmailError && (
+                            <p className="text-[10px] text-rose-400 font-medium">{regEmailError}</p>
+                          )}
+                        </div>
+                      )}
                     </div>
 
                     <div>

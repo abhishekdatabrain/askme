@@ -6,6 +6,8 @@ const {
   googleAuthViewer,
   sendWhatsAppOtpViewer,
   verifyWhatsAppOtpViewer,
+  sendEmailOtpViewer,
+  verifyEmailOtpViewer,
   truecallerAuthViewer,
   getViewerProfile,
   getPublicLiveFeed,
@@ -58,6 +60,20 @@ router.post('/whatsapp-otp/send', sendWhatsAppOtpViewer);
  * @access  Public
  */
 router.post('/whatsapp-otp/verify', verifyWhatsAppOtpViewer);
+
+/**
+ * @route   POST /api/viewers/email-otp/send
+ * @desc    Send Email OTP for Verification
+ * @access  Public
+ */
+router.post('/email-otp/send', sendEmailOtpViewer);
+
+/**
+ * @route   POST /api/viewers/email-otp/verify
+ * @desc    Verify Email OTP
+ * @access  Public
+ */
+router.post('/email-otp/verify', verifyEmailOtpViewer);
 
 /**
  * @route   POST /api/viewers/truecaller-auth

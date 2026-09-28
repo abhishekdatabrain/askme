@@ -242,7 +242,7 @@ function CreatorDashboardContent() {
     const u = getCreatorUser();
 
     if (!token || !u || !u.id) {
-      window.location.href = '/creators/login';
+      window.location.href = '/';
       return;
     }
 
@@ -598,28 +598,6 @@ function CreatorDashboardContent() {
 
           <div className="flex items-center gap-3">
             <button
-              onClick={toggleTheme}
-              className={`px-3 py-1.5 rounded-xl border text-xs font-bold transition-all flex items-center gap-1.5 ${theme === 'light'
-                ? 'bg-[#F1F3F5] text-[#212529] border-[#E9ECEF] hover:bg-[#E9ECEF]'
-                : 'bg-[#1C1C26] text-white border-[#1C1C26] hover:border-[#EB1000]/40'
-                }`}
-              title={theme === 'dark' ? 'Switch to Light Theme' : 'Switch to Dark Theme'}
-            >
-              {theme === 'dark' ? (
-                <>
-                  <Sun className="h-4 w-4 text-[#FFD60A]" />
-                  <span className="hidden sm:inline">Light</span>
-                </>
-              ) : (
-                <>
-                  <Moon className="h-4 w-4 text-[#EB1000]" />
-                  <span className="hidden sm:inline">Dark</span>
-                </>
-              )}
-            </button>
-
-            <Link
-              href="/creators/kyc"
               className={`px-3.5 py-1.5 rounded-xl text-xs font-bold border transition-colors flex items-center gap-1.5 ${kycStatus === 'approved' || kycStatus === 'verified'
                 ? 'bg-[#10B981]/10 text-[#10B981] border-[#10B981]/30 hover:bg-[#10B981]/20'
                 : kycStatus === 'rejected'
@@ -628,7 +606,7 @@ function CreatorDashboardContent() {
                 }`}
             >
               <ShieldCheck className="h-4 w-4" /> KYC: <span className="capitalize">{kycStatus === 'approved' || kycStatus === 'verified' ? 'Approved' : kycStatus === 'rejected' ? 'Rejected' : 'Pending'}</span>
-            </Link>
+            </button>
 
             <CreatorNotificationDropdown theme={theme} />
           </div>
@@ -642,7 +620,7 @@ function CreatorDashboardContent() {
           {activeTab === 'overview' && (
             <div className="space-y-6 animate-fade-in">
               {/* Active Session Callout Banner with QR & OBS Overlay Grid if Live */}
-              {activeSession && (
+              {/* {activeSession && (
                 <div className={`p-6 rounded-3xl border-2 shadow-2xl space-y-6 shadow-[#EB1000]/10 transition-colors ${theme === 'light' ? 'bg-white border-[#EB1000]/60' : 'bg-[#13131A] border-[#EB1000]/40'
                   }`}>
                   <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border-b pb-4 border-[#1C1C26]">
@@ -678,9 +656,9 @@ function CreatorDashboardContent() {
                   </div>
 
                   {/* Generated QR Code & OBS Overlay Grid */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {/* QR & Payment Link */}
-                    <div className={`p-4 rounded-2xl border flex items-center gap-4 ${theme === 'light' ? 'bg-[#F8F9FA] border-[#E9ECEF]' : 'bg-[#0A0A0F] border-[#1C1C26]'}`}>
+              {/* <div className={`p-4 rounded-2xl border flex items-center gap-4 ${theme === 'light' ? 'bg-[#F8F9FA] border-[#E9ECEF]' : 'bg-[#0A0A0F] border-[#1C1C26]'}`}>
                       <BrandedQrCode qrUrl={activeSession.qrCodeUrl} size="sm" showBrandHeader={false} />
                       <div className="space-y-1 min-w-0 flex-1">
                         <span className="text-[10px] font-bold text-[#EB1000] uppercase">Instant UPI Payment Link & QR</span>
@@ -697,10 +675,10 @@ function CreatorDashboardContent() {
                           </a>
                         </div>
                       </div>
-                    </div>
+                    </div> */}
 
-                    {/* OBS Overlay Source */}
-                    <div className={`p-4 rounded-2xl border flex items-center gap-4 ${theme === 'light' ? 'bg-[#F8F9FA] border-[#E9ECEF]' : 'bg-[#0A0A0F] border-[#1C1C26]'}`}>
+              {/* OBS Overlay Source */}
+              {/* <div className={`p-4 rounded-2xl border flex items-center gap-4 ${theme === 'light' ? 'bg-[#F8F9FA] border-[#E9ECEF]' : 'bg-[#0A0A0F] border-[#1C1C26]'}`}>
                       <div className="h-24 w-24 rounded-xl bg-[#EB1000]/10 border border-[#EB1000]/30 flex flex-col items-center justify-center text-[#EB1000] shrink-0">
                         <Monitor className="h-7 w-7" />
                         <span className="text-[9px] font-black mt-1 uppercase">OBS SOURCE</span>
@@ -717,10 +695,10 @@ function CreatorDashboardContent() {
                           </a>
                         </div>
                       </div>
-                    </div>
-                  </div>
-                </div>
-              )}
+                    </div> */}
+              {/* </div>
+                </div> */}
+              {/* )} */}
 
               {/* Welcome Banner */}
               <div className={`p-6 rounded-3xl border shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4 transition-colors ${theme === 'light' ? 'bg-white border-[#E9ECEF]' : 'bg-[#13131A] border-[#1C1C26]'
@@ -1314,8 +1292,8 @@ function CreatorDashboardContent() {
               </form>
             </div>
           )}
-        </main>
-      </div>
+        </main >
+      </div >
     </>
   );
 }

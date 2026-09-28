@@ -7,6 +7,8 @@ const {
   googleAuthCreator,
   sendWhatsAppOtpCreator,
   verifyWhatsAppOtpCreator,
+  sendEmailOtpCreator,
+  verifyEmailOtpCreator,
   truecallerAuthCreator,
   submitKyc,
   getKycStatus,
@@ -46,6 +48,11 @@ const {
   verifyAadhaarController,
   matchIdentityController,
   verifyBankController,
+  initDigiLockerSessionController,
+  verifyDigiLockerSessionController,
+  sendDigiLockerAadhaarOtpController,
+  verifyDigiLockerAadhaarOtpController,
+  panToGstinLookupController,
   getPublicCommissionSettings,
 } = require('../../creator/controllers/creatorController');
 
@@ -62,6 +69,8 @@ router.post('/login', loginCreator);
 router.post('/google-auth', googleAuthCreator);
 router.post('/whatsapp-otp/send', sendWhatsAppOtpCreator);
 router.post('/whatsapp-otp/verify', verifyWhatsAppOtpCreator);
+router.post('/email-otp/send', sendEmailOtpCreator);
+router.post('/email-otp/verify', verifyEmailOtpCreator);
 router.post('/truecaller-auth', truecallerAuthCreator);
 
 /**
@@ -82,6 +91,11 @@ router.post('/kyc/verify-pan', verifyPanController);
 router.post('/kyc/verify-aadhaar/send-otp', sendAadhaarOtpController);
 router.post('/kyc/verify-aadhaar/verify-otp', verifyAadhaarOtpController);
 router.post('/kyc/verify-aadhaar', verifyAadhaarController);
+router.post('/kyc/digilocker/init', initDigiLockerSessionController);
+router.post('/kyc/digilocker/verify', verifyDigiLockerSessionController);
+router.post('/kyc/digilocker/send-otp', sendDigiLockerAadhaarOtpController);
+router.post('/kyc/digilocker/verify-otp', verifyDigiLockerAadhaarOtpController);
+router.post('/kyc/pan-to-gstin', panToGstinLookupController);
 router.post('/kyc/match-identity', matchIdentityController);
 router.post('/kyc/verify-bank', verifyBankController);
 

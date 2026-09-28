@@ -148,7 +148,7 @@ export default function CreatorActiveSessionPage() {
     const token = getCreatorToken();
     const u = getCreatorUser();
     if (!token || !u || !u.id) {
-      window.location.href = '/creators/login';
+      window.location.href = '/';
       return;
     }
     setCreator(u);
@@ -266,11 +266,10 @@ export default function CreatorActiveSessionPage() {
                   <button
                     type="button"
                     onClick={toggleQrDisabled}
-                    className={`px-5 py-2.5 rounded-xl text-xs font-black border transition-all flex items-center gap-2 cursor-pointer shadow-md ${
-                      isQrDisabled
+                    className={`px-5 py-2.5 rounded-xl text-xs font-black border transition-all flex items-center gap-2 cursor-pointer shadow-md ${isQrDisabled
                         ? 'bg-gradient-to-r from-[#00E676] to-[#00C853] text-black border-[#00E676] hover:brightness-110 shadow-[#00E676]/20'
                         : 'bg-[#12121C] text-[#FF3B30] border-[#FF3B30]/60 hover:bg-[#FF3B30]/10 hover:border-[#FF3B30]'
-                    }`}
+                      }`}
                   >
                     {isQrDisabled ? (
                       <>
@@ -315,9 +314,8 @@ export default function CreatorActiveSessionPage() {
                       )}
                     </div>
 
-                    <p className={`text-xs font-mono truncate px-3 py-2 rounded-xl border transition-all ${
-                      theme === 'light' ? 'bg-white border-[#E2E8F0] text-[#0F172A]' : 'bg-[#12121C] border-[#222236] text-white'
-                    }`}>
+                    <p className={`text-xs font-mono truncate px-3 py-2 rounded-xl border transition-all ${theme === 'light' ? 'bg-white border-[#E2E8F0] text-[#0F172A]' : 'bg-[#12121C] border-[#222236] text-white'
+                      }`}>
                       {activeSession.paymentLink}
                     </p>
 

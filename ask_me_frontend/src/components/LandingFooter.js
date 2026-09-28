@@ -71,6 +71,16 @@ export default function LandingFooter() {
                 </svg>
               </a>
             </div>
+
+            {/* Registered Office Entity Card directly under Social Icons */}
+            <div className="pt-2 max-w-sm">
+              <div className="p-3.5 rounded-2xl bg-[#0F0F18] border border-[#222234] text-xs space-y-1 shadow-md">
+                <p className="font-bold text-white text-[12.5px] tracking-tight">Futurepast ventures LLP</p>
+                <p className="text-[11.5px] text-[#8E8E9F] leading-snug">
+                  Lake View City, Lohegaon, Pune 411047, MH, India
+                </p>
+              </div>
+            </div>
           </div>
 
           {/* Right Links Columns */}
@@ -229,9 +239,12 @@ export default function LandingFooter() {
         </div>
 
         {/* Bottom Bar Separated by Horizontal Border */}
-        <div className="pt-8 border-t border-[#1C1C2A] flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-[#8E8E9F] font-medium">
-          <p>2026 All rights reserved</p>
-          <p>Made with ♡ for Live Moments</p>
+        <div className="pt-8 border-t border-[#1C1C2A] flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-[#8E8E9F] font-medium">
+          <div className="space-y-1 text-center sm:text-left">
+            <p>© 2026 AskMe (Futurepast ventures LLP). All rights reserved.</p>
+            <p className="text-[11px] text-[#717182]">Creators keep 85% of eligible revenue, subject to applicable terms, fees, eligibility and payment conditions.</p>
+          </div>
+          <p className="shrink-0 text-center sm:text-right">Developed by Databrain Technology Pvt. Ltd.</p>
         </div>
       </div>
     </footer>

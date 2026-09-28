@@ -236,7 +236,7 @@ export default function AllCreatorsPage() {
       if (toast?.warning) {
         toast.warning('Please log in as a viewer to join VIP Membership.', 'Authentication Required');
       }
-      setTimeout(() => { router.push('/viewers/login'); }, 1200);
+      setTimeout(() => { router.push('/'); }, 1200);
       return;
     }
     setVipModalCreator(creator);
@@ -259,7 +259,7 @@ export default function AllCreatorsPage() {
       if (toast?.warning) {
         toast.warning('Please log in as a viewer to ask a question.', 'Authentication Required');
       }
-      setTimeout(() => { router.push('/viewers/login'); }, 1200);
+      setTimeout(() => { router.push('/'); }, 1200);
       return;
     }
 

@@ -101,7 +101,7 @@ export default function CreatorStartLivePage() {
     const token = getCreatorToken();
     const u = getCreatorUser();
     if (!token || !u || !u.id) {
-      window.location.href = '/creators/login';
+      window.location.href = '/';
       return;
     }
     setCreator(u);

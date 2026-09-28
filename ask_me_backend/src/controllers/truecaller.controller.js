@@ -159,7 +159,7 @@ const truecallerCallback = async (req, res) => {
 
     if (error) {
       console.warn('[Truecaller Callback Error]:', error);
-      return res.redirect(`${frontendUrl}/viewers/login?error=${encodeURIComponent(error)}`);
+      return res.redirect(`${frontendUrl}/?error=${encodeURIComponent(error)}`);
     }
 
     if ((payload && signature) || accessToken) {
@@ -218,10 +218,9 @@ const truecallerCallback = async (req, res) => {
       }
     }
 
-    return res.redirect(`${frontendUrl}/viewers/login?tc_status=fail`);
+    return res.redirect(`${frontendUrl}?tc_status=fail`);
   } catch (err) {
     console.error('[Truecaller Callback Exception]:', err);
-    return res.redirect(`${frontendUrl}/viewers/login?error=server_error`);
   }
 };
 module.exports = {

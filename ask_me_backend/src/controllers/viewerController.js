@@ -10,8 +10,9 @@ const FollowModel = require('../models/FollowModel');
 const Donation = require('../models/DonationModel');
 const { sendLoginOtpWhatsApp } = require('../services/whatsappService');
 const { generateAndStoreOtp, verifyStoredOtp } = require('../utils/whatsappOtpStore');
+const { generateAndStoreEmailOtp, verifyStoredEmailOtp } = require('../utils/emailOtpStore');
 const { verifyTruecallerToken } = require('../services/truecallerService');
-const { sendWelcomeEmailAsync } = require('../services/emailService');
+const { sendWelcomeEmailAsync, sendEmailOtp } = require('../services/emailService');
 const { Op } = require('sequelize');
 
 const { OAuth2Client } = require('google-auth-library');
@@ -229,6 +230,13 @@ const googleAuthViewer = async (req, res, next) => {
         name: verifiedName,
         email: verifiedEmail,
         password: randomPassword,
+        role: 'viewer',
+      });
+
+      // Send non-blocking welcome email to new Google OAuth viewer
+      sendWelcomeEmailAsync({
+        email: user.email,
+        name: user.name,
         role: 'viewer',
       });
     }
@@ -1304,6 +1312,74 @@ const verifyWhatsAppOtpViewer = async (req, res, next) => {
   }
 };
 
+/**
+ * @desc    Send Email OTP to Viewer for Email Verification
+ * @route   POST /api/viewers/email-otp/send
+ * @access  Public
+ */
+const sendEmailOtpViewer = async (req, res, next) => {
+  try {
+    const { email } = req.body;
+    const cleanEmail = String(email || '').trim().toLowerCase();
+
+    if (!cleanEmail || !cleanEmail.includes('@')) {
+      return res.status(400).json({
+        status: 'fail',
+        message: 'Please enter a valid email address.',
+      });
+    }
+
+    const { otp } = generateAndStoreEmailOtp(cleanEmail);
+
+    await sendEmailOtp({ email: cleanEmail, otp });
+
+    return res.status(200).json({
+      status: 'success',
+      message: 'Verification code sent to your email (expires in 10 minutes).',
+      expiresMinutes: 10,
+      ...(process.env.NODE_ENV !== 'production' ? { debugOtp: otp } : {}),
+    });
+  } catch (error) {
+    console.error('SEND EMAIL OTP VIEWER ERROR:', error);
+    next(error);
+  }
+};
+
+/**
+ * @desc    Verify Email OTP for Viewer
+ * @route   POST /api/viewers/email-otp/verify
+ * @access  Public
+ */
+const verifyEmailOtpViewer = async (req, res, next) => {
+  try {
+    const { email, otp } = req.body;
+    const cleanEmail = String(email || '').trim().toLowerCase();
+
+    if (!cleanEmail || !otp) {
+      return res.status(400).json({
+        status: 'fail',
+        message: 'Email address and 6-digit OTP code are required.',
+      });
+    }
+
+    const verification = verifyStoredEmailOtp(cleanEmail, otp);
+    if (!verification.valid) {
+      return res.status(400).json({
+        status: 'fail',
+        message: verification.message,
+      });
+    }
+
+    return res.status(200).json({
+      status: 'success',
+      message: 'Email address verified successfully!',
+    });
+  } catch (error) {
+    console.error('VERIFY EMAIL OTP VIEWER ERROR:', error);
+    next(error);
+  }
+};
+
 const { truecallerAuthViewer } = require('./truecaller.controller');
 
 module.exports = {
@@ -1312,6 +1388,8 @@ module.exports = {
   googleAuthViewer,
   sendWhatsAppOtpViewer,
   verifyWhatsAppOtpViewer,
+  sendEmailOtpViewer,
+  verifyEmailOtpViewer,
   truecallerAuthViewer,
   getViewerProfile,
   getPublicLiveFeed,
@@ -1322,3 +1400,4 @@ module.exports = {
   getPublicPastStreams,
   getPublicCategories,
 };
+

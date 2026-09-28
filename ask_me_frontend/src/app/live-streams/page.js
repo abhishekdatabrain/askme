@@ -174,7 +174,7 @@ export default function PublicLiveStreamsPage() {
       if (toast?.warning) {
         toast.warning('Please log in as a viewer to follow creators.', 'Authentication Required');
       }
-      setTimeout(() => { router.push('/viewers/login'); }, 1200);
+      setTimeout(() => { router.push('/'); }, 1200);
       return;
     }
 

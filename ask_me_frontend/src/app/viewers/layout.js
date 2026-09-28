@@ -12,7 +12,7 @@ export default function ViewerLayout({ children }) {
   const [theme, setTheme] = useState('dark');
 
   // Exclude auth pages (login & register) from sidebar & auth layout protection
-  const isAuthPage = pathname === '/viewers/login' || pathname === '/viewers/register';
+  const isAuthPage = pathname === '/' || pathname === '/';
 
   useEffect(() => {
     if (isAuthPage) {

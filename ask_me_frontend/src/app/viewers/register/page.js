@@ -465,7 +465,7 @@ export default function ViewerRegisterPage() {
           <div className="border-t border-[#1C1C26] pt-4 text-center">
             <p className="text-xs text-[#8B8B96]">
               Already have a viewer account?{' '}
-              <Link href="/viewers/login" className="text-[#00F5D4] font-bold hover:underline">
+              <Link href="/" className="text-[#00F5D4] font-bold hover:underline">
                 Login here
               </Link>
             </p>

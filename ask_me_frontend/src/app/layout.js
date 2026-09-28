@@ -21,7 +21,10 @@ export const metadata = {
   title: "AskMe PRO | Live Stream & Q&A Platform",
   description: "Live Signal Broadcast & Creator Discovery Control Room",
   icons: {
-    icon: "/logo.png",
+    icon: [
+      { url: "/logo.png", type: "image/png" },
+      { url: "/icon.png", type: "image/png" },
+    ],
     shortcut: "/logo.png",
     apple: "/logo.png",
   },

@@ -95,7 +95,7 @@ export default function CreatorLiveChatModulePage() {
     const token = getCreatorToken();
     const u = getCreatorUser();
     if (!token || !u || !u.id) {
-      window.location.href = '/creators/login';
+      window.location.href = '/';
       return;
     }
 
@@ -117,18 +117,15 @@ export default function CreatorLiveChatModulePage() {
     <>
       <div className="flex-1 flex flex-col min-w-0">
         {/* Module Header */}
-        <header className={`border-b sticky top-0 z-30 shrink-0 px-6 py-4 flex items-center justify-between transition-colors duration-200 ${
-          theme === 'light' ? 'border-[#E9ECEF] bg-white/95 backdrop-blur-md shadow-sm' : 'border-[#1C1C26] bg-[#0A0A0F]/95 backdrop-blur-md shadow-sm'
-        }`}>
+        <header className={`border-b sticky top-0 z-30 shrink-0 px-6 py-4 flex items-center justify-between transition-colors duration-200 ${theme === 'light' ? 'border-[#E9ECEF] bg-white/95 backdrop-blur-md shadow-sm' : 'border-[#1C1C26] bg-[#0A0A0F]/95 backdrop-blur-md shadow-sm'
+          }`}>
           <div>
-            <h1 className={`font-heading font-black text-xl flex items-center gap-2 ${
-              theme === 'light' ? 'text-[#1A1D20]' : 'text-white'
-            }`}>
+            <h1 className={`font-heading font-black text-xl flex items-center gap-2 ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'
+              }`}>
               <MessageSquare className="h-5 w-5 text-[#00F5D4]" /> Live Chat Panel Module
             </h1>
-            <p className={`text-xs ${
-              theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'
-            }`}>Active live stream Socket.IO chat room, incoming viewer donations & creator replies</p>
+            <p className={`text-xs ${theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'
+              }`}>Active live stream Socket.IO chat room, incoming viewer donations & creator replies</p>
           </div>
 
           <div className="flex items-center gap-3">
@@ -138,11 +135,10 @@ export default function CreatorLiveChatModulePage() {
             {/* Header Theme Switcher Button */}
             <button
               onClick={toggleTheme}
-              className={`px-3 py-1.5 rounded-xl border text-xs font-bold transition-all flex items-center gap-1.5 ${
-                theme === 'light'
+              className={`px-3 py-1.5 rounded-xl border text-xs font-bold transition-all flex items-center gap-1.5 ${theme === 'light'
                   ? 'bg-[#F1F3F5] text-[#212529] border-[#E9ECEF] hover:bg-[#E9ECEF]'
                   : 'bg-[#1C1C26] text-white border-[#1C1C26] hover:border-[#00F5D4]/40'
-              }`}
+                }`}
               title={theme === 'dark' ? 'Switch to Light Theme' : 'Switch to Dark Theme'}
             >
               {theme === 'dark' ? (
@@ -170,9 +166,8 @@ export default function CreatorLiveChatModulePage() {
 
             <button
               onClick={() => fetchSessions(creator?.id, getCreatorToken())}
-              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${
-                theme === 'light' ? 'bg-[#E9ECEF] text-[#1A1D20] hover:bg-[#DEE2E6]' : 'bg-[#1C1C26] hover:bg-[#252533] text-white'
-              }`}
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${theme === 'light' ? 'bg-[#E9ECEF] text-[#1A1D20] hover:bg-[#DEE2E6]' : 'bg-[#1C1C26] hover:bg-[#252533] text-white'
+                }`}
             >
               <RefreshCw className="h-3.5 w-3.5 text-[#00F5D4]" /> Refresh
             </button>
@@ -184,23 +179,19 @@ export default function CreatorLiveChatModulePage() {
           {isLoading ? (
             <div className="p-12 text-center space-y-3">
               <div className="h-8 w-8 border-4 border-[#00F5D4] border-t-transparent rounded-full animate-spin mx-auto" />
-              <p className={`text-xs font-bold uppercase tracking-wider ${
-                theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'
-              }`}>Loading Live Chat Panel...</p>
+              <p className={`text-xs font-bold uppercase tracking-wider ${theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'
+                }`}>Loading Live Chat Panel...</p>
             </div>
           ) : activeSessions.length === 0 ? (
-            <div className={`p-12 rounded-3xl border text-center space-y-4 max-w-xl mx-auto shadow-xl my-8 ${
-              theme === 'light' ? 'bg-white border-[#E9ECEF]' : 'bg-[#13131A] border-[#1C1C26]'
-            }`}>
+            <div className={`p-12 rounded-3xl border text-center space-y-4 max-w-xl mx-auto shadow-xl my-8 ${theme === 'light' ? 'bg-white border-[#E9ECEF]' : 'bg-[#13131A] border-[#1C1C26]'
+              }`}>
               <div className="p-4 rounded-2xl bg-[#FF3D71]/10 text-[#FF3D71] w-fit mx-auto border border-[#FF3D71]/30">
                 <Radio className="h-8 w-8 animate-pulse" />
               </div>
-              <h3 className={`font-heading font-black text-xl ${
-                theme === 'light' ? 'text-[#1A1D20]' : 'text-white'
-              }`}>No Active Live Session Found</h3>
-              <p className={`text-xs ${
-                theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'
-              }`}>
+              <h3 className={`font-heading font-black text-xl ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'
+                }`}>No Active Live Session Found</h3>
+              <p className={`text-xs ${theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'
+                }`}>
                 You need an active broadcast session to open the live chat panel and receive instant viewer questions.
               </p>
               <div className="pt-2">
@@ -214,23 +205,20 @@ export default function CreatorLiveChatModulePage() {
             </div>
           ) : (
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-              
+
               {/* LEFT COLUMN: ACTIVE LIVE CHAT BOX (8 Cols) */}
               <div className="lg:col-span-8 space-y-4">
                 {/* Session Selector (If multiple active sessions) */}
                 {activeSessions.length > 1 && (
-                  <div className={`p-4 rounded-2xl border flex items-center justify-between gap-4 ${
-                    theme === 'light' ? 'bg-white border-[#E9ECEF]' : 'bg-[#13131A] border-[#1C1C26]'
-                  }`}>
-                    <span className={`text-xs font-bold ${
-                      theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'
-                    }`}>Select Active Broadcast:</span>
+                  <div className={`p-4 rounded-2xl border flex items-center justify-between gap-4 ${theme === 'light' ? 'bg-white border-[#E9ECEF]' : 'bg-[#13131A] border-[#1C1C26]'
+                    }`}>
+                    <span className={`text-xs font-bold ${theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'
+                      }`}>Select Active Broadcast:</span>
                     <select
                       value={selectedSessionId || ''}
                       onChange={(e) => setSelectedSessionId(e.target.value)}
-                      className={`text-xs font-bold rounded-xl px-3 py-1.5 focus:outline-none focus:border-[#00F5D4] ${
-                        theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6] text-[#1A1D20]' : 'bg-[#0A0A0F] border-[#1C1C26] text-white'
-                      }`}
+                      className={`text-xs font-bold rounded-xl px-3 py-1.5 focus:outline-none focus:border-[#00F5D4] ${theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6] text-[#1A1D20]' : 'bg-[#0A0A0F] border-[#1C1C26] text-white'
+                        }`}
                     >
                       {activeSessions.map(s => (
                         <option key={s.id} value={s.id}>{s.title} ({s.category})</option>
@@ -252,48 +240,39 @@ export default function CreatorLiveChatModulePage() {
 
               {/* RIGHT COLUMN: SESSION OVERVIEW & QR LINKS */}
               <div className="lg:col-span-4 space-y-4">
-                
+
                 {/* Session Card Info */}
-                <div className={`p-5 rounded-3xl border space-y-4 shadow-xl ${
-                  theme === 'light' ? 'bg-white border-[#E9ECEF]' : 'bg-[#13131A] border-[#1C1C26]'
-                }`}>
-                  <div className={`flex items-center justify-between border-b pb-3 ${
-                    theme === 'light' ? 'border-[#E9ECEF]' : 'border-[#1C1C26]'
+                <div className={`p-5 rounded-3xl border space-y-4 shadow-xl ${theme === 'light' ? 'bg-white border-[#E9ECEF]' : 'bg-[#13131A] border-[#1C1C26]'
                   }`}>
+                  <div className={`flex items-center justify-between border-b pb-3 ${theme === 'light' ? 'border-[#E9ECEF]' : 'border-[#1C1C26]'
+                    }`}>
                     <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-[#00E676]/10 text-[#00E676] border border-[#00E676]/30 animate-pulse">
                       ● LIVE SESSION ACTIVE
                     </span>
-                    <span className={`text-xs ${
-                      theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'
-                    }`}>ID #{selectedSession.id}</span>
+                    <span className={`text-xs ${theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'
+                      }`}>ID #{selectedSession.id}</span>
                   </div>
 
                   <div>
-                    <h4 className={`font-heading font-bold text-base ${
-                      theme === 'light' ? 'text-[#1A1D20]' : 'text-white'
-                    }`}>{selectedSession.title}</h4>
-                    <p className={`text-xs mt-0.5 ${
-                      theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'
-                    }`}>{selectedSession.category || 'General Broadcast'}</p>
+                    <h4 className={`font-heading font-bold text-base ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'
+                      }`}>{selectedSession.title}</h4>
+                    <p className={`text-xs mt-0.5 ${theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'
+                      }`}>{selectedSession.category || 'General Broadcast'}</p>
                   </div>
 
-                  <div className={`grid grid-cols-2 gap-3 p-3 rounded-2xl border text-xs ${
-                    theme === 'light' ? 'bg-[#F8F9FA] border-[#E9ECEF]' : 'bg-[#0A0A0F] border-[#1C1C26]'
-                  }`}>
+                  <div className={`grid grid-cols-2 gap-3 p-3 rounded-2xl border text-xs ${theme === 'light' ? 'bg-[#F8F9FA] border-[#E9ECEF]' : 'bg-[#0A0A0F] border-[#1C1C26]'
+                    }`}>
                     <div>
-                      <span className={`text-[10px] block font-bold ${
-                        theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'
-                      }`}>TOTAL DONATIONS</span>
-                      <span className={`font-heading font-black text-sm ${
-                        theme === 'light' ? 'text-[#1A1D20]' : 'text-white'
-                      }`}>
+                      <span className={`text-[10px] block font-bold ${theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'
+                        }`}>TOTAL DONATIONS</span>
+                      <span className={`font-heading font-black text-sm ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'
+                        }`}>
                         {selectedSession.totalDonations || 0}
                       </span>
                     </div>
                     <div>
-                      <span className={`text-[10px] block font-bold ${
-                        theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'
-                      }`}>TOTAL COLLECTED</span>
+                      <span className={`text-[10px] block font-bold ${theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'
+                        }`}>TOTAL COLLECTED</span>
                       <span className="font-heading font-black text-[#00E676] text-sm">
                         ₹{(selectedSession.totalAmount || 0).toLocaleString()}
                       </span>
@@ -302,9 +281,8 @@ export default function CreatorLiveChatModulePage() {
                 </div>
 
                 {/* Live Stream QR Code */}
-                <div className={`p-4 rounded-3xl border space-y-3 shadow-xl ${
-                  theme === 'light' ? 'bg-white border-[#E9ECEF]' : 'bg-[#13131A] border-[#1C1C26]'
-                }`}>
+                <div className={`p-4 rounded-3xl border space-y-3 shadow-xl ${theme === 'light' ? 'bg-white border-[#E9ECEF]' : 'bg-[#13131A] border-[#1C1C26]'
+                  }`}>
                   <span className="text-[10px] font-extrabold text-[#00F5D4] uppercase tracking-wider block">
                     Active Session QR Code
                   </span>
@@ -315,9 +293,8 @@ export default function CreatorLiveChatModulePage() {
                       className="h-20 w-20 rounded-xl bg-white p-1 shadow-md shrink-0 border border-[#00F5D4]/30"
                     />
                     <div className="space-y-1">
-                      <p className={`text-xs font-bold ${
-                        theme === 'light' ? 'text-[#1A1D20]' : 'text-white'
-                      }`}>Scan & Pay Instant UPI</p>
+                      <p className={`text-xs font-bold ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'
+                        }`}>Scan & Pay Instant UPI</p>
                       <a
                         href={selectedSession.qrCodeUrl}
                         target="_blank"
@@ -331,15 +308,13 @@ export default function CreatorLiveChatModulePage() {
                 </div>
 
                 {/* Payment Link */}
-                <div className={`p-4 rounded-3xl border space-y-2 shadow-xl ${
-                  theme === 'light' ? 'bg-white border-[#E9ECEF]' : 'bg-[#13131A] border-[#1C1C26]'
-                }`}>
+                <div className={`p-4 rounded-3xl border space-y-2 shadow-xl ${theme === 'light' ? 'bg-white border-[#E9ECEF]' : 'bg-[#13131A] border-[#1C1C26]'
+                  }`}>
                   <span className="text-[10px] font-extrabold text-[#00F5D4] uppercase tracking-wider block">
                     Stream Payment Link
                   </span>
-                  <p className={`text-xs font-mono truncate p-2 rounded-xl border ${
-                    theme === 'light' ? 'bg-[#F8F9FA] border-[#E9ECEF] text-[#1A1D20]' : 'bg-[#0A0A0F] border-[#1C1C26] text-white'
-                  }`}>
+                  <p className={`text-xs font-mono truncate p-2 rounded-xl border ${theme === 'light' ? 'bg-[#F8F9FA] border-[#E9ECEF] text-[#1A1D20]' : 'bg-[#0A0A0F] border-[#1C1C26] text-white'
+                    }`}>
                     {selectedSession.paymentLink}
                   </p>
                   <button

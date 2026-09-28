@@ -46,15 +46,17 @@ export default function LandingNavbar() {
   return (
     <>
       <header
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled || mobileMenuOpen
           ? 'bg-[#07070C]/95 backdrop-blur-xl border-b border-[#1E1E2D]/80 py-2 px-2 sm:px-4 lg:px-6 shadow-2xl'
           : 'bg-transparent py-3 px-2 sm:px-4 lg:px-6'
           }`}
       >
         <div
-          className={`max-w-7xl mx-auto rounded-full transition-all duration-300 ${scrolled
-            ? 'bg-[#0D0D14] border border-[#222234] shadow-2xl py-2 px-4 sm:px-6'
-            : 'bg-[#0F0F18]/90 backdrop-blur-md border border-[#202030] py-2 px-4 sm:px-6 shadow-xl'
+          className={`max-w-7xl mx-auto transition-all duration-300 ${mobileMenuOpen
+            ? 'bg-[#0D0D14] border border-[#222234] shadow-2xl py-3 px-4 sm:px-6 rounded-2xl sm:rounded-3xl'
+            : scrolled
+              ? 'bg-[#0D0D14] border border-[#222234] shadow-2xl py-2 px-4 sm:px-6 rounded-full'
+              : 'bg-[#0F0F18]/90 backdrop-blur-md border border-[#202030] py-2 px-4 sm:px-6 shadow-xl rounded-full'
             }`}
         >
           <div className="flex items-center justify-between gap-3">
@@ -129,13 +131,13 @@ export default function LandingNavbar() {
               <button
                 type="button"
                 onClick={() => openAuth('creator', 'register')}
-                className="px-3.5 py-1.5 rounded-full bg-[#EB1000] text-white text-xs font-bold sm:hidden cursor-pointer"
+                className="px-3.5 py-1.5 rounded-full bg-[#EB1000] text-white text-xs font-bold sm:hidden cursor-pointer shadow-md"
               >
                 Get Started
               </button>
               <button
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="p-2 rounded-full bg-[#161622] text-white border border-[#262638]"
+                className="p-2 rounded-full bg-[#161622] text-white border border-[#262638] hover:bg-[#202030] transition cursor-pointer"
                 aria-label="Toggle Menu"
               >
                 {mobileMenuOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
@@ -145,43 +147,41 @@ export default function LandingNavbar() {
 
           {/* Mobile Dropdown */}
           {mobileMenuOpen && (
-            <div className="lg:hidden mt-3 pt-3 pb-2 border-t border-[#222234] space-y-2 text-xs font-semibold text-[#A0A0B2]">
-              <Link href="/discover-creators" onClick={() => setMobileMenuOpen(false)} className="block py-1.5 hover:text-white">
+            <div className="lg:hidden mt-3 pt-3 pb-3 border-t border-[#222234] space-y-1.5 text-xs font-semibold text-[#A0A0B2] animate-fadeIn">
+              <Link href="/discover-creators" onClick={() => setMobileMenuOpen(false)} className="block py-2 px-3 rounded-xl hover:bg-white/5 hover:text-white transition">
                 Discover
               </Link>
-              <a href="#categories" onClick={() => setMobileMenuOpen(false)} className="block py-1.5 hover:text-white">
+              <a href="#categories" onClick={() => setMobileMenuOpen(false)} className="block py-2 px-3 rounded-xl hover:bg-white/5 hover:text-white transition">
                 Categories
               </a>
-              <a href="#how-it-works" onClick={() => setMobileMenuOpen(false)} className="block py-1.5 hover:text-white">
+              <a href="#how-it-works" onClick={() => setMobileMenuOpen(false)} className="block py-2 px-3 rounded-xl hover:bg-white/5 hover:text-white transition">
                 How It Works
               </a>
-              <a href="#for-creators" onClick={() => setMobileMenuOpen(false)} className="block py-1.5 hover:text-white">
+              <a href="#for-creators" onClick={() => setMobileMenuOpen(false)} className="block py-2 px-3 rounded-xl hover:bg-white/5 hover:text-white transition">
                 For Creators
               </a>
-              <Link href="/live-streams" onClick={() => setMobileMenuOpen(false)} className="block py-1.5 text-white font-bold flex items-center gap-1.5">
+              <Link href="/live-streams" onClick={() => setMobileMenuOpen(false)} className="block py-2 px-3 rounded-xl text-white font-bold flex items-center gap-2 hover:bg-white/5 transition">
                 <span className="h-2 w-2 rounded-full bg-[#EB1000] animate-pulse"></span>
                 Live Streams
               </Link>
-              <Link href="/contact" onClick={() => setMobileMenuOpen(false)} className="block py-1.5 hover:text-white">
+              <Link href="/contact" onClick={() => setMobileMenuOpen(false)} className="block py-2 px-3 rounded-xl hover:bg-white/5 hover:text-white transition">
                 Contact Us
               </Link>
-              <div className="pt-2 flex flex-col gap-2">
-                <div className="grid grid-cols-2 gap-2 pt-1">
-                  <button
-                    type="button"
-                    onClick={() => openAuth('viewer', 'login')}
-                    className="py-2 rounded-full bg-[#161622] border border-[#262638] text-center text-white font-semibold cursor-pointer"
-                  >
-                    Viewer Login
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => openAuth('creator', 'register')}
-                    className="py-2 rounded-full bg-[#EB1000] text-center text-white font-bold cursor-pointer"
-                  >
-                    Get Started
-                  </button>
-                </div>
+              <div className="pt-2 border-t border-[#222234] grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => openAuth('viewer', 'login')}
+                  className="py-2.5 rounded-xl bg-[#161622] border border-[#262638] text-center text-white text-xs font-bold hover:bg-[#202030] transition cursor-pointer"
+                >
+                  Viewer Login
+                </button>
+                <button
+                  type="button"
+                  onClick={() => openAuth('creator', 'register')}
+                  className="py-2.5 rounded-xl bg-[#EB1000] hover:bg-[#CC0E00] text-center text-white text-xs font-bold shadow-lg shadow-[#EB1000]/25 transition cursor-pointer"
+                >
+                  Get Started
+                </button>
               </div>
             </div>
           )}

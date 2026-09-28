@@ -42,7 +42,7 @@ export default function AnalyticsPage() {
     const token = getCreatorToken();
     const u = getCreatorUser();
     if (!token || !u || !u.id) {
-      window.location.href = '/creators/login';
+      window.location.href = '/';
       return;
     }
     setCreator(u);
@@ -75,9 +75,8 @@ export default function AnalyticsPage() {
   return (
     <>
       <div className="flex-1 flex flex-col min-w-0">
-        <header className={`border-b sticky top-0 z-30 shrink-0 px-6 py-4 flex items-center justify-between transition-colors ${
-          theme === 'light' ? 'border-[#E9ECEF] bg-white/95 backdrop-blur-md shadow-sm' : 'border-[#1C1C26] bg-[#0A0A0F]/95 backdrop-blur-md shadow-sm'
-        }`}>
+        <header className={`border-b sticky top-0 z-30 shrink-0 px-6 py-4 flex items-center justify-between transition-colors ${theme === 'light' ? 'border-[#E9ECEF] bg-white/95 backdrop-blur-md shadow-sm' : 'border-[#1C1C26] bg-[#0A0A0F]/95 backdrop-blur-md shadow-sm'
+          }`}>
           <div>
             <h1 className={`font-heading font-black text-xl flex items-center gap-2 ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'}`}>
               <BarChart3 className="h-5 w-5 text-[#00F5D4]" /> Creator Financial Analytics
@@ -96,9 +95,8 @@ export default function AnalyticsPage() {
         </header>
 
         <main className="p-6 max-w-5xl w-full mx-auto space-y-6">
-          <div className={`p-6 rounded-3xl border space-y-6 shadow-xl ${
-            theme === 'light' ? 'bg-white border-[#E9ECEF]' : 'bg-[#13131A] border-[#1C1C26]'
-          }`}>
+          <div className={`p-6 rounded-3xl border space-y-6 shadow-xl ${theme === 'light' ? 'bg-white border-[#E9ECEF]' : 'bg-[#13131A] border-[#1C1C26]'
+            }`}>
             <div>
               <h3 className={`font-heading font-black text-xl ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'}`}>Revenue & Commission Breakdown</h3>
               <p className="text-xs text-[#8B8B96] mt-0.5">85% creator share model with transparent settlement reporting.</p>

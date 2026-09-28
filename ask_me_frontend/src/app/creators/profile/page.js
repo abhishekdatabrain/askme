@@ -235,7 +235,7 @@ export default function CreatorProfilePage() {
     const userObj = getCreatorUser();
 
     if (!token || !userObj?.id) {
-      window.location.href = "/creators/login";
+      window.location.href = "/";
       return;
     }
 

@@ -172,13 +172,31 @@ export default function CreatorKycPage() {
     const [isVerifyingPan, setIsVerifyingPan] = useState(false);
     const [panVerificationData, setPanVerificationData] = useState(null);
 
-    // 2. Aadhaar OKYC State
+    // 2. Aadhaar & DigiLocker State
     const [isSendingAadhaarOtp, setIsSendingAadhaarOtp] = useState(false);
     const [isVerifyingAadhaarOtp, setIsVerifyingAadhaarOtp] = useState(false);
     const [aadhaarOtpSent, setAadhaarOtpSent] = useState(false);
     const [aadhaarRefId, setAadhaarRefId] = useState('');
     const [aadhaarOtp, setAadhaarOtp] = useState('');
     const [aadhaarVerificationData, setAadhaarVerificationData] = useState(null);
+
+    // DigiLocker State
+    const [isInitiatingDigiLocker, setIsInitiatingDigiLocker] = useState(false);
+    const [isVerifyingDigiLocker, setIsVerifyingDigiLocker] = useState(false);
+    const [isSendingDigiLockerOtp, setIsSendingDigiLockerOtp] = useState(false);
+    const [isVerifyingDigiLockerOtp, setIsVerifyingDigiLockerOtp] = useState(false);
+    const [digiLockerOtpSent, setDigiLockerOtpSent] = useState(false);
+    const [digiLockerRefId, setDigiLockerRefId] = useState('');
+    const [digiLockerOtp, setDigiLockerOtp] = useState('');
+    const [digiLockerPin, setDigiLockerPin] = useState('');
+    const [showDigiLockerOtpBox, setShowDigiLockerOtpBox] = useState(false);
+    const [showDigiConsentModal, setShowDigiConsentModal] = useState(false);
+    const [digiConsentAgreed, setDigiConsentAgreed] = useState(true);
+    const [digiCardStep, setDigiCardStep] = useState(2); // 2: PAN, 3: DigiLocker Aadhaar, 4: DigiLocker Consent, 5: Verification Success
+
+    // PAN to GSTIN State
+    const [isFetchingGstin, setIsFetchingGstin] = useState(false);
+    const [gstinData, setGstinData] = useState(null);
 
     // 3. PAN + Aadhaar Identity Match State
     const [isCheckingIdentityMatch, setIsCheckingIdentityMatch] = useState(false);
@@ -187,6 +205,24 @@ export default function CreatorKycPage() {
     // 4. Bank Account Verification State (Penny Drop)
     const [isVerifyingBank, setIsVerifyingBank] = useState(false);
     const [bankVerificationData, setBankVerificationData] = useState(null);
+
+    // 5. EULA & Legal Agreement State
+    const [showEulaModal, setShowEulaModal] = useState(false);
+    const [agreeEula, setAgreeEula] = useState(false);
+
+    // Age calculation helper (18+ check)
+    const calculateAge = (dobString) => {
+        if (!dobString) return null;
+        const dob = new Date(dobString);
+        if (isNaN(dob.getTime())) return null;
+        const today = new Date();
+        let age = today.getFullYear() - dob.getFullYear();
+        const m = today.getMonth() - dob.getMonth();
+        if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) {
+            age--;
+        }
+        return age;
+    };
 
     const sanitizePanNumber = (input) => {
         if (!input) return '';
@@ -214,6 +250,243 @@ export default function CreatorKycPage() {
             cleaned = chars.join('');
         }
         return cleaned;
+    };
+
+    // --- DigiLocker Handlers ---
+    const handleInitDigiLocker = async () => {
+        try {
+            setIsInitiatingDigiLocker(true);
+            const redirectUrl = typeof window !== 'undefined' ? `${window.location.origin}/creators/kyc` : '';
+            const res = await fetch(API_ENDPOINTS.CREATORS.DIGILOCKER_INIT, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                },
+                body: JSON.stringify({
+                    redirectUrl,
+                    verificationId: `CF-DIGI-${Date.now()}`,
+                }),
+            });
+            const data = await res.json();
+            if (res.ok && data.status === 'success' && data.data?.redirectUrl) {
+                toast.info('Redirecting to DigiLocker for Aadhaar Verification...', 'DigiLocker Initiated');
+                setTimeout(() => {
+                    window.location.href = data.data.redirectUrl;
+                }, 400);
+            } else {
+                toast.error(data.message || 'Failed to initialize DigiLocker session.', 'DigiLocker Error');
+            }
+        } catch (err) {
+            toast.error(err.message || 'Failed to connect to DigiLocker.', 'DigiLocker Error');
+        } finally {
+            setIsInitiatingDigiLocker(false);
+        }
+    };
+
+    const handleVerifyDigiLockerCallback = async (verificationId) => {
+        try {
+            setIsVerifyingDigiLocker(true);
+            toast.info('Verifying Aadhaar document via DigiLocker...', 'DigiLocker Verification');
+
+            const res = await fetch(API_ENDPOINTS.CREATORS.DIGILOCKER_VERIFY, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                },
+                body: JSON.stringify({
+                    verificationId,
+                    name: panVerificationData?.registeredName || formData.fullName,
+                }),
+            });
+
+            const data = await res.json();
+            if (res.ok && data.status === 'success' && data.data?.verified) {
+                const digiData = data.data;
+                const aadhaarName = digiData.registeredName || formData.fullName;
+
+                // 18+ Age Restriction Check from DigiLocker DOB
+                if (digiData.dob) {
+                    const age = calculateAge(digiData.dob);
+                    if (age !== null && age < 18) {
+                        toast.error(`Age Restriction Error: Verified DigiLocker DOB indicates age ${age} (< 18). You must be 18+ to complete KYC.`, 'Underage Error');
+                        setAadhaarVerificationData(null);
+                        return;
+                    }
+                    setFormData(prev => ({
+                        ...prev,
+                        dateOfBirth: digiData.dob,
+                    }));
+                }
+
+                setAadhaarVerificationData({
+                    ...digiData,
+                    verificationMode: 'DigiLocker',
+                });
+                setDigiCardStep(5);
+
+                toast.success(`Aadhaar Verified via DigiLocker! Name: ${aadhaarName}`, 'DigiLocker Verified');
+
+                // If PAN is already verified, trigger backend identity match
+                const panName = panVerificationData?.registeredName || formData.fullName;
+                if (panVerificationData?.verified) {
+                    runIdentityMatch(panName, aadhaarName);
+                }
+
+                // Clear query params from URL
+                if (typeof window !== 'undefined' && window.history) {
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                }
+            } else {
+                toast.error(data.message || 'DigiLocker verification failed.', 'DigiLocker Error');
+            }
+        } catch (err) {
+            toast.error(err.message || 'Error processing DigiLocker verification.', 'Verification Error');
+        } finally {
+            setIsVerifyingDigiLocker(false);
+        }
+    };
+
+    // --- DigiLocker Aadhaar OTP Handlers ---
+    const handleSendDigiLockerOtp = async () => {
+        const cleanAadhaar = String(formData.aadhaarNumber || '').replace(/\D/g, '');
+        if (!cleanAadhaar || cleanAadhaar.length !== 12) {
+            toast.error('Please enter a valid 12-digit Aadhaar Card Number.', 'Aadhaar Required');
+            return;
+        }
+
+        try {
+            setIsSendingDigiLockerOtp(true);
+            const res = await fetch(API_ENDPOINTS.CREATORS.DIGILOCKER_SEND_OTP, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                },
+                body: JSON.stringify({
+                    aadhaarNumber: cleanAadhaar,
+                }),
+            });
+            const data = await res.json();
+            if (res.ok && data.status === 'success' && data.data?.refId) {
+                setDigiLockerRefId(data.data.refId);
+                setDigiLockerOtpSent(true);
+                setShowDigiLockerOtpBox(true);
+                toast.success('DigiLocker OTP sent successfully to your Aadhaar-linked mobile!', 'DigiLocker OTP Sent');
+            } else {
+                toast.error(data.message || 'Failed to send DigiLocker OTP.', 'DigiLocker Error');
+            }
+        } catch (err) {
+            toast.error(err.message, 'DigiLocker OTP Error');
+        } finally {
+            setIsSendingDigiLockerOtp(false);
+        }
+    };
+
+    const handleVerifyDigiLockerOtp = async () => {
+        if (!digiLockerOtp || digiLockerOtp.trim().length < 4) {
+            toast.error('Please enter the 6-digit OTP received for DigiLocker Aadhaar verification.', 'OTP Required');
+            return;
+        }
+
+        try {
+            setIsVerifyingDigiLockerOtp(true);
+            const res = await fetch(API_ENDPOINTS.CREATORS.DIGILOCKER_VERIFY_OTP, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                },
+                body: JSON.stringify({
+                    otp: digiLockerOtp.trim(),
+                    securityPin: digiLockerPin.trim(),
+                    refId: digiLockerRefId,
+                    aadhaarNumber: formData.aadhaarNumber,
+                    name: panVerificationData?.registeredName || formData.fullName,
+                }),
+            });
+            const data = await res.json();
+            if (res.ok && data.status === 'success' && data.data?.verified) {
+                const digiData = data.data;
+                const aadhaarName = digiData.registeredName || formData.fullName;
+
+                // 18+ Age restriction check
+                if (digiData.dob) {
+                    const age = calculateAge(digiData.dob);
+                    if (age !== null && age < 18) {
+                        toast.error(`Age Restriction Error: DigiLocker DOB indicates age ${age} (< 18). You must be 18+ to complete KYC.`, 'Underage Error');
+                        setAadhaarVerificationData(null);
+                        return;
+                    }
+                    setFormData(prev => ({
+                        ...prev,
+                        dateOfBirth: digiData.dob,
+                    }));
+                }
+
+                setAadhaarVerificationData({
+                    ...digiData,
+                    verificationMode: 'DigiLocker OTP',
+                });
+                setDigiCardStep(5);
+
+                setShowDigiLockerOtpBox(false);
+                toast.success(`Aadhaar Verified via DigiLocker OTP! Name: ${aadhaarName}`, 'DigiLocker Verified');
+
+                // Trigger PAN-Aadhaar identity match if PAN is verified
+                const panName = panVerificationData?.registeredName || formData.fullName;
+                if (panVerificationData?.verified) {
+                    runIdentityMatch(panName, aadhaarName);
+                }
+            } else {
+                setAadhaarVerificationData(null);
+                toast.error(data.message || 'Invalid DigiLocker OTP. Verification failed.', 'Verification Failed');
+            }
+        } catch (err) {
+            toast.error(err.message, 'Verification Error');
+        } finally {
+            setIsVerifyingDigiLockerOtp(false);
+        }
+    };
+
+    // --- PAN to GSTIN Lookup Handler ---
+    const handleFetchGstin = async () => {
+        if (!formData.panNumber || !formData.panNumber.trim()) {
+            toast.error('Please enter a PAN Card Number first.', 'PAN Required');
+            return;
+        }
+
+        const cleanPan = sanitizePanNumber(formData.panNumber);
+        try {
+            setIsFetchingGstin(true);
+            const res = await fetch(API_ENDPOINTS.CREATORS.PAN_TO_GSTIN, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                },
+                body: JSON.stringify({
+                    panNumber: cleanPan,
+                }),
+            });
+            const data = await res.json();
+            if (res.ok && data.status === 'success' && data.data) {
+                setGstinData(data.data);
+                const count = data.data.count || (data.data.gstinList ? data.data.gstinList.length : 0);
+                if (count > 0) {
+                    toast.success(`Found ${count} registered GSTIN(s) for PAN ${cleanPan}!`, 'GSTIN Found');
+                } else {
+                    toast.info(`No GSTIN registered for PAN ${cleanPan}.`, 'GSTIN Lookup');
+                }
+            } else {
+                toast.error(data.message || 'Failed to fetch GSTIN details for this PAN.', 'GSTIN Lookup Error');
+            }
+        } catch (err) {
+            toast.error(err.message, 'GSTIN Lookup Error');
+        } finally {
+            setIsFetchingGstin(false);
+        }
     };
 
     // --- STEP 2: PAN Verification Handler ---
@@ -530,6 +803,16 @@ export default function CreatorKycPage() {
             }
         };
 
+        // Check for DigiLocker Redirect Callback params
+        if (typeof window !== 'undefined') {
+            const urlParams = new URLSearchParams(window.location.search);
+            const digiVerifId = urlParams.get('digilocker_verification_id') || urlParams.get('verification_id');
+            if (digiVerifId) {
+                setStep(2);
+                handleVerifyDigiLockerCallback(digiVerifId);
+            }
+        }
+
         checkKycStatus();
     }, []);
 
@@ -563,6 +846,13 @@ export default function CreatorKycPage() {
         }
 
         if (!formData.dateOfBirth) return 'Date of Birth is required.';
+
+        // 18+ Age Restriction Validation
+        const userAge = calculateAge(formData.dateOfBirth);
+        if (userAge !== null && userAge < 18) {
+            return 'Age Restriction: You must be at least 18 years old to register as a Creator and complete KYC.';
+        }
+
         if (!formData.address.trim()) return 'Residential Address is required.';
         if (!formData.country.trim()) return 'Country is required.';
         if (!formData.state.trim()) return 'State is required.';
@@ -575,7 +865,13 @@ export default function CreatorKycPage() {
             return 'Please complete PAN Card verification via Cashfree first.';
         }
         if (!aadhaarVerificationData?.verified) {
-            return 'Please complete Aadhaar e-KYC (OTP verification) via Cashfree.';
+            return 'Please complete Aadhaar verification via DigiLocker or Aadhaar OTP.';
+        }
+        if (aadhaarVerificationData?.dob) {
+            const aadhaarAge = calculateAge(aadhaarVerificationData.dob);
+            if (aadhaarAge !== null && aadhaarAge < 18) {
+                return 'Underage Error: Verified Aadhaar identity indicates age under 18. KYC cannot be submitted.';
+            }
         }
         return null;
     };
@@ -596,6 +892,10 @@ export default function CreatorKycPage() {
         const cleanIfsc = formData.ifscCode.trim().toUpperCase();
         if (!ifscRegex.test(cleanIfsc)) {
             return 'Invalid IFSC Code format. E.g. SBIN0001234 or HDFC0000240.';
+        }
+
+        if (!bankVerificationData?.verified) {
+            return 'Please verify your bank account details via Cashfree Penny Drop before proceeding.';
         }
 
         return null;
@@ -635,9 +935,9 @@ export default function CreatorKycPage() {
 
     const handleSubmitKyc = async (e) => {
         e.preventDefault();
-        if (!formData.agreeTerms) {
-            setErrorMsg('Please confirm legal agreement terms to submit.');
-            toast.error('Legal Agreement Required');
+        if (!formData.agreeTerms || !agreeEula) {
+            setErrorMsg('Please read and accept the AskMe EULA Agreement & legal declaration to proceed.');
+            toast.error('Please accept both the AskMe EULA Agreement and identity declaration before submitting KYC.', 'Legal Agreement Required');
             return;
         }
 
@@ -1078,6 +1378,9 @@ export default function CreatorKycPage() {
                                                 : 'bg-[#181826] border-[#2A2A3E] text-white focus:border-[#EB1000] focus:ring-1 focus:ring-[#EB1000]'
                                                 }`}
                                         />
+                                        <span className="text-[10px] text-[#00F5D4] mt-1 block font-medium flex items-center gap-1">
+                                            ⚡ 18+ Age Requirement: Must be at least 18 years old (Verified against Aadhaar Govt ID).
+                                        </span>
                                     </div>
                                 </div>
 
@@ -1294,213 +1597,347 @@ export default function CreatorKycPage() {
                             </form>
                         )}
 
-                        {/* STEP 2: Document Proof (PAN + Aadhaar OKYC + Identity Match) */}
+                        {/* STEP 2: Document Proof (Unified Single Form Page) */}
                         {step === 2 && (
                             <form onSubmit={handleNextStep} className="space-y-6">
-                                <div className="flex items-center gap-2.5">
-                                    <span className="p-2 rounded-xl bg-[#EB1000]/10 text-[#EB1000] border border-[#EB1000]/20 shrink-0">
-                                        <FileText className="h-4 w-4" />
+                                {/* Step Header */}
+                                <div className="flex items-center gap-3">
+                                    <span className="p-2.5 rounded-2xl bg-indigo-600/10 text-indigo-400 border border-indigo-500/20 shrink-0 shadow-sm">
+                                        <FileText className="h-5 w-5" />
                                     </span>
                                     <div>
-                                        <h3 className={`font-extrabold text-sm ${theme === 'light' ? 'text-[#0F172A]' : 'text-white'}`}>
-                                            Step 2 — Cashfree Identity Verification
+                                        <h3 className={`font-black text-base tracking-tight ${theme === 'light' ? 'text-[#0F172A]' : 'text-white'}`}>
+                                            Step 2 — Cashfree & DigiLocker Verification
                                         </h3>
-                                        <p className="text-[11px] text-[#8B8B96]">Verify your PAN card & complete UIDAI Aadhaar e-KYC via OTP.</p>
+                                        <p className="text-xs text-[#94A3B8] font-medium">Verify your PAN card & complete Aadhaar e-KYC via DigiLocker.</p>
                                     </div>
                                 </div>
 
-                                {/* SECTION 1: PAN VERIFICATION */}
-                                <div className={`p-5 rounded-2xl border space-y-3 transition-all ${theme === 'light' ? 'bg-[#F8FAFC] border-[#E2E8F0]' : 'bg-[#181826] border-[#2A2A3E]'}`}>
-                                    <div className="flex items-center justify-between border-b pb-2 border-current/10">
+                                {/* SECTION 1: PAN CARD VERIFICATION */}
+                                <div className={`p-6 rounded-3xl border space-y-4 transition-all ${theme === 'light' ? 'bg-white border-[#E2E8F0]' : 'bg-[#141422] border-[#26263A]'}`}>
+                                    <div className="flex items-center justify-between border-b pb-3 border-current/10">
                                         <div className="flex items-center gap-2">
-                                            <CreditCard className="h-4 w-4 text-[#EB1000]" />
+                                            <CreditCard className="h-4 w-4 text-indigo-400" />
                                             <h4 className={`text-xs font-black uppercase tracking-wider ${theme === 'light' ? 'text-[#0F172A]' : 'text-white'}`}>
                                                 1. PAN Card Verification
                                             </h4>
                                         </div>
                                         {panVerificationData?.verified ? (
-                                            <span className="text-[10px] font-extrabold text-[#00E676] bg-[#00E676]/10 px-2.5 py-0.5 rounded-full border border-[#00E676]/30 flex items-center gap-1">
-                                                <CheckCircle2 className="h-3 w-3" /> PAN Verified
+                                            <span className="text-[11px] font-extrabold text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded-lg border border-emerald-500/30 flex items-center gap-1.5">
+                                                <CheckCircle2 className="h-3.5 w-3.5" /> PAN Verified
                                             </span>
                                         ) : (
-                                            <span className="text-[10px] font-bold text-amber-500 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/30">
+                                            <span className="text-[10px] font-bold text-amber-500 bg-amber-500/10 px-2.5 py-0.5 rounded-full border border-amber-500/30">
                                                 Required
                                             </span>
                                         )}
                                     </div>
 
-                                    <div>
-                                        <label className={`block text-xs font-extrabold mb-1.5 ${theme === 'light' ? 'text-[#0F172A]' : 'text-[#E2E8F0]'}`}>
-                                            PAN Number (10 Digits) *
-                                        </label>
-                                        <div className="flex gap-2">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <div>
+                                            <label className={`block text-xs font-extrabold mb-2 ${theme === 'light' ? 'text-[#0F172A]' : 'text-[#E2E8F0]'}`}>
+                                                PAN Number (10 Digits) *
+                                            </label>
+                                            <div className="relative">
+                                                <input
+                                                    type="text"
+                                                    maxLength={10}
+                                                    required
+                                                    value={formData.panNumber}
+                                                    onChange={(e) => handleInputChange('panNumber', e.target.value.toUpperCase())}
+                                                    placeholder="e.g. ABCDE1234F"
+                                                    className={`w-full px-4 py-3.5 rounded-xl border text-xs outline-none font-mono uppercase font-bold tracking-wider pr-28 transition-all ${
+                                                        theme === 'light' ? 'bg-[#F8FAFC] border-[#CBD5E1] text-[#0F172A] focus:border-indigo-600' : 'bg-[#0B0B12] border-[#26263A] text-white focus:border-indigo-500'
+                                                    }`}
+                                                />
+                                                {panVerificationData?.verified ? (
+                                                    <span className="absolute right-2 top-1/2 -translate-y-1/2 px-3 py-1 rounded-lg bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 text-[11px] font-extrabold flex items-center gap-1.5">
+                                                        <CheckCircle2 className="w-3.5 h-3.5" /> Verified
+                                                    </span>
+                                                ) : (
+                                                    <button
+                                                        type="button"
+                                                        onClick={handleVerifyPan}
+                                                        disabled={isVerifyingPan || !formData.panNumber}
+                                                        className="absolute right-2 top-1/2 -translate-y-1/2 px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-extrabold transition shadow-md disabled:opacity-50 flex items-center gap-1.5 cursor-pointer"
+                                                    >
+                                                        {isVerifyingPan ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : 'Verify'}
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <label className={`block text-xs font-extrabold mb-2 ${theme === 'light' ? 'text-[#0F172A]' : 'text-[#E2E8F0]'}`}>
+                                                Name (as per PAN)
+                                            </label>
                                             <input
                                                 type="text"
-                                                maxLength={10}
-                                                required
-                                                value={formData.panNumber}
-                                                onChange={(e) => handleInputChange('panNumber', e.target.value.toUpperCase())}
-                                                placeholder="e.g. ABCDE1234F"
-                                                className={`flex-1 px-4 py-3 rounded-xl border text-xs outline-none font-mono uppercase font-bold transition-all duration-200 ${theme === 'light'
-                                                    ? 'bg-white border-[#E2E8F0] text-[#0F172A] focus:border-[#EB1000]'
-                                                    : 'bg-[#101018] border-[#2A2A3E] text-white focus:border-[#EB1000]'
-                                                    }`}
+                                                readOnly={!!panVerificationData?.registeredName}
+                                                value={panVerificationData?.registeredName || formData.fullName}
+                                                onChange={(e) => handleInputChange('fullName', e.target.value)}
+                                                placeholder="Rohit Kumar"
+                                                className={`w-full px-4 py-3.5 rounded-xl border text-xs outline-none font-medium ${
+                                                    theme === 'light' ? 'bg-[#F8FAFC] border-[#CBD5E1] text-[#0F172A]' : 'bg-[#0B0B12] border-[#26263A] text-white'
+                                                }`}
                                             />
-                                            <button
-                                                type="button"
-                                                onClick={handleVerifyPan}
-                                                disabled={isVerifyingPan || !formData.panNumber}
-                                                className="px-5 py-3 rounded-xl bg-gradient-to-r from-[#EB1000] to-[#CC0E00] text-white text-xs font-black shrink-0 transition hover:opacity-90 disabled:opacity-50 flex items-center gap-1.5 cursor-pointer"
-                                            >
-                                                {isVerifyingPan ? (
-                                                    <>
-                                                        <RefreshCw className="h-3.5 w-3.5 animate-spin" /> Verifying...
-                                                    </>
-                                                ) : (
-                                                    <>
-                                                        <ShieldCheck className="h-3.5 w-3.5" /> Verify PAN
-                                                    </>
-                                                )}
-                                            </button>
                                         </div>
                                     </div>
 
+                                    {/* Green Verified Alert Notice */}
                                     {panVerificationData?.verified && (
-                                        <div className={`p-3 rounded-xl border text-xs space-y-1 ${theme === 'light' ? 'bg-[#EBFBFA] border-[#00F5D4]/40 text-[#007A6B]' : 'bg-[#00F5D4]/10 border-[#00F5D4]/30 text-[#00F5D4]'}`}>
-                                            <div className="font-extrabold flex items-center gap-1.5">
-                                                <Check className="h-4 w-4" /> PAN Holder Name: {panVerificationData.registeredName}
+                                        <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 space-y-1 text-xs">
+                                            <div className="font-extrabold flex items-center gap-2 text-sm">
+                                                <Check className="w-4 h-4 text-emerald-400 shrink-0 stroke-[3]" />
+                                                <span>PAN verified successfully</span>
                                             </div>
-                                            <div className="text-[11px] opacity-80">
-                                                PAN Type: {panVerificationData.type || 'INDIVIDUAL'} &bull; Ref: {panVerificationData.referenceId}
-                                            </div>
+                                            <p className="text-xs opacity-90 pl-6 text-emerald-300">
+                                                You can now proceed to Aadhaar verification using DigiLocker below.
+                                            </p>
+                                        </div>
+                                    )}
+
+                                    {/* PAN to GSTIN Lookup */}
+                                    {formData.panNumber && formData.panNumber.length === 10 && (
+                                        <div className="pt-1">
+                                            <button
+                                                type="button"
+                                                onClick={handleFetchGstin}
+                                                disabled={isFetchingGstin}
+                                                className={`w-full py-3 px-4 rounded-xl border text-xs font-extrabold flex items-center justify-center gap-2 transition cursor-pointer ${
+                                                    theme === 'light'
+                                                        ? 'bg-[#F1F5F9] border-[#CBD5E1] text-[#0F172A] hover:bg-[#E2E8F0]'
+                                                        : 'bg-[#1A1A2A] border-[#2E2E44] text-white hover:bg-[#222238]'
+                                                }`}
+                                            >
+                                                {isFetchingGstin ? (
+                                                    <><RefreshCw className="h-4 w-4 animate-spin" /> Fetching Registered GSTINs...</>
+                                                ) : (
+                                                    <><Building2 className="h-4 w-4 text-[#00F5D4]" /> Fetch Registered GSTINs (PAN to GSTIN)</>
+                                                )}
+                                            </button>
+
+                                            {gstinData && (
+                                                <div className="mt-3 p-4 rounded-2xl border bg-[#0B0B12] border-[#26263A] space-y-2.5 text-xs">
+                                                    <div className="flex items-center justify-between text-[#00F5D4] font-bold text-xs">
+                                                        <span>Registered GSTIN Details ({gstinData.count || 0})</span>
+                                                        <span className="text-gray-400 font-mono">PAN: {gstinData.pan}</span>
+                                                    </div>
+                                                    {gstinData.gstinList && gstinData.gstinList.length > 0 ? (
+                                                        <div className="space-y-2">
+                                                            {gstinData.gstinList.map((item, idx) => (
+                                                                <div key={idx} className="p-3 rounded-xl bg-[#141422] border border-[#26263A] flex items-center justify-between text-xs">
+                                                                    <div>
+                                                                        <span className="font-mono font-bold text-white block">{item.gstin}</span>
+                                                                        <span className="text-[#94A3B8] text-[11px]">{item.businessName} &bull; {item.state}</span>
+                                                                    </div>
+                                                                    <span className="px-2.5 py-1 rounded-lg text-[10px] font-extrabold bg-[#00E676]/10 text-[#00E676] border border-[#00E676]/30">
+                                                                        {item.status || 'Active'}
+                                                                    </span>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    ) : (
+                                                        <p className="text-xs text-gray-400">No active GSTIN registration found for this PAN card.</p>
+                                                    )}
+                                                </div>
+                                            )}
                                         </div>
                                     )}
                                 </div>
 
-                                {/* SECTION 2: AADHAAR E-KYC / OKYC */}
-                                <div className={`p-5 rounded-2xl border space-y-3 transition-all ${theme === 'light' ? 'bg-[#F8FAFC] border-[#E2E8F0]' : 'bg-[#181826] border-[#2A2A3E]'}`}>
-                                    <div className="flex items-center justify-between border-b pb-2 border-current/10">
+                                {/* SECTION 2: DIGILOCKER AADHAAR VERIFICATION */}
+                                <div className={`p-6 rounded-3xl border space-y-5 transition-all ${theme === 'light' ? 'bg-white border-[#E2E8F0]' : 'bg-[#141422] border-[#26263A]'}`}>
+                                    <div className="flex items-center justify-between border-b pb-3 border-current/10">
                                         <div className="flex items-center gap-2">
-                                            <Smartphone className="h-4 w-4 text-[#00F5D4]" />
+                                            <ShieldCheck className="h-4 w-4 text-indigo-400" />
                                             <h4 className={`text-xs font-black uppercase tracking-wider ${theme === 'light' ? 'text-[#0F172A]' : 'text-white'}`}>
-                                                2. Aadhaar e-KYC (OKYC + OTP)
+                                                2. DigiLocker Aadhaar Verification
                                             </h4>
                                         </div>
                                         {aadhaarVerificationData?.verified ? (
-                                            <span className="text-[10px] font-extrabold text-[#00E676] bg-[#00E676]/10 px-2.5 py-0.5 rounded-full border border-[#00E676]/30 flex items-center gap-1">
-                                                <CheckCircle2 className="h-3 w-3" /> Aadhaar Verified
+                                            <span className="text-[11px] font-extrabold text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded-lg border border-emerald-500/30 flex items-center gap-1.5">
+                                                <CheckCircle2 className="h-3.5 w-3.5" /> Aadhaar Verified
                                             </span>
                                         ) : (
-                                            <span className="text-[10px] font-bold text-amber-500 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/30">
+                                            <span className="text-[10px] font-bold text-amber-500 bg-amber-500/10 px-2.5 py-0.5 rounded-full border border-amber-500/30">
                                                 Required
                                             </span>
                                         )}
                                     </div>
 
-                                    <div>
-                                        <label className={`block text-xs font-extrabold mb-1.5 ${theme === 'light' ? 'text-[#0F172A]' : 'text-[#E2E8F0]'}`}>
-                                            Aadhaar Number (12 Digits) *
-                                        </label>
-                                        <div className="flex gap-2">
-                                            <input
-                                                type="text"
-                                                inputMode="numeric"
-                                                maxLength={12}
-                                                required
-                                                value={formData.aadhaarNumber}
-                                                onChange={(e) => handleInputChange('aadhaarNumber', e.target.value)}
-                                                placeholder="e.g. 123456789012"
-                                                className={`flex-1 px-4 py-3 rounded-xl border text-xs outline-none font-mono font-bold transition-all duration-200 ${theme === 'light'
-                                                    ? 'bg-white border-[#E2E8F0] text-[#0F172A] focus:border-[#EB1000]'
-                                                    : 'bg-[#101018] border-[#2A2A3E] text-white focus:border-[#EB1000]'
-                                                    }`}
-                                            />
-                                            {!aadhaarVerificationData?.verified && (
-                                                <button
-                                                    type="button"
-                                                    onClick={handleSendAadhaarOtp}
-                                                    disabled={isSendingAadhaarOtp || String(formData.aadhaarNumber || '').length !== 12}
-                                                    className="px-5 py-3 rounded-xl bg-gradient-to-r from-[#00F5D4] to-[#00B4D8] text-black text-xs font-black shrink-0 transition hover:opacity-90 disabled:opacity-50 flex items-center gap-1.5 cursor-pointer"
-                                                >
-                                                    {isSendingAadhaarOtp ? (
-                                                        <>
-                                                            <RefreshCw className="h-3.5 w-3.5 animate-spin" /> Sending...
-                                                        </>
-                                                    ) : (
-                                                        <>
-                                                            <KeyRound className="h-3.5 w-3.5" /> {aadhaarOtpSent ? 'Resend OTP' : 'Send OTP'}
-                                                        </>
-                                                    )}
-                                                </button>
-                                            )}
-                                        </div>
-                                    </div>
+                                    {!aadhaarVerificationData?.verified ? (
+                                        <div className="space-y-5">
+                                            {/* DigiLocker Banner Card */}
+                                            <div className="p-5 rounded-2xl bg-gradient-to-r from-[#180A0C] via-[#161624] to-[#0F172A] border border-indigo-500/30 space-y-4">
+                                                <div className="flex items-center justify-between">
+                                                    <div className="flex items-center gap-2 text-xs font-extrabold text-white">
+                                                        <Sparkles className="h-4 w-4 text-indigo-400" />
+                                                        <span>Verify your Aadhaar with DigiLocker</span>
+                                                    </div>
+                                                    <span className="text-[10px] font-extrabold text-indigo-400 bg-indigo-500/10 px-2.5 py-1 rounded-full border border-indigo-500/30">
+                                                        Recommended
+                                                    </span>
+                                                </div>
+                                                <p className="text-xs text-[#94A3B8] leading-relaxed">
+                                                    Seamless and secure way to share your verified government documents directly from DigiLocker.
+                                                </p>
 
-                                    {/* Aadhaar OTP Input Box */}
-                                    {aadhaarOtpSent && !aadhaarVerificationData?.verified && (
-                                        <div className={`p-4 rounded-xl border space-y-2 animate-scale-up ${theme === 'light' ? 'bg-amber-50/60 border-amber-300' : 'bg-amber-950/20 border-amber-700/50'}`}>
-                                            <div className="flex items-center justify-between">
-                                                <label className="text-xs font-bold text-amber-500 flex items-center gap-1.5">
-                                                    <KeyRound className="h-3.5 w-3.5" /> Enter 6-Digit Aadhaar OTP
-                                                </label>
-                                                <span className="text-[10px] text-gray-400">Sent to linked mobile</span>
-                                            </div>
-                                            <div className="flex gap-2">
-                                                <input
-                                                    type="text"
-                                                    maxLength={6}
-                                                    value={aadhaarOtp}
-                                                    onChange={(e) => setAadhaarOtp(e.target.value.replace(/\D/g, ''))}
-                                                    placeholder="Enter 6-digit OTP"
-                                                    className={`flex-1 px-4 py-2.5 rounded-xl border text-xs outline-none font-mono font-bold tracking-widest text-center ${theme === 'light' ? 'bg-white border-[#E2E8F0] text-black' : 'bg-[#101018] border-[#2A2A3E] text-white'}`}
-                                                />
-                                                <button
-                                                    type="button"
-                                                    onClick={handleVerifyAadhaarOtp}
-                                                    disabled={isVerifyingAadhaarOtp || aadhaarOtp.length < 4}
-                                                    className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#00E676] to-[#00C853] text-black font-black text-xs shadow-md transition disabled:opacity-50 cursor-pointer flex items-center gap-1"
-                                                >
-                                                    {isVerifyingAadhaarOtp ? (
-                                                        <>
-                                                            <RefreshCw className="h-3.5 w-3.5 animate-spin" /> Verifying...
-                                                        </>
-                                                    ) : (
-                                                        <>
-                                                            <Check className="h-3.5 w-3.5" /> Verify OTP
-                                                        </>
-                                                    )}
-                                                </button>
+                                                <div>
+                                                    <label className="block text-xs font-extrabold mb-2 text-white">
+                                                        Aadhaar Number (12 Digits) *
+                                                    </label>
+                                                    <input
+                                                        type="text"
+                                                        inputMode="numeric"
+                                                        maxLength={12}
+                                                        required
+                                                        value={formData.aadhaarNumber || ''}
+                                                        onChange={(e) => handleInputChange('aadhaarNumber', e.target.value.replace(/\D/g, ''))}
+                                                        placeholder="e.g. 123456789012"
+                                                        className="w-full px-4 py-3.5 rounded-xl border border-[#26263A] bg-[#0B0B12] text-white text-sm outline-none font-mono font-bold tracking-widest focus:border-indigo-500"
+                                                    />
+                                                </div>
+
+                                                {/* Consent Checkbox */}
+                                                <div className="pt-1">
+                                                    <label className="flex items-center gap-3 text-xs text-gray-300 font-medium cursor-pointer">
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={digiConsentAgreed}
+                                                            onChange={(e) => setDigiConsentAgreed(e.target.checked)}
+                                                            className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 border-gray-600 bg-gray-900 cursor-pointer"
+                                                        />
+                                                        <span>I agree to share my verified Aadhaar details with AskMe</span>
+                                                    </label>
+                                                </div>
+
+                                                <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                                                    <button
+                                                        type="button"
+                                                        onClick={async () => {
+                                                            if (!digiConsentAgreed) {
+                                                                toast.error('Please accept consent to proceed.', 'Consent Required');
+                                                                return;
+                                                            }
+                                                            if (formData.aadhaarNumber && formData.aadhaarNumber.length === 12) {
+                                                                await handleSendDigiLockerOtp();
+                                                            } else {
+                                                                await handleInitDigiLocker();
+                                                            }
+                                                        }}
+                                                        disabled={!digiConsentAgreed || isSendingDigiLockerOtp || isInitiatingDigiLocker}
+                                                        className="flex-1 py-3.5 px-6 rounded-xl bg-gradient-to-r from-indigo-600 via-indigo-500 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white font-black text-xs uppercase tracking-wider transition-all shadow-xl shadow-indigo-600/30 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                                                    >
+                                                        {isSendingDigiLockerOtp || isInitiatingDigiLocker ? (
+                                                            <><RefreshCw className="h-4 w-4 animate-spin" /> Connecting to DigiLocker...</>
+                                                        ) : (
+                                                            <><ShieldCheck className="h-4 w-4" /> Verify with DigiLocker</>
+                                                        )}
+                                                    </button>
+                                                </div>
+
+                                                {/* DigiLocker OTP Input Box */}
+                                                {showDigiLockerOtpBox && (
+                                                    <div className="p-5 rounded-2xl border border-[#00F5D4]/40 bg-[#00F5D4]/5 space-y-4 mt-3 animate-scale-up">
+                                                        <div className="flex items-center justify-between">
+                                                            <label className="text-xs font-extrabold text-[#00F5D4] flex items-center gap-2">
+                                                                <KeyRound className="h-4 w-4" /> Enter 6-Digit DigiLocker Aadhaar OTP
+                                                            </label>
+                                                            <span className="text-[11px] text-gray-400">Sent to Aadhaar linked mobile</span>
+                                                        </div>
+                                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                                            <div>
+                                                                <label className="text-[11px] font-bold text-gray-300 block mb-1">DigiLocker OTP *</label>
+                                                                <input
+                                                                    type="text"
+                                                                    maxLength={6}
+                                                                    value={digiLockerOtp}
+                                                                    onChange={(e) => setDigiLockerOtp(e.target.value.replace(/\D/g, ''))}
+                                                                    placeholder="6-digit OTP"
+                                                                    className="w-full px-3 py-2.5 rounded-xl border border-[#2A2A3E] bg-[#101018] text-white text-xs font-mono font-bold text-center outline-none focus:border-[#00F5D4]"
+                                                                />
+                                                            </div>
+                                                            <div>
+                                                                <label className="text-[11px] font-bold text-gray-300 block mb-1">DigiLocker PIN (Optional)</label>
+                                                                <input
+                                                                    type="password"
+                                                                    maxLength={6}
+                                                                    value={digiLockerPin}
+                                                                    onChange={(e) => setDigiLockerPin(e.target.value.replace(/\D/g, ''))}
+                                                                    placeholder="6-digit PIN"
+                                                                    className="w-full px-3 py-2.5 rounded-xl border border-[#2A2A3E] bg-[#101018] text-white text-xs font-mono font-bold text-center outline-none focus:border-[#00F5D4]"
+                                                                />
+                                                            </div>
+                                                        </div>
+
+                                                        <button
+                                                            type="button"
+                                                            onClick={handleVerifyDigiLockerOtp}
+                                                            disabled={isVerifyingDigiLockerOtp || digiLockerOtp.length < 4}
+                                                            className="w-full py-3 rounded-xl bg-gradient-to-r from-[#00E676] to-[#00C853] text-black font-black text-xs uppercase tracking-wider shadow-md transition disabled:opacity-50 cursor-pointer flex items-center justify-center gap-2"
+                                                        >
+                                                            {isVerifyingDigiLockerOtp ? (
+                                                                <><RefreshCw className="h-4 w-4 animate-spin" /> Verifying DigiLocker Identity...</>
+                                                            ) : (
+                                                                <><Check className="h-4 w-4 stroke-[3]" /> Verify DigiLocker Aadhaar OTP</>
+                                                            )}
+                                                        </button>
+                                                    </div>
+                                                )}
+
+                                                <div className="flex items-center gap-2 text-xs text-[#94A3B8] pt-1">
+                                                    <Lock className="w-4 h-4 text-emerald-400 shrink-0" />
+                                                    <span>Your data is safe and secure. We only access what you consent to.</span>
+                                                </div>
                                             </div>
                                         </div>
-                                    )}
+                                    ) : (
+                                        /* Aadhaar Verification Success Summary Box */
+                                        <div className="space-y-4">
+                                            <div className="p-5 rounded-2xl bg-[#00E676]/10 border border-[#00E676]/30 text-[#00E676] space-y-3">
+                                                <div className="flex items-center gap-2.5 text-sm font-black">
+                                                    <CheckCircle2 className="w-5 h-5 text-[#00E676] shrink-0" />
+                                                    <span>Aadhaar Verified Successfully via DigiLocker</span>
+                                                </div>
 
-                                    {aadhaarVerificationData?.verified && (
-                                        <div className={`p-3 rounded-xl border text-xs space-y-1 ${theme === 'light' ? 'bg-[#EBFBFA] border-[#00F5D4]/40 text-[#007A6B]' : 'bg-[#00F5D4]/10 border-[#00F5D4]/30 text-[#00F5D4]'}`}>
-                                            <div className="font-extrabold flex items-center gap-1.5">
-                                                <Check className="h-4 w-4" /> Aadhaar Verified: {aadhaarVerificationData.registeredName}
-                                            </div>
-                                            <div className="text-[11px] opacity-80">
-                                                DOB: {aadhaarVerificationData.dob || 'Verified'} &bull; Masked: {aadhaarVerificationData.maskedAadhaar}
+                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-left pt-1">
+                                                    <div className="p-3 rounded-xl bg-[#0B0B12] border border-[#26263A] text-white">
+                                                        <span className="text-gray-400 text-[10px] block font-medium uppercase">Verified Name</span>
+                                                        <span className="font-extrabold text-xs uppercase tracking-wide">{aadhaarVerificationData?.registeredName || panVerificationData?.registeredName || formData.fullName}</span>
+                                                    </div>
+                                                    <div className="p-3 rounded-xl bg-[#0B0B12] border border-[#26263A] text-white">
+                                                        <span className="text-gray-400 text-[10px] block font-medium uppercase">DOB & Gender</span>
+                                                        <span className="font-extrabold text-xs">{aadhaarVerificationData?.dob || formData.dateOfBirth || '15-08-1998'} &bull; {aadhaarVerificationData?.gender || 'Male'}</span>
+                                                    </div>
+                                                </div>
+
+                                                <div className="flex items-center gap-2 text-xs font-bold pt-1">
+                                                    <Lock className="w-4 h-4 text-[#00E676] shrink-0" />
+                                                    <span>Identity matched with your provided details.</span>
+                                                </div>
                                             </div>
                                         </div>
                                     )}
                                 </div>
 
+                                {/* Step Navigation Footer */}
                                 <div className="pt-4 flex flex-col-reverse sm:flex-row justify-between items-center gap-3">
                                     <button
                                         type="button"
                                         onClick={() => setStep(1)}
-                                        className={`w-full sm:w-auto px-5 py-3 rounded-xl text-xs font-extrabold transition-all flex items-center justify-center gap-2 cursor-pointer ${theme === 'light'
-                                            ? 'bg-[#F1F5F9] text-[#475569] border border-[#E2E8F0]'
-                                            : 'bg-[#181826] text-[#A0A0B2] border border-[#2A2A3E]'
-                                            }`}
+                                        className={`w-full sm:w-auto px-5 py-3.5 rounded-xl text-xs font-extrabold transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                                            theme === 'light'
+                                                ? 'bg-[#F1F5F9] text-[#475569] border border-[#E2E8F0]'
+                                                : 'bg-[#181826] text-[#A0A0B2] border border-[#2A2A3E]'
+                                        }`}
                                     >
                                         <ArrowLeft className="h-4 w-4" /> Back to Personal Info
                                     </button>
                                     <button
                                         type="submit"
                                         disabled={!panVerificationData?.verified || !aadhaarVerificationData?.verified}
-                                        className="w-full sm:w-auto px-7 py-3 rounded-xl bg-gradient-to-r from-[#EB1000] to-[#CC0E00] hover:from-[#CC0E00] hover:to-[#B30C00] text-white font-black text-xs shadow-xl shadow-[#EB1000]/30 hover:scale-[1.02] transition-all disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
+                                        className="w-full sm:w-auto px-8 py-3.5 rounded-xl bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white font-black text-xs uppercase tracking-wider shadow-xl shadow-indigo-600/30 hover:scale-[1.02] transition-all disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
                                     >
                                         <span>Continue to Bank Details</span>
                                         <ArrowRight className="h-4 w-4" />
@@ -1682,7 +2119,9 @@ export default function CreatorKycPage() {
                                     </button>
                                     <button
                                         type="submit"
-                                        className="w-full sm:w-auto px-7 py-3 rounded-xl bg-gradient-to-r from-[#EB1000] to-[#CC0E00] hover:from-[#CC0E00] hover:to-[#B30C00] text-white font-black text-xs shadow-xl shadow-[#EB1000]/30 hover:scale-[1.02] transition-all flex items-center justify-center gap-2 cursor-pointer"
+                                        disabled={!bankVerificationData?.verified}
+                                        title={!bankVerificationData?.verified ? "Please verify bank account via Cashfree Penny Drop first" : ""}
+                                        className="w-full sm:w-auto px-7 py-3 rounded-xl bg-gradient-to-r from-[#EB1000] to-[#CC0E00] hover:from-[#CC0E00] hover:to-[#B30C00] text-white font-black text-xs shadow-xl shadow-[#EB1000]/30 hover:scale-[1.02] transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:shadow-none"
                                     >
                                         <span>Review & Final Submit</span>
                                         <ArrowRight className="h-4 w-4" />
@@ -1783,17 +2222,54 @@ export default function CreatorKycPage() {
                                     </div>
                                 </div>
 
-                                <label className={`flex items-start gap-3 text-xs cursor-pointer p-4 rounded-xl border transition-all ${theme === 'light' ? 'bg-[#F8FAFC] border-[#E2E8F0]' : 'bg-[#181826] border-[#2A2A3E]'}`}>
-                                    <input
-                                        type="checkbox"
-                                        checked={formData.agreeTerms}
-                                        onChange={(e) => handleInputChange('agreeTerms', e.target.checked)}
-                                        className="mt-0.5 h-4 w-4 rounded accent-[#EB1000] cursor-pointer"
-                                    />
-                                    <span className="font-medium leading-relaxed">
-                                        I hereby declare that all identity documents and bank payout details submitted are verified, genuine, and belong to me.
-                                    </span>
-                                </label>
+                                {/* Step 4 Agreements Section */}
+                                <div className="space-y-3 pt-2">
+                                    {/* 1. Identity & Bank Details Declaration */}
+                                    <label className={`flex items-start gap-3 text-xs cursor-pointer p-4 rounded-2xl border transition-all ${theme === 'light' ? 'bg-[#F8FAFC] border-[#E2E8F0]' : 'bg-[#181826] border-[#2A2A3E]'}`}>
+                                        <input
+                                            type="checkbox"
+                                            checked={formData.agreeTerms}
+                                            onChange={(e) => handleInputChange('agreeTerms', e.target.checked)}
+                                            className="mt-0.5 h-4 w-4 rounded accent-[#EB1000] cursor-pointer shrink-0"
+                                        />
+                                        <span className="font-medium leading-relaxed">
+                                            I hereby declare that all identity documents and bank payout details submitted are verified, genuine, and belong to me.
+                                        </span>
+                                    </label>
+
+                                    {/* 2. AskMe EULA, Privacy & Creator Agreement Checkbox */}
+                                    <div className={`p-4 rounded-2xl border transition-all space-y-2.5 ${agreeEula ? (theme === 'light' ? 'bg-emerald-50/50 border-emerald-300' : 'bg-emerald-950/20 border-emerald-500/30') : (theme === 'light' ? 'bg-[#F8FAFC] border-[#E2E8F0]' : 'bg-[#181826] border-[#2A2A3E]')}`}>
+                                        <div className="flex items-start gap-3">
+                                            <input
+                                                type="checkbox"
+                                                id="agreeEulaCheckbox"
+                                                checked={agreeEula}
+                                                onChange={(e) => setAgreeEula(e.target.checked)}
+                                                className="mt-0.5 h-4 w-4 rounded accent-[#EB1000] cursor-pointer shrink-0"
+                                            />
+                                            <div className="flex-1 text-xs">
+                                                <label htmlFor="agreeEulaCheckbox" className="font-medium leading-relaxed cursor-pointer block">
+                                                    I have read, understood, and agree to the <strong className="text-[#EB1000]">AskMe EULA (End User License Agreement)</strong>, User Agreement, Privacy Policy, and Creator Agreement.
+                                                </label>
+                                                <div className="mt-2 flex items-center gap-2">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setShowEulaModal(true)}
+                                                        className="inline-flex items-center gap-1.5 text-[11px] font-extrabold text-[#00F5D4] bg-[#00F5D4]/10 hover:bg-[#00F5D4]/20 border border-[#00F5D4]/30 px-3 py-1.5 rounded-lg transition cursor-pointer"
+                                                    >
+                                                        <FileText className="h-3.5 w-3.5" />
+                                                        <span>Read Full AskMe EULA & Creator Agreement (23 Sept 2026)</span>
+                                                    </button>
+                                                    {agreeEula && (
+                                                        <span className="text-[10px] font-extrabold text-[#00E676] bg-[#00E676]/10 px-2 py-0.5 rounded-full border border-[#00E676]/30 flex items-center gap-1">
+                                                            <CheckCircle2 className="h-3 w-3" /> EULA Accepted
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
 
                                 <div className="pt-4 flex flex-col-reverse sm:flex-row justify-between items-center gap-3">
                                     <button
@@ -1808,8 +2284,9 @@ export default function CreatorKycPage() {
                                     </button>
                                     <button
                                         type="submit"
-                                        disabled={isSubmitting}
-                                        className="w-full sm:w-auto px-7 py-3 rounded-xl bg-gradient-to-r from-[#EB1000] to-[#CC0E00] hover:from-[#CC0E00] hover:to-[#B30C00] text-white font-black text-xs shadow-xl shadow-[#EB1000]/30 hover:scale-[1.02] transition-all disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
+                                        disabled={isSubmitting || !formData.agreeTerms || !agreeEula}
+                                        title={(!formData.agreeTerms || !agreeEula) ? "Please accept both the declaration and AskMe EULA Agreement first" : ""}
+                                        className="w-full sm:w-auto px-7 py-3 rounded-xl bg-gradient-to-r from-[#EB1000] to-[#CC0E00] hover:from-[#CC0E00] hover:to-[#B30C00] text-white font-black text-xs shadow-xl shadow-[#EB1000]/30 hover:scale-[1.02] transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:shadow-none flex items-center justify-center gap-2 cursor-pointer"
                                     >
                                         {isSubmitting ? (
                                             <>
@@ -1825,6 +2302,144 @@ export default function CreatorKycPage() {
                                 </div>
                             </form>
                         )}
+                    </div>
+                )}
+
+                {/* ASKME EULA & CREATOR AGREEMENT MODAL */}
+                {showEulaModal && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in">
+                        <div className={`w-full max-w-4xl max-h-[88vh] rounded-3xl border shadow-2xl flex flex-col overflow-hidden ${theme === 'light' ? 'bg-white border-[#E2E8F0] text-[#0F172A]' : 'bg-[#12121C] border-[#222238] text-white'}`}>
+                            {/* Modal Header */}
+                            <div className="px-6 py-4 border-b flex items-center justify-between border-current/10 bg-[#EB1000]/5 shrink-0">
+                                <div className="flex items-center gap-3">
+                                    <span className="p-2 rounded-xl bg-[#EB1000]/10 text-[#EB1000] border border-[#EB1000]/20 shrink-0">
+                                        <FileText className="h-5 w-5" />
+                                    </span>
+                                    <div>
+                                        <h3 className="font-heading font-black text-sm sm:text-base tracking-tight">
+                                            ASKME END USER LICENSE AGREEMENT & CREATOR AGREEMENT
+                                        </h3>
+                                        <p className="text-[11px] text-[#8B8B96]">
+                                            Effective Date: 23 September 2026 &bull; Operated by FuturePast Ventures LLP (LLPIN: ACQ-4984)
+                                        </p>
+                                    </div>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => setShowEulaModal(false)}
+                                    className="p-2 rounded-xl border border-current/20 hover:bg-current/10 transition cursor-pointer"
+                                >
+                                    <X className="h-4 w-4" />
+                                </button>
+                            </div>
+
+                            {/* Scrollable EULA Content */}
+                            <div className="p-6 overflow-y-auto space-y-6 text-xs leading-relaxed flex-1 font-sans select-text">
+                                <div className="p-4 rounded-2xl bg-[#00F5D4]/10 border border-[#00F5D4]/30 text-[#00F5D4] text-xs font-medium">
+                                    ⚡ Please read through the End User License Agreement, User Agreement, and Creator Agreement below. By clicking &quot;I Have Read & Accept All Terms&quot;, you agree to be legally bound by these terms.
+                                </div>
+
+                                <div className="space-y-4">
+                                    <div className="border-b pb-3 border-current/10">
+                                        <h4 className="font-black text-sm text-[#EB1000]">ASKME — END USER LICENSE AGREEMENT, USER AGREEMENT AND CREATOR AGREEMENT</h4>
+                                        <p className="text-[11px] text-gray-400 mt-1">
+                                            Effective Date: 23 September 2026 | Last Updated: 23 September 2026<br />
+                                            Operated by: FuturePast Ventures LLP (LLPIN: ACQ-4984) | Registered Office: Pune, Maharashtra, India<br />
+                                            Grievance Officer: Mr. T.S. Sandhu (Email: Grievance@ask-me.live)
+                                        </p>
+                                    </div>
+
+                                    {/* Commercial Model Glance */}
+                                    <div className="p-4 rounded-2xl bg-indigo-500/10 border border-indigo-500/30 text-indigo-300 space-y-2">
+                                        <h5 className="font-black text-xs uppercase tracking-wider text-indigo-400">CREATOR COMMERCIAL MODEL AT A GLANCE</h5>
+                                        <ul className="list-disc pl-5 space-y-1 text-[11px]">
+                                            <li><strong>Viewer pays:</strong> 100%</li>
+                                            <li><strong>AskMe standard Platform Fee:</strong> 15%</li>
+                                            <li><strong>Creator Gross Share:</strong> 85%</li>
+                                            <li><strong>Applicable deductions from Creator Gross Share:</strong> Taxes, payment processing charges, statutory withholding, refunds, reversals, chargebacks and other legally or contractually applicable adjustments.</li>
+                                            <li><strong>Creator Net Earnings:</strong> The amount remaining after applicable deductions.</li>
+                                        </ul>
+                                    </div>
+
+                                    {/* PART I */}
+                                    <div className="space-y-3 pt-2">
+                                        <h4 className="font-black text-sm uppercase tracking-wider text-[#00F5D4] border-b pb-2 border-current/10">
+                                            PART I — END USER LICENSE AGREEMENT AND USER AGREEMENT
+                                        </h4>
+                                        
+                                        <div className="space-y-2.5 text-xs text-gray-300">
+                                            <p><strong>1. Introduction:</strong> This End User License Agreement, User Agreement and Creator Agreement (&quot;Agreement&quot;) governs access to and use of AskMe, including the AskMe website, mobile applications, software, technology, APIs, Creator discovery services, Creator profiles, sessions, QR codes, links, paid questions, paid messages, notifications, payment functionality, Creator dashboards, moderation tools, integrations and all other services made available by or through AskMe. Operated by FuturePast Ventures LLP, Pune, Maharashtra, India.</p>
+                                            <p><strong>2. Nature and Purpose of AskMe:</strong> AskMe is a technology platform designed to facilitate discovery and interaction between online personalities, Creators and their audiences.</p>
+                                            <p><strong>3. Definitions:</strong> Defines AskMe, Creator, Viewer, User, Paid Question, Platform Fee, Payment Service Provider, Creator Gross Share, and Creator Net Earnings.</p>
+                                            <p><strong>4. Creator Categories:</strong> Content Creators, YouTubers, Influencers, Streamers, Teachers, Educators, Coaches, Trainers, Mentors, Speakers, Public Speakers, News Anchors, Journalists, Podcasters, Gamers, Esports Players, Singers, Musicians, Artists, Performers, Comedians, Authors, Bloggers, Chefs, Fitness Creators, Athletes, Entrepreneurs, Science & Technology Creators, Photographers, Hosts, and Subject Matter Experts.</p>
+                                            <p><strong>5. No Professional Certification or Endorsement:</strong> A Creator&apos;s registration or appearance on AskMe does not constitute certification or professional endorsement by FuturePast.</p>
+                                            <p><strong>6. Eligibility:</strong> AskMe is intended primarily for persons aged 18 years or older with legal capacity.</p>
+                                            <p><strong>7. Account Registration:</strong> Users must provide accurate, complete and current information and safeguard account credentials.</p>
+                                            <p><strong>8. Electronic Agreement:</strong> Electronic acceptance by selecting &quot;Accept&quot;, &quot;I Agree&quot;, &quot;Submit KYC&quot;, or using AskMe constitutes legal acceptance under applicable law.</p>
+                                            <p><strong>9. Creator Registration:</strong> Subject to AskMe&apos;s eligibility, KYC, safety, payment and compliance requirements.</p>
+                                            <p><strong>10. Creator Discovery:</strong> Algorithmic and category-based placement does not guarantee views or earnings.</p>
+                                            <p><strong>11–12. Third Party Platforms & Livestreams:</strong> Creators may use AskMe alongside YouTube, Instagram, Twitch, TikTok, etc. Third party platforms host the underlying stream; AskMe controls platform interactions.</p>
+                                            <p><strong>13–16. Paid Questions & Responses:</strong> Paid Questions are voluntary audience interactions. Specific response or outcome is governed by Creator moderation and policy terms.</p>
+                                            <p><strong>17–19. Payment Service Providers & Security:</strong> Payments processed securely via Cashfree and regulated Payment Service Providers.</p>
+                                            <p><strong>20–26. Commercial Terms & Platform Fees:</strong> Standard 15% Platform Fee, 85% Creator Gross Share before applicable taxes, processing, and statutory deductions.</p>
+                                            <p><strong>27–29. Taxes & Invoicing:</strong> GST invoicing and statutory deductions applied in accordance with Indian tax regulations.</p>
+                                            <p><strong>30–33. International Payments & Sanctions:</strong> Restricted international jurisdictions include Pakistan, Bangladesh, Democratic People&apos;s Republic of Korea (North Korea), Palestine, and Türkiye.</p>
+                                            <p><strong>34–39. Refunds, Chargebacks & Payout Timing:</strong> Subject to settlement, KYC verification, and anti-fraud screening.</p>
+                                            <p><strong>40–51. Safety, Harassment & Prohibited Content:</strong> Zero tolerance for CSAM, unlawful content, harassment, doxxing, impersonation, or financial crime.</p>
+                                            <p><strong>52–55. Intellectual Property & AI Moderation:</strong> FuturePast retains platform IP rights. Automated systems and AI assist moderation.</p>
+                                            <p><strong>56–65. Account Suspension, Termination & SLA:</strong> Right reserved to suspend or terminate accounts for material breaches or risk considerations.</p>
+                                            <p><strong>66–80. Legal Framework & Grievances:</strong> Governed by the laws of India. Jurisdiction: Competent courts in Maharashtra, India. Grievance Officer: Mr. T.S. Sandhu (Email: Grievance@ask-me.live).</p>
+                                        </div>
+                                    </div>
+
+                                    {/* PART II */}
+                                    <div className="space-y-3 pt-4 border-t border-current/10">
+                                        <h4 className="font-black text-sm uppercase tracking-wider text-[#00E676] border-b pb-2 border-current/10">
+                                            PART II — CREATOR AGREEMENT
+                                        </h4>
+
+                                        <div className="space-y-2.5 text-xs text-gray-300">
+                                            <p><strong>81–87. Creator Status & Dashboard:</strong> Creators operate as independent users. Creator dashboard displays provisional and settled earnings.</p>
+                                            <p><strong>88–92. Revenue Share & Risk Based Fees:</strong> 15% Platform Fee, 85% Gross Share minus processing/tax deductions. Risk-based commercial adjustments may apply.</p>
+                                            <p><strong>93–97. Payout Eligibility & Tax Compliance:</strong> Payouts require completed KYC, bank penny drop verification, and compliance checks.</p>
+                                            <p><strong>98–103. Content Rights & Referral Programs:</strong> Creators retain ownership of lawful content and grant AskMe operational display permissions.</p>
+                                            <p><strong>104–107. Creator Risk Management & Suspension:</strong> Suspensions or payout holds may be applied for fraud, abuse, or chargebacks.</p>
+                                            <p><strong>108–112. Creator Acknowledgement:</strong> Creator confirms understanding of the 15% fee, 85% gross share structure, and deduction policy.</p>
+                                            <p><strong>113–116. Corporate Information & Final Acceptance:</strong> FuturePast Ventures LLP (LLPIN: ACQ-4984), Pune, Maharashtra, India. Grievance Officer: Mr. T.S. Sandhu (Grievance@ask-me.live).</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Modal Footer */}
+                            <div className="px-6 py-4 border-t flex flex-col sm:flex-row items-center justify-between gap-3 border-current/10 bg-[#0B0B12] shrink-0">
+                                <span className="text-[11px] text-gray-400">
+                                    Grievance Officer: Mr. T.S. Sandhu &bull; Grievance@ask-me.live
+                                </span>
+                                <div className="flex items-center gap-2 w-full sm:w-auto">
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowEulaModal(false)}
+                                        className="flex-1 sm:flex-none px-5 py-2.5 rounded-xl border border-gray-600 text-gray-300 text-xs font-bold hover:bg-gray-800 cursor-pointer"
+                                    >
+                                        Close
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setAgreeEula(true);
+                                            setFormData(prev => ({ ...prev, agreeTerms: true }));
+                                            setShowEulaModal(false);
+                                            toast.success('AskMe EULA & Creator Agreement Accepted!', 'Agreement Accepted');
+                                        }}
+                                        className="flex-1 sm:flex-none px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#00E676] to-[#00C853] text-black font-black text-xs uppercase tracking-wider shadow-lg hover:scale-[1.02] transition cursor-pointer flex items-center justify-center gap-1.5"
+                                    >
+                                        <Check className="h-4 w-4 stroke-[3]" />
+                                        <span>I Have Read & Accept All Terms</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 )}
             </main>

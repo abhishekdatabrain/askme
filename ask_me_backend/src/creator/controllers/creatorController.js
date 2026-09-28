@@ -5,6 +5,8 @@
  */
 
 const { getAuthenticatedCreatorId, normalizeCreatorInput } = require("../../utils/normalizeInput")
+const { generateAndStoreEmailOtp, verifyStoredEmailOtp } = require("../../utils/emailOtpStore");
+const { sendEmailOtp } = require("../../services/emailService");
 const {
   registerCreatorService,
   loginCreatorService,
@@ -913,6 +915,91 @@ const verifyBankController = async (req, res, next) => {
 };
 
 /**
+ * Initialize Cashfree DigiLocker Session Controller
+ */
+const initDigiLockerSessionController = async (req, res, next) => {
+  try {
+    const { redirectUrl, verificationId } = req.body;
+    const result = await cashfreeVerificationService.initDigiLockerSession({ redirectUrl, verificationId });
+    return res.status(result.success ? 200 : 400).json({
+      status: result.success ? "success" : "fail",
+      message: result.message || "DigiLocker session initialized.",
+      data: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Verify Cashfree DigiLocker Session / Document Controller
+ */
+const verifyDigiLockerSessionController = async (req, res, next) => {
+  try {
+    const { verificationId, name } = req.body;
+    const result = await cashfreeVerificationService.getDigiLockerDetails({ verificationId, name });
+    return res.status(result.success ? 200 : 400).json({
+      status: result.success ? "success" : "fail",
+      message: result.message || "DigiLocker verification processed.",
+      data: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Cashfree PAN to GSTIN Lookup Controller
+ */
+const panToGstinLookupController = async (req, res, next) => {
+  try {
+    const { panNumber } = req.body;
+    const result = await cashfreeVerificationService.panToGstinLookup({ panNumber });
+    return res.status(result.success ? 200 : 400).json({
+      status: result.success ? "success" : "fail",
+      message: result.message || "PAN to GSTIN lookup processed.",
+      data: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Cashfree DigiLocker Aadhaar OTP Step 1: Send OTP Controller
+ */
+const sendDigiLockerAadhaarOtpController = async (req, res, next) => {
+  try {
+    const { aadhaarNumber } = req.body;
+    const result = await cashfreeVerificationService.sendDigiLockerAadhaarOtp({ aadhaarNumber });
+    return res.status(result.success ? 200 : 400).json({
+      status: result.success ? "success" : "fail",
+      message: result.message || "DigiLocker Aadhaar OTP processed.",
+      data: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Cashfree DigiLocker Aadhaar OTP Step 2: Verify OTP Controller
+ */
+const verifyDigiLockerAadhaarOtpController = async (req, res, next) => {
+  try {
+    const { otp, securityPin, refId, aadhaarNumber, name } = req.body;
+    const result = await cashfreeVerificationService.verifyDigiLockerAadhaarOtp({ otp, securityPin, refId, aadhaarNumber, name });
+    return res.status(result.success ? 200 : 400).json({
+      status: result.success ? "success" : "fail",
+      message: result.message || "DigiLocker Aadhaar OTP verification processed.",
+      data: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
  * Send WhatsApp OTP Creator
  */
 const sendWhatsAppOtpCreator = async (req, res, next) => {
@@ -985,12 +1072,78 @@ const getPublicCommissionSettings = async (req, res, next) => {
   }
 };
 
+/**
+ * Send Email OTP Creator
+ */
+const sendEmailOtpCreator = async (req, res, next) => {
+  try {
+    const { email } = req.body;
+    const cleanEmail = String(email || '').trim().toLowerCase();
+
+    if (!cleanEmail || !cleanEmail.includes('@')) {
+      return res.status(400).json({
+        status: 'fail',
+        message: 'Please enter a valid email address.',
+      });
+    }
+
+    const { otp } = generateAndStoreEmailOtp(cleanEmail);
+
+    await sendEmailOtp({ email: cleanEmail, otp });
+
+    return res.status(200).json({
+      status: 'success',
+      message: 'Verification code sent to your email (expires in 10 minutes).',
+      expiresMinutes: 10,
+      ...(process.env.NODE_ENV !== 'production' ? { debugOtp: otp } : {}),
+    });
+  } catch (error) {
+    console.error('SEND EMAIL OTP CREATOR ERROR:', error);
+    next(error);
+  }
+};
+
+/**
+ * Verify Email OTP Creator
+ */
+const verifyEmailOtpCreator = async (req, res, next) => {
+  try {
+    const { email, otp } = req.body;
+    const cleanEmail = String(email || '').trim().toLowerCase();
+
+    if (!cleanEmail || !otp) {
+      return res.status(400).json({
+        status: 'fail',
+        message: 'Email address and 6-digit OTP code are required.',
+      });
+    }
+
+    const verification = verifyStoredEmailOtp(cleanEmail, otp);
+    if (!verification.valid) {
+      return res.status(400).json({
+        status: 'fail',
+        message: verification.message,
+      });
+    }
+
+    return res.status(200).json({
+      status: 'success',
+      message: 'Email address verified successfully!',
+    });
+  } catch (error) {
+    console.error('VERIFY EMAIL OTP CREATOR ERROR:', error);
+    next(error);
+  }
+};
+
 module.exports = {
   registerCreator,
   loginCreator,
   googleAuthCreator,
   sendWhatsAppOtpCreator,
   verifyWhatsAppOtpCreator,
+  sendEmailOtpCreator,
+  verifyEmailOtpCreator,
   truecallerAuthCreator,
   submitKyc,
   getKycStatus,
@@ -1031,5 +1184,10 @@ module.exports = {
   verifyAadhaarController,
   matchIdentityController,
   verifyBankController,
+  initDigiLockerSessionController,
+  verifyDigiLockerSessionController,
+  sendDigiLockerAadhaarOtpController,
+  verifyDigiLockerAadhaarOtpController,
+  panToGstinLookupController,
   getPublicCommissionSettings,
 };

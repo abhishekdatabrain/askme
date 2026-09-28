@@ -11,7 +11,7 @@ export default function CreatorLayout({ children }) {
   const isNoSidebarPage =
     pathname === '/creators' ||
     pathname === '/creators/' ||
-    pathname === '/creators/login' ||
+    pathname === '/' ||
     pathname === '/creators/register' ||
     pathname === '/creators/kyc' ||
     pathname?.startsWith('/creators/kyc');

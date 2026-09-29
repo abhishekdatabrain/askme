@@ -267,8 +267,8 @@ export default function CreatorActiveSessionPage() {
                     type="button"
                     onClick={toggleQrDisabled}
                     className={`px-5 py-2.5 rounded-xl text-xs font-black border transition-all flex items-center gap-2 cursor-pointer shadow-md ${isQrDisabled
-                        ? 'bg-gradient-to-r from-[#00E676] to-[#00C853] text-black border-[#00E676] hover:brightness-110 shadow-[#00E676]/20'
-                        : 'bg-[#12121C] text-[#FF3B30] border-[#FF3B30]/60 hover:bg-[#FF3B30]/10 hover:border-[#FF3B30]'
+                      ? 'bg-gradient-to-r from-[#00E676] to-[#00C853] text-black border-[#00E676] hover:brightness-110 shadow-[#00E676]/20'
+                      : 'bg-[#12121C] text-[#FF3B30] border-[#FF3B30]/60 hover:bg-[#FF3B30]/10 hover:border-[#FF3B30]'
                       }`}
                   >
                     {isQrDisabled ? (
@@ -294,52 +294,47 @@ export default function CreatorActiveSessionPage() {
               {/* Generated Outputs Grid */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
                 {/* QR & Payment Link Card */}
-                <div className={`p-5 rounded-2xl border flex flex-col sm:flex-row items-center sm:items-start gap-4 transition-all relative overflow-hidden ${theme === 'light' ? 'bg-[#F8FAFC] border-[#E2E8F0]' : 'bg-[#181826] border-[#2A2A3E]'}`}>
+                <div className={`p-5 rounded-2xl border flex flex-col sm:flex-row items-center sm:items-start gap-5 transition-all relative overflow-hidden ${theme === 'light' ? 'bg-[#F8FAFC] border-[#E2E8F0]' : 'bg-[#181826] border-[#2A2A3E]'}`}>
                   {/* QR Code Container */}
-                  <div className="relative shrink-0">
-                    <BrandedQrCode qrUrl={activeSession.qrCodeUrl} size="md" showBrandHeader={false} />
+                  <div className="relative shrink-0 flex items-center justify-center">
+                    <BrandedQrCode paymentLink={activeSession.paymentLink} qrUrl={activeSession.qrCodeUrl} size="sm" showBrandHeader={false} />
                   </div>
 
-                  <div className="space-y-2 min-w-0 flex-1 w-full text-center sm:text-left">
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      <span className="text-[10px] font-black text-[#EB1000] uppercase tracking-wider block">Instant UPI Payment Link & QR</span>
-                      {isQrDisabled ? (
-                        <span className="px-2.5 py-0.5 rounded-full bg-[#FF3B30]/10 text-[#FF3B30] border border-[#FF3B30]/30 text-[9px] font-black uppercase flex items-center gap-1">
-                          <span className="h-1.5 w-1.5 rounded-full bg-[#FF3B30]" /> Payments Paused
-                        </span>
-                      ) : (
-                        <span className="px-2.5 py-0.5 rounded-full bg-[#00E676]/10 text-[#00E676] border border-[#00E676]/30 text-[9px] font-black uppercase flex items-center gap-1">
-                          <span className="h-1.5 w-1.5 rounded-full bg-[#00E676] animate-pulse" /> Active
-                        </span>
-                      )}
-                    </div>
+                  <div className="space-y-2.5 min-w-0 flex-1 w-full text-center sm:text-left flex flex-col justify-between self-stretch">
+                    <div className="space-y-2">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <span className="text-xs font-black text-[#EB1000] uppercase tracking-wider block whitespace-nowrap">Payment Link & QR</span>
+                        {isQrDisabled ? (
+                          <span className="px-2.5 py-0.5 rounded-full bg-[#FF3B30]/10 text-[#FF3B30] border border-[#FF3B30]/30 text-[9px] font-black uppercase flex items-center gap-1 shrink-0 whitespace-nowrap">
+                            <span className="h-1.5 w-1.5 rounded-full bg-[#FF3B30]" /> Payments Paused
+                          </span>
+                        ) : (
+                          <span className="px-2.5 py-0.5 rounded-full bg-[#00E676]/10 text-[#00E676] border border-[#00E676]/30 text-[9px] font-black uppercase flex items-center gap-1 shrink-0 whitespace-nowrap">
+                            <span className="h-1.5 w-1.5 rounded-full bg-[#00E676] animate-pulse" /> Active
+                          </span>
+                        )}
+                      </div>
 
-                    <p className={`text-xs font-mono truncate px-3 py-2 rounded-xl border transition-all ${theme === 'light' ? 'bg-white border-[#E2E8F0] text-[#0F172A]' : 'bg-[#12121C] border-[#222236] text-white'
-                      }`}>
-                      {activeSession.paymentLink}
-                    </p>
+                      <p className={`text-xs font-mono truncate px-3 py-2 rounded-xl border transition-all ${theme === 'light' ? 'bg-white border-[#E2E8F0] text-[#0F172A]' : 'bg-[#12121C] border-[#222236] text-white'
+                        }`}>
+                        {activeSession.paymentLink}
+                      </p>
+                    </div>
 
                     <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 pt-1">
                       <button
                         onClick={() => copyText(activeSession.paymentLink, 'Payment Link')}
-                        className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-[#EB1000] to-[#CC0E00] text-white font-black text-xs shadow-md shadow-[#EB1000]/20 hover:opacity-90 transition flex items-center gap-1.5 cursor-pointer"
+                        className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-[#EB1000] to-[#CC0E00] text-white font-black text-xs shadow-md shadow-[#EB1000]/20 hover:opacity-90 transition flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
                       >
                         <Copy className="h-3.5 w-3.5" /> Copy Link
                       </button>
                       <button
                         onClick={downloadQrCode}
-                        className={`px-3.5 py-2 rounded-xl text-xs font-extrabold border transition flex items-center gap-1.5 cursor-pointer ${theme === 'light' ? 'bg-white text-[#EB1000] border-[#EB1000]/40 hover:bg-[#EB1000]/10' : 'bg-[#12121C] text-[#EB1000] border-[#EB1000]/40 hover:bg-[#EB1000]/20'}`}
+                        className={`px-3.5 py-2 rounded-xl text-xs font-extrabold border transition flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${theme === 'light' ? 'bg-white text-[#EB1000] border-[#EB1000]/40 hover:bg-[#EB1000]/10' : 'bg-[#12121C] text-[#EB1000] border-[#EB1000]/40 hover:bg-[#EB1000]/20'}`}
                       >
                         <Download className="h-3.5 w-3.5" /> Download QR
                       </button>
-                      <a
-                        href={activeSession.paymentLink}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className={`px-3.5 py-2 rounded-xl text-xs font-bold border transition flex items-center gap-1 ${theme === 'light' ? 'bg-white text-[#64748B] border-[#E2E8F0] hover:text-[#0F172A]' : 'bg-[#12121C] text-[#A0A0B2] border-[#222236] hover:text-white'}`}
-                      >
-                        Test Link <ExternalLink className="h-3.5 w-3.5 text-[#EB1000]" />
-                      </a>
+                     
                     </div>
                   </div>
                 </div>

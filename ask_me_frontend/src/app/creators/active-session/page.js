@@ -292,6 +292,7 @@ export default function CreatorActiveSessionPage() {
               </div>
 
               {/* Generated Outputs Grid */}
+              
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
                 {/* QR & Payment Link Card */}
                 <div className={`p-5 rounded-2xl border flex flex-col sm:flex-row items-center sm:items-start gap-5 transition-all relative overflow-hidden ${theme === 'light' ? 'bg-[#F8FAFC] border-[#E2E8F0]' : 'bg-[#181826] border-[#2A2A3E]'}`}>

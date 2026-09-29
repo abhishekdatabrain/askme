@@ -1097,7 +1097,7 @@ export default function CreatorKycPage() {
 
                                 <h2 className={`font-heading font-black text-2xl mt-2 ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'
                                     }`}>
-                                    Your Application is under review                                </h2>
+                                    Your Application is Under Review                                </h2>
 
                                 <p className={`text-sm mt-1 ${theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'
                                     }`}>

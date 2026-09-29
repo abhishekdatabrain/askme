@@ -739,11 +739,11 @@ export default function Home() {
       {/* Top Floating Pill Header Navbar */}
       <LandingNavbar />
 
-      <main className="pt-24 pb-20 space-y-20">
+      <main className="pt-24 pb-20 space-y-28">
         {/* ========================================================================= */}
         {/* SECTION 1: HERO SECTION & INTERACTIVE SHOWCASE SLIDER */}
         {/* ========================================================================= */}
-        <section className="relative overflow-hidden pt-4">
+        <section className="relative overflow-hidden pt-4 pb-12">
           {/* Ambient Glow Effects */}
           <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[950px] h-[550px] bg-gradient-to-tr from-[#EB1000]/25 via-[#EB1000]/5 to-transparent blur-[170px] pointer-events-none rounded-full"></div>
 
@@ -825,6 +825,92 @@ export default function Home() {
                     </a>
                   </div>
 
+                  {/* Showcase Browser Frame */}
+                  <div className="rounded-3xl bg-[#0D0D14] border border-[#222234] shadow-[0_25px_90px_rgba(0,0,0,0.85)] overflow-hidden p-4 sm:p-6 text-left relative">
+                    {/* Top Window Bar */}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-[#1E1E2D] pb-3 mb-3 sm:pb-4 sm:mb-4 gap-2.5 sm:gap-4">
+                      <div className="flex items-center gap-2">
+                        <span className="h-3 w-3 rounded-full bg-[#FF5F56]"></span>
+                        <span className="h-3 w-3 rounded-full bg-[#FFBD2E]"></span>
+                        <span className="h-3 w-3 rounded-full bg-[#27C93F]"></span>
+                        <div className="ml-3 px-3.5 py-1 rounded-lg bg-[#161622] border border-[#27273A] text-xs font-mono text-[#8B8B9E]">
+                          askme.live
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-3 text-xs">
+                        <div className="px-3 py-1 rounded-full bg-[#00F5D4]/10 border border-[#00F5D4]/40 text-[#00F5D4] font-bold flex items-center gap-1.5 text-xs w-fit">
+                          <span className="h-2 w-2 rounded-full bg-[#00F5D4] animate-ping"></span>
+                          <span>Ultra low Latency 0.4s</span>
+                        </div>
+                        <span className="text-[#6B6B7F] font-medium hidden md:inline-block">
+                          Stream Sync: <span className="text-white font-semibold">Active</span>
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Inner Window Box */}
+                    <div className="max-w-4xl mx-auto">
+                      <div className="relative aspect-square sm:aspect-video rounded-3xl overflow-hidden border border-[#222234] bg-[#12121B] shadow-2xl">
+                        <img
+                          src="https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=1000&q=80"
+                          alt="Live Stream Preview"
+                          className="w-full h-full object-cover opacity-90 absolute inset-0"
+                        />
+
+                        {/* Top Badges */}
+                        <div className="absolute top-3.5 left-3.5 right-3.5 flex items-center justify-between gap-2 z-10">
+                          <span className="px-3 py-1 rounded-xl bg-[#EB1000] text-white text-xs font-black tracking-wider flex items-center gap-1.5 shadow-lg">
+                            <span className="h-2 w-2 rounded-full bg-white animate-pulse"></span>
+                            LIVE
+                          </span>
+
+                          <span className="px-3 py-1 rounded-xl bg-[#D97706]/25 backdrop-blur-md text-[#FBBF24] text-xs font-bold border border-[#F59E0B]/40 shadow-lg">
+                            🔥 Trending #1
+                          </span>
+                        </div>
+
+                        {/* Chat Overlay Pill */}
+                        <div className="absolute bottom-16 sm:bottom-16 right-3.5 z-10">
+                          <div className="px-3.5 py-2 rounded-2xl bg-[#EB1000] text-white font-bold text-xs sm:text-[13px] shadow-2xl border border-red-400/40 flex items-center gap-1.5">
+                            <span>❤️ &quot;Play your unreleased track!&quot;</span>
+                          </div>
+                        </div>
+
+                        {/* Streamer Bar at Bottom */}
+                        <div className="absolute bottom-3 left-3.5 right-3.5 p-3 rounded-2xl bg-black/90 backdrop-blur-md border border-white/10 flex items-center justify-between gap-3 z-10">
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            <div className="min-w-0">
+                              <div className="text-sm font-bold text-white flex items-center gap-1.5 truncate">
+                                AskMe Live <span className="text-[#00F5D4] text-xs">✔</span>
+                              </div>
+                              <div className="text-xs text-[#A0A0B2] truncate mt-0.5">
+                                Acoustic Sessions &amp; Songwriting AMA
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 3 HIGHLIGHT PILLS */}
+                  <div className="pt-6 max-w-4xl mx-auto">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <div className="p-4 rounded-2xl bg-[#12121C] border border-[#222232] text-center space-y-1">
+                        <span className="text-[13px] font-black text-[#EB1000] uppercase tracking-wider block">Delivered to the creator's AskMe queue</span>
+                        <span className="text-[13px] text-[#8B8B9E] font-medium block">creator spotlight queue</span>
+                      </div>
+                      <div className="p-4 rounded-2xl bg-[#12121C] border border-[#222232] text-center space-y-1">
+                        <span className="text-[13px] font-black text-[#00F5D4] uppercase tracking-wider block">0% DIRECT FEE</span>
+                        <span className="text-[13px] text-[#8B8B9E] font-medium block">Web QR payments direct</span>
+                      </div>
+                      <div className="p-4 rounded-2xl bg-[#12121C] border border-[#222232] text-center space-y-1">
+                        <span className="text-[13px] font-black text-[#FFD60A] uppercase tracking-wider block">STREAM QR WIDGET</span>
+                        <span className="text-[13px] text-[#8B8B9E] font-medium block">YouTube, Twitch &amp; Kick</span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
                 {/* HERO SLIDE 1: 2-Column Live Showcase Hero */}
@@ -886,7 +972,17 @@ export default function Home() {
                       </div>
 
                       {/* Trust Row */}
-
+                      <div className="flex items-center gap-5 text-xs text-[#8E8E9F] font-semibold pt-1">
+                        <span className="flex items-center gap-1.5 text-[#10B981]">
+                          <CheckCircle2 className="h-4 w-4" />
+                          Zero app install needed
+                        </span>
+                        <span>•</span>
+                        <span className="flex items-center gap-1.5 text-[#10B981]">
+                          <CheckCircle2 className="h-4 w-4" />
+                          Priority queue
+                        </span>
+                      </div>
                     </div>
 
                     {/* RIGHT COLUMN: INTERACTIVE LIVE BROADCAST CARD MOCKUP */}
@@ -901,7 +997,78 @@ export default function Home() {
                       </div>
                     </div>
                   </div>
+                  {/* Showcase Browser Frame */}
+                  <div className="pt-8 max-w-6xl mx-auto">
+                    <div className="rounded-3xl bg-[#0D0D14] border border-[#222234] shadow-[0_25px_90px_rgba(0,0,0,0.85)] overflow-hidden p-4 sm:p-6 text-left relative">
 
+                      {/* Top Window Bar */}
+                      <div className="flex items-center justify-between border-b border-[#1E1E2D] pb-4 mb-4 gap-4 flex-wrap">
+                        <div className="flex items-center gap-2">
+                          <span className="h-3 w-3 rounded-full bg-[#FF5F56]"></span>
+                          <span className="h-3 w-3 rounded-full bg-[#FFBD2E]"></span>
+                          <span className="h-3 w-3 rounded-full bg-[#27C93F]"></span>
+                          <div className="ml-3 px-4 py-1 rounded-md bg-[#161622] border border-[#27273A] text-[13px] font-mono text-[#8B8B9E] hidden sm:inline-block">
+                            askme.live
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-3 text-[13px]">
+                          <div className="px-3 py-1 rounded-full bg-[#00F5D4]/10 border border-[#00F5D4]/30 text-[#00F5D4] font-bold flex items-center gap-1.5">
+                            <span className="h-1.5 w-1.5 rounded-full bg-[#00F5D4] animate-ping"></span>
+                            <span>Ultra low Latency 0.4s</span>
+                          </div>
+                          <span className="text-[#6B6B7F] font-medium hidden md:inline-block">
+                            Stream Sync: <span className="text-white font-semibold">Active</span>
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Inner Window Box */}
+                      <div className="max-w-4xl mx-auto">
+                        <div className="relative aspect-square sm:aspect-video rounded-3xl overflow-hidden border border-[#222234] bg-[#12121B] shadow-2xl">
+                          <img
+                            src="/micimage.jpeg"
+                            alt="Live Stream Preview"
+                            className="w-full h-full object-cover opacity-90 absolute inset-0"
+                          />
+
+                          {/* Top Badges */}
+                          <div className="absolute top-3.5 left-3.5 right-3.5 flex items-center justify-between gap-2 z-10">
+                            <span className="px-3 py-1 rounded-xl bg-[#EB1000] text-white text-xs font-black tracking-wider flex items-center gap-1.5 shadow-lg">
+                              <span className="h-2 w-2 rounded-full bg-white animate-pulse"></span>
+                              LIVE
+                            </span>
+
+                            <span className="px-3 py-1 rounded-xl bg-[#D97706]/25 backdrop-blur-md text-[#FBBF24] text-xs font-bold border border-[#F59E0B]/40 shadow-lg">
+                              🔥 Trending #1
+                            </span>
+                          </div>
+
+                          {/* Chat Overlay Pill */}
+                          <div className="absolute bottom-16 sm:bottom-16 right-3.5 z-10">
+                            <div className="px-3.5 py-2 rounded-2xl bg-[#EB1000] text-white font-bold text-xs sm:text-[13px] shadow-2xl border border-red-400/40 flex items-center gap-1.5">
+                              <span>❤️ &quot;Play your unreleased track!&quot;</span>
+                            </div>
+                          </div>
+
+                          {/* Streamer Bar at Bottom */}
+                          <div className="absolute bottom-3 left-3.5 right-3.5 p-3 rounded-2xl bg-black/90 backdrop-blur-md border border-white/10 flex items-center justify-between gap-3 z-10">
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <div className="min-w-0">
+                                <div className="text-sm font-bold text-white flex items-center gap-1.5 truncate">
+                                  AskMe Live <span className="text-[#00F5D4] text-xs">✔</span>
+                                </div>
+                                <div className="text-xs text-[#A0A0B2] truncate mt-0.5">
+                                  Acoustic Sessions &amp; Songwriting AMA
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -929,7 +1096,7 @@ export default function Home() {
         {/* ========================================================================= */}
         {/* SECTION 2: CORE EXPERIENCE — ASK WITHOUT INTERRUPTING YOUR LIVE */}
         {/* ========================================================================= */}
-        <section id="how-it-works" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+        <section id="how-it-works" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
           <div className="text-center space-y-4">
             <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#180A0C] border border-[#EB1000]/40 text-[#EB1000] text-[11px] sm:text-[12px] font-mono font-bold tracking-widest uppercase shadow-[0_0_15px_rgba(235,16,0,0.25)]">
               <span className="h-1.5 w-1.5 rounded-full bg-[#EB1000] animate-pulse"></span>
@@ -1125,7 +1292,7 @@ export default function Home() {
         {/* ========================================================================= */}
         {/* SECTION 3: THE SCOOT PHILOSOPHY — 5-STEP INTERACTIVE VIDEO JOURNEY */}
         {/* ========================================================================= */}
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
           {/* THE SCOOT PHILOSOPHY HEADER */}
           <div className="text-center space-y-4">
             <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#180A0C] border border-[#EB1000]/40 text-[#EB1000] text-[11px] sm:text-[12px] font-mono font-bold tracking-widest uppercase shadow-[0_0_15px_rgba(235,16,0,0.25)]">
@@ -1279,7 +1446,7 @@ export default function Home() {
         {/* ========================================================================= */}
         {/* SECTION 3.5: GUARANTEED VISIBILITY — YOUR QUESTION DOESN'T DISAPPEAR INTO THE CHAT */}
         {/* ========================================================================= */}
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
           {/* Header */}
           <div className="text-center space-y-4">
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#180A0C] border border-[#EB1000]/60 text-[#EB1000] text-[11px] sm:text-[12px] font-mono font-bold tracking-widest uppercase shadow-[0_0_15px_rgba(235,16,0,0.25)]">
@@ -1433,7 +1600,7 @@ export default function Home() {
         {/* ========================================================================= */}
         {/* SECTION 4: REAL-TIME PING ENGINE — THEY ANSWER. YOU KNOW */}
         {/* ========================================================================= */}
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
           <div className="text-center space-y-3">
             <span className="text-[12px] sm:text-[14px] font-black text-[#EB1000] tracking-widest uppercase">ZERO GUESSWORK • REAL-TIME PING ENGINE</span>
             <h2 className="text-3xl sm:text-5xl lg:text-[55px] xl:text-[60px] font-heading font-extrabold text-white tracking-tight leading-[1.15]">
@@ -1567,18 +1734,18 @@ export default function Home() {
           </div>
 
           {/* Bottom White Oval Action Button */}
-          {/* <div className="flex justify-center pt-4">
+          <div className="flex justify-center pt-4">
             <button className="px-7 py-3 rounded-full bg-white text-black font-extrabold text-xs sm:text-sm flex items-center gap-2.5 shadow-2xl shadow-white/10 hover:bg-gray-100 transition-all">
               <Bell className="h-4 w-4 text-black" />
               See Answer Alert
             </button>
-          </div> */}
+          </div>
         </section>
 
         {/* ========================================================================= */}
         {/* SECTION 5: NEVER MISS YOUR CREATOR — FEATURED LIVE STREAM SHOWCASE */}
         {/* ========================================================================= */}
-        <section id="live-matrix" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6 text-left">
+        <section id="live-matrix" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10 text-left">
           {/* HEADER */}
           <div className="text-center space-y-4">
             <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#180A0C] border border-[#EB1000]/40 text-[#EB1000] text-[11px] sm:text-[12px] font-mono font-bold tracking-widest uppercase shadow-[0_0_15px_rgba(235,16,0,0.25)]">
@@ -1632,9 +1799,9 @@ export default function Home() {
                 <span className="px-3 py-1 rounded-full bg-[#EB1000] text-white text-xs font-extrabold flex items-center gap-1.5 shadow-md shadow-[#EB1000]/40 uppercase tracking-wider">
                   <span className="h-2 w-2 rounded-full bg-white animate-pulse"></span> LIVE NOW
                 </span>
-                {/* <span className="text-xs text-[#8E8E9F] bg-[#0E0E16] px-3.5 py-1 rounded-full border border-[#222232] font-medium">
+                <span className="text-xs text-[#8E8E9F] bg-[#0E0E16] px-3.5 py-1 rounded-full border border-[#222232] font-medium">
                   Broadcasting to: <span className="text-white font-semibold">{currentStream.broadcastingTo}</span>
-                </span> */}
+                </span>
               </div>
 
               <div className="flex items-center gap-3">
@@ -1829,7 +1996,7 @@ export default function Home() {
         {/* ========================================================================= */}
         {/* SECTION 6: ONE ASKME. EVERY PLATFORM — ZERO SILOS */}
         {/* ========================================================================= */}
-        <section id="for-creators" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+        <section id="for-creators" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
           {/* HEADER */}
           <div className="text-center space-y-4">
             <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#180A0C] border border-[#EB1000]/40 text-[#EB1000] text-[11px] sm:text-[12px] font-mono font-bold tracking-widest uppercase shadow-[0_0_15px_rgba(235,16,0,0.25)]">
@@ -2018,7 +2185,7 @@ export default function Home() {
         {/* ========================================================================= */}
         {/* SECTION 7: BUILT FOR MODERN CREATORS — OBS STUDIO DOCK MOCKUP */}
         {/* ========================================================================= */}
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
           {/* HEADER */}
           <div className="text-center space-y-4">
             <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#180A0C] border border-[#EB1000]/40 text-[#EB1000] text-[11px] sm:text-[12px] font-mono font-bold tracking-widest uppercase shadow-[0_0_15px_rgba(235,16,0,0.25)]">
@@ -2277,7 +2444,7 @@ export default function Home() {
         {/* ========================================================================= */}
         {/* SECTION 8: TRANSPARENT CREATOR ECONOMICS & CALCULATOR */}
         {/* ========================================================================= */}
-        <section id="calculator" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+        <section id="calculator" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
           {/* HEADER */}
           <div className="text-center space-y-4">
             <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#180A0C] border border-[#EB1000]/40 text-[#EB1000] text-[11px] sm:text-[12px] font-mono font-bold tracking-widest uppercase shadow-[0_0_15px_rgba(235,16,0,0.25)]">
@@ -2807,7 +2974,7 @@ export default function Home() {
         {/* ========================================================================= */}
         {/* SECTION 10: PLATFORM & ECONOMICS FEATURE MATRIX TABLE */}
         {/* ========================================================================= */}
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-7">
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
           {/* HEADER AREA */}
           <div className="text-center space-y-4">
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#180A0C] border border-[#EB1000]/40 text-[#EB1000] text-xs font-mono font-bold tracking-widest uppercase shadow-[0_0_15px_rgba(235,16,0,0.25)]">
@@ -2992,7 +3159,7 @@ export default function Home() {
           </div>
         </section>
         {/* THE STORY BEHIND ASKME (OUR ORIGIN SECTION) */}
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-7 text-left">
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8 text-left">
           {/* SINGLE MASTER CARD FOR STORY BEHIND ASKME */}
           <div className="p-6 sm:p-10 lg:p-12 rounded-2xl bg-[#09090F] border border-[#EB1000]/40 shadow-[0_0_40px_rgba(235,16,0,0.12)] relative overflow-hidden space-y-8 text-center group">
             {/* Background subtle glow effect */}
@@ -3150,7 +3317,7 @@ export default function Home() {
         {/* ========================================================================= */}
         {/* SECTION 11: FREQUENTLY ASKED QUESTIONS (EVERYTHING YOU NEED TO KNOW) */}
         {/* ========================================================================= */}
-        <section id="faq" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-7 text-left">
+        <section id="faq" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8 text-left">
           {/* TOP HEADER & CONTROLS */}
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
             <div className="space-y-3">
@@ -3484,7 +3651,7 @@ export default function Home() {
         {/* ========================================================================= */}
         {/* SECTION 13: PURPOSE & VISION — WHY ASKME EXISTS */}
         {/* ========================================================================= */}
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
           {/* HEADER AREA */}
           <div className="text-center space-y-4">
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#180A0C] border border-[#EB1000]/40 text-[#EB1000] text-xs font-mono font-bold tracking-widest uppercase shadow-[0_0_15px_rgba(235,16,0,0.25)]">

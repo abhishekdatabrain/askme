@@ -99,7 +99,7 @@ export default function AnalyticsPage() {
             }`}>
             <div>
               <h3 className={`font-heading font-black text-xl ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'}`}>Revenue & Commission Breakdown</h3>
-              <p className="text-xs text-[#8B8B96] mt-0.5">85% creator share model with transparent settlement reporting.</p>
+              <p className="text-xs text-[#8B8B96] mt-0.5">83.3% creator share model with transparent settlement reporting.</p>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -120,7 +120,7 @@ export default function AnalyticsPage() {
               </div>
 
               <div className={`p-5 rounded-2xl border space-y-2 ${theme === 'light' ? 'bg-[#F8F9FA] border-[#E9ECEF]' : 'bg-[#0A0A0F] border-[#1C1C26]'}`}>
-                <span className="text-xs text-[#8B8B96] font-bold block">Creator Net Earnings (85%)</span>
+                <span className="text-xs text-[#8B8B96] font-bold block">Creator Net Earnings (80.3%)</span>
                 <div className="font-heading font-extrabold text-2xl text-[#00E676]">
                   ₹{walletMetrics.totalEarnings.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </div>

@@ -54,6 +54,7 @@ export default function CreatorManagement({ activeSubTab }) {
         const data = await res.json();
         if (data.status === 'success' && (data.data?.creators || data.creators)) {
           const list = data.data?.creators || data.creators || [];
+          console.log(list, "list");
           setCreators(list.map((c, idx) => {
             const rawDate = c.regDate || c.createdAt || c.created_at;
             let formattedDate = 'N/A';
@@ -73,7 +74,7 @@ export default function CreatorManagement({ activeSubTab }) {
               mobile: c.mobile || 'N/A',
               category: c.category || 'Creator',
               kycStatus: c.kycStatus || 'Approved',
-              accountStatus: c.accountStatus ? (c.accountStatus.charAt(0).toUpperCase() + c.accountStatus.slice(1)) : 'Active',
+              accountStatus: c.accountStatus,
               totalDonations: `₹${(c.totalRevenue || bal || 0).toLocaleString()}`,
               platform: 'youtube',
               createdAt: formattedDate,
@@ -225,23 +226,42 @@ export default function CreatorManagement({ activeSubTab }) {
                   </span>
                 </td>
                 <td className="py-3.5 px-2 font-bold text-white">{c.walletBalance}</td>
-                <td className="py-3.5 px-2 font-bold ">{c.accountStatus}</td>
+                <td className="py-3.5 px-2">
+                  <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${c.accountStatus === 'Active' ? 'bg-[#00E676]/10 text-[#00E676] border border-[#00E676]/30' :
+                    c.accountStatus === 'Pending' ? 'bg-[#FFD60A]/10 text-[#FFD60A] border border-[#FFD60A]/30' :
+                      'bg-[#FF3D71]/10 text-[#FF3D71] border border-[#FF3D71]/30'
+                    }`}>
+                    {c.accountStatus}
+                  </span>
+                </td>
                 <td className="py-3.5 px-2 text-right">
                   <div className="flex items-center justify-end gap-1">
                     {/* 1. View Profile Icon */}
                     <button
                       onClick={() => setSelectedCreatorForView(c)}
                       title="View Profile Details"
-                      className="p-1.5 rounded-lg bg-[#1C1C26] text-[#8B8B96] hover:text-[#00F5D4] hover:bg-[#00F5D4]/10 transition"
+                      className="p-1.5 rounded-lg bg-[#1C1C26] text-[#8B8B96] hover:text-[#00F5D4] hover:bg-[#00F5D4]/10 transition cursor-pointer"
                     >
                       <Eye className="h-3.5 w-3.5" />
                     </button>
 
-                    {/* 4. Block / Unblock Icon */}
+                    {/* 2. Approve Creator  */}
+                    <button
+                      onClick={() => handleAction(c.id, 'approve')}
+                      title="Approve Creator"
+                      className={`p-1.5 rounded-lg transition cursor-pointer ${c.kycStatus === 'Approved' && c.accountStatus === 'Active'
+                        ? 'bg-[#00E676]/10 text-[#00E676] border border-[#00E676]/30'
+                        : 'bg-[#1C1C26] text-[#8B8B96] hover:text-[#00E676] hover:bg-[#00E676]/10'
+                        }`}
+                    >
+                      <CheckCircle2 className="h-3.5 w-3.5" />
+                    </button>
+
+                    {/* 3. Block / Unblock Icon */}
                     <button
                       onClick={() => handleAction(c.id, 'block')}
                       title={c.accountStatus === 'Blocked' ? 'Unblock Creator' : 'Block Creator'}
-                      className={`p-1.5 rounded-lg transition ${c.accountStatus === 'Blocked'
+                      className={`p-1.5 rounded-lg transition cursor-pointer ${c.accountStatus === 'Blocked'
                         ? 'bg-[#FFD60A]/10 text-[#FFD60A]'
                         : 'bg-[#1C1C26] text-[#8B8B96] hover:text-[#FFD60A] hover:bg-[#FFD60A]/10'
                         }`}
@@ -249,11 +269,11 @@ export default function CreatorManagement({ activeSubTab }) {
                       <Ban className="h-3.5 w-3.5" />
                     </button>
 
-                    {/* 5. Delete Icon */}
+                    {/* 4. Delete Icon */}
                     <button
                       onClick={() => handleDelete(c.id)}
                       title="Delete Creator"
-                      className="p-1.5 rounded-lg bg-[#1C1C26] text-[#8B8B96] hover:text-[#FF3D71] hover:bg-[#FF3D71]/10 transition"
+                      className="p-1.5 rounded-lg bg-[#1C1C26] text-[#8B8B96] hover:text-[#FF3D71] hover:bg-[#FF3D71]/10 transition cursor-pointer"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                     </button>

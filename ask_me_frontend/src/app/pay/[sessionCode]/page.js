@@ -62,6 +62,7 @@ function ViewerPaymentContent() {
   const [message, setMessage] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('upi'); // 'upi' | 'card' | 'netbanking'
   const [isVipMember, setIsVipMember] = useState(false);
+  const [agreedToConsent, setAgreedToConsent] = useState(false);
 
   // Auth Modal State
   const [showAuthModal, setShowAuthModal] = useState(false);
@@ -475,7 +476,7 @@ function ViewerPaymentContent() {
     }
   };
 
-  // Razorpay Test Mode Modal State
+  // Razorpay Mode Modal State
   const [showRazorpayModal, setShowRazorpayModal] = useState(false);
   const [razorpayTab, setRazorpayTab] = useState('upi'); // 'upi' | 'card' | 'netbanking' | 'wallet'
   const [testUpiId, setTestUpiId] = useState('success@razorpay');
@@ -521,6 +522,16 @@ function ViewerPaymentContent() {
 
     if (!message || !message.trim()) {
       alert('Please enter your live stream message / paid question.');
+      return;
+    }
+
+    if (!agreedToConsent) {
+      alert('Please check the Contact Consent Disclaimer box below to proceed with payment.');
+      const chk = document.getElementById('payConsentCheck');
+      if (chk) {
+        chk.focus();
+        chk.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
       return;
     }
 
@@ -686,9 +697,7 @@ function ViewerPaymentContent() {
             </button>
           )}
 
-          <div className="hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#00E676]/10 text-[#00E676] border border-[#00E676]/30 text-xs font-bold">
-            <Lock className="h-3.5 w-3.5" /> 256-Bit SSL
-          </div>
+
         </div>
       </header>
 
@@ -821,14 +830,13 @@ function ViewerPaymentContent() {
 
               <div>
                 <div className="flex items-center gap-2">
-                  <h2 className="font-heading font-black text-xl text-white">{creatorData?.fullName || 'Creator Host'}</h2>
+                  <h2 className="font-heading font-black text-xl text-white">{creatorData?.fullName}</h2>
                   <ShieldCheck className="h-4 w-4 text-[#00F5D4]" />
                 </div>
-                <p className="text-xs text-[#00F5D4] font-semibold">{creatorData?.username || '@creator'}</p>
                 <div className="flex items-center gap-1.5 mt-1">
                   <span className={`h-2 w-2 rounded-full ${sessionData?.status === 'active' ? 'bg-[#00E676] animate-pulse' : 'bg-[#FF3D71]'}`} />
                   <span className="text-[11px] text-[#8B8B96] font-medium">
-                    {sessionData?.title || 'Live Stream Session'} ({sessionData?.category || 'Gaming'})
+                    {sessionData?.title || 'Live Stream Session'} ({sessionData?.category || creatorData?.bio})
                   </span>
                 </div>
               </div>
@@ -873,7 +881,7 @@ function ViewerPaymentContent() {
                 <div>
                   <label className="block text-xs font-bold text-white mb-2 flex items-center justify-between">
                     <span>Enter Amount (₹) <span className="text-[#FF3D71]">*</span></span>
-                    <span className="text-[11px] text-[#00F5D4]">100% Instant UPI</span>
+                    <span className="text-[11px] text-[#00F5D4]">UPI Payment</span>
                   </label>
 
                   {/* Preset Chips */}
@@ -1047,6 +1055,35 @@ function ViewerPaymentContent() {
                     </>
                   )}
                 </button>
+
+                {/* Contact Consent Disclaimer Checkbox Box */}
+                <div className="flex items-start gap-3 py-3 px-3.5 rounded-2xl bg-[#0A0A0F] border border-[#1C1C26] hover:border-[#222234] transition-colors mt-3">
+                  <input
+                    type="checkbox"
+                    id="payConsentCheck"
+                    required
+                    checked={agreedToConsent}
+                    onChange={(e) => setAgreedToConsent(e.target.checked)}
+                    className="mt-0.5 h-4 w-4 rounded bg-[#161622] border-[#28283C] text-[#EB1000] focus:ring-[#EB1000] cursor-pointer accent-[#EB1000] shrink-0"
+                  />
+                  <label htmlFor="payConsentCheck" className="text-xs text-[#8B8B96] cursor-pointer select-none leading-relaxed">
+                    I agree to the <span className="font-semibold text-white">Contact Consent Disclaimer</span>
+                    <p className="mt-1 text-[11px] leading-relaxed">
+                      By providing your mobile number, email address, or other contact details to{' '}
+                      <Link href="https://ask-me.live" target="_blank" rel="noopener noreferrer" className="text-[#EB1000] hover:underline font-medium">
+                        Ask-me.live
+                      </Link>
+                      , you acknowledge and agree that{' '}
+                      <Link href="https://ask-me.live" target="_blank" rel="noopener noreferrer" className="text-[#EB1000] hover:underline font-medium">
+                        Ask-me.live
+                      </Link>{' '}
+                      and its authorized representatives may contact you through calls, SMS, WhatsApp, email, or other communication channels for service related, transactional, account, support, marketplace, promotional, and other legitimate business purposes.
+                    </p>
+                    <p className="mt-1 text-[11px] leading-relaxed">
+                      You may opt out of promotional communications at any time. Service and transactional communications may still be sent where necessary to provide or administer our services.
+                    </p>
+                  </label>
+                </div>
               </form>
             )}
           </div>
@@ -1598,7 +1635,7 @@ function ViewerPaymentContent() {
 
       <footer className="border-t border-[#1C1C26] py-4 text-center text-xs text-[#8B8B96] space-y-1">
         <p>&copy; 2026 AskMe (Futurepast ventures LLP). All rights reserved.</p>
-        <p className="text-[11px] text-[#717182]">Creators keep 85% of eligible revenue, subject to applicable terms, fees, eligibility and payment conditions.</p>
+        <p className="text-[11px] text-[#717182]">Creators keep 80.3% of eligible revenue, subject to applicable terms, fees, eligibility and payment conditions.</p>
       </footer>
     </div>
   );

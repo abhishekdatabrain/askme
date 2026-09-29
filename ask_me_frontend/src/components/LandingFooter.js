@@ -242,7 +242,7 @@ export default function LandingFooter() {
         <div className="pt-8 border-t border-[#1C1C2A] flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-[#8E8E9F] font-medium">
           <div className="space-y-1 text-center sm:text-left">
             <p>© 2026 AskMe (Futurepast ventures LLP). All rights reserved.</p>
-            <p className="text-[11px] text-[#717182]">Creators keep 85% of eligible revenue, subject to applicable terms, fees, eligibility and payment conditions.</p>
+            <p className="text-[11px] text-[#717182]">Creators keep 80.3% of eligible revenue, subject to applicable terms, fees, eligibility and payment conditions.</p>
           </div>
           <p className="shrink-0 text-center sm:text-right">Developed by Databrain Technology Pvt. Ltd.</p>
         </div>

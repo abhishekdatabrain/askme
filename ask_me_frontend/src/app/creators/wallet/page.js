@@ -142,7 +142,7 @@ export default function CreatorWalletPage() {
         'Date & Time',
         'Viewer / Supporter Name',
         'Gross Amount (INR)',
-        'Creator Net Share 85% (INR)',
+        'Creator Net Share 80.3% (INR)',
         'Live Stream Message',
         'Payment Status'
       ];
@@ -178,7 +178,7 @@ export default function CreatorWalletPage() {
         'Settlement Month',
         'Gross Earning (INR)',
         'Platform Fee 15% (INR)',
-        'Creator Net Earning 85% (INR)',
+        'Creator Net Earning 80.3% (INR)',
         'Previous Carried Balance (INR)',
         'Available Amount (INR)',
         'Withdrawn Amount (INR)',
@@ -261,7 +261,7 @@ export default function CreatorWalletPage() {
                 ₹{walletData.totalEarnings.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
               </div>
               <span className="text-[11px] text-[#00E676] font-semibold flex items-center gap-1">
-                <ShieldCheck className="h-3.5 w-3.5" /> 85% Net Revenue Lifetime
+                <ShieldCheck className="h-3.5 w-3.5" /> 80.3% Net Revenue Lifetime
               </span>
             </div>
 
@@ -451,7 +451,7 @@ export default function CreatorWalletPage() {
                                   ₹{tx.amount.toFixed(2)}
                                 </div>
                                 <span className={`text-[10px] ${theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'
-                                  }`}>Net (85%): ₹{tx.netAmount.toFixed(2)}</span>
+                                  }`}>Net (80.3%): ₹{tx.netAmount.toFixed(2)}</span>
                               </td>
 
                               <td className="py-3.5 px-3 max-w-xs">
@@ -573,7 +573,7 @@ export default function CreatorWalletPage() {
                           <th className="py-3 px-3">Sr No</th>
                           <th className="py-3 px-3">Earning Month</th>
                           <th className="py-3 px-3">Settlement Month</th>
-                          <th className="py-3 px-3">Net Earning (85%)</th>
+                          <th className="py-3 px-3">Net Earning (80.3%)</th>
                           <th className="py-3 px-3">Prev Carried Bal</th>
                           <th className="py-3 px-3">Available Amount</th>
                           <th className="py-3 px-3">Withdrawn</th>

@@ -69,7 +69,7 @@ export default function HeroStreamMarquee() {
 
   return (
     <div className="relative w-full overflow-hidden rounded-3xl bg-[#0A0A0F] border border-[#1C1C26] p-4 shadow-2xl">
-      {/* Visual Direction Section 5 Gradient Overlay: 85% center #0A0A0F, 20% edges */}
+      {/* Visual Direction Section 5 Gradient Overlay: 80.3% center #0A0A0F, 20% edges */}
       <div className="pointer-events-none absolute inset-0 z-10 bg-gradient-to-r from-[#0A0A0F] via-[#0A0A0F]/85 to-[#0A0A0F]"></div>
 
       {/* Marquee Rows with Vertical Offsets */}

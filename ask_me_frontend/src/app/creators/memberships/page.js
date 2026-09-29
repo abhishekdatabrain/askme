@@ -319,7 +319,7 @@ export default function CreatorMembershipsPage() {
               <div className={`font-heading font-extrabold text-2xl mt-1 ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'}`}>
                 ₹{subscribersList.reduce((sum, s) => sum + (s.amount || 0), 0).toLocaleString('en-IN') || (membershipPlans.length * 499).toLocaleString('en-IN')} / mo
               </div>
-              <span className="text-[11px] text-[#00E676] font-semibold">85% Creator Net Payout</span>
+              <span className="text-[11px] text-[#00E676] font-semibold">80.3% Creator Net Payout</span>
             </div>
           </div>
 

@@ -131,7 +131,7 @@ export default function EulaPage() {
     {
       num: '21',
       title: 'Creator Gross Share',
-      content: 'After deduction of the applicable AskMe Platform Fee, the remaining amount ordinarily constitutes the Creator\'s gross share. Under the standard 15% Platform Fee structure, the Creator\'s gross share is ordinarily 85% of the applicable transaction amount. The 85% is a gross Creator share and not a guaranteed net payout.'
+      content: 'After deduction of the applicable AskMe Platform Fee, the remaining amount ordinarily constitutes the Creator\'s gross share. Under the standard 15% Platform Fee structure, the Creator\'s gross share is ordinarily 80.3% of the applicable transaction amount. The 80.3% is a gross Creator share and not a guaranteed net payout.'
     },
     {
       num: '22',
@@ -146,12 +146,12 @@ export default function EulaPage() {
     {
       num: '24',
       title: 'Creator Earnings Calculation',
-      content: 'Standard Calculation:\n• Transaction Amount: 100%\n• Less AskMe Platform Fee: ordinarily 15%\n• Creator Gross Share: ordinarily 85%\n• Less Applicable Deductions\n• Creator Net Earnings: remaining amount\n\n  The applicable deductions may include taxes, payment processing charges, foreign exchange charges, statutory withholding, refunds, reversals, chargebacks, fraud adjustments, Payment Service Provider adjustments and other legally required or contractually applicable deductions.\n Example:Viewer pays \$10, AskMe Platform Fee is \$1.50, Creator Gross Share is \$8.50. If applicable deductions total \$0.70, Creator Net Earnings would be \$7.80. This is an illustration only.'
+      content: 'Standard Calculation:\n• Transaction Amount: 100%\n• Less AskMe Platform Fee: ordinarily 15%\n• Creator Gross Share: ordinarily 80.3%\n• Less Applicable Deductions\n• Creator Net Earnings: remaining amount\n\n  The applicable deductions may include taxes, payment processing charges, foreign exchange charges, statutory withholding, refunds, reversals, chargebacks, fraud adjustments, Payment Service Provider adjustments and other legally required or contractually applicable deductions.\n Example:Viewer pays \$10, AskMe Platform Fee is \$1.50, Creator Gross Share is \$8.50. If applicable deductions total \$0.70, Creator Net Earnings would be \$7.80. This is an illustration only.'
     },
     {
       num: '25',
-      title: 'Creator Net Earnings Are Not Guaranteed at 85%',
-      content: 'The expression "85% Creator Share" refers to the Creator\'s gross share under the standard 15% Platform Fee structure. It does not mean that the Creator will receive 85% as the final net payout deposited into their bank account. Final Creator Net Earnings may be lower after applicable deductions.'
+      title: 'Creator Net Earnings Are Not Guaranteed at 80.3%',
+      content: 'The expression "80.3% Creator Share" refers to the Creator\'s gross share under the standard 15% Platform Fee structure. It does not mean that the Creator will receive 80.3% as the final net payout deposited into their bank account. Final Creator Net Earnings may be lower after applicable deductions.'
     },
     {
       num: '26',
@@ -171,7 +171,7 @@ export default function EulaPage() {
     {
       num: '29',
       title: 'Payment Processing Charges',
-      content: 'Payment processing charges vary depending on payment method, currency, country, card network, Payment Service Provider and transaction value. Payment processing charges attributable to the Creator transaction may be deducted from the Creator\'s 85% gross share.'
+      content: 'Payment processing charges vary depending on payment method, currency, country, card network, Payment Service Provider and transaction value. Payment processing charges attributable to the Creator transaction may be deducted from the Creator\'s 80.3% gross share.'
     },
     {
       num: '30',
@@ -254,7 +254,7 @@ export default function EulaPage() {
     {
       num: '88-96',
       title: 'Creator Financials & Payouts (Clauses 88 to 96)',
-      content: '• Gross Revenue Share (Clause 88): Standard model is 15% Platform Fee and 85% Creator Gross Share.\n• Variable & Promotional Fees (Clauses 89-91): Platform Fees may adjust for campaigns, referrals, or risk assessments.\n• Net Earnings (Clause 92): Final payout is calculated after deducting taxes, processing charges, withholding, refunds, and chargebacks.\n• Payment Provider Requirements & Holds (Clauses 93-96): Payouts subject to settlement, KYC, and chargeback recovery.'
+      content: '• Gross Revenue Share (Clause 88): Standard model is 15% Platform Fee and 80.3% Creator Gross Share.\n• Variable & Promotional Fees (Clauses 89-91): Platform Fees may adjust for campaigns, referrals, or risk assessments.\n• Net Earnings (Clause 92): Final payout is calculated after deducting taxes, processing charges, withholding, refunds, and chargebacks.\n• Payment Provider Requirements & Holds (Clauses 93-96): Payouts subject to settlement, KYC, and chargeback recovery.'
     },
     {
       num: '97-104',
@@ -264,7 +264,7 @@ export default function EulaPage() {
     {
       num: '105-116',
       title: 'Termination, International Terms & Legal Info (Clauses 105 to 116)',
-      content: '• Suspension & Termination (Clauses 105-107): Accounts subject to suspension/termination for material breach or fraud.\n• International Creators & Restricted Jurisdictions (Clauses 109-111): Restrictions apply to Pakistan, Bangladesh, North Korea, Palestine, and Türkiye.\n• Commercial Model Acknowledgement (Clause 112): Creators confirm understanding of the 15% fee / 85% gross share structure.\n• Grievance & Corporate Info (Clauses 114-116): Operator: FuturePast Ventures LLP (LLPIN: ACQ-4984, Pune, Maharashtra, India). Grievance Officer: Mr. T.S. Sandhu (Grievance@ask-me.live).'
+      content: '• Suspension & Termination (Clauses 105-107): Accounts subject to suspension/termination for material breach or fraud.\n• International Creators & Restricted Jurisdictions (Clauses 109-111): Restrictions apply to Pakistan, Bangladesh, North Korea, Palestine, and Türkiye.\n• Commercial Model Acknowledgement (Clause 112): Creators confirm understanding of the 15% fee / 80.3% gross share structure.\n• Grievance & Corporate Info (Clauses 114-116): Operator: FuturePast Ventures LLP (LLPIN: ACQ-4984, Pune, Maharashtra, India). Grievance Officer: Mr. T.S. Sandhu (Grievance@ask-me.live).'
     }
   ];
 
@@ -434,7 +434,7 @@ export default function EulaPage() {
               </div>
               <div className="p-4 rounded-2xl bg-[#141422] border border-[#222234]">
                 <span className="text-xs text-[#8E8E9F] block mb-1">Creator Gross Share</span>
-                <span className="text-2xl font-black text-[#00E676]">85%</span>
+                <span className="text-2xl font-black text-[#00E676]">80.3%</span>
               </div>
               <div className="p-4 rounded-2xl bg-[#141422] border border-[#222234]">
                 <span className="text-xs text-[#8E8E9F] block mb-1">Creator Net Payout</span>
@@ -447,13 +447,13 @@ export default function EulaPage() {
                 • <strong>AskMe standard Platform Fee:</strong> 15% of the applicable transaction amount.
               </p>
               <p>
-                • <strong>Creator Gross Share:</strong> 85% of the applicable transaction amount.
+                • <strong>Creator Gross Share:</strong> 80.3% of the applicable transaction amount.
               </p>
               <p>
                 • <strong>Applicable Deductions from Gross Share:</strong> Taxes (GST), payment processing charges, statutory withholding, refunds, reversals, chargebacks and other legally applicable adjustments.
               </p>
               <p className="p-4 rounded-2xl bg-[#141422] border border-[#222234] text-xs text-[#8E8E9F]">
-                💡 <strong>Important Note:</strong> AskMe may increase or reduce the 15% Platform Fee for promotional campaigns, referral programs, special arrangements, channel risk, transaction risk, payment provider requirements or compliance considerations. The Creator&apos;s 85% is a gross share, not a guaranteed net payout.
+                💡 <strong>Important Note:</strong> AskMe may increase or reduce the 15% Platform Fee for promotional campaigns, referral programs, special arrangements, channel risk, transaction risk, payment provider requirements or compliance considerations. The Creator&apos;s 80.3% is a gross share, not a guaranteed net payout.
               </p>
             </div>
           </section>

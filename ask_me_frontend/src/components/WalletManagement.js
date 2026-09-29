@@ -214,7 +214,7 @@ export default function WalletManagement({ activeSubTab }) {
       'Email',
       'Gross Raised (INR)',
       'Platform Fee 15% (INR)',
-      'Creator Net Share 85% (INR)',
+      'Creator Net Share 80.3% (INR)',
       'Available Balance (INR)',
       'Pending Balance (INR)',
       'Withdrawn Amount (INR)',
@@ -259,7 +259,7 @@ export default function WalletManagement({ activeSubTab }) {
               <Wallet className="h-6 w-6 text-[#EB1000]" /> System Earnings & Revenue Settlement Report
             </h2>
             <p className="text-xs text-[#8B8B96] mt-0.5">
-              Live tracking of viewer donations, 15% platform cut, 85% creator payouts, & wallet balance settlements.
+              Live tracking of viewer donations, 15% platform cut, 80.3% creator payouts, & wallet balance settlements.
             </p>
           </div>
         </div>
@@ -279,7 +279,7 @@ export default function WalletManagement({ activeSubTab }) {
 
           <div className="p-4 rounded-2xl bg-[#0A0A0F] border border-[#1C1C26] space-y-1">
             <span className="text-[11px] font-bold text-[#8B8B96] flex items-center gap-1">
-              <ShieldCheck className="h-3.5 w-3.5 text-[#00E676]" /> Creator Net Share (85%)
+              <ShieldCheck className="h-3.5 w-3.5 text-[#00E676]" /> Creator Net Share (80.3%)
             </span>
             <div className="font-heading font-black text-xl text-white">
               ₹{totalCreatorNet.toLocaleString('en-IN')}
@@ -390,7 +390,7 @@ export default function WalletManagement({ activeSubTab }) {
                     <span className="font-heading font-black text-[#FFD60A] text-sm">₹{(w.platformCommission || 0).toLocaleString('en-IN')}</span>
                   </div>
                   <div className="p-2.5 rounded-xl bg-[#13131A] border border-[#1C1C26]">
-                    <span className="text-[10px] text-[#8B8B96] block font-semibold">Net Share (85%)</span>
+                    <span className="text-[10px] text-[#8B8B96] block font-semibold">Net Share (80.3%)</span>
                     <span className="font-heading font-black text-[#00E676] text-sm">₹{(w.netCreatorShare || 0).toLocaleString('en-IN')}</span>
                   </div>
                   <div className="p-2.5 rounded-xl bg-[#13131A] border border-[#00E676]/30 bg-[#00E676]/5">

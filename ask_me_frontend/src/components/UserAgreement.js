@@ -15,7 +15,7 @@ export default function UserAgreement({ activeSubTab }) {
               Platform User Agreement & Legal Terms
             </h1>
             <p className="text-xs text-[#8B8B96] mt-0.5">
-              Master legal compliance agreement governing Creator broadcasting, 85% revenue split, payout rules & KYC guidelines.
+              Master legal compliance agreement governing Creator broadcasting, 80.3% revenue split, payout rules & KYC guidelines.
             </p>
           </div>
         </div>
@@ -35,7 +35,7 @@ export default function UserAgreement({ activeSubTab }) {
             <span>1. Revenue Share Split & Dynamic Platform Fee</span>
           </div>
           <p>
-            Creators onboarding on the AskMe PRO live streaming platform retain a guaranteed <strong className="text-[#00E676]">85% net revenue share</strong> on all viewer donations, askMail messages, and paid live stream Q&A interactions.
+            Creators onboarding on the AskMe PRO live streaming platform retain a guaranteed <strong className="text-[#00E676]">80.3% net revenue share</strong> on all viewer donations, askMail messages, and paid live stream Q&A interactions.
           </p>
           <p>
             The platform automatically deducts a <strong>15% platform commission cut</strong> (or active VIP tier rate) to cover high-speed streaming infrastructure, OBS browser overlay relay servers, and payment gateway processing fees.

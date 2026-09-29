@@ -454,10 +454,10 @@ export default function AdminMembershipsManager({ activeSubTab = 'overview', the
                         <td className="py-3 font-mono font-bold text-[#FFD60A]">{sub.amount}</td>
                         <td className="py-3">
                           <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase ${sub.status === 'Active'
-                              ? 'bg-[#00E676]/15 text-[#00E676] border border-[#00E676]/30'
-                              : sub.status === 'Cancelled'
-                                ? 'bg-[#FF3D71]/15 text-[#FF3D71] border border-[#FF3D71]/30'
-                                : 'bg-[#FFD60A]/15 text-[#FFD60A] border border-[#FFD60A]/30'
+                            ? 'bg-[#00E676]/15 text-[#00E676] border border-[#00E676]/30'
+                            : sub.status === 'Cancelled'
+                              ? 'bg-[#FF3D71]/15 text-[#FF3D71] border border-[#FF3D71]/30'
+                              : 'bg-[#FFD60A]/15 text-[#FFD60A] border border-[#FFD60A]/30'
                             }`}>
                             {sub.status}
                           </span>
@@ -724,10 +724,10 @@ export default function AdminMembershipsManager({ activeSubTab = 'overview', the
                         <td className="py-3.5 font-mono font-bold text-[#FFD60A]">{sub.amount}</td>
                         <td className="py-3.5">
                           <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase ${sub.status === 'Active'
-                              ? 'bg-[#00E676]/15 text-[#00E676] border border-[#00E676]/30'
-                              : sub.status === 'Cancelled'
-                                ? 'bg-[#FF3D71]/15 text-[#FF3D71] border border-[#FF3D71]/30'
-                                : 'bg-[#FFD60A]/15 text-[#FFD60A] border border-[#FFD60A]/30'
+                            ? 'bg-[#00E676]/15 text-[#00E676] border border-[#00E676]/30'
+                            : sub.status === 'Cancelled'
+                              ? 'bg-[#FF3D71]/15 text-[#FF3D71] border border-[#FF3D71]/30'
+                              : 'bg-[#FFD60A]/15 text-[#FFD60A] border border-[#FFD60A]/30'
                             }`}>
                             {sub.status}
                           </span>
@@ -976,9 +976,9 @@ export default function AdminMembershipsManager({ activeSubTab = 'overview', the
             <div className="p-4 rounded-2xl bg-[#181820] border border-[#2A2A3A] flex items-center justify-between">
               <div>
                 <span className="font-bold text-white block">Platform Cut vs Creator Payout</span>
-                <span className="text-[#8B8B96]">Fixed 15% platform commission / 85% creator payout share.</span>
+                <span className="text-[#8B8B96]">Fixed 15% platform commission / 80.3% creator payout share.</span>
               </div>
-              <span className="font-heading font-black text-lg text-[#FFD60A]">15% / 85%</span>
+              <span className="font-heading font-black text-lg text-[#FFD60A]">15% / 80.3%</span>
             </div>
 
             <button

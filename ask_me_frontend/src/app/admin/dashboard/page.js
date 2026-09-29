@@ -120,7 +120,7 @@ export default function AdminDashboardPage() {
                     title="Pending Withdrawals"
                     value={`${dashboardStats.pendingWithdrawals} Requests`}
                     change={`₹${dashboardStats.pendingWithdrawalsAmount.toLocaleString()} Queued`}
-                    subtitle="85% Net Payout Queue"
+                    subtitle="80.3% Net Payout Queue"
                     icon={DollarSign}
                     accent="yellow"
                 />
@@ -166,7 +166,7 @@ export default function AdminDashboardPage() {
                     <div>
                         <h5 className="font-bold text-white uppercase text-[11px] tracking-wider mb-3">Creator Services</h5>
                         <ul className="space-y-2 text-xs">
-                            <li><a href="#" className="hover:text-[#00F5D4] transition-colors">Keep 85% Net Revenue Share</a></li>
+                            <li><a href="#" className="hover:text-[#00F5D4] transition-colors">Keep 80.3% Net Revenue Share</a></li>
                             <li><a href="#" className="hover:text-[#00F5D4] transition-colors">OBS Live Stream Overlay</a></li>
                             <li><a href="#" className="hover:text-[#00F5D4] transition-colors">Instant KYC Payout Settlement</a></li>
                             <li><a href="#" className="hover:text-[#00F5D4] transition-colors">Payment Protection</a></li>

@@ -659,7 +659,7 @@ export default function CreatorKycPage() {
                         accountHolderName: prev.accountHolderName || aadhaarName || panName,
                     }));
                 } else {
-                    toast.warning(data.data.message || 'Identity mismatch detected between PAN and Aadhaar. Flagged for manual review.', 'Manual Review Required');
+                    toast.warning(data.data.message);
                 }
             }
         } catch (err) {
@@ -1079,279 +1079,439 @@ export default function CreatorKycPage() {
                     </div>
                 ) : flowState === 'kyc_approved' ? (
                     /* --- 1. APPROVED SCREEN --- */
-                    <div className={`p-8 rounded-3xl border shadow-2xl space-y-6 animate-scale-up ${theme === 'light' ? 'bg-white border-[#00E676]/40' : 'bg-[#13131A] border-[#00E676]/30'
+                    <div className={`p-8 rounded-3xl border shadow-2xl space-y-6 animate-scale-up ${theme === 'light'
+                        ? 'bg-white border-[#00E676]/40'
+                        : 'bg-[#13131A] border-[#00E676]/30'
                         }`}>
-                        <div className={`flex items-center gap-4 border-b pb-6 ${theme === 'light' ? 'border-[#E9ECEF]' : 'border-[#1C1C26]'
+                        <div className={`flex items-center gap-4 border-b pb-6 ${theme === 'light'
+                            ? 'border-[#E9ECEF]'
+                            : 'border-[#1C1C26]'
                             }`}>
                             <div className="p-3.5 rounded-2xl bg-[#00E676]/10 text-[#00E676] border border-[#00E676]/30 shrink-0">
                                 <CheckCircle2 className="h-8 w-8" />
                             </div>
-                            <div>
-                                <span className="px-3 py-1 rounded-full bg-[#00E676]/10 text-[#00E676] border border-[#00E676]/30 text-xs font-extrabold uppercase tracking-wider">
-                                    ✓ KYC VERIFIED & APPROVED
-                                </span>
-                                <h2 className={`font-heading font-black text-2xl mt-1 ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'
-                                    }`}>KYC Identity Verification Complete</h2>
-                                <p className={`text-xs ${theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'
-                                    }`}>Your PAN, Aadhaar e-KYC, and bank details have been verified by Cashfree and super admin auditors.</p>
-                            </div>
-                        </div>
 
-                        <div className="pt-2">
-                            <Link
-                                href="/creators/dashboard"
-                                className="px-6 py-3 rounded-xl bg-gradient-to-r from-[#00F5D4] to-[#00B4D8] text-black font-extrabold text-xs shadow-md hover:opacity-95 transition inline-flex items-center gap-2"
-                            >
-                                <ShieldCheck className="h-4 w-4" /> Go to Creator Control Room Dashboard
-                            </Link>
-                        </div>
-                    </div>
-                ) : flowState === 'manual_review' ? (
-                    /* --- MANUAL REVIEW SCREEN --- */
-                    <div className={`p-6 sm:p-10 rounded-3xl border shadow-2xl space-y-6 animate-scale-up relative overflow-hidden ${theme === 'light'
-                        ? 'bg-gradient-to-br from-white via-[#FFF9F5] to-white border-[#FF9800]/40'
-                        : 'bg-gradient-to-br from-[#1A1510] via-[#1E1712] to-[#14100C] border-[#FF9800]/30'
-                        }`}>
-                        <div className="flex items-start gap-4">
-                            <div className="p-4 rounded-2xl bg-[#FF9800]/10 text-[#FF9800] border border-[#FF9800]/30 shrink-0 shadow-lg">
-                                <AlertTriangle className="h-8 w-8" />
-                            </div>
-                            <div className="space-y-1">
-                                <span className="px-3 py-1 rounded-full bg-[#FF9800]/15 text-[#FF9800] border border-[#FF9800]/40 text-xs font-black uppercase tracking-wider inline-block">
-                                    KYC STATUS: MANUAL REVIEW
-                                </span>
-                                <h2 className={`font-heading font-black text-2xl sm:text-3xl tracking-tight mt-1 ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'}`}>
-                                    Application Under Compliance Review
-                                </h2>
-                                <p className={`text-xs max-w-xl leading-relaxed ${theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'}`}>
-                                    Your PAN, Aadhaar, or Bank Account details could not be matched automatically. Your application has been sent to our super admin team for manual identity verification.
+
+                            <div>
+
+
+                                <h2 className={`font-heading font-black text-2xl mt-2 ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'
+                                    }`}>
+                                    Your Application is under review                                </h2>
+
+                                <p className={`text-sm mt-1 ${theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'
+                                    }`}>
+                                    Your identity verification has been successfully completed.
+                                    Our admin team is now reviewing your application. You will be
+                                    notified once the final review is completed.
                                 </p>
                             </div>
                         </div>
 
-                        <div className={`p-4 rounded-2xl border flex items-center gap-3 ${theme === 'light' ? 'bg-[#FFF3E0] border-[#FFB74D] text-[#E65100]' : 'bg-[#FF9800]/10 border-[#FF9800]/30 text-[#FFB74D]'}`}>
-                            <AlertCircle className="h-5 w-5 shrink-0" />
-                            <div className="text-xs">
-                                <strong>Compliance Note:</strong> Manual review takes approximately <strong>24 to 48 hours</strong>. You will receive a notification once verified.
-                            </div>
-                        </div>
 
-                        <div className="pt-2 flex gap-3">
-                            <button
-                                onClick={() => window.location.reload()}
-                                className="px-5 py-2.5 rounded-xl border text-xs font-bold transition-all flex items-center gap-2 bg-[#181824] text-white border-[#262636] hover:border-[#FF9800]"
-                            >
-                                <RefreshCw className="h-4 w-4 text-[#FF9800]" /> Check Status
-                            </button>
-                        </div>
+
+                        {/* <div className="pt-2">
+    <Link
+        href="/creators/dashboard"
+        className="px-6 py-3 rounded-xl bg-gradient-to-r from-[#00F5D4] to-[#00B4D8] text-black font-extrabold text-xs shadow-md hover:opacity-95 transition inline-flex items-center gap-2"
+    >
+        <ShieldCheck className="h-4 w-4" />
+        Go to Creator Dashboard
+    </Link>
+</div> */}
+
                     </div>
-                ) : (flowState === 'pending' || flowState === 'kyc_submitted') ? (
-                    /* --- SUBMITTED & PENDING SCREEN --- */
-                    <div className={`p-6 sm:p-10 rounded-3xl border shadow-2xl space-y-8 animate-scale-up relative overflow-hidden transition-all duration-300 ${theme === 'light'
-                        ? 'bg-gradient-to-br from-white via-[#FFFDF5] to-white border-[#FFD60A]/40'
-                        : 'bg-gradient-to-br from-[#12121A] via-[#1A1A24] to-[#12121A] border-[#FFD60A]/30'
-                        }`}>
-                        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 border-b pb-6 border-current/10">
-                            <div className="flex items-start gap-4">
-                                <div className="p-4 rounded-2xl bg-[#FFD60A]/10 text-[#FFD60A] border border-[#FFD60A]/30 shrink-0 shadow-lg relative">
-                                    <Clock className="h-8 w-8 animate-spin" />
-                                    <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-[#FFD60A] animate-ping" />
-                                </div>
 
-                                <div className="space-y-1">
-                                    <div className="flex flex-wrap items-center gap-2">
-                                        <span className="px-3 py-1 rounded-full bg-[#FFD60A]/15 text-[#FFD60A] border border-[#FFD60A]/40 text-xs font-black uppercase tracking-wider flex items-center gap-1.5 shadow-sm">
-                                            <span className="h-2 w-2 rounded-full bg-[#FFD60A] animate-pulse" />
-                                            KYC APPLICATION UNDER REVIEW
-                                        </span>
-                                        <span className={`text-xs font-mono px-2.5 py-0.5 rounded-md border ${theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6] text-[#6C757D]' : 'bg-[#181824] border-[#262636] text-[#8B8B96]'
-                                            }`}>
-                                            ID: #{submittedKycResult?.id || creatorUser?.id || '8839'}
-                                        </span>
+                ) :
+                    (flowState === 'pending' || flowState === 'kyc_submitted') ? (
+                        /* --- SUBMITTED & PENDING SCREEN --- */
+                        <div className={`p-6 sm:p-10 rounded-3xl border shadow-2xl space-y-8 animate-scale-up relative overflow-hidden transition-all duration-300 ${theme === 'light'
+                            ? 'bg-gradient-to-br from-white via-[#FFFDF5] to-white border-[#FFD60A]/40'
+                            : 'bg-gradient-to-br from-[#12121A] via-[#1A1A24] to-[#12121A] border-[#FFD60A]/30'
+                            }`}>
+                            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 border-b pb-6 border-current/10">
+                                <div className="flex items-start gap-4">
+                                    <div className="p-4 rounded-2xl bg-[#FFD60A]/10 text-[#FFD60A] border border-[#FFD60A]/30 shrink-0 shadow-lg relative">
+                                        <Clock className="h-8 w-8 animate-spin" />
+                                        <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-[#FFD60A] animate-ping" />
                                     </div>
 
-                                    <h2 className={`font-heading font-black text-2xl sm:text-3xl tracking-tight ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'
+                                    <div className="space-y-1">
+                                        <div className="flex flex-wrap items-center gap-2">
+                                            <span className="px-3 py-1 rounded-full bg-[#FFD60A]/15 text-[#FFD60A] border border-[#FFD60A]/40 text-xs font-black uppercase tracking-wider flex items-center gap-1.5 shadow-sm">
+                                                <span className="h-2 w-2 rounded-full bg-[#FFD60A] animate-pulse" />
+                                                KYC APPLICATION UNDER REVIEW
+                                            </span>
+                                            <span className={`text-xs font-mono px-2.5 py-0.5 rounded-md border ${theme === 'light' ? 'bg-[#F8F9FA] border-[#DEE2E6] text-[#6C757D]' : 'bg-[#181824] border-[#262636] text-[#8B8B96]'
+                                                }`}>
+                                                ID: #{submittedKycResult?.id || creatorUser?.id || '8839'}
+                                            </span>
+                                        </div>
+
+                                        <h2 className={`font-heading font-black text-2xl sm:text-3xl tracking-tight ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'
+                                            }`}>
+                                            Verification Pending Admin Approval
+                                        </h2>
+                                        <p className={`text-xs max-w-xl leading-relaxed ${theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'
+                                            }`}>
+                                            Your PAN Card, Aadhaar e-KYC, and bank payout details have been submitted to the compliance team for final approval.
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <button
+                                    onClick={() => {
+                                        toast.info('Checking latest KYC verification status...', 'Status Check');
+                                        window.location.reload();
+                                    }}
+                                    className={`px-4 py-2.5 rounded-xl border text-xs font-bold transition-all flex items-center gap-2 shrink-0 ${theme === 'light'
+                                        ? 'bg-[#F1F3F5] text-[#1A1D20] border-[#DEE2E6] hover:bg-[#E9ECEF]'
+                                        : 'bg-[#181826] text-white border-[#262636] hover:border-[#00F5D4]/40'
+                                        }`}
+                                >
+                                    <RefreshCw className="h-4 w-4 text-[#00F5D4]" />
+                                    Check Status
+                                </button>
+                            </div>
+
+                            {/* Audit Progress Timeline */}
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div className={`p-4 rounded-2xl border flex items-center gap-3 ${theme === 'light' ? 'bg-white border-[#00E676]/30' : 'bg-[#181824] border-[#00E676]/30'}`}>
+                                    <div className="p-2.5 rounded-xl bg-[#00E676]/10 text-[#00E676] border border-[#00E676]/30 shrink-0">
+                                        <CheckCircle2 className="h-5 w-5" />
+                                    </div>
+                                    <div>
+                                        <span className="text-[10px] font-bold text-[#00E676] uppercase tracking-wider block">Completed</span>
+                                        <h4 className={`text-xs font-bold ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'}`}>1. Cashfree e-KYC Verified</h4>
+                                        <p className="text-[11px] text-[#8B8B96]">PAN & Aadhaar match passed</p>
+                                    </div>
+                                </div>
+
+                                <div className={`p-4 rounded-2xl border flex items-center gap-3 relative ${theme === 'light' ? 'bg-[#FFD60A]/10 border-[#FFD60A]/50' : 'bg-[#FFD60A]/10 border-[#FFD60A]/40'}`}>
+                                    <div className="p-2.5 rounded-xl bg-[#FFD60A]/20 text-[#FFD60A] border border-[#FFD60A]/40 shrink-0">
+                                        <Clock className="h-5 w-5 animate-spin" />
+                                    </div>
+                                    <div>
+                                        <span className="text-[10px] font-extrabold text-[#FFD60A] uppercase tracking-wider block">In Progress</span>
+                                        <h4 className={`text-xs font-bold ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'}`}>2. Admin Final Approval</h4>
+                                        <p className="text-[11px] text-[#FFD60A]">Compliance team review</p>
+                                    </div>
+                                </div>
+
+                                <div className={`p-4 rounded-2xl border flex items-center gap-3 opacity-60 ${theme === 'light' ? 'bg-[#F8F9FA] border-[#E9ECEF]' : 'bg-[#14141E] border-[#222230]'}`}>
+                                    <div className={`p-2.5 rounded-xl border shrink-0 ${theme === 'light' ? 'bg-white border-[#DEE2E6] text-[#8B8B96]' : 'bg-[#1C1C28] border-[#2A2A3A] text-[#8B8B96]'}`}>
+                                        <Lock className="h-5 w-5" />
+                                    </div>
+                                    <div>
+                                        <span className="text-[10px] font-bold text-[#8B8B96] uppercase tracking-wider block">Final Step</span>
+                                        <h4 className={`text-xs font-bold ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'}`}>3. Dashboard Access</h4>
+                                        <p className="text-[11px] text-[#8B8B96]">Instant Creator Studio access</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Security & Audit SLA Notice Banner */}
+                            <div className={`p-4 rounded-2xl border flex items-center gap-3 relative z-10 ${theme === 'light' ? 'bg-[#EBFBFA] border-[#00F5D4]/40 text-[#007A6B]' : 'bg-[#00F5D4]/10 border-[#00F5D4]/30 text-[#00F5D4]'
+                                }`}>
+                                <Sparkles className="h-5 w-5 shrink-0 stroke-[2]" />
+                                <div className="text-xs leading-relaxed">
+                                    <strong>Estimated SLA:</strong> Final admin approval is typically completed within <strong>2 to 24 hours</strong>.
+                                </div>
+                            </div>
+                        </div>
+                    ) : (
+                        /* --- 4-STEP KYC WIZARD --- */
+                        <div className={`p-6 sm:p-8 md:p-10 rounded-3xl border shadow-2xl space-y-6 sm:space-y-8 relative overflow-hidden transition-all duration-300 ${theme === 'light'
+                            ? 'bg-white border-[#E2E8F0] shadow-slate-200/60'
+                            : 'bg-[#12121C]/95 backdrop-blur-xl border-[#222236] shadow-black/80'
+                            }`}>
+                            {/* Gradient Top Accent Bar */}
+                            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#EB1000] via-[#FF5500] to-[#00F5D4]" />
+
+                            {/* Top Header */}
+                            <div className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b pb-5 ${theme === 'light' ? 'border-[#E2E8F0]' : 'border-[#222236]'
+                                }`}>
+                                <div>
+                                    <h2 className={`font-heading font-black text-xl sm:text-2xl tracking-tight ${theme === 'light' ? 'text-[#0F172A]' : 'text-white'
                                         }`}>
-                                        Verification Pending Admin Approval
+                                        Creator KYC Identity Verification
                                     </h2>
-                                    <p className={`text-xs max-w-xl leading-relaxed ${theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'
+                                    <p className={`text-xs mt-1 font-medium ${theme === 'light' ? 'text-[#64748B]' : 'text-[#A0A0B2]'
                                         }`}>
-                                        Your PAN Card, Aadhaar e-KYC, and bank payout details have been submitted to the compliance team for final approval.
+                                        Cashfree-powered PAN, Aadhaar e-KYC, and Bank Account Penny Drop verification.
                                     </p>
                                 </div>
+                                <span className="self-start sm:self-auto px-3.5 py-1.5 rounded-full bg-[#EB1000]/10 text-[#EB1000] border border-[#EB1000]/30 text-xs font-black shrink-0 flex items-center gap-1.5 shadow-sm">
+                                    <span className="h-2 w-2 rounded-full bg-[#EB1000] animate-pulse" />
+                                    Step {step} of 4
+                                </span>
                             </div>
 
-                            <button
-                                onClick={() => {
-                                    toast.info('Checking latest KYC verification status...', 'Status Check');
-                                    window.location.reload();
-                                }}
-                                className={`px-4 py-2.5 rounded-xl border text-xs font-bold transition-all flex items-center gap-2 shrink-0 ${theme === 'light'
-                                    ? 'bg-[#F1F3F5] text-[#1A1D20] border-[#DEE2E6] hover:bg-[#E9ECEF]'
-                                    : 'bg-[#181826] text-white border-[#262636] hover:border-[#00F5D4]/40'
-                                    }`}
-                            >
-                                <RefreshCw className="h-4 w-4 text-[#00F5D4]" />
-                                Check Status
-                            </button>
-                        </div>
-
-                        {/* Audit Progress Timeline */}
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div className={`p-4 rounded-2xl border flex items-center gap-3 ${theme === 'light' ? 'bg-white border-[#00E676]/30' : 'bg-[#181824] border-[#00E676]/30'}`}>
-                                <div className="p-2.5 rounded-xl bg-[#00E676]/10 text-[#00E676] border border-[#00E676]/30 shrink-0">
-                                    <CheckCircle2 className="h-5 w-5" />
-                                </div>
-                                <div>
-                                    <span className="text-[10px] font-bold text-[#00E676] uppercase tracking-wider block">Completed</span>
-                                    <h4 className={`text-xs font-bold ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'}`}>1. Cashfree e-KYC Verified</h4>
-                                    <p className="text-[11px] text-[#8B8B96]">PAN & Aadhaar match passed</p>
-                                </div>
+                            {/* Stepper Navigation Tabs */}
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                                <button
+                                    onClick={() => setStep(1)}
+                                    className={`py-2.5 px-3 rounded-xl text-xs font-extrabold flex items-center justify-center gap-2 transition-all duration-200 ${step === 1
+                                        ? 'bg-gradient-to-r from-[#EB1000] to-[#CC0E00] text-white shadow-lg shadow-[#EB1000]/30 scale-[1.02]'
+                                        : theme === 'light'
+                                            ? 'bg-[#F8FAFC] text-[#64748B] border border-[#E2E8F0] hover:bg-[#F1F5F9] hover:text-[#0F172A]'
+                                            : 'bg-[#181826] text-[#A0A0B2] border border-[#2A2A3E] hover:bg-[#202030] hover:text-white'
+                                        }`}
+                                >
+                                    <User className="h-4 w-4 shrink-0" /> 1. Personal Info
+                                </button>
+                                <button
+                                    onClick={() => step > 1 && setStep(2)}
+                                    className={`py-2.5 px-3 rounded-xl text-xs font-extrabold flex items-center justify-center gap-2 transition-all duration-200 ${step === 2
+                                        ? 'bg-gradient-to-r from-[#EB1000] to-[#CC0E00] text-white shadow-lg shadow-[#EB1000]/30 scale-[1.02]'
+                                        : theme === 'light'
+                                            ? 'bg-[#F8FAFC] text-[#64748B] border border-[#E2E8F0] hover:bg-[#F1F5F9] hover:text-[#0F172A]'
+                                            : 'bg-[#181826] text-[#A0A0B2] border border-[#2A2A3E] hover:bg-[#202030] hover:text-white'
+                                        }`}
+                                >
+                                    <FileText className="h-4 w-4 shrink-0" /> 2. Document Proof
+                                </button>
+                                <button
+                                    onClick={() => step > 2 && setStep(3)}
+                                    className={`py-2.5 px-3 rounded-xl text-xs font-extrabold flex items-center justify-center gap-2 transition-all duration-200 ${step === 3
+                                        ? 'bg-gradient-to-r from-[#EB1000] to-[#CC0E00] text-white shadow-lg shadow-[#EB1000]/30 scale-[1.02]'
+                                        : theme === 'light'
+                                            ? 'bg-[#F8FAFC] text-[#64748B] border border-[#E2E8F0] hover:bg-[#F1F5F9] hover:text-[#0F172A]'
+                                            : 'bg-[#181826] text-[#A0A0B2] border border-[#2A2A3E] hover:bg-[#202030] hover:text-white'
+                                        }`}
+                                >
+                                    <Building2 className="h-4 w-4 shrink-0" /> 3. Bank Details
+                                </button>
+                                <button
+                                    onClick={() => step > 3 && setStep(4)}
+                                    className={`py-2.5 px-3 rounded-xl text-xs font-extrabold flex items-center justify-center gap-2 transition-all duration-200 ${step === 4
+                                        ? 'bg-gradient-to-r from-[#EB1000] to-[#CC0E00] text-white shadow-lg shadow-[#EB1000]/30 scale-[1.02]'
+                                        : theme === 'light'
+                                            ? 'bg-[#F8FAFC] text-[#64748B] border border-[#E2E8F0] hover:bg-[#F1F5F9] hover:text-[#0F172A]'
+                                            : 'bg-[#181826] text-[#A0A0B2] border border-[#2A2A3E] hover:bg-[#202030] hover:text-white'
+                                        }`}
+                                >
+                                    <CheckCircle2 className="h-4 w-4 shrink-0" /> 4. Review & Submit
+                                </button>
                             </div>
 
-                            <div className={`p-4 rounded-2xl border flex items-center gap-3 relative ${theme === 'light' ? 'bg-[#FFD60A]/10 border-[#FFD60A]/50' : 'bg-[#FFD60A]/10 border-[#FFD60A]/40'}`}>
-                                <div className="p-2.5 rounded-xl bg-[#FFD60A]/20 text-[#FFD60A] border border-[#FFD60A]/40 shrink-0">
-                                    <Clock className="h-5 w-5 animate-spin" />
-                                </div>
-                                <div>
-                                    <span className="text-[10px] font-extrabold text-[#FFD60A] uppercase tracking-wider block">In Progress</span>
-                                    <h4 className={`text-xs font-bold ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'}`}>2. Admin Final Approval</h4>
-                                    <p className="text-[11px] text-[#FFD60A]">Compliance team review</p>
-                                </div>
-                            </div>
-
-                            <div className={`p-4 rounded-2xl border flex items-center gap-3 opacity-60 ${theme === 'light' ? 'bg-[#F8F9FA] border-[#E9ECEF]' : 'bg-[#14141E] border-[#222230]'}`}>
-                                <div className={`p-2.5 rounded-xl border shrink-0 ${theme === 'light' ? 'bg-white border-[#DEE2E6] text-[#8B8B96]' : 'bg-[#1C1C28] border-[#2A2A3A] text-[#8B8B96]'}`}>
-                                    <Lock className="h-5 w-5" />
-                                </div>
-                                <div>
-                                    <span className="text-[10px] font-bold text-[#8B8B96] uppercase tracking-wider block">Final Step</span>
-                                    <h4 className={`text-xs font-bold ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'}`}>3. Dashboard Access</h4>
-                                    <p className="text-[11px] text-[#8B8B96]">Instant Creator Studio access</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Security & Audit SLA Notice Banner */}
-                        <div className={`p-4 rounded-2xl border flex items-center gap-3 relative z-10 ${theme === 'light' ? 'bg-[#EBFBFA] border-[#00F5D4]/40 text-[#007A6B]' : 'bg-[#00F5D4]/10 border-[#00F5D4]/30 text-[#00F5D4]'
-                            }`}>
-                            <Sparkles className="h-5 w-5 shrink-0 stroke-[2]" />
-                            <div className="text-xs leading-relaxed">
-                                <strong>Estimated SLA:</strong> Final admin approval is typically completed within <strong>2 to 24 hours</strong>.
-                            </div>
-                        </div>
-                    </div>
-                ) : (
-                    /* --- 4-STEP KYC WIZARD --- */
-                    <div className={`p-6 sm:p-8 md:p-10 rounded-3xl border shadow-2xl space-y-6 sm:space-y-8 relative overflow-hidden transition-all duration-300 ${theme === 'light'
-                        ? 'bg-white border-[#E2E8F0] shadow-slate-200/60'
-                        : 'bg-[#12121C]/95 backdrop-blur-xl border-[#222236] shadow-black/80'
-                        }`}>
-                        {/* Gradient Top Accent Bar */}
-                        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#EB1000] via-[#FF5500] to-[#00F5D4]" />
-
-                        {/* Top Header */}
-                        <div className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b pb-5 ${theme === 'light' ? 'border-[#E2E8F0]' : 'border-[#222236]'
-                            }`}>
-                            <div>
-                                <h2 className={`font-heading font-black text-xl sm:text-2xl tracking-tight ${theme === 'light' ? 'text-[#0F172A]' : 'text-white'
-                                    }`}>
-                                    Creator KYC Identity Verification
-                                </h2>
-                                <p className={`text-xs mt-1 font-medium ${theme === 'light' ? 'text-[#64748B]' : 'text-[#A0A0B2]'
-                                    }`}>
-                                    Cashfree-powered PAN, Aadhaar e-KYC, and Bank Account Penny Drop verification.
-                                </p>
-                            </div>
-                            <span className="self-start sm:self-auto px-3.5 py-1.5 rounded-full bg-[#EB1000]/10 text-[#EB1000] border border-[#EB1000]/30 text-xs font-black shrink-0 flex items-center gap-1.5 shadow-sm">
-                                <span className="h-2 w-2 rounded-full bg-[#EB1000] animate-pulse" />
-                                Step {step} of 4
-                            </span>
-                        </div>
-
-                        {/* Stepper Navigation Tabs */}
-                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-                            <button
-                                onClick={() => setStep(1)}
-                                className={`py-2.5 px-3 rounded-xl text-xs font-extrabold flex items-center justify-center gap-2 transition-all duration-200 ${step === 1
-                                    ? 'bg-gradient-to-r from-[#EB1000] to-[#CC0E00] text-white shadow-lg shadow-[#EB1000]/30 scale-[1.02]'
-                                    : theme === 'light'
-                                        ? 'bg-[#F8FAFC] text-[#64748B] border border-[#E2E8F0] hover:bg-[#F1F5F9] hover:text-[#0F172A]'
-                                        : 'bg-[#181826] text-[#A0A0B2] border border-[#2A2A3E] hover:bg-[#202030] hover:text-white'
-                                    }`}
-                            >
-                                <User className="h-4 w-4 shrink-0" /> 1. Personal Info
-                            </button>
-                            <button
-                                onClick={() => step > 1 && setStep(2)}
-                                className={`py-2.5 px-3 rounded-xl text-xs font-extrabold flex items-center justify-center gap-2 transition-all duration-200 ${step === 2
-                                    ? 'bg-gradient-to-r from-[#EB1000] to-[#CC0E00] text-white shadow-lg shadow-[#EB1000]/30 scale-[1.02]'
-                                    : theme === 'light'
-                                        ? 'bg-[#F8FAFC] text-[#64748B] border border-[#E2E8F0] hover:bg-[#F1F5F9] hover:text-[#0F172A]'
-                                        : 'bg-[#181826] text-[#A0A0B2] border border-[#2A2A3E] hover:bg-[#202030] hover:text-white'
-                                    }`}
-                            >
-                                <FileText className="h-4 w-4 shrink-0" /> 2. Document Proof
-                            </button>
-                            <button
-                                onClick={() => step > 2 && setStep(3)}
-                                className={`py-2.5 px-3 rounded-xl text-xs font-extrabold flex items-center justify-center gap-2 transition-all duration-200 ${step === 3
-                                    ? 'bg-gradient-to-r from-[#EB1000] to-[#CC0E00] text-white shadow-lg shadow-[#EB1000]/30 scale-[1.02]'
-                                    : theme === 'light'
-                                        ? 'bg-[#F8FAFC] text-[#64748B] border border-[#E2E8F0] hover:bg-[#F1F5F9] hover:text-[#0F172A]'
-                                        : 'bg-[#181826] text-[#A0A0B2] border border-[#2A2A3E] hover:bg-[#202030] hover:text-white'
-                                    }`}
-                            >
-                                <Building2 className="h-4 w-4 shrink-0" /> 3. Bank Details
-                            </button>
-                            <button
-                                onClick={() => step > 3 && setStep(4)}
-                                className={`py-2.5 px-3 rounded-xl text-xs font-extrabold flex items-center justify-center gap-2 transition-all duration-200 ${step === 4
-                                    ? 'bg-gradient-to-r from-[#EB1000] to-[#CC0E00] text-white shadow-lg shadow-[#EB1000]/30 scale-[1.02]'
-                                    : theme === 'light'
-                                        ? 'bg-[#F8FAFC] text-[#64748B] border border-[#E2E8F0] hover:bg-[#F1F5F9] hover:text-[#0F172A]'
-                                        : 'bg-[#181826] text-[#A0A0B2] border border-[#2A2A3E] hover:bg-[#202030] hover:text-white'
-                                    }`}
-                            >
-                                <CheckCircle2 className="h-4 w-4 shrink-0" /> 4. Review & Submit
-                            </button>
-                        </div>
-
-                        {/* STEP 1: Personal Information */}
-                        {step === 1 && (
-                            <form onSubmit={handleNextStep} className="space-y-5">
-                                <div className="flex items-center gap-2.5">
-                                    <span className="p-2 rounded-xl bg-[#00F5D4]/10 text-[#00F5D4] border border-[#00F5D4]/20 shrink-0">
-                                        <User className="h-4 w-4" />
-                                    </span>
-                                    <div>
-                                        <h3 className={`font-extrabold text-sm ${theme === 'light' ? 'text-[#0F172A]' : 'text-white'}`}>
-                                            Step 1 — Personal Information
-                                        </h3>
-                                        <p className="text-[11px] text-[#8B8B96]">Mobile number is pre-verified from Creator Registration.</p>
+                            {/* STEP 1: Personal Information */}
+                            {step === 1 && (
+                                <form onSubmit={handleNextStep} className="space-y-5">
+                                    <div className="flex items-center gap-2.5">
+                                        <span className="p-2 rounded-xl bg-[#00F5D4]/10 text-[#00F5D4] border border-[#00F5D4]/20 shrink-0">
+                                            <User className="h-4 w-4" />
+                                        </span>
+                                        <div>
+                                            <h3 className={`font-extrabold text-sm ${theme === 'light' ? 'text-[#0F172A]' : 'text-white'}`}>
+                                                Step 1 — Personal Information
+                                            </h3>
+                                            <p className="text-[11px] text-[#8B8B96]">Mobile number is pre-verified from Creator Registration.</p>
+                                        </div>
                                     </div>
-                                </div>
 
-                                {/* Row 1: Legal Full Name & Date of Birth */}
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    <div>
-                                        <div className="flex items-center justify-between mb-1.5">
-                                            <label className={`block text-xs font-extrabold ${theme === 'light' ? 'text-[#0F172A]' : 'text-[#E2E8F0]'}`}>
-                                                Legal Full Name (Matching PAN/ID) *
+                                    {/* Row 1: Legal Full Name & Date of Birth */}
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <div>
+                                            <div className="flex items-center justify-between mb-1.5">
+                                                <label className={`block text-xs font-extrabold ${theme === 'light' ? 'text-[#0F172A]' : 'text-[#E2E8F0]'}`}>
+                                                    Legal Full Name (Matching PAN/ID) *
+                                                </label>
+                                                {isNameLocked && (
+                                                    <span className="inline-flex items-center gap-1 text-[10px] font-extrabold text-amber-500 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/30">
+                                                        <Lock className="h-3 w-3" /> Pre-filled & Locked
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <input
+                                                type="text"
+                                                required
+                                                readOnly={isNameLocked}
+                                                value={formData.fullName}
+                                                onChange={(e) => handleInputChange('fullName', e.target.value)}
+                                                placeholder="e.g. Abhishek Raushan"
+                                                className={`w-full px-4 py-3 rounded-xl border text-xs outline-none font-medium transition-all duration-200 ${theme === 'light'
+                                                    ? 'bg-[#F8FAFC] border-[#E2E8F0] text-[#0F172A] placeholder-[#94A3B8] focus:border-[#EB1000] focus:ring-1 focus:ring-[#EB1000]'
+                                                    : 'bg-[#181826] border-[#2A2A3E] text-white placeholder-[#6E6E82] focus:border-[#EB1000] focus:ring-1 focus:ring-[#EB1000]'
+                                                    }`}
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <label className={`block text-xs font-extrabold mb-1.5 ${theme === 'light' ? 'text-[#0F172A]' : 'text-[#E2E8F0]'}`}>
+                                                Date of Birth *
                                             </label>
-                                            {isNameLocked && (
-                                                <span className="inline-flex items-center gap-1 text-[10px] font-extrabold text-amber-500 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/30">
-                                                    <Lock className="h-3 w-3" /> Pre-filled & Locked
+                                            <input
+                                                type="date"
+                                                required
+                                                max={new Date().toISOString().split('T')[0]}
+                                                value={formData.dateOfBirth || ''}
+                                                onClick={(e) => {
+                                                    try { e.target.showPicker(); } catch (err) { }
+                                                }}
+                                                onChange={(e) => handleInputChange('dateOfBirth', e.target.value)}
+                                                style={{ colorScheme: theme === 'light' ? 'light' : 'dark' }}
+                                                className={`w-full px-4 py-3 rounded-xl border text-xs outline-none font-medium transition-all duration-200 cursor-pointer ${theme === 'light'
+                                                    ? 'bg-[#F8FAFC] border-[#E2E8F0] text-[#0F172A] focus:border-[#EB1000] focus:ring-1 focus:ring-[#EB1000]'
+                                                    : 'bg-[#181826] border-[#2A2A3E] text-white focus:border-[#EB1000] focus:ring-1 focus:ring-[#EB1000]'
+                                                    }`}
+                                            />
+                                            <span className="text-[10px] text-[#00F5D4] mt-1 block font-medium flex items-center gap-1">
+                                                ⚡ 18+ Age Requirement: Must be at least 18 years old (Verified against Aadhaar Govt ID).
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    {/* Row 2: Verified Mobile Number (Locked) & Stream Category */}
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <div>
+                                            <div className="flex items-center justify-between mb-1.5">
+                                                <label className={`block text-xs font-extrabold ${theme === 'light' ? 'text-[#0F172A]' : 'text-[#E2E8F0]'}`}>
+                                                    Verified Mobile Number *
+                                                </label>
+                                                <span className="inline-flex items-center gap-1 text-[10px] font-extrabold text-[#00E676] bg-[#00E676]/10 px-2 py-0.5 rounded-full border border-[#00E676]/30">
+                                                    <CheckCircle2 className="h-3 w-3" /> Pre-Verified (Locked)
                                                 </span>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <div className={`px-3 py-3 rounded-xl border text-xs font-mono font-bold ${theme === 'light' ? 'bg-[#E2E8F0]/60 border-[#CBD5E1] text-[#475569]' : 'bg-[#12121C] border-[#2A2A3E] text-[#94A3B8]'}`}>
+                                                    🇮🇳 +91
+                                                </div>
+                                                <div className="relative flex-1">
+                                                    <input
+                                                        type="tel"
+                                                        readOnly
+                                                        disabled
+                                                        value={formData.mobileNumber}
+                                                        className={`w-full px-4 py-3 rounded-xl border text-xs outline-none font-mono font-bold cursor-not-allowed ${theme === 'light'
+                                                            ? 'bg-[#E2E8F0]/60 border-[#CBD5E1] text-[#475569]'
+                                                            : 'bg-[#12121C] border-[#2A2A3E] text-[#94A3B8]'
+                                                            }`}
+                                                    />
+                                                    <Lock className="absolute right-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[#00E676] pointer-events-none" />
+                                                </div>
+                                            </div>
+                                            <span className="text-[10px] text-[#8B8B96] block mt-1">Verified during Creator Registration. Locked for security.</span>
+                                        </div>
+
+                                        <div>
+                                            <label className={`block text-xs font-extrabold mb-1.5 ${theme === 'light' ? 'text-[#0F172A]' : 'text-[#E2E8F0]'}`}>
+                                                Stream Category *
+                                            </label>
+                                            <select
+                                                required
+                                                value={formData.categorySelect || (['Gaming', 'Politics', 'Technology', 'Finance', 'Entertainment', 'Education'].includes(formData.category) ? formData.category : (formData.category ? 'Other' : ''))}
+                                                onChange={(e) => {
+                                                    const val = e.target.value;
+                                                    if (val === 'Other') {
+                                                        setFormData(prev => ({ ...prev, categorySelect: 'Other', category: prev.customCategory || '' }));
+                                                    } else {
+                                                        setFormData(prev => ({ ...prev, categorySelect: val, category: val, customCategory: '' }));
+                                                    }
+                                                }}
+                                                className={`w-full px-4 py-3 rounded-xl border text-xs outline-none font-medium transition-all duration-200 ${theme === 'light'
+                                                    ? 'bg-[#F8FAFC] border-[#E2E8F0] text-[#0F172A] focus:border-[#EB1000] focus:ring-1 focus:ring-[#EB1000]'
+                                                    : 'bg-[#181826] border-[#2A2A3E] text-white focus:border-[#EB1000] focus:ring-1 focus:ring-[#EB1000]'
+                                                    }`}
+                                            >
+                                                <option value="">Select Stream Category...</option>
+                                                <option value="Gaming">Gaming</option>
+                                                <option value="Politics">Politics</option>
+                                                <option value="Technology">Technology</option>
+                                                <option value="Finance">Finance</option>
+                                                <option value="Entertainment">Entertainment</option>
+                                                <option value="Education">Education</option>
+                                                <option value="Other">Other (Type manually...)</option>
+                                            </select>
+
+                                            {(formData.categorySelect === 'Other' || (!['Gaming', 'Politics', 'Technology', 'Finance', 'Entertainment', 'Education', ''].includes(formData.category) && formData.category !== '')) && (
+                                                <input
+                                                    type="text"
+                                                    required
+                                                    value={formData.customCategory || (['Gaming', 'Politics', 'Technology', 'Finance', 'Entertainment', 'Education', ''].includes(formData.category) ? '' : formData.category)}
+                                                    onChange={(e) => {
+                                                        const val = e.target.value;
+                                                        setFormData(prev => ({ ...prev, customCategory: val, category: val }));
+                                                    }}
+                                                    placeholder="Enter custom stream category..."
+                                                    className={`w-full mt-2 px-4 py-3 rounded-xl border text-xs outline-none font-medium transition-all duration-200 ${theme === 'light'
+                                                        ? 'bg-[#F8FAFC] border-[#E2E8F0] text-[#0F172A] placeholder-[#94A3B8] focus:border-[#EB1000] focus:ring-1 focus:ring-[#EB1000]'
+                                                        : 'bg-[#181826] border-[#2A2A3E] text-white placeholder-[#6E6E82] focus:border-[#EB1000] focus:ring-1 focus:ring-[#EB1000]'
+                                                        }`}
+                                                />
                                             )}
                                         </div>
+                                    </div>
+
+                                    {/* Social Media Links */}
+                                    <div className={`p-4 rounded-2xl border space-y-3 ${theme === 'light' ? 'bg-[#F8FAFC] border-[#E2E8F0]' : 'bg-[#181826]/70 border-[#2A2A3E]'}`}>
+                                        <div className="flex items-center justify-between border-b pb-2 border-current/10">
+                                            <div className="flex items-center gap-2">
+                                                <Sparkles className="h-4 w-4 text-[#EB1000]" />
+                                                <h4 className={`font-extrabold text-xs ${theme === 'light' ? 'text-[#0F172A]' : 'text-white'}`}>
+                                                    Social Media & Channel Links
+                                                </h4>
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={handleAddSocialLink}
+                                                className="text-[11px] font-extrabold text-[#EB1000] hover:underline flex items-center gap-1 cursor-pointer"
+                                            >
+                                                + Add Link
+                                            </button>
+                                        </div>
+
+                                        <div className="space-y-3">
+                                            {(formData.socialLinks || []).map((item, idx) => (
+                                                <div key={idx} className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                                                    <div className="w-full sm:w-48 shrink-0">
+                                                        <select
+                                                            value={item.platform}
+                                                            onChange={(e) => handleUpdateSocialLink(idx, 'platform', e.target.value)}
+                                                            className={`w-full px-3 py-2.5 rounded-xl border text-xs outline-none font-semibold transition ${theme === 'light' ? 'bg-white border-[#E2E8F0] text-[#0F172A]' : 'bg-[#101018] border-[#2A2A3E] text-white'}`}
+                                                        >
+                                                            {socialPlatforms.map(p => (
+                                                                <option key={p.value} value={p.value}>
+                                                                    {p.icon} {p.label}
+                                                                </option>
+                                                            ))}
+                                                        </select>
+                                                    </div>
+
+                                                    <div className="flex-1 min-w-0 flex items-center gap-2">
+                                                        <input
+                                                            type="text"
+                                                            value={item.link}
+                                                            onChange={(e) => handleUpdateSocialLink(idx, 'link', e.target.value)}
+                                                            placeholder={`Channel handle or URL (e.g. @${creatorUser?.username || 'creator'})...`}
+                                                            className={`w-full px-3.5 py-2.5 rounded-xl border text-xs outline-none transition font-mono ${theme === 'light' ? 'bg-white border-[#E2E8F0] text-[#0F172A]' : 'bg-[#101018] border-[#2A2A3E] text-white'}`}
+                                                        />
+                                                        {(formData.socialLinks || []).length > 1 && (
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => handleRemoveSocialLink(idx)}
+                                                                className={`p-2.5 rounded-xl border transition-colors flex items-center justify-center shrink-0 ${theme === 'light' ? 'bg-[#F1F5F9] border-[#E2E8F0] text-[#64748B] hover:text-[#EF4444]' : 'bg-[#1C1C26] border-[#2A2A3E] text-[#8B8B96] hover:text-[#FF5252]'}`}
+                                                            >
+                                                                <X className="h-4 w-4" />
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    {/* Address */}
+                                    <div>
+                                        <label className={`block text-xs font-extrabold mb-1.5 ${theme === 'light' ? 'text-[#0F172A]' : 'text-[#E2E8F0]'}`}>
+                                            Residential Address *
+                                        </label>
                                         <input
                                             type="text"
                                             required
-                                            readOnly={isNameLocked}
-                                            value={formData.fullName}
-                                            onChange={(e) => handleInputChange('fullName', e.target.value)}
-                                            placeholder="e.g. Abhishek Raushan"
+                                            value={formData.address || ''}
+                                            onChange={(e) => handleInputChange('address', e.target.value)}
+                                            placeholder="Flat / House No. / Street Address / Area"
                                             className={`w-full px-4 py-3 rounded-xl border text-xs outline-none font-medium transition-all duration-200 ${theme === 'light'
                                                 ? 'bg-[#F8FAFC] border-[#E2E8F0] text-[#0F172A] placeholder-[#94A3B8] focus:border-[#EB1000] focus:ring-1 focus:ring-[#EB1000]'
                                                 : 'bg-[#181826] border-[#2A2A3E] text-white placeholder-[#6E6E82] focus:border-[#EB1000] focus:ring-1 focus:ring-[#EB1000]'
@@ -1359,951 +1519,765 @@ export default function CreatorKycPage() {
                                         />
                                     </div>
 
-                                    <div>
-                                        <label className={`block text-xs font-extrabold mb-1.5 ${theme === 'light' ? 'text-[#0F172A]' : 'text-[#E2E8F0]'}`}>
-                                            Date of Birth *
-                                        </label>
-                                        <input
-                                            type="date"
-                                            required
-                                            max={new Date().toISOString().split('T')[0]}
-                                            value={formData.dateOfBirth || ''}
-                                            onClick={(e) => {
-                                                try { e.target.showPicker(); } catch (err) { }
-                                            }}
-                                            onChange={(e) => handleInputChange('dateOfBirth', e.target.value)}
-                                            style={{ colorScheme: theme === 'light' ? 'light' : 'dark' }}
-                                            className={`w-full px-4 py-3 rounded-xl border text-xs outline-none font-medium transition-all duration-200 cursor-pointer ${theme === 'light'
-                                                ? 'bg-[#F8FAFC] border-[#E2E8F0] text-[#0F172A] focus:border-[#EB1000] focus:ring-1 focus:ring-[#EB1000]'
-                                                : 'bg-[#181826] border-[#2A2A3E] text-white focus:border-[#EB1000] focus:ring-1 focus:ring-[#EB1000]'
-                                                }`}
-                                        />
-                                        <span className="text-[10px] text-[#00F5D4] mt-1 block font-medium flex items-center gap-1">
-                                            ⚡ 18+ Age Requirement: Must be at least 18 years old (Verified against Aadhaar Govt ID).
-                                        </span>
-                                    </div>
-                                </div>
-
-                                {/* Row 2: Verified Mobile Number (Locked) & Stream Category */}
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    <div>
-                                        <div className="flex items-center justify-between mb-1.5">
-                                            <label className={`block text-xs font-extrabold ${theme === 'light' ? 'text-[#0F172A]' : 'text-[#E2E8F0]'}`}>
-                                                Verified Mobile Number *
+                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                        <div>
+                                            <label className={`block text-xs font-extrabold mb-1.5 ${theme === 'light' ? 'text-[#0F172A]' : 'text-[#E2E8F0]'}`}>
+                                                Country *
                                             </label>
-                                            <span className="inline-flex items-center gap-1 text-[10px] font-extrabold text-[#00E676] bg-[#00E676]/10 px-2 py-0.5 rounded-full border border-[#00E676]/30">
-                                                <CheckCircle2 className="h-3 w-3" /> Pre-Verified (Locked)
-                                            </span>
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                            <div className={`px-3 py-3 rounded-xl border text-xs font-mono font-bold ${theme === 'light' ? 'bg-[#E2E8F0]/60 border-[#CBD5E1] text-[#475569]' : 'bg-[#12121C] border-[#2A2A3E] text-[#94A3B8]'}`}>
-                                                🇮🇳 +91
-                                            </div>
-                                            <div className="relative flex-1">
-                                                <input
-                                                    type="tel"
-                                                    readOnly
-                                                    disabled
-                                                    value={formData.mobileNumber}
-                                                    className={`w-full px-4 py-3 rounded-xl border text-xs outline-none font-mono font-bold cursor-not-allowed ${theme === 'light'
-                                                        ? 'bg-[#E2E8F0]/60 border-[#CBD5E1] text-[#475569]'
-                                                        : 'bg-[#12121C] border-[#2A2A3E] text-[#94A3B8]'
-                                                        }`}
-                                                />
-                                                <Lock className="absolute right-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[#00E676] pointer-events-none" />
-                                            </div>
-                                        </div>
-                                        <span className="text-[10px] text-[#8B8B96] block mt-1">Verified during Creator Registration. Locked for security.</span>
-                                    </div>
-
-                                    <div>
-                                        <label className={`block text-xs font-extrabold mb-1.5 ${theme === 'light' ? 'text-[#0F172A]' : 'text-[#E2E8F0]'}`}>
-                                            Stream Category *
-                                        </label>
-                                        <select
-                                            required
-                                            value={formData.categorySelect || (['Gaming', 'Politics', 'Technology', 'Finance', 'Entertainment', 'Education'].includes(formData.category) ? formData.category : (formData.category ? 'Other' : ''))}
-                                            onChange={(e) => {
-                                                const val = e.target.value;
-                                                if (val === 'Other') {
-                                                    setFormData(prev => ({ ...prev, categorySelect: 'Other', category: prev.customCategory || '' }));
-                                                } else {
-                                                    setFormData(prev => ({ ...prev, categorySelect: val, category: val, customCategory: '' }));
-                                                }
-                                            }}
-                                            className={`w-full px-4 py-3 rounded-xl border text-xs outline-none font-medium transition-all duration-200 ${theme === 'light'
-                                                ? 'bg-[#F8FAFC] border-[#E2E8F0] text-[#0F172A] focus:border-[#EB1000] focus:ring-1 focus:ring-[#EB1000]'
-                                                : 'bg-[#181826] border-[#2A2A3E] text-white focus:border-[#EB1000] focus:ring-1 focus:ring-[#EB1000]'
-                                                }`}
-                                        >
-                                            <option value="">Select Stream Category...</option>
-                                            <option value="Gaming">Gaming</option>
-                                            <option value="Politics">Politics</option>
-                                            <option value="Technology">Technology</option>
-                                            <option value="Finance">Finance</option>
-                                            <option value="Entertainment">Entertainment</option>
-                                            <option value="Education">Education</option>
-                                            <option value="Other">Other (Type manually...)</option>
-                                        </select>
-
-                                        {(formData.categorySelect === 'Other' || (!['Gaming', 'Politics', 'Technology', 'Finance', 'Entertainment', 'Education', ''].includes(formData.category) && formData.category !== '')) && (
                                             <input
                                                 type="text"
                                                 required
-                                                value={formData.customCategory || (['Gaming', 'Politics', 'Technology', 'Finance', 'Entertainment', 'Education', ''].includes(formData.category) ? '' : formData.category)}
-                                                onChange={(e) => {
-                                                    const val = e.target.value;
-                                                    setFormData(prev => ({ ...prev, customCategory: val, category: val }));
-                                                }}
-                                                placeholder="Enter custom stream category..."
-                                                className={`w-full mt-2 px-4 py-3 rounded-xl border text-xs outline-none font-medium transition-all duration-200 ${theme === 'light'
-                                                    ? 'bg-[#F8FAFC] border-[#E2E8F0] text-[#0F172A] placeholder-[#94A3B8] focus:border-[#EB1000] focus:ring-1 focus:ring-[#EB1000]'
-                                                    : 'bg-[#181826] border-[#2A2A3E] text-white placeholder-[#6E6E82] focus:border-[#EB1000] focus:ring-1 focus:ring-[#EB1000]'
-                                                    }`}
+                                                value={formData.country || ''}
+                                                onChange={(e) => handleInputChange('country', e.target.value)}
+                                                placeholder="e.g. India"
+                                                className={`w-full px-4 py-3 rounded-xl border text-xs outline-none font-medium ${theme === 'light' ? 'bg-[#F8FAFC] border-[#E2E8F0] text-[#0F172A]' : 'bg-[#181826] border-[#2A2A3E] text-white'}`}
                                             />
-                                        )}
-                                    </div>
-                                </div>
-
-                                {/* Social Media Links */}
-                                <div className={`p-4 rounded-2xl border space-y-3 ${theme === 'light' ? 'bg-[#F8FAFC] border-[#E2E8F0]' : 'bg-[#181826]/70 border-[#2A2A3E]'}`}>
-                                    <div className="flex items-center justify-between border-b pb-2 border-current/10">
-                                        <div className="flex items-center gap-2">
-                                            <Sparkles className="h-4 w-4 text-[#EB1000]" />
-                                            <h4 className={`font-extrabold text-xs ${theme === 'light' ? 'text-[#0F172A]' : 'text-white'}`}>
-                                                Social Media & Channel Links
-                                            </h4>
                                         </div>
+
+                                        <div>
+                                            <label className={`block text-xs font-extrabold mb-1.5 ${theme === 'light' ? 'text-[#0F172A]' : 'text-[#E2E8F0]'}`}>
+                                                State *
+                                            </label>
+                                            <input
+                                                type="text"
+                                                required
+                                                value={formData.state || ''}
+                                                onChange={(e) => handleInputChange('state', e.target.value)}
+                                                placeholder="e.g. Delhi / Maharashtra"
+                                                className={`w-full px-4 py-3 rounded-xl border text-xs outline-none font-medium ${theme === 'light' ? 'bg-[#F8FAFC] border-[#E2E8F0] text-[#0F172A]' : 'bg-[#181826] border-[#2A2A3E] text-white'}`}
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <label className={`block text-xs font-extrabold mb-1.5 ${theme === 'light' ? 'text-[#0F172A]' : 'text-[#E2E8F0]'}`}>
+                                                City *
+                                            </label>
+                                            <input
+                                                type="text"
+                                                required
+                                                value={formData.city || ''}
+                                                onChange={(e) => handleInputChange('city', e.target.value)}
+                                                placeholder="e.g. New Delhi / Mumbai"
+                                                className={`w-full px-4 py-3 rounded-xl border text-xs outline-none font-medium ${theme === 'light' ? 'bg-[#F8FAFC] border-[#E2E8F0] text-[#0F172A]' : 'bg-[#181826] border-[#2A2A3E] text-white'}`}
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="pt-4 flex justify-end">
                                         <button
-                                            type="button"
-                                            onClick={handleAddSocialLink}
-                                            className="text-[11px] font-extrabold text-[#EB1000] hover:underline flex items-center gap-1 cursor-pointer"
+                                            type="submit"
+                                            className="px-7 py-3 rounded-xl bg-gradient-to-r from-[#EB1000] to-[#CC0E00] hover:from-[#CC0E00] hover:to-[#B30C00] text-white font-black text-xs shadow-xl shadow-[#EB1000]/30 hover:scale-[1.02] transition-all flex items-center gap-2 cursor-pointer"
                                         >
-                                            + Add Link
+                                            <span>Continue to Document Proof</span>
+                                            <ArrowRight className="h-4 w-4" />
                                         </button>
                                     </div>
+                                </form>
+                            )}
 
-                                    <div className="space-y-3">
-                                        {(formData.socialLinks || []).map((item, idx) => (
-                                            <div key={idx} className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-                                                <div className="w-full sm:w-48 shrink-0">
-                                                    <select
-                                                        value={item.platform}
-                                                        onChange={(e) => handleUpdateSocialLink(idx, 'platform', e.target.value)}
-                                                        className={`w-full px-3 py-2.5 rounded-xl border text-xs outline-none font-semibold transition ${theme === 'light' ? 'bg-white border-[#E2E8F0] text-[#0F172A]' : 'bg-[#101018] border-[#2A2A3E] text-white'}`}
-                                                    >
-                                                        {socialPlatforms.map(p => (
-                                                            <option key={p.value} value={p.value}>
-                                                                {p.icon} {p.label}
-                                                            </option>
-                                                        ))}
-                                                    </select>
-                                                </div>
+                            {/* STEP 2: Document Proof (Unified Single Form Page) */}
+                            {step === 2 && (
+                                <form onSubmit={handleNextStep} className="space-y-6">
+                                    {/* Step Header */}
+                                    <div className="flex items-center gap-3">
+                                        <span className="p-2.5 rounded-2xl bg-indigo-600/10 text-indigo-400 border border-indigo-500/20 shrink-0 shadow-sm">
+                                            <FileText className="h-5 w-5" />
+                                        </span>
+                                        <div>
+                                            <h3 className={`font-black text-base tracking-tight ${theme === 'light' ? 'text-[#0F172A]' : 'text-white'}`}>
+                                                Step 2 — Cashfree & DigiLocker Verification
+                                            </h3>
+                                            <p className="text-xs text-[#94A3B8] font-medium">Verify your PAN card & complete Aadhaar e-KYC via DigiLocker.</p>
+                                        </div>
+                                    </div>
 
-                                                <div className="flex-1 min-w-0 flex items-center gap-2">
+                                    {/* SECTION 1: PAN CARD VERIFICATION */}
+                                    <div className={`p-6 rounded-3xl border space-y-4 transition-all ${theme === 'light' ? 'bg-white border-[#E2E8F0]' : 'bg-[#141422] border-[#26263A]'}`}>
+                                        <div className="flex items-center justify-between border-b pb-3 border-current/10">
+                                            <div className="flex items-center gap-2">
+                                                <CreditCard className="h-4 w-4 text-indigo-400" />
+                                                <h4 className={`text-xs font-black uppercase tracking-wider ${theme === 'light' ? 'text-[#0F172A]' : 'text-white'}`}>
+                                                    1. PAN Card Verification
+                                                </h4>
+                                            </div>
+                                            {panVerificationData?.verified ? (
+                                                <span className="text-[11px] font-extrabold text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded-lg border border-emerald-500/30 flex items-center gap-1.5">
+                                                    <CheckCircle2 className="h-3.5 w-3.5" /> PAN Verified
+                                                </span>
+                                            ) : (
+                                                <span className="text-[10px] font-bold text-amber-500 bg-amber-500/10 px-2.5 py-0.5 rounded-full border border-amber-500/30">
+                                                    Required
+                                                </span>
+                                            )}
+                                        </div>
+
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                            <div>
+                                                <label className={`block text-xs font-extrabold mb-2 ${theme === 'light' ? 'text-[#0F172A]' : 'text-[#E2E8F0]'}`}>
+                                                    PAN Number (10 Digits) *
+                                                </label>
+                                                <div className="relative">
                                                     <input
                                                         type="text"
-                                                        value={item.link}
-                                                        onChange={(e) => handleUpdateSocialLink(idx, 'link', e.target.value)}
-                                                        placeholder={`Channel handle or URL (e.g. @${creatorUser?.username || 'creator'})...`}
-                                                        className={`w-full px-3.5 py-2.5 rounded-xl border text-xs outline-none transition font-mono ${theme === 'light' ? 'bg-white border-[#E2E8F0] text-[#0F172A]' : 'bg-[#101018] border-[#2A2A3E] text-white'}`}
+                                                        maxLength={10}
+                                                        required
+                                                        value={formData.panNumber}
+                                                        onChange={(e) => handleInputChange('panNumber', e.target.value.toUpperCase())}
+                                                        placeholder="e.g. ABCDE1234F"
+                                                        className={`w-full px-4 py-3.5 rounded-xl border text-xs outline-none font-mono uppercase font-bold tracking-wider pr-28 transition-all ${theme === 'light' ? 'bg-[#F8FAFC] border-[#CBD5E1] text-[#0F172A] focus:border-indigo-600' : 'bg-[#0B0B12] border-[#26263A] text-white focus:border-indigo-500'
+                                                            }`}
                                                     />
-                                                    {(formData.socialLinks || []).length > 1 && (
+                                                    {panVerificationData?.verified ? (
+                                                        <span className="absolute right-2 top-1/2 -translate-y-1/2 px-3 py-1 rounded-lg bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 text-[11px] font-extrabold flex items-center gap-1.5">
+                                                            <CheckCircle2 className="w-3.5 h-3.5" /> Verified
+                                                        </span>
+                                                    ) : (
                                                         <button
                                                             type="button"
-                                                            onClick={() => handleRemoveSocialLink(idx)}
-                                                            className={`p-2.5 rounded-xl border transition-colors flex items-center justify-center shrink-0 ${theme === 'light' ? 'bg-[#F1F5F9] border-[#E2E8F0] text-[#64748B] hover:text-[#EF4444]' : 'bg-[#1C1C26] border-[#2A2A3E] text-[#8B8B96] hover:text-[#FF5252]'}`}
+                                                            onClick={handleVerifyPan}
+                                                            disabled={isVerifyingPan || !formData.panNumber}
+                                                            className="absolute right-2 top-1/2 -translate-y-1/2 px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-extrabold transition shadow-md disabled:opacity-50 flex items-center gap-1.5 cursor-pointer"
                                                         >
-                                                            <X className="h-4 w-4" />
+                                                            {isVerifyingPan ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : 'Verify'}
                                                         </button>
                                                     )}
                                                 </div>
                                             </div>
-                                        ))}
-                                    </div>
-                                </div>
 
-                                {/* Address */}
-                                <div>
-                                    <label className={`block text-xs font-extrabold mb-1.5 ${theme === 'light' ? 'text-[#0F172A]' : 'text-[#E2E8F0]'}`}>
-                                        Residential Address *
-                                    </label>
-                                    <input
-                                        type="text"
-                                        required
-                                        value={formData.address || ''}
-                                        onChange={(e) => handleInputChange('address', e.target.value)}
-                                        placeholder="Flat / House No. / Street Address / Area"
-                                        className={`w-full px-4 py-3 rounded-xl border text-xs outline-none font-medium transition-all duration-200 ${theme === 'light'
-                                            ? 'bg-[#F8FAFC] border-[#E2E8F0] text-[#0F172A] placeholder-[#94A3B8] focus:border-[#EB1000] focus:ring-1 focus:ring-[#EB1000]'
-                                            : 'bg-[#181826] border-[#2A2A3E] text-white placeholder-[#6E6E82] focus:border-[#EB1000] focus:ring-1 focus:ring-[#EB1000]'
-                                            }`}
-                                    />
-                                </div>
-
-                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                                    <div>
-                                        <label className={`block text-xs font-extrabold mb-1.5 ${theme === 'light' ? 'text-[#0F172A]' : 'text-[#E2E8F0]'}`}>
-                                            Country *
-                                        </label>
-                                        <input
-                                            type="text"
-                                            required
-                                            value={formData.country || ''}
-                                            onChange={(e) => handleInputChange('country', e.target.value)}
-                                            placeholder="e.g. India"
-                                            className={`w-full px-4 py-3 rounded-xl border text-xs outline-none font-medium ${theme === 'light' ? 'bg-[#F8FAFC] border-[#E2E8F0] text-[#0F172A]' : 'bg-[#181826] border-[#2A2A3E] text-white'}`}
-                                        />
-                                    </div>
-
-                                    <div>
-                                        <label className={`block text-xs font-extrabold mb-1.5 ${theme === 'light' ? 'text-[#0F172A]' : 'text-[#E2E8F0]'}`}>
-                                            State *
-                                        </label>
-                                        <input
-                                            type="text"
-                                            required
-                                            value={formData.state || ''}
-                                            onChange={(e) => handleInputChange('state', e.target.value)}
-                                            placeholder="e.g. Delhi / Maharashtra"
-                                            className={`w-full px-4 py-3 rounded-xl border text-xs outline-none font-medium ${theme === 'light' ? 'bg-[#F8FAFC] border-[#E2E8F0] text-[#0F172A]' : 'bg-[#181826] border-[#2A2A3E] text-white'}`}
-                                        />
-                                    </div>
-
-                                    <div>
-                                        <label className={`block text-xs font-extrabold mb-1.5 ${theme === 'light' ? 'text-[#0F172A]' : 'text-[#E2E8F0]'}`}>
-                                            City *
-                                        </label>
-                                        <input
-                                            type="text"
-                                            required
-                                            value={formData.city || ''}
-                                            onChange={(e) => handleInputChange('city', e.target.value)}
-                                            placeholder="e.g. New Delhi / Mumbai"
-                                            className={`w-full px-4 py-3 rounded-xl border text-xs outline-none font-medium ${theme === 'light' ? 'bg-[#F8FAFC] border-[#E2E8F0] text-[#0F172A]' : 'bg-[#181826] border-[#2A2A3E] text-white'}`}
-                                        />
-                                    </div>
-                                </div>
-
-                                <div className="pt-4 flex justify-end">
-                                    <button
-                                        type="submit"
-                                        className="px-7 py-3 rounded-xl bg-gradient-to-r from-[#EB1000] to-[#CC0E00] hover:from-[#CC0E00] hover:to-[#B30C00] text-white font-black text-xs shadow-xl shadow-[#EB1000]/30 hover:scale-[1.02] transition-all flex items-center gap-2 cursor-pointer"
-                                    >
-                                        <span>Continue to Document Proof</span>
-                                        <ArrowRight className="h-4 w-4" />
-                                    </button>
-                                </div>
-                            </form>
-                        )}
-
-                        {/* STEP 2: Document Proof (Unified Single Form Page) */}
-                        {step === 2 && (
-                            <form onSubmit={handleNextStep} className="space-y-6">
-                                {/* Step Header */}
-                                <div className="flex items-center gap-3">
-                                    <span className="p-2.5 rounded-2xl bg-indigo-600/10 text-indigo-400 border border-indigo-500/20 shrink-0 shadow-sm">
-                                        <FileText className="h-5 w-5" />
-                                    </span>
-                                    <div>
-                                        <h3 className={`font-black text-base tracking-tight ${theme === 'light' ? 'text-[#0F172A]' : 'text-white'}`}>
-                                            Step 2 — Cashfree & DigiLocker Verification
-                                        </h3>
-                                        <p className="text-xs text-[#94A3B8] font-medium">Verify your PAN card & complete Aadhaar e-KYC via DigiLocker.</p>
-                                    </div>
-                                </div>
-
-                                {/* SECTION 1: PAN CARD VERIFICATION */}
-                                <div className={`p-6 rounded-3xl border space-y-4 transition-all ${theme === 'light' ? 'bg-white border-[#E2E8F0]' : 'bg-[#141422] border-[#26263A]'}`}>
-                                    <div className="flex items-center justify-between border-b pb-3 border-current/10">
-                                        <div className="flex items-center gap-2">
-                                            <CreditCard className="h-4 w-4 text-indigo-400" />
-                                            <h4 className={`text-xs font-black uppercase tracking-wider ${theme === 'light' ? 'text-[#0F172A]' : 'text-white'}`}>
-                                                1. PAN Card Verification
-                                            </h4>
+                                            <div>
+                                                <label className={`block text-xs font-extrabold mb-2 ${theme === 'light' ? 'text-[#0F172A]' : 'text-[#E2E8F0]'}`}>
+                                                    Name (as per PAN)
+                                                </label>
+                                                <input
+                                                    type="text"
+                                                    readOnly={!!panVerificationData?.registeredName}
+                                                    value={panVerificationData?.registeredName || formData.fullName}
+                                                    onChange={(e) => handleInputChange('fullName', e.target.value)}
+                                                    placeholder="Rohit Kumar"
+                                                    className={`w-full px-4 py-3.5 rounded-xl border text-xs outline-none font-medium ${theme === 'light' ? 'bg-[#F8FAFC] border-[#CBD5E1] text-[#0F172A]' : 'bg-[#0B0B12] border-[#26263A] text-white'
+                                                        }`}
+                                                />
+                                            </div>
                                         </div>
-                                        {panVerificationData?.verified ? (
-                                            <span className="text-[11px] font-extrabold text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded-lg border border-emerald-500/30 flex items-center gap-1.5">
-                                                <CheckCircle2 className="h-3.5 w-3.5" /> PAN Verified
-                                            </span>
-                                        ) : (
-                                            <span className="text-[10px] font-bold text-amber-500 bg-amber-500/10 px-2.5 py-0.5 rounded-full border border-amber-500/30">
-                                                Required
-                                            </span>
+
+                                        {/* Green Verified Alert Notice */}
+                                        {panVerificationData?.verified && (
+                                            <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 space-y-1 text-xs">
+                                                <div className="font-extrabold flex items-center gap-2 text-sm">
+                                                    <Check className="w-4 h-4 text-emerald-400 shrink-0 stroke-[3]" />
+                                                    <span>PAN verified successfully</span>
+                                                </div>
+                                                <p className="text-xs opacity-90 pl-6 text-emerald-300">
+                                                    You can now proceed to Aadhaar verification using DigiLocker below.
+                                                </p>
+                                            </div>
                                         )}
+
+                                        {/* PAN to GSTIN Lookup */}
+                                        {formData.panNumber && formData.panNumber.length === 10 && (
+                                            <div className="pt-1">
+                                                <button
+                                                    type="button"
+                                                    onClick={handleFetchGstin}
+                                                    disabled={isFetchingGstin}
+                                                    className={`w-full py-3 px-4 rounded-xl border text-xs font-extrabold flex items-center justify-center gap-2 transition cursor-pointer ${theme === 'light'
+                                                        ? 'bg-[#F1F5F9] border-[#CBD5E1] text-[#0F172A] hover:bg-[#E2E8F0]'
+                                                        : 'bg-[#1A1A2A] border-[#2E2E44] text-white hover:bg-[#222238]'
+                                                        }`}
+                                                >
+                                                    {isFetchingGstin ? (
+                                                        <><RefreshCw className="h-4 w-4 animate-spin" /> Fetching Registered GSTINs...</>
+                                                    ) : (
+                                                        <><Building2 className="h-4 w-4 text-[#00F5D4]" /> Fetch Registered GSTINs (PAN to GSTIN)</>
+                                                    )}
+                                                </button>
+
+                                                {gstinData && (
+                                                    <div className="mt-3 p-4 rounded-2xl border bg-[#0B0B12] border-[#26263A] space-y-2.5 text-xs">
+                                                        <div className="flex items-center justify-between text-[#00F5D4] font-bold text-xs">
+                                                            <span>Registered GSTIN Details ({gstinData.count || 0})</span>
+                                                            <span className="text-gray-400 font-mono">PAN: {gstinData.pan}</span>
+                                                        </div>
+                                                        {gstinData.gstinList && gstinData.gstinList.length > 0 ? (
+                                                            <div className="space-y-2">
+                                                                {gstinData.gstinList.map((item, idx) => (
+                                                                    <div key={idx} className="p-3 rounded-xl bg-[#141422] border border-[#26263A] flex items-center justify-between text-xs">
+                                                                        <div>
+                                                                            <span className="font-mono font-bold text-white block">{item.gstin}</span>
+                                                                            <span className="text-[#94A3B8] text-[11px]">{item.businessName} &bull; {item.state}</span>
+                                                                        </div>
+                                                                        <span className="px-2.5 py-1 rounded-lg text-[10px] font-extrabold bg-[#00E676]/10 text-[#00E676] border border-[#00E676]/30">
+                                                                            {item.status || 'Active'}
+                                                                        </span>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        ) : (
+                                                            <p className="text-xs text-gray-400">No active GSTIN registration found for this PAN card.</p>
+                                                        )}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* SECTION 2: DIGILOCKER AADHAAR VERIFICATION */}
+                                    <div className={`p-6 rounded-3xl border space-y-5 transition-all ${theme === 'light' ? 'bg-white border-[#E2E8F0]' : 'bg-[#141422] border-[#26263A]'}`}>
+                                        <div className="flex items-center justify-between border-b pb-3 border-current/10">
+                                            <div className="flex items-center gap-2">
+                                                <ShieldCheck className="h-4 w-4 text-indigo-400" />
+                                                <h4 className={`text-xs font-black uppercase tracking-wider ${theme === 'light' ? 'text-[#0F172A]' : 'text-white'}`}>
+                                                    2. DigiLocker Aadhaar Verification
+                                                </h4>
+                                            </div>
+                                            {aadhaarVerificationData?.verified ? (
+                                                <span className="text-[11px] font-extrabold text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded-lg border border-emerald-500/30 flex items-center gap-1.5">
+                                                    <CheckCircle2 className="h-3.5 w-3.5" /> Aadhaar Verified
+                                                </span>
+                                            ) : (
+                                                <span className="text-[10px] font-bold text-amber-500 bg-amber-500/10 px-2.5 py-0.5 rounded-full border border-amber-500/30">
+                                                    Required
+                                                </span>
+                                            )}
+                                        </div>
+
+                                        {!aadhaarVerificationData?.verified ? (
+                                            <div className="space-y-5">
+                                                {/* DigiLocker Banner Card */}
+                                                <div className="p-5 rounded-2xl bg-gradient-to-r from-[#180A0C] via-[#161624] to-[#0F172A] border border-indigo-500/30 space-y-4">
+                                                    <div className="flex items-center justify-between">
+                                                        <div className="flex items-center gap-2 text-xs font-extrabold text-white">
+                                                            <Sparkles className="h-4 w-4 text-indigo-400" />
+                                                            <span>Verify your Aadhaar with DigiLocker</span>
+                                                        </div>
+                                                        <span className="text-[10px] font-extrabold text-indigo-400 bg-indigo-500/10 px-2.5 py-1 rounded-full border border-indigo-500/30">
+                                                            Recommended
+                                                        </span>
+                                                    </div>
+                                                    <p className="text-xs text-[#94A3B8] leading-relaxed">
+                                                        Seamless and secure way to share your verified government documents directly from DigiLocker.
+                                                    </p>
+
+                                                    <div>
+                                                        <label className="block text-xs font-extrabold mb-2 text-white">
+                                                            Aadhaar Number (12 Digits) *
+                                                        </label>
+                                                        <input
+                                                            type="text"
+                                                            inputMode="numeric"
+                                                            maxLength={12}
+                                                            required
+                                                            value={formData.aadhaarNumber || ''}
+                                                            onChange={(e) => handleInputChange('aadhaarNumber', e.target.value.replace(/\D/g, ''))}
+                                                            placeholder="e.g. 123456789012"
+                                                            className="w-full px-4 py-3.5 rounded-xl border border-[#26263A] bg-[#0B0B12] text-white text-sm outline-none font-mono font-bold tracking-widest focus:border-indigo-500"
+                                                        />
+                                                    </div>
+
+                                                    {/* Consent Checkbox */}
+                                                    <div className="pt-1">
+                                                        <label className="flex items-center gap-3 text-xs text-gray-300 font-medium cursor-pointer">
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={digiConsentAgreed}
+                                                                onChange={(e) => setDigiConsentAgreed(e.target.checked)}
+                                                                className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 border-gray-600 bg-gray-900 cursor-pointer"
+                                                            />
+                                                            <span>I agree to share my verified Aadhaar details with AskMe</span>
+                                                        </label>
+                                                    </div>
+
+                                                    <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                                                        <button
+                                                            type="button"
+                                                            onClick={async () => {
+                                                                if (!digiConsentAgreed) {
+                                                                    toast.error('Please accept consent to proceed.', 'Consent Required');
+                                                                    return;
+                                                                }
+                                                                if (formData.aadhaarNumber && formData.aadhaarNumber.length === 12) {
+                                                                    await handleSendDigiLockerOtp();
+                                                                } else {
+                                                                    await handleInitDigiLocker();
+                                                                }
+                                                            }}
+                                                            disabled={!digiConsentAgreed || isSendingDigiLockerOtp || isInitiatingDigiLocker}
+                                                            className="flex-1 py-3.5 px-6 rounded-xl bg-gradient-to-r from-indigo-600 via-indigo-500 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white font-black text-xs uppercase tracking-wider transition-all shadow-xl shadow-indigo-600/30 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                                                        >
+                                                            {isSendingDigiLockerOtp || isInitiatingDigiLocker ? (
+                                                                <><RefreshCw className="h-4 w-4 animate-spin" /> Connecting to DigiLocker...</>
+                                                            ) : (
+                                                                <><ShieldCheck className="h-4 w-4" /> Verify with DigiLocker</>
+                                                            )}
+                                                        </button>
+                                                    </div>
+
+                                                    {/* DigiLocker OTP Input Box */}
+                                                    {showDigiLockerOtpBox && (
+                                                        <div className="p-5 rounded-2xl border border-[#00F5D4]/40 bg-[#00F5D4]/5 space-y-4 mt-3 animate-scale-up">
+                                                            <div className="flex items-center justify-between">
+                                                                <label className="text-xs font-extrabold text-[#00F5D4] flex items-center gap-2">
+                                                                    <KeyRound className="h-4 w-4" /> Enter 6-Digit DigiLocker Aadhaar OTP
+                                                                </label>
+                                                                <span className="text-[11px] text-gray-400">Sent to Aadhaar linked mobile</span>
+                                                            </div>
+                                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                                                <div>
+                                                                    <label className="text-[11px] font-bold text-gray-300 block mb-1">DigiLocker OTP *</label>
+                                                                    <input
+                                                                        type="text"
+                                                                        maxLength={6}
+                                                                        value={digiLockerOtp}
+                                                                        onChange={(e) => setDigiLockerOtp(e.target.value.replace(/\D/g, ''))}
+                                                                        placeholder="6-digit OTP"
+                                                                        className="w-full px-3 py-2.5 rounded-xl border border-[#2A2A3E] bg-[#101018] text-white text-xs font-mono font-bold text-center outline-none focus:border-[#00F5D4]"
+                                                                    />
+                                                                </div>
+                                                                <div>
+                                                                    <label className="text-[11px] font-bold text-gray-300 block mb-1">DigiLocker PIN (Optional)</label>
+                                                                    <input
+                                                                        type="password"
+                                                                        maxLength={6}
+                                                                        value={digiLockerPin}
+                                                                        onChange={(e) => setDigiLockerPin(e.target.value.replace(/\D/g, ''))}
+                                                                        placeholder="6-digit PIN"
+                                                                        className="w-full px-3 py-2.5 rounded-xl border border-[#2A2A3E] bg-[#101018] text-white text-xs font-mono font-bold text-center outline-none focus:border-[#00F5D4]"
+                                                                    />
+                                                                </div>
+                                                            </div>
+
+                                                            <button
+                                                                type="button"
+                                                                onClick={handleVerifyDigiLockerOtp}
+                                                                disabled={isVerifyingDigiLockerOtp || digiLockerOtp.length < 4}
+                                                                className="w-full py-3 rounded-xl bg-gradient-to-r from-[#00E676] to-[#00C853] text-black font-black text-xs uppercase tracking-wider shadow-md transition disabled:opacity-50 cursor-pointer flex items-center justify-center gap-2"
+                                                            >
+                                                                {isVerifyingDigiLockerOtp ? (
+                                                                    <><RefreshCw className="h-4 w-4 animate-spin" /> Verifying DigiLocker Identity...</>
+                                                                ) : (
+                                                                    <><Check className="h-4 w-4 stroke-[3]" /> Verify DigiLocker Aadhaar OTP</>
+                                                                )}
+                                                            </button>
+                                                        </div>
+                                                    )}
+
+                                                    <div className="flex items-center gap-2 text-xs text-[#94A3B8] pt-1">
+                                                        <Lock className="w-4 h-4 text-emerald-400 shrink-0" />
+                                                        <span>Your data is safe and secure. We only access what you consent to.</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            /* Aadhaar Verification Success Summary Box */
+                                            <div className="space-y-4">
+                                                <div className="p-5 rounded-2xl bg-[#00E676]/10 border border-[#00E676]/30 text-[#00E676] space-y-3">
+                                                    <div className="flex items-center gap-2.5 text-sm font-black">
+                                                        <CheckCircle2 className="w-5 h-5 text-[#00E676] shrink-0" />
+                                                        <span>Aadhaar Verified Successfully via DigiLocker</span>
+                                                    </div>
+
+                                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-left pt-1">
+                                                        <div className="p-3 rounded-xl bg-[#0B0B12] border border-[#26263A] text-white">
+                                                            <span className="text-gray-400 text-[10px] block font-medium uppercase">Verified Name</span>
+                                                            <span className="font-extrabold text-xs uppercase tracking-wide">{aadhaarVerificationData?.registeredName || panVerificationData?.registeredName || formData.fullName}</span>
+                                                        </div>
+                                                        <div className="p-3 rounded-xl bg-[#0B0B12] border border-[#26263A] text-white">
+                                                            <span className="text-gray-400 text-[10px] block font-medium uppercase">DOB & Gender</span>
+                                                            <span className="font-extrabold text-xs">{aadhaarVerificationData?.dob || formData.dateOfBirth || '15-08-1998'} &bull; {aadhaarVerificationData?.gender || 'Male'}</span>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="flex items-center gap-2 text-xs font-bold pt-1">
+                                                        <Lock className="w-4 h-4 text-[#00E676] shrink-0" />
+                                                        <span>Identity matched with your provided details.</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* Step Navigation Footer */}
+                                    <div className="pt-4 flex flex-col-reverse sm:flex-row justify-between items-center gap-3">
+                                        <button
+                                            type="button"
+                                            onClick={() => setStep(1)}
+                                            className={`w-full sm:w-auto px-5 py-3.5 rounded-xl text-xs font-extrabold transition-all flex items-center justify-center gap-2 cursor-pointer ${theme === 'light'
+                                                ? 'bg-[#F1F5F9] text-[#475569] border border-[#E2E8F0]'
+                                                : 'bg-[#181826] text-[#A0A0B2] border border-[#2A2A3E]'
+                                                }`}
+                                        >
+                                            <ArrowLeft className="h-4 w-4" /> Back to Personal Info
+                                        </button>
+                                        <button
+                                            type="submit"
+                                            disabled={!panVerificationData?.verified || !aadhaarVerificationData?.verified}
+                                            className="w-full sm:w-auto px-8 py-3.5 rounded-xl bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white font-black text-xs uppercase tracking-wider shadow-xl shadow-indigo-600/30 hover:scale-[1.02] transition-all disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
+                                        >
+                                            <span>Continue to Bank Details</span>
+                                            <ArrowRight className="h-4 w-4" />
+                                        </button>
+                                    </div>
+                                </form>
+                            )}
+
+                            {/* STEP 3: Bank Details */}
+                            {step === 3 && (
+                                <form onSubmit={handleNextStep} className="space-y-5">
+                                    <div className="flex items-center gap-2.5">
+                                        <span className="p-2 rounded-xl bg-[#EB1000]/10 text-[#EB1000] border border-[#EB1000]/20 shrink-0">
+                                            <Building2 className="h-4 w-4" />
+                                        </span>
+                                        <div>
+                                            <h3 className={`font-extrabold text-sm ${theme === 'light' ? 'text-[#0F172A]' : 'text-white'}`}>
+                                                Step 3 — Bank Account Details (Cashfree Penny Drop)
+                                            </h3>
+                                            <p className="text-[11px] text-[#8B8B96]">Bank account holder name will be verified against your verified government identity.</p>
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <label className={`block text-xs font-extrabold mb-1.5 ${theme === 'light' ? 'text-[#0F172A]' : 'text-[#E2E8F0]'}`}>
+                                            Bank Account Holder Name *
+                                        </label>
+                                        <input
+                                            type="text"
+                                            required
+                                            value={formData.accountHolderName}
+                                            onChange={(e) => handleInputChange('accountHolderName', e.target.value)}
+                                            placeholder="e.g. Abhishek Raushan"
+                                            className={`w-full px-4 py-3 rounded-xl border text-xs outline-none font-medium transition-all duration-200 ${theme === 'light'
+                                                ? 'bg-[#F8FAFC] border-[#E2E8F0] text-[#0F172A] focus:border-[#EB1000]'
+                                                : 'bg-[#181826] border-[#2A2A3E] text-white focus:border-[#EB1000]'
+                                                }`}
+                                        />
                                     </div>
 
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                         <div>
-                                            <label className={`block text-xs font-extrabold mb-2 ${theme === 'light' ? 'text-[#0F172A]' : 'text-[#E2E8F0]'}`}>
-                                                PAN Number (10 Digits) *
-                                            </label>
-                                            <div className="relative">
-                                                <input
-                                                    type="text"
-                                                    maxLength={10}
-                                                    required
-                                                    value={formData.panNumber}
-                                                    onChange={(e) => handleInputChange('panNumber', e.target.value.toUpperCase())}
-                                                    placeholder="e.g. ABCDE1234F"
-                                                    className={`w-full px-4 py-3.5 rounded-xl border text-xs outline-none font-mono uppercase font-bold tracking-wider pr-28 transition-all ${
-                                                        theme === 'light' ? 'bg-[#F8FAFC] border-[#CBD5E1] text-[#0F172A] focus:border-indigo-600' : 'bg-[#0B0B12] border-[#26263A] text-white focus:border-indigo-500'
-                                                    }`}
-                                                />
-                                                {panVerificationData?.verified ? (
-                                                    <span className="absolute right-2 top-1/2 -translate-y-1/2 px-3 py-1 rounded-lg bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 text-[11px] font-extrabold flex items-center gap-1.5">
-                                                        <CheckCircle2 className="w-3.5 h-3.5" /> Verified
-                                                    </span>
-                                                ) : (
-                                                    <button
-                                                        type="button"
-                                                        onClick={handleVerifyPan}
-                                                        disabled={isVerifyingPan || !formData.panNumber}
-                                                        className="absolute right-2 top-1/2 -translate-y-1/2 px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-extrabold transition shadow-md disabled:opacity-50 flex items-center gap-1.5 cursor-pointer"
-                                                    >
-                                                        {isVerifyingPan ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : 'Verify'}
-                                                    </button>
-                                                )}
-                                            </div>
-                                        </div>
-
-                                        <div>
-                                            <label className={`block text-xs font-extrabold mb-2 ${theme === 'light' ? 'text-[#0F172A]' : 'text-[#E2E8F0]'}`}>
-                                                Name (as per PAN)
+                                            <label className={`block text-xs font-extrabold mb-1.5 ${theme === 'light' ? 'text-[#0F172A]' : 'text-[#E2E8F0]'}`}>
+                                                Bank Name *
                                             </label>
                                             <input
                                                 type="text"
-                                                readOnly={!!panVerificationData?.registeredName}
-                                                value={panVerificationData?.registeredName || formData.fullName}
-                                                onChange={(e) => handleInputChange('fullName', e.target.value)}
-                                                placeholder="Rohit Kumar"
-                                                className={`w-full px-4 py-3.5 rounded-xl border text-xs outline-none font-medium ${
-                                                    theme === 'light' ? 'bg-[#F8FAFC] border-[#CBD5E1] text-[#0F172A]' : 'bg-[#0B0B12] border-[#26263A] text-white'
-                                                }`}
+                                                required
+                                                value={formData.bankName}
+                                                onChange={(e) => handleInputChange('bankName', e.target.value)}
+                                                placeholder="e.g. HDFC Bank / ICICI Bank"
+                                                className={`w-full px-4 py-3 rounded-xl border text-xs outline-none font-medium ${theme === 'light' ? 'bg-[#F8FAFC] border-[#E2E8F0] text-[#0F172A]' : 'bg-[#181826] border-[#2A2A3E] text-white'}`}
                                             />
                                         </div>
-                                    </div>
 
-                                    {/* Green Verified Alert Notice */}
-                                    {panVerificationData?.verified && (
-                                        <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 space-y-1 text-xs">
-                                            <div className="font-extrabold flex items-center gap-2 text-sm">
-                                                <Check className="w-4 h-4 text-emerald-400 shrink-0 stroke-[3]" />
-                                                <span>PAN verified successfully</span>
-                                            </div>
-                                            <p className="text-xs opacity-90 pl-6 text-emerald-300">
-                                                You can now proceed to Aadhaar verification using DigiLocker below.
-                                            </p>
+                                        <div>
+                                            <label className={`block text-xs font-extrabold mb-1.5 ${theme === 'light' ? 'text-[#0F172A]' : 'text-[#E2E8F0]'}`}>
+                                                Account Number *
+                                            </label>
+                                            <input
+                                                type="text"
+                                                inputMode="numeric"
+                                                pattern="[0-9]*"
+                                                required
+                                                value={formData.accountNumber}
+                                                onChange={(e) => handleInputChange('accountNumber', e.target.value)}
+                                                placeholder="e.g. 50100298410294"
+                                                className={`w-full px-4 py-3 rounded-xl border text-xs outline-none font-mono ${theme === 'light' ? 'bg-[#F8FAFC] border-[#E2E8F0] text-[#0F172A]' : 'bg-[#181826] border-[#2A2A3E] text-white'}`}
+                                            />
                                         </div>
-                                    )}
 
-                                    {/* PAN to GSTIN Lookup */}
-                                    {formData.panNumber && formData.panNumber.length === 10 && (
-                                        <div className="pt-1">
-                                            <button
-                                                type="button"
-                                                onClick={handleFetchGstin}
-                                                disabled={isFetchingGstin}
-                                                className={`w-full py-3 px-4 rounded-xl border text-xs font-extrabold flex items-center justify-center gap-2 transition cursor-pointer ${
-                                                    theme === 'light'
-                                                        ? 'bg-[#F1F5F9] border-[#CBD5E1] text-[#0F172A] hover:bg-[#E2E8F0]'
-                                                        : 'bg-[#1A1A2A] border-[#2E2E44] text-white hover:bg-[#222238]'
-                                                }`}
-                                            >
-                                                {isFetchingGstin ? (
-                                                    <><RefreshCw className="h-4 w-4 animate-spin" /> Fetching Registered GSTINs...</>
-                                                ) : (
-                                                    <><Building2 className="h-4 w-4 text-[#00F5D4]" /> Fetch Registered GSTINs (PAN to GSTIN)</>
-                                                )}
-                                            </button>
-
-                                            {gstinData && (
-                                                <div className="mt-3 p-4 rounded-2xl border bg-[#0B0B12] border-[#26263A] space-y-2.5 text-xs">
-                                                    <div className="flex items-center justify-between text-[#00F5D4] font-bold text-xs">
-                                                        <span>Registered GSTIN Details ({gstinData.count || 0})</span>
-                                                        <span className="text-gray-400 font-mono">PAN: {gstinData.pan}</span>
-                                                    </div>
-                                                    {gstinData.gstinList && gstinData.gstinList.length > 0 ? (
-                                                        <div className="space-y-2">
-                                                            {gstinData.gstinList.map((item, idx) => (
-                                                                <div key={idx} className="p-3 rounded-xl bg-[#141422] border border-[#26263A] flex items-center justify-between text-xs">
-                                                                    <div>
-                                                                        <span className="font-mono font-bold text-white block">{item.gstin}</span>
-                                                                        <span className="text-[#94A3B8] text-[11px]">{item.businessName} &bull; {item.state}</span>
-                                                                    </div>
-                                                                    <span className="px-2.5 py-1 rounded-lg text-[10px] font-extrabold bg-[#00E676]/10 text-[#00E676] border border-[#00E676]/30">
-                                                                        {item.status || 'Active'}
-                                                                    </span>
-                                                                </div>
-                                                            ))}
-                                                        </div>
-                                                    ) : (
-                                                        <p className="text-xs text-gray-400">No active GSTIN registration found for this PAN card.</p>
-                                                    )}
-                                                </div>
-                                            )}
+                                        <div>
+                                            <label className={`block text-xs font-extrabold mb-1.5 ${theme === 'light' ? 'text-[#0F172A]' : 'text-[#E2E8F0]'}`}>
+                                                Confirmation Account Number *
+                                            </label>
+                                            <input
+                                                type="text"
+                                                inputMode="numeric"
+                                                pattern="[0-9]*"
+                                                required
+                                                value={formData.confirmAccountNumber || ''}
+                                                onChange={(e) => handleInputChange('confirmAccountNumber', e.target.value)}
+                                                placeholder="Re-enter account number"
+                                                className={`w-full px-4 py-3 rounded-xl border text-xs outline-none font-mono ${formData.confirmAccountNumber && formData.accountNumber !== formData.confirmAccountNumber
+                                                    ? 'border-[#FF3D71] bg-[#FF3D71]/10 text-[#FF3D71]'
+                                                    : theme === 'light' ? 'bg-[#F8FAFC] border-[#E2E8F0] text-[#0F172A]' : 'bg-[#181826] border-[#2A2A3E] text-white'}`}
+                                            />
                                         </div>
-                                    )}
-                                </div>
 
-                                {/* SECTION 2: DIGILOCKER AADHAAR VERIFICATION */}
-                                <div className={`p-6 rounded-3xl border space-y-5 transition-all ${theme === 'light' ? 'bg-white border-[#E2E8F0]' : 'bg-[#141422] border-[#26263A]'}`}>
-                                    <div className="flex items-center justify-between border-b pb-3 border-current/10">
-                                        <div className="flex items-center gap-2">
-                                            <ShieldCheck className="h-4 w-4 text-indigo-400" />
-                                            <h4 className={`text-xs font-black uppercase tracking-wider ${theme === 'light' ? 'text-[#0F172A]' : 'text-white'}`}>
-                                                2. DigiLocker Aadhaar Verification
-                                            </h4>
-                                        </div>
-                                        {aadhaarVerificationData?.verified ? (
-                                            <span className="text-[11px] font-extrabold text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded-lg border border-emerald-500/30 flex items-center gap-1.5">
-                                                <CheckCircle2 className="h-3.5 w-3.5" /> Aadhaar Verified
-                                            </span>
-                                        ) : (
-                                            <span className="text-[10px] font-bold text-amber-500 bg-amber-500/10 px-2.5 py-0.5 rounded-full border border-amber-500/30">
-                                                Required
-                                            </span>
-                                        )}
-                                    </div>
-
-                                    {!aadhaarVerificationData?.verified ? (
-                                        <div className="space-y-5">
-                                            {/* DigiLocker Banner Card */}
-                                            <div className="p-5 rounded-2xl bg-gradient-to-r from-[#180A0C] via-[#161624] to-[#0F172A] border border-indigo-500/30 space-y-4">
-                                                <div className="flex items-center justify-between">
-                                                    <div className="flex items-center gap-2 text-xs font-extrabold text-white">
-                                                        <Sparkles className="h-4 w-4 text-indigo-400" />
-                                                        <span>Verify your Aadhaar with DigiLocker</span>
-                                                    </div>
-                                                    <span className="text-[10px] font-extrabold text-indigo-400 bg-indigo-500/10 px-2.5 py-1 rounded-full border border-indigo-500/30">
-                                                        Recommended
+                                        <div>
+                                            <div className="flex items-center justify-between mb-1.5">
+                                                <label className={`block text-xs font-extrabold ${theme === 'light' ? 'text-[#0F172A]' : 'text-[#E2E8F0]'}`}>
+                                                    IFSC Code *
+                                                </label>
+                                                {bankVerificationData?.verified ? (
+                                                    <span className="text-[10px] font-extrabold text-[#00E676] bg-[#00E676]/10 px-2.5 py-0.5 rounded-full border border-[#00E676]/30 flex items-center gap-1">
+                                                        <CheckCircle2 className="h-3 w-3" /> Bank Verified
                                                     </span>
-                                                </div>
-                                                <p className="text-xs text-[#94A3B8] leading-relaxed">
-                                                    Seamless and secure way to share your verified government documents directly from DigiLocker.
-                                                </p>
-
-                                                <div>
-                                                    <label className="block text-xs font-extrabold mb-2 text-white">
-                                                        Aadhaar Number (12 Digits) *
-                                                    </label>
-                                                    <input
-                                                        type="text"
-                                                        inputMode="numeric"
-                                                        maxLength={12}
-                                                        required
-                                                        value={formData.aadhaarNumber || ''}
-                                                        onChange={(e) => handleInputChange('aadhaarNumber', e.target.value.replace(/\D/g, ''))}
-                                                        placeholder="e.g. 123456789012"
-                                                        className="w-full px-4 py-3.5 rounded-xl border border-[#26263A] bg-[#0B0B12] text-white text-sm outline-none font-mono font-bold tracking-widest focus:border-indigo-500"
-                                                    />
-                                                </div>
-
-                                                {/* Consent Checkbox */}
-                                                <div className="pt-1">
-                                                    <label className="flex items-center gap-3 text-xs text-gray-300 font-medium cursor-pointer">
-                                                        <input
-                                                            type="checkbox"
-                                                            checked={digiConsentAgreed}
-                                                            onChange={(e) => setDigiConsentAgreed(e.target.checked)}
-                                                            className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 border-gray-600 bg-gray-900 cursor-pointer"
-                                                        />
-                                                        <span>I agree to share my verified Aadhaar details with AskMe</span>
-                                                    </label>
-                                                </div>
-
-                                                <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                                                ) : (
                                                     <button
                                                         type="button"
-                                                        onClick={async () => {
-                                                            if (!digiConsentAgreed) {
-                                                                toast.error('Please accept consent to proceed.', 'Consent Required');
-                                                                return;
-                                                            }
-                                                            if (formData.aadhaarNumber && formData.aadhaarNumber.length === 12) {
-                                                                await handleSendDigiLockerOtp();
-                                                            } else {
-                                                                await handleInitDigiLocker();
-                                                            }
-                                                        }}
-                                                        disabled={!digiConsentAgreed || isSendingDigiLockerOtp || isInitiatingDigiLocker}
-                                                        className="flex-1 py-3.5 px-6 rounded-xl bg-gradient-to-r from-indigo-600 via-indigo-500 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white font-black text-xs uppercase tracking-wider transition-all shadow-xl shadow-indigo-600/30 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                                                        onClick={handleVerifyBank}
+                                                        disabled={isVerifyingBank || !formData.accountNumber || !formData.ifscCode}
+                                                        className="text-[11px] font-extrabold text-[#EB1000] hover:underline flex items-center gap-1 disabled:opacity-50 cursor-pointer"
                                                     >
-                                                        {isSendingDigiLockerOtp || isInitiatingDigiLocker ? (
-                                                            <><RefreshCw className="h-4 w-4 animate-spin" /> Connecting to DigiLocker...</>
+                                                        {isVerifyingBank ? (
+                                                            <>
+                                                                <RefreshCw className="h-3 w-3 animate-spin" /> Verifying...
+                                                            </>
                                                         ) : (
-                                                            <><ShieldCheck className="h-4 w-4" /> Verify with DigiLocker</>
+                                                            <>
+                                                                <ShieldCheck className="h-3 w-3" /> Cashfree Penny Drop
+                                                            </>
                                                         )}
                                                     </button>
-                                                </div>
-
-                                                {/* DigiLocker OTP Input Box */}
-                                                {showDigiLockerOtpBox && (
-                                                    <div className="p-5 rounded-2xl border border-[#00F5D4]/40 bg-[#00F5D4]/5 space-y-4 mt-3 animate-scale-up">
-                                                        <div className="flex items-center justify-between">
-                                                            <label className="text-xs font-extrabold text-[#00F5D4] flex items-center gap-2">
-                                                                <KeyRound className="h-4 w-4" /> Enter 6-Digit DigiLocker Aadhaar OTP
-                                                            </label>
-                                                            <span className="text-[11px] text-gray-400">Sent to Aadhaar linked mobile</span>
-                                                        </div>
-                                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                                            <div>
-                                                                <label className="text-[11px] font-bold text-gray-300 block mb-1">DigiLocker OTP *</label>
-                                                                <input
-                                                                    type="text"
-                                                                    maxLength={6}
-                                                                    value={digiLockerOtp}
-                                                                    onChange={(e) => setDigiLockerOtp(e.target.value.replace(/\D/g, ''))}
-                                                                    placeholder="6-digit OTP"
-                                                                    className="w-full px-3 py-2.5 rounded-xl border border-[#2A2A3E] bg-[#101018] text-white text-xs font-mono font-bold text-center outline-none focus:border-[#00F5D4]"
-                                                                />
-                                                            </div>
-                                                            <div>
-                                                                <label className="text-[11px] font-bold text-gray-300 block mb-1">DigiLocker PIN (Optional)</label>
-                                                                <input
-                                                                    type="password"
-                                                                    maxLength={6}
-                                                                    value={digiLockerPin}
-                                                                    onChange={(e) => setDigiLockerPin(e.target.value.replace(/\D/g, ''))}
-                                                                    placeholder="6-digit PIN"
-                                                                    className="w-full px-3 py-2.5 rounded-xl border border-[#2A2A3E] bg-[#101018] text-white text-xs font-mono font-bold text-center outline-none focus:border-[#00F5D4]"
-                                                                />
-                                                            </div>
-                                                        </div>
-
-                                                        <button
-                                                            type="button"
-                                                            onClick={handleVerifyDigiLockerOtp}
-                                                            disabled={isVerifyingDigiLockerOtp || digiLockerOtp.length < 4}
-                                                            className="w-full py-3 rounded-xl bg-gradient-to-r from-[#00E676] to-[#00C853] text-black font-black text-xs uppercase tracking-wider shadow-md transition disabled:opacity-50 cursor-pointer flex items-center justify-center gap-2"
-                                                        >
-                                                            {isVerifyingDigiLockerOtp ? (
-                                                                <><RefreshCw className="h-4 w-4 animate-spin" /> Verifying DigiLocker Identity...</>
-                                                            ) : (
-                                                                <><Check className="h-4 w-4 stroke-[3]" /> Verify DigiLocker Aadhaar OTP</>
-                                                            )}
-                                                        </button>
-                                                    </div>
                                                 )}
-
-                                                <div className="flex items-center gap-2 text-xs text-[#94A3B8] pt-1">
-                                                    <Lock className="w-4 h-4 text-emerald-400 shrink-0" />
-                                                    <span>Your data is safe and secure. We only access what you consent to.</span>
-                                                </div>
+                                            </div>
+                                            <div className="flex gap-2">
+                                                <input
+                                                    type="text"
+                                                    maxLength={11}
+                                                    required
+                                                    value={formData.ifscCode}
+                                                    onChange={(e) => handleInputChange('ifscCode', e.target.value)}
+                                                    placeholder="e.g. SBIN0001234"
+                                                    className={`flex-1 px-4 py-3 rounded-xl border text-xs outline-none font-mono uppercase ${theme === 'light' ? 'bg-[#F8FAFC] border-[#E2E8F0] text-[#0F172A]' : 'bg-[#181826] border-[#2A2A3E] text-white'}`}
+                                                />
+                                                {!bankVerificationData?.verified && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={handleVerifyBank}
+                                                        disabled={isVerifyingBank || !formData.accountNumber || !formData.ifscCode}
+                                                        className="px-4 py-3 rounded-xl bg-[#EB1000]/10 text-[#EB1000] border border-[#EB1000]/30 hover:bg-[#EB1000]/20 text-xs font-black shrink-0 transition cursor-pointer"
+                                                    >
+                                                        Verify
+                                                    </button>
+                                                )}
                                             </div>
                                         </div>
-                                    ) : (
-                                        /* Aadhaar Verification Success Summary Box */
-                                        <div className="space-y-4">
-                                            <div className="p-5 rounded-2xl bg-[#00E676]/10 border border-[#00E676]/30 text-[#00E676] space-y-3">
-                                                <div className="flex items-center gap-2.5 text-sm font-black">
-                                                    <CheckCircle2 className="w-5 h-5 text-[#00E676] shrink-0" />
-                                                    <span>Aadhaar Verified Successfully via DigiLocker</span>
-                                                </div>
+                                    </div>
 
-                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-left pt-1">
-                                                    <div className="p-3 rounded-xl bg-[#0B0B12] border border-[#26263A] text-white">
-                                                        <span className="text-gray-400 text-[10px] block font-medium uppercase">Verified Name</span>
-                                                        <span className="font-extrabold text-xs uppercase tracking-wide">{aadhaarVerificationData?.registeredName || panVerificationData?.registeredName || formData.fullName}</span>
-                                                    </div>
-                                                    <div className="p-3 rounded-xl bg-[#0B0B12] border border-[#26263A] text-white">
-                                                        <span className="text-gray-400 text-[10px] block font-medium uppercase">DOB & Gender</span>
-                                                        <span className="font-extrabold text-xs">{aadhaarVerificationData?.dob || formData.dateOfBirth || '15-08-1998'} &bull; {aadhaarVerificationData?.gender || 'Male'}</span>
-                                                    </div>
-                                                </div>
-
-                                                <div className="flex items-center gap-2 text-xs font-bold pt-1">
-                                                    <Lock className="w-4 h-4 text-[#00E676] shrink-0" />
-                                                    <span>Identity matched with your provided details.</span>
-                                                </div>
+                                    {bankVerificationData?.verified && (
+                                        <div className={`p-3.5 rounded-xl border text-xs space-y-1 ${bankVerificationData.isNameMatch
+                                            ? theme === 'light' ? 'bg-emerald-50 border-emerald-300 text-emerald-800' : 'bg-emerald-950/30 border-emerald-500/40 text-emerald-400'
+                                            : theme === 'light' ? 'bg-amber-50 border-amber-300 text-amber-800' : 'bg-amber-950/30 border-amber-500/40 text-amber-400'
+                                            }`}>
+                                            <div className="font-extrabold flex items-center gap-1.5">
+                                                <Check className="h-4 w-4" /> Bank Account Verified: {bankVerificationData.bankName}
+                                            </div>
+                                            <div className="text-[11px]">
+                                                Account Holder: <strong>{bankVerificationData.accountHolderName}</strong> &bull; Match: <strong>{bankVerificationData.isNameMatch ? '✓ Verified Match' : '⚠ Flagged for Manual Review'}</strong>
                                             </div>
                                         </div>
                                     )}
-                                </div>
-
-                                {/* Step Navigation Footer */}
-                                <div className="pt-4 flex flex-col-reverse sm:flex-row justify-between items-center gap-3">
-                                    <button
-                                        type="button"
-                                        onClick={() => setStep(1)}
-                                        className={`w-full sm:w-auto px-5 py-3.5 rounded-xl text-xs font-extrabold transition-all flex items-center justify-center gap-2 cursor-pointer ${
-                                            theme === 'light'
-                                                ? 'bg-[#F1F5F9] text-[#475569] border border-[#E2E8F0]'
-                                                : 'bg-[#181826] text-[#A0A0B2] border border-[#2A2A3E]'
-                                        }`}
-                                    >
-                                        <ArrowLeft className="h-4 w-4" /> Back to Personal Info
-                                    </button>
-                                    <button
-                                        type="submit"
-                                        disabled={!panVerificationData?.verified || !aadhaarVerificationData?.verified}
-                                        className="w-full sm:w-auto px-8 py-3.5 rounded-xl bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white font-black text-xs uppercase tracking-wider shadow-xl shadow-indigo-600/30 hover:scale-[1.02] transition-all disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
-                                    >
-                                        <span>Continue to Bank Details</span>
-                                        <ArrowRight className="h-4 w-4" />
-                                    </button>
-                                </div>
-                            </form>
-                        )}
-
-                        {/* STEP 3: Bank Details */}
-                        {step === 3 && (
-                            <form onSubmit={handleNextStep} className="space-y-5">
-                                <div className="flex items-center gap-2.5">
-                                    <span className="p-2 rounded-xl bg-[#EB1000]/10 text-[#EB1000] border border-[#EB1000]/20 shrink-0">
-                                        <Building2 className="h-4 w-4" />
-                                    </span>
-                                    <div>
-                                        <h3 className={`font-extrabold text-sm ${theme === 'light' ? 'text-[#0F172A]' : 'text-white'}`}>
-                                            Step 3 — Bank Account Details (Cashfree Penny Drop)
-                                        </h3>
-                                        <p className="text-[11px] text-[#8B8B96]">Bank account holder name will be verified against your verified government identity.</p>
-                                    </div>
-                                </div>
-
-                                <div>
-                                    <label className={`block text-xs font-extrabold mb-1.5 ${theme === 'light' ? 'text-[#0F172A]' : 'text-[#E2E8F0]'}`}>
-                                        Bank Account Holder Name *
-                                    </label>
-                                    <input
-                                        type="text"
-                                        required
-                                        value={formData.accountHolderName}
-                                        onChange={(e) => handleInputChange('accountHolderName', e.target.value)}
-                                        placeholder="e.g. Abhishek Raushan"
-                                        className={`w-full px-4 py-3 rounded-xl border text-xs outline-none font-medium transition-all duration-200 ${theme === 'light'
-                                            ? 'bg-[#F8FAFC] border-[#E2E8F0] text-[#0F172A] focus:border-[#EB1000]'
-                                            : 'bg-[#181826] border-[#2A2A3E] text-white focus:border-[#EB1000]'
-                                            }`}
-                                    />
-                                </div>
-
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    <div>
-                                        <label className={`block text-xs font-extrabold mb-1.5 ${theme === 'light' ? 'text-[#0F172A]' : 'text-[#E2E8F0]'}`}>
-                                            Bank Name *
-                                        </label>
-                                        <input
-                                            type="text"
-                                            required
-                                            value={formData.bankName}
-                                            onChange={(e) => handleInputChange('bankName', e.target.value)}
-                                            placeholder="e.g. HDFC Bank / ICICI Bank"
-                                            className={`w-full px-4 py-3 rounded-xl border text-xs outline-none font-medium ${theme === 'light' ? 'bg-[#F8FAFC] border-[#E2E8F0] text-[#0F172A]' : 'bg-[#181826] border-[#2A2A3E] text-white'}`}
-                                        />
-                                    </div>
 
                                     <div>
                                         <label className={`block text-xs font-extrabold mb-1.5 ${theme === 'light' ? 'text-[#0F172A]' : 'text-[#E2E8F0]'}`}>
-                                            Account Number *
+                                            UPI ID (Optional Payout VPA)
                                         </label>
                                         <input
                                             type="text"
-                                            inputMode="numeric"
-                                            pattern="[0-9]*"
-                                            required
-                                            value={formData.accountNumber}
-                                            onChange={(e) => handleInputChange('accountNumber', e.target.value)}
-                                            placeholder="e.g. 50100298410294"
+                                            value={formData.upiId}
+                                            onChange={(e) => handleInputChange('upiId', e.target.value)}
+                                            placeholder="e.g. creator@upi or yourname@oksbi"
                                             className={`w-full px-4 py-3 rounded-xl border text-xs outline-none font-mono ${theme === 'light' ? 'bg-[#F8FAFC] border-[#E2E8F0] text-[#0F172A]' : 'bg-[#181826] border-[#2A2A3E] text-white'}`}
                                         />
                                     </div>
 
-                                    <div>
-                                        <label className={`block text-xs font-extrabold mb-1.5 ${theme === 'light' ? 'text-[#0F172A]' : 'text-[#E2E8F0]'}`}>
-                                            Confirmation Account Number *
-                                        </label>
-                                        <input
-                                            type="text"
-                                            inputMode="numeric"
-                                            pattern="[0-9]*"
-                                            required
-                                            value={formData.confirmAccountNumber || ''}
-                                            onChange={(e) => handleInputChange('confirmAccountNumber', e.target.value)}
-                                            placeholder="Re-enter account number"
-                                            className={`w-full px-4 py-3 rounded-xl border text-xs outline-none font-mono ${formData.confirmAccountNumber && formData.accountNumber !== formData.confirmAccountNumber
-                                                ? 'border-[#FF3D71] bg-[#FF3D71]/10 text-[#FF3D71]'
-                                                : theme === 'light' ? 'bg-[#F8FAFC] border-[#E2E8F0] text-[#0F172A]' : 'bg-[#181826] border-[#2A2A3E] text-white'}`}
-                                        />
+                                    <div className="pt-4 flex flex-col-reverse sm:flex-row justify-between items-center gap-3">
+                                        <button
+                                            type="button"
+                                            onClick={() => setStep(2)}
+                                            className={`w-full sm:w-auto px-5 py-3 rounded-xl text-xs font-extrabold transition-all flex items-center justify-center gap-2 cursor-pointer ${theme === 'light'
+                                                ? 'bg-[#F1F5F9] text-[#475569] border border-[#E2E8F0]'
+                                                : 'bg-[#181826] text-[#A0A0B2] border border-[#2A2A3E]'
+                                                }`}
+                                        >
+                                            <ArrowLeft className="h-4 w-4" /> Back to Document Proof
+                                        </button>
+                                        <button
+                                            type="submit"
+                                            disabled={!bankVerificationData?.verified}
+                                            title={!bankVerificationData?.verified ? "Please verify bank account via Cashfree Penny Drop first" : ""}
+                                            className="w-full sm:w-auto px-7 py-3 rounded-xl bg-gradient-to-r from-[#EB1000] to-[#CC0E00] hover:from-[#CC0E00] hover:to-[#B30C00] text-white font-black text-xs shadow-xl shadow-[#EB1000]/30 hover:scale-[1.02] transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:shadow-none"
+                                        >
+                                            <span>Review & Final Submit</span>
+                                            <ArrowRight className="h-4 w-4" />
+                                        </button>
                                     </div>
+                                </form>
+                            )}
 
-                                    <div>
-                                        <div className="flex items-center justify-between mb-1.5">
-                                            <label className={`block text-xs font-extrabold ${theme === 'light' ? 'text-[#0F172A]' : 'text-[#E2E8F0]'}`}>
-                                                IFSC Code *
-                                            </label>
-                                            {bankVerificationData?.verified ? (
-                                                <span className="text-[10px] font-extrabold text-[#00E676] bg-[#00E676]/10 px-2.5 py-0.5 rounded-full border border-[#00E676]/30 flex items-center gap-1">
-                                                    <CheckCircle2 className="h-3 w-3" /> Bank Verified
-                                                </span>
-                                            ) : (
-                                                <button
-                                                    type="button"
-                                                    onClick={handleVerifyBank}
-                                                    disabled={isVerifyingBank || !formData.accountNumber || !formData.ifscCode}
-                                                    className="text-[11px] font-extrabold text-[#EB1000] hover:underline flex items-center gap-1 disabled:opacity-50 cursor-pointer"
-                                                >
-                                                    {isVerifyingBank ? (
-                                                        <>
-                                                            <RefreshCw className="h-3 w-3 animate-spin" /> Verifying...
-                                                        </>
-                                                    ) : (
-                                                        <>
-                                                            <ShieldCheck className="h-3 w-3" /> Cashfree Penny Drop
-                                                        </>
-                                                    )}
-                                                </button>
-                                            )}
-                                        </div>
-                                        <div className="flex gap-2">
-                                            <input
-                                                type="text"
-                                                maxLength={11}
-                                                required
-                                                value={formData.ifscCode}
-                                                onChange={(e) => handleInputChange('ifscCode', e.target.value)}
-                                                placeholder="e.g. SBIN0001234"
-                                                className={`flex-1 px-4 py-3 rounded-xl border text-xs outline-none font-mono uppercase ${theme === 'light' ? 'bg-[#F8FAFC] border-[#E2E8F0] text-[#0F172A]' : 'bg-[#181826] border-[#2A2A3E] text-white'}`}
-                                            />
-                                            {!bankVerificationData?.verified && (
-                                                <button
-                                                    type="button"
-                                                    onClick={handleVerifyBank}
-                                                    disabled={isVerifyingBank || !formData.accountNumber || !formData.ifscCode}
-                                                    className="px-4 py-3 rounded-xl bg-[#EB1000]/10 text-[#EB1000] border border-[#EB1000]/30 hover:bg-[#EB1000]/20 text-xs font-black shrink-0 transition cursor-pointer"
-                                                >
-                                                    Verify
-                                                </button>
-                                            )}
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {bankVerificationData?.verified && (
-                                    <div className={`p-3.5 rounded-xl border text-xs space-y-1 ${bankVerificationData.isNameMatch
-                                        ? theme === 'light' ? 'bg-emerald-50 border-emerald-300 text-emerald-800' : 'bg-emerald-950/30 border-emerald-500/40 text-emerald-400'
-                                        : theme === 'light' ? 'bg-amber-50 border-amber-300 text-amber-800' : 'bg-amber-950/30 border-amber-500/40 text-amber-400'
-                                        }`}>
-                                        <div className="font-extrabold flex items-center gap-1.5">
-                                            <Check className="h-4 w-4" /> Bank Account Verified: {bankVerificationData.bankName}
-                                        </div>
-                                        <div className="text-[11px]">
-                                            Account Holder: <strong>{bankVerificationData.accountHolderName}</strong> &bull; Match: <strong>{bankVerificationData.isNameMatch ? '✓ Verified Match' : '⚠ Flagged for Manual Review'}</strong>
-                                        </div>
-                                    </div>
-                                )}
-
-                                <div>
-                                    <label className={`block text-xs font-extrabold mb-1.5 ${theme === 'light' ? 'text-[#0F172A]' : 'text-[#E2E8F0]'}`}>
-                                        UPI ID (Optional Payout VPA)
-                                    </label>
-                                    <input
-                                        type="text"
-                                        value={formData.upiId}
-                                        onChange={(e) => handleInputChange('upiId', e.target.value)}
-                                        placeholder="e.g. creator@upi or yourname@oksbi"
-                                        className={`w-full px-4 py-3 rounded-xl border text-xs outline-none font-mono ${theme === 'light' ? 'bg-[#F8FAFC] border-[#E2E8F0] text-[#0F172A]' : 'bg-[#181826] border-[#2A2A3E] text-white'}`}
-                                    />
-                                </div>
-
-                                <div className="pt-4 flex flex-col-reverse sm:flex-row justify-between items-center gap-3">
-                                    <button
-                                        type="button"
-                                        onClick={() => setStep(2)}
-                                        className={`w-full sm:w-auto px-5 py-3 rounded-xl text-xs font-extrabold transition-all flex items-center justify-center gap-2 cursor-pointer ${theme === 'light'
-                                            ? 'bg-[#F1F5F9] text-[#475569] border border-[#E2E8F0]'
-                                            : 'bg-[#181826] text-[#A0A0B2] border border-[#2A2A3E]'
-                                            }`}
-                                    >
-                                        <ArrowLeft className="h-4 w-4" /> Back to Document Proof
-                                    </button>
-                                    <button
-                                        type="submit"
-                                        disabled={!bankVerificationData?.verified}
-                                        title={!bankVerificationData?.verified ? "Please verify bank account via Cashfree Penny Drop first" : ""}
-                                        className="w-full sm:w-auto px-7 py-3 rounded-xl bg-gradient-to-r from-[#EB1000] to-[#CC0E00] hover:from-[#CC0E00] hover:to-[#B30C00] text-white font-black text-xs shadow-xl shadow-[#EB1000]/30 hover:scale-[1.02] transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:shadow-none"
-                                    >
-                                        <span>Review & Final Submit</span>
-                                        <ArrowRight className="h-4 w-4" />
-                                    </button>
-                                </div>
-                            </form>
-                        )}
-
-                        {/* STEP 4: Review & Final Submit */}
-                        {step === 4 && (
-                            <form onSubmit={handleSubmitKyc} className="space-y-6">
-                                <div className="flex items-center gap-2.5">
-                                    <span className="p-2 rounded-xl bg-[#EB1000]/10 text-[#EB1000] border border-[#EB1000]/20 shrink-0">
-                                        <CheckCircle2 className="h-4 w-4" />
-                                    </span>
-                                    <div>
-                                        <h3 className={`font-extrabold text-sm ${theme === 'light' ? 'text-[#0F172A]' : 'text-white'}`}>
-                                            Step 4 — Review Verification Summary & Submit
-                                        </h3>
-                                        <p className="text-[11px] text-[#8B8B96]">Review all Cashfree verification results before final submission.</p>
-                                    </div>
-                                </div>
-
-                                {/* Verification Checklist Badges */}
-                                <div className={`p-5 rounded-2xl border space-y-4 text-xs ${theme === 'light' ? 'bg-[#F8FAFC] border-[#E2E8F0]' : 'bg-[#181826] border-[#2A2A3E]'}`}>
-                                    {/* 1. Personal Info Summary */}
-                                    <div className="pb-3 border-b border-current/10 space-y-2">
-                                        <div className="flex items-center justify-between">
-                                            <span className="font-extrabold uppercase text-[10px] tracking-wider text-[#8B8B96]">1. Personal Information</span>
-                                            <span className="text-[#00E676] font-bold text-[11px] flex items-center gap-1">
-                                                <CheckCircle2 className="h-3.5 w-3.5" /> Mobile Verified
-                                            </span>
-                                        </div>
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-                                            <div>
-                                                <span className="text-[10px] text-gray-400 block">Legal Name</span>
-                                                <span className="font-bold">{aadhaarVerificationData?.registeredName || panVerificationData?.registeredName || formData.fullName}</span>
-                                            </div>
-                                            <div>
-                                                <span className="text-[10px] text-gray-400 block">Mobile & Category</span>
-                                                <span className="font-bold">{formData.mobileCountryCode} {formData.mobileNumber} &bull; <span className="text-[#EB1000]">{formData.category}</span></span>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {/* 2. Document Proof Summary */}
-                                    <div className="pb-3 border-b border-current/10 space-y-2">
-                                        <div className="flex items-center justify-between">
-                                            <span className="font-extrabold uppercase text-[10px] tracking-wider text-[#8B8B96]">2. Document Proof</span>
-                                            <div className="flex items-center gap-2">
-                                                <span className="text-[#00E676] font-bold text-[11px] flex items-center gap-1">
-                                                    <CheckCircle2 className="h-3.5 w-3.5" /> PAN Verified
-                                                </span>
-                                                <span className="text-[#00E676] font-bold text-[11px] flex items-center gap-1">
-                                                    <CheckCircle2 className="h-3.5 w-3.5" /> Aadhaar Verified
-                                                </span>
-                                            </div>
-                                        </div>
-                                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
-                                            <div>
-                                                <span className="text-[10px] text-gray-400 block">PAN Number</span>
-                                                <span className="font-mono font-bold text-[#EB1000] uppercase">{panVerificationData?.panNumber || formData.panNumber}</span>
-                                            </div>
-                                            <div>
-                                                <span className="text-[10px] text-gray-400 block">Aadhaar e-KYC</span>
-                                                <span className="font-mono font-bold text-[#00F5D4]">{aadhaarVerificationData?.maskedAadhaar || `XXXXXXXX${formData.aadhaarNumber.slice(-4)}`}</span>
-                                            </div>
-                                            <div>
-                                                <span className="text-[10px] text-gray-400 block">PAN / Aadhaar Match</span>
-                                                <span className="font-bold text-[#00E676]">✓ Identity Match</span>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {/* 3. Bank Details Summary */}
-                                    <div className="space-y-2">
-                                        <div className="flex items-center justify-between">
-                                            <span className="font-extrabold uppercase text-[10px] tracking-wider text-[#8B8B96]">3. Bank Details</span>
-                                            <div className="flex items-center gap-2">
-                                                <span className="text-[#00E676] font-bold text-[11px] flex items-center gap-1">
-                                                    <CheckCircle2 className="h-3.5 w-3.5" /> Bank Account Verified
-                                                </span>
-                                                <span className="text-[#00E676] font-bold text-[11px] flex items-center gap-1">
-                                                    <CheckCircle2 className="h-3.5 w-3.5" /> Bank Holder Match
-                                                </span>
-                                            </div>
-                                        </div>
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-                                            <div>
-                                                <span className="text-[10px] text-gray-400 block">Payout Destination</span>
-                                                <span className="font-bold">{formData.bankName} - A/C #{formData.accountNumber} ({formData.ifscCode})</span>
-                                            </div>
-                                            <div>
-                                                <span className="text-[10px] text-gray-400 block">UPI VPA</span>
-                                                <span className="font-mono font-bold">{formData.upiId || 'Not configured'}</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* Step 4 Agreements Section */}
-                                <div className="space-y-3 pt-2">
-                                    {/* 1. Identity & Bank Details Declaration */}
-                                    <label className={`flex items-start gap-3 text-xs cursor-pointer p-4 rounded-2xl border transition-all ${theme === 'light' ? 'bg-[#F8FAFC] border-[#E2E8F0]' : 'bg-[#181826] border-[#2A2A3E]'}`}>
-                                        <input
-                                            type="checkbox"
-                                            checked={formData.agreeTerms}
-                                            onChange={(e) => handleInputChange('agreeTerms', e.target.checked)}
-                                            className="mt-0.5 h-4 w-4 rounded accent-[#EB1000] cursor-pointer shrink-0"
-                                        />
-                                        <span className="font-medium leading-relaxed">
-                                            I hereby declare that all identity documents and bank payout details submitted are verified, genuine, and belong to me.
+                            {/* STEP 4: Review & Final Submit */}
+                            {step === 4 && (
+                                <form onSubmit={handleSubmitKyc} className="space-y-6">
+                                    <div className="flex items-center gap-2.5">
+                                        <span className="p-2 rounded-xl bg-[#EB1000]/10 text-[#EB1000] border border-[#EB1000]/20 shrink-0">
+                                            <CheckCircle2 className="h-4 w-4" />
                                         </span>
-                                    </label>
+                                        <div>
+                                            <h3 className={`font-extrabold text-sm ${theme === 'light' ? 'text-[#0F172A]' : 'text-white'}`}>
+                                                Step 4 — Review Verification Summary & Submit
+                                            </h3>
+                                            <p className="text-[11px] text-[#8B8B96]">Review all Cashfree verification results before final submission.</p>
+                                        </div>
+                                    </div>
 
-                                    {/* 2. AskMe EULA, Privacy & Creator Agreement Checkbox */}
-                                    <div className={`p-4 rounded-2xl border transition-all space-y-2.5 ${agreeEula ? (theme === 'light' ? 'bg-emerald-50/50 border-emerald-300' : 'bg-emerald-950/20 border-emerald-500/30') : (theme === 'light' ? 'bg-[#F8FAFC] border-[#E2E8F0]' : 'bg-[#181826] border-[#2A2A3E]')}`}>
-                                        <div className="flex items-start gap-3">
-                                            <input
-                                                type="checkbox"
-                                                id="agreeEulaCheckbox"
-                                                checked={agreeEula}
-                                                onChange={(e) => setAgreeEula(e.target.checked)}
-                                                className="mt-0.5 h-4 w-4 rounded accent-[#EB1000] cursor-pointer shrink-0"
-                                            />
-                                            <div className="flex-1 text-xs">
-                                                <label htmlFor="agreeEulaCheckbox" className="font-medium leading-relaxed cursor-pointer block">
-                                                    I have read, understood, and agree to the <strong className="text-[#EB1000]">AskMe EULA (End User License Agreement)</strong>, User Agreement, Privacy Policy, and Creator Agreement.
-                                                </label>
-                                                <div className="mt-2 flex items-center gap-2">
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => setShowEulaModal(true)}
-                                                        className="inline-flex items-center gap-1.5 text-[11px] font-extrabold text-[#00F5D4] bg-[#00F5D4]/10 hover:bg-[#00F5D4]/20 border border-[#00F5D4]/30 px-3 py-1.5 rounded-lg transition cursor-pointer"
-                                                    >
-                                                        <FileText className="h-3.5 w-3.5" />
-                                                        <span>Read Full AskMe EULA & Creator Agreement (23 Sept 2026)</span>
-                                                    </button>
-                                                    {agreeEula && (
-                                                        <span className="text-[10px] font-extrabold text-[#00E676] bg-[#00E676]/10 px-2 py-0.5 rounded-full border border-[#00E676]/30 flex items-center gap-1">
-                                                            <CheckCircle2 className="h-3 w-3" /> EULA Accepted
-                                                        </span>
-                                                    )}
+                                    {/* Verification Checklist Badges */}
+                                    <div className={`p-5 rounded-2xl border space-y-4 text-xs ${theme === 'light' ? 'bg-[#F8FAFC] border-[#E2E8F0]' : 'bg-[#181826] border-[#2A2A3E]'}`}>
+                                        {/* 1. Personal Info Summary */}
+                                        <div className="pb-3 border-b border-current/10 space-y-2">
+                                            <div className="flex items-center justify-between">
+                                                <span className="font-extrabold uppercase text-[10px] tracking-wider text-[#8B8B96]">1. Personal Information</span>
+                                                <span className="text-[#00E676] font-bold text-[11px] flex items-center gap-1">
+                                                    <CheckCircle2 className="h-3.5 w-3.5" /> Mobile Verified
+                                                </span>
+                                            </div>
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                                                <div>
+                                                    <span className="text-[10px] text-gray-400 block">Legal Name</span>
+                                                    <span className="font-bold">{aadhaarVerificationData?.registeredName || panVerificationData?.registeredName || formData.fullName}</span>
+                                                </div>
+                                                <div>
+                                                    <span className="text-[10px] text-gray-400 block">Mobile & Category</span>
+                                                    <span className="font-bold">{formData.mobileCountryCode} {formData.mobileNumber} &bull; <span className="text-[#EB1000]">{formData.category}</span></span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* 2. Document Proof Summary */}
+                                        <div className="pb-3 border-b border-current/10 space-y-2">
+                                            <div className="flex items-center justify-between">
+                                                <span className="font-extrabold uppercase text-[10px] tracking-wider text-[#8B8B96]">2. Document Proof</span>
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-[#00E676] font-bold text-[11px] flex items-center gap-1">
+                                                        <CheckCircle2 className="h-3.5 w-3.5" /> PAN Verified
+                                                    </span>
+                                                    <span className="text-[#00E676] font-bold text-[11px] flex items-center gap-1">
+                                                        <CheckCircle2 className="h-3.5 w-3.5" /> Aadhaar Verified
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
+                                                <div>
+                                                    <span className="text-[10px] text-gray-400 block">PAN Number</span>
+                                                    <span className="font-mono font-bold text-[#EB1000] uppercase">{panVerificationData?.panNumber || formData.panNumber}</span>
+                                                </div>
+                                                <div>
+                                                    <span className="text-[10px] text-gray-400 block">Aadhaar e-KYC</span>
+                                                    <span className="font-mono font-bold text-[#00F5D4]">{aadhaarVerificationData?.maskedAadhaar || `XXXXXXXX${formData.aadhaarNumber.slice(-4)}`}</span>
+                                                </div>
+                                                <div>
+                                                    <span className="text-[10px] text-gray-400 block">PAN / Aadhaar Match</span>
+                                                    <span className="font-bold text-[#00E676]">✓ Identity Match</span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* 3. Bank Details Summary */}
+                                        <div className="space-y-2">
+                                            <div className="flex items-center justify-between">
+                                                <span className="font-extrabold uppercase text-[10px] tracking-wider text-[#8B8B96]">3. Bank Details</span>
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-[#00E676] font-bold text-[11px] flex items-center gap-1">
+                                                        <CheckCircle2 className="h-3.5 w-3.5" /> Bank Account Verified
+                                                    </span>
+                                                    <span className="text-[#00E676] font-bold text-[11px] flex items-center gap-1">
+                                                        <CheckCircle2 className="h-3.5 w-3.5" /> Bank Holder Match
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                                                <div>
+                                                    <span className="text-[10px] text-gray-400 block">Payout Destination</span>
+                                                    <span className="font-bold">{formData.bankName} - A/C #{formData.accountNumber} ({formData.ifscCode})</span>
+                                                </div>
+                                                <div>
+                                                    <span className="text-[10px] text-gray-400 block">UPI VPA</span>
+                                                    <span className="font-mono font-bold">{formData.upiId || 'Not configured'}</span>
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
-                                </div>
 
-                                <div className="pt-4 flex flex-col-reverse sm:flex-row justify-between items-center gap-3">
-                                    <button
-                                        type="button"
-                                        onClick={() => setStep(3)}
-                                        className={`w-full sm:w-auto px-5 py-3 rounded-xl text-xs font-extrabold transition-all flex items-center justify-center gap-2 cursor-pointer ${theme === 'light'
-                                            ? 'bg-[#F1F5F9] text-[#475569] border border-[#E2E8F0]'
-                                            : 'bg-[#181826] text-[#A0A0B2] border border-[#2A2A3E]'
-                                            }`}
-                                    >
-                                        <ArrowLeft className="h-4 w-4" /> Back to Bank Details
-                                    </button>
-                                    <button
-                                        type="submit"
-                                        disabled={isSubmitting || !formData.agreeTerms || !agreeEula}
-                                        title={(!formData.agreeTerms || !agreeEula) ? "Please accept both the declaration and AskMe EULA Agreement first" : ""}
-                                        className="w-full sm:w-auto px-7 py-3 rounded-xl bg-gradient-to-r from-[#EB1000] to-[#CC0E00] hover:from-[#CC0E00] hover:to-[#B30C00] text-white font-black text-xs shadow-xl shadow-[#EB1000]/30 hover:scale-[1.02] transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:shadow-none flex items-center justify-center gap-2 cursor-pointer"
-                                    >
-                                        {isSubmitting ? (
-                                            <>
-                                                <RefreshCw className="h-4 w-4 animate-spin" /> Submitting KYC...
-                                            </>
-                                        ) : (
-                                            <>
-                                                <span>Submit KYC for Admin Review</span>
-                                                <ShieldCheck className="h-4 w-4" />
-                                            </>
-                                        )}
-                                    </button>
-                                </div>
-                            </form>
-                        )}
-                    </div>
-                )}
+                                    {/* Step 4 Agreements Section */}
+                                    <div className="space-y-3 pt-2">
+                                        {/* 1. Identity & Bank Details Declaration */}
+                                        <label className={`flex items-start gap-3 text-xs cursor-pointer p-4 rounded-2xl border transition-all ${theme === 'light' ? 'bg-[#F8FAFC] border-[#E2E8F0]' : 'bg-[#181826] border-[#2A2A3E]'}`}>
+                                            <input
+                                                type="checkbox"
+                                                checked={formData.agreeTerms}
+                                                onChange={(e) => handleInputChange('agreeTerms', e.target.checked)}
+                                                className="mt-0.5 h-4 w-4 rounded accent-[#EB1000] cursor-pointer shrink-0"
+                                            />
+                                            <span className="font-medium leading-relaxed">
+                                                I hereby declare that all identity documents and bank payout details submitted are verified, genuine, and belong to me.
+                                            </span>
+                                        </label>
+
+                                        {/* 2. AskMe EULA, Privacy & Creator Agreement Checkbox */}
+                                        <div className={`p-4 rounded-2xl border transition-all space-y-2.5 ${agreeEula ? (theme === 'light' ? 'bg-emerald-50/50 border-emerald-300' : 'bg-emerald-950/20 border-emerald-500/30') : (theme === 'light' ? 'bg-[#F8FAFC] border-[#E2E8F0]' : 'bg-[#181826] border-[#2A2A3E]')}`}>
+                                            <div className="flex items-start gap-3">
+                                                <input
+                                                    type="checkbox"
+                                                    id="agreeEulaCheckbox"
+                                                    checked={agreeEula}
+                                                    onChange={(e) => setAgreeEula(e.target.checked)}
+                                                    className="mt-0.5 h-4 w-4 rounded accent-[#EB1000] cursor-pointer shrink-0"
+                                                />
+                                                <div className="flex-1 text-xs">
+                                                    <label htmlFor="agreeEulaCheckbox" className="font-medium leading-relaxed cursor-pointer block">
+                                                        I have read, understood, and agree to the <strong className="text-[#EB1000]">AskMe EULA (End User License Agreement)</strong>, User Agreement, Privacy Policy, and Creator Agreement.
+                                                    </label>
+                                                    <div className="mt-2 flex items-center gap-2">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setShowEulaModal(true)}
+                                                            className="inline-flex items-center gap-1.5 text-[11px] font-extrabold text-[#00F5D4] bg-[#00F5D4]/10 hover:bg-[#00F5D4]/20 border border-[#00F5D4]/30 px-3 py-1.5 rounded-lg transition cursor-pointer"
+                                                        >
+                                                            <FileText className="h-3.5 w-3.5" />
+                                                            <span>Read Full AskMe EULA & Creator Agreement (23 Sept 2026)</span>
+                                                        </button>
+                                                        {agreeEula && (
+                                                            <span className="text-[10px] font-extrabold text-[#00E676] bg-[#00E676]/10 px-2 py-0.5 rounded-full border border-[#00E676]/30 flex items-center gap-1">
+                                                                <CheckCircle2 className="h-3 w-3" /> EULA Accepted
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="pt-4 flex flex-col-reverse sm:flex-row justify-between items-center gap-3">
+                                        <button
+                                            type="button"
+                                            onClick={() => setStep(3)}
+                                            className={`w-full sm:w-auto px-5 py-3 rounded-xl text-xs font-extrabold transition-all flex items-center justify-center gap-2 cursor-pointer ${theme === 'light'
+                                                ? 'bg-[#F1F5F9] text-[#475569] border border-[#E2E8F0]'
+                                                : 'bg-[#181826] text-[#A0A0B2] border border-[#2A2A3E]'
+                                                }`}
+                                        >
+                                            <ArrowLeft className="h-4 w-4" /> Back to Bank Details
+                                        </button>
+                                        <button
+                                            type="submit"
+                                            disabled={isSubmitting || !formData.agreeTerms || !agreeEula}
+                                            title={(!formData.agreeTerms || !agreeEula) ? "Please accept both the declaration and AskMe EULA Agreement first" : ""}
+                                            className="w-full sm:w-auto px-7 py-3 rounded-xl bg-gradient-to-r from-[#EB1000] to-[#CC0E00] hover:from-[#CC0E00] hover:to-[#B30C00] text-white font-black text-xs shadow-xl shadow-[#EB1000]/30 hover:scale-[1.02] transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:shadow-none flex items-center justify-center gap-2 cursor-pointer"
+                                        >
+                                            {isSubmitting ? (
+                                                <>
+                                                    <RefreshCw className="h-4 w-4 animate-spin" /> Submitting KYC...
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <span>Submit KYC </span>
+                                                    <ShieldCheck className="h-4 w-4" />
+                                                </>
+                                            )}
+                                        </button>
+                                    </div>
+                                </form>
+                            )}
+                        </div>
+                    )}
 
                 {/* ASKME EULA & CREATOR AGREEMENT MODAL */}
                 {showEulaModal && (
@@ -2355,7 +2329,7 @@ export default function CreatorKycPage() {
                                         <ul className="list-disc pl-5 space-y-1 text-[11px]">
                                             <li><strong>Viewer pays:</strong> 100%</li>
                                             <li><strong>AskMe standard Platform Fee:</strong> 15%</li>
-                                            <li><strong>Creator Gross Share:</strong> 85%</li>
+                                            <li><strong>Creator Gross Share:</strong> 80.3%</li>
                                             <li><strong>Applicable deductions from Creator Gross Share:</strong> Taxes, payment processing charges, statutory withholding, refunds, reversals, chargebacks and other legally or contractually applicable adjustments.</li>
                                             <li><strong>Creator Net Earnings:</strong> The amount remaining after applicable deductions.</li>
                                         </ul>
@@ -2366,7 +2340,7 @@ export default function CreatorKycPage() {
                                         <h4 className="font-black text-sm uppercase tracking-wider text-[#00F5D4] border-b pb-2 border-current/10">
                                             PART I — END USER LICENSE AGREEMENT AND USER AGREEMENT
                                         </h4>
-                                        
+
                                         <div className="space-y-2.5 text-xs text-gray-300">
                                             <p><strong>1. Introduction:</strong> This End User License Agreement, User Agreement and Creator Agreement (&quot;Agreement&quot;) governs access to and use of AskMe, including the AskMe website, mobile applications, software, technology, APIs, Creator discovery services, Creator profiles, sessions, QR codes, links, paid questions, paid messages, notifications, payment functionality, Creator dashboards, moderation tools, integrations and all other services made available by or through AskMe. Operated by FuturePast Ventures LLP, Pune, Maharashtra, India.</p>
                                             <p><strong>2. Nature and Purpose of AskMe:</strong> AskMe is a technology platform designed to facilitate discovery and interaction between online personalities, Creators and their audiences.</p>
@@ -2381,7 +2355,7 @@ export default function CreatorKycPage() {
                                             <p><strong>11–12. Third Party Platforms & Livestreams:</strong> Creators may use AskMe alongside YouTube, Instagram, Twitch, TikTok, etc. Third party platforms host the underlying stream; AskMe controls platform interactions.</p>
                                             <p><strong>13–16. Paid Questions & Responses:</strong> Paid Questions are voluntary audience interactions. Specific response or outcome is governed by Creator moderation and policy terms.</p>
                                             <p><strong>17–19. Payment Service Providers & Security:</strong> Payments processed securely via Cashfree and regulated Payment Service Providers.</p>
-                                            <p><strong>20–26. Commercial Terms & Platform Fees:</strong> Standard 15% Platform Fee, 85% Creator Gross Share before applicable taxes, processing, and statutory deductions.</p>
+                                            <p><strong>20–26. Commercial Terms & Platform Fees:</strong> Standard 15% Platform Fee, 80.3% Creator Gross Share before applicable taxes, processing, and statutory deductions.</p>
                                             <p><strong>27–29. Taxes & Invoicing:</strong> GST invoicing and statutory deductions applied in accordance with Indian tax regulations.</p>
                                             <p><strong>30–33. International Payments & Sanctions:</strong> Restricted international jurisdictions include Pakistan, Bangladesh, Democratic People&apos;s Republic of Korea (North Korea), Palestine, and Türkiye.</p>
                                             <p><strong>34–39. Refunds, Chargebacks & Payout Timing:</strong> Subject to settlement, KYC verification, and anti-fraud screening.</p>
@@ -2400,11 +2374,11 @@ export default function CreatorKycPage() {
 
                                         <div className="space-y-2.5 text-xs text-gray-300">
                                             <p><strong>81–87. Creator Status & Dashboard:</strong> Creators operate as independent users. Creator dashboard displays provisional and settled earnings.</p>
-                                            <p><strong>88–92. Revenue Share & Risk Based Fees:</strong> 15% Platform Fee, 85% Gross Share minus processing/tax deductions. Risk-based commercial adjustments may apply.</p>
+                                            <p><strong>88–92. Revenue Share & Risk Based Fees:</strong> 15% Platform Fee, 80.3% Gross Share minus processing/tax deductions. Risk-based commercial adjustments may apply.</p>
                                             <p><strong>93–97. Payout Eligibility & Tax Compliance:</strong> Payouts require completed KYC, bank penny drop verification, and compliance checks.</p>
                                             <p><strong>98–103. Content Rights & Referral Programs:</strong> Creators retain ownership of lawful content and grant AskMe operational display permissions.</p>
                                             <p><strong>104–107. Creator Risk Management & Suspension:</strong> Suspensions or payout holds may be applied for fraud, abuse, or chargebacks.</p>
-                                            <p><strong>108–112. Creator Acknowledgement:</strong> Creator confirms understanding of the 15% fee, 85% gross share structure, and deduction policy.</p>
+                                            <p><strong>108–112. Creator Acknowledgement:</strong> Creator confirms understanding of the 15% fee, 80.3% gross share structure, and deduction policy.</p>
                                             <p><strong>113–116. Corporate Information & Final Acceptance:</strong> FuturePast Ventures LLP (LLPIN: ACQ-4984), Pune, Maharashtra, India. Grievance Officer: Mr. T.S. Sandhu (Grievance@ask-me.live).</p>
                                         </div>
                                     </div>

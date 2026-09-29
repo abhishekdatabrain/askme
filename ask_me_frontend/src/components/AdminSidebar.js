@@ -402,10 +402,10 @@ export default function AdminSidebar({ activeTab: propsActiveTab, setActiveTab, 
             <span className="text-xs font-extrabold text-[#FFD60A]">15% Net</span>
           </div>
           <p className={`text-[11px] leading-relaxed ${theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'}`}>
-            Creators keep <span className="text-[#00E676] font-bold">85%</span> of guaranteed paid questions and askMail interactions.
+            Creators keep <span className="text-[#00E676] font-bold">80.3%</span> of guaranteed paid questions and askMail interactions.
           </p>
           <div className={`w-full h-1.5 rounded-full overflow-hidden ${theme === 'light' ? 'bg-[#E9ECEF]' : 'bg-[#1C1C26]'}`}>
-            <div className="bg-[#EB1000] h-full w-[85%] rounded-full"></div>
+            <div className="bg-[#EB1000] h-full w-[80.3%] rounded-full"></div>
           </div>
         </div>
       </div>

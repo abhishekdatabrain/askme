@@ -713,7 +713,7 @@ function CreatorDashboardContent() {
                     Welcome, <span className="bg-gradient-to-r from-[#EB1000] to-[#CC0E00] bg-clip-text text-transparent">{creator?.fullName || 'Creator Host'}</span>
                   </h2>
                   <p className={`text-xs md:text-sm mt-1 ${theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'}`}>
-                    85% net revenue share enabled. Embed your stream overlay for paid viewer questions & instant UPI settlements.
+                    80.3% net revenue share enabled. Embed your stream overlay for paid viewer questions & instant UPI settlements.
                   </p>
                 </div>
 
@@ -734,7 +734,7 @@ function CreatorDashboardContent() {
                   <div className={`font-heading font-extrabold text-2xl ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'}`}>
                     ₹{walletMetrics.totalEarnings.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </div>
-                  <span className="text-[11px] text-[#10B981] font-semibold">85% Revenue Share active</span>
+                  <span className="text-[11px] text-[#10B981] font-semibold">80.3% Revenue Share active</span>
                 </div>
 
                 <div className={`p-5 rounded-2xl border space-y-2 ${theme === 'light' ? 'bg-white border-[#E9ECEF]' : 'bg-[#13131A] border-[#1C1C26]'}`}>
@@ -1175,7 +1175,7 @@ function CreatorDashboardContent() {
                     <span className="text-2xl font-black text-[#EF4444]">₹{(walletMetrics.totalEarnings / 0.85 * 0.15 || 0).toLocaleString('en-IN', { maximumFractionDigits: 2 })}</span>
                   </div>
                   <div className="p-4 rounded-2xl bg-[#0A0A0F] border border-[#1C1C26] space-y-1">
-                    <span className="text-xs text-[#8B8B96] block">Creator Net Earnings (85%)</span>
+                    <span className="text-xs text-[#8B8B96] block">Creator Net Earnings (80.3%)</span>
                     <span className="text-2xl font-black text-[#10B981]">₹{walletMetrics.totalEarnings.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</span>
                   </div>
                 </div>

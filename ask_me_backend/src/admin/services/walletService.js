@@ -97,7 +97,7 @@ class WalletService {
         const cleanUsername = String(creator.username || `creator_${creatorId}`).replace(/^@+/, '');
         const isApproved = String(creator.kyc_status || '').toLowerCase() === 'approved';
 
-        // Available & Pending balances represent actual net wallet balance (85% net creator share)
+        // Available & Pending balances represent actual net wallet balance (80.3% net creator share)
         let pending = !isApproved ? (rawPending > 0 && rawPending <= creatorNet ? rawPending : creatorNet - withdrawn) : 0;
         let avail = isApproved ? (available > 0 && available <= creatorNet ? available : creatorNet - withdrawn) : 0;
 

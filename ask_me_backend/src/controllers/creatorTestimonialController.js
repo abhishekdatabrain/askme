@@ -7,7 +7,7 @@ const { Op } = require('sequelize');
 //     creator_name: 'TechBurner Live',
 //     username: '@techburner',
 //     profile_image: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80',
-//     testimonial: 'AskMe completely transformed my live stream. Instead of having hundreds of frantic chat messages scroll by unread every second, I have a clean, organized queue on my iPad. Best of all, keeping 85% with zero Apple or app-store commission has doubled our Q&A broadcast revenue.',
+//     testimonial: 'AskMe completely transformed my live stream. Instead of having hundreds of frantic chat messages scroll by unread every second, I have a clean, organized queue on my iPad. Best of all, keeping 80.3% with zero Apple or app-store commission has doubled our Q&A broadcast revenue.',
 //     metric_label: 'Average Live Q&A Payout',
 //     metric_value: '₹3.2K+ /stream',
 //     creator_type: 'YouTube Live Creator',

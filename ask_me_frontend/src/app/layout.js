@@ -18,15 +18,15 @@ const inter = Inter({
 });
 
 export const metadata = {
-  title: "AskMe PRO | Live Stream & Q&A Platform",
+  title: "AskMe Live Stream & Q&A Platform",
   description: "Live Signal Broadcast & Creator Discovery Control Room",
   icons: {
     icon: [
-      { url: "/logo.png", type: "image/png" },
       { url: "/icon.png", type: "image/png" },
+      { url: "/favicon.ico", type: "image/x-icon" },
     ],
-    shortcut: "/logo.png",
-    apple: "/logo.png",
+    shortcut: "/icon.png",
+    apple: "/icon.png",
   },
 };
 

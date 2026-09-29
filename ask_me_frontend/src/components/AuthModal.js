@@ -290,6 +290,12 @@ function InnerAuthModal({ isOpen, onClose, initialRole = 'viewer', initialMode =
         } else {
           const token = data.data?.token || data.token;
           const creator = data.data?.creator || data.user;
+          if (creator?.status === 'blocked') {
+            const errText = 'Your creator account has been blocked by administrator. Please contact support.';
+            setErrorMsg(errText);
+            toast?.error(errText, 'Account Blocked');
+            return;
+          }
           if (token && creator) {
             setCreatorSession(token, creator);
           }
@@ -300,6 +306,8 @@ function InnerAuthModal({ isOpen, onClose, initialRole = 'viewer', initialMode =
             let targetUrl = '/creators/kyc';
             if (status === 'approved') {
               targetUrl = '/creators/dashboard';
+            } else {
+              targetUrl = '/creators/kyc';
             }
             window.location.href = targetUrl;
           }, 800);
@@ -683,6 +691,12 @@ function InnerAuthModal({ isOpen, onClose, initialRole = 'viewer', initialMode =
             throw new Error(errText);
           }
 
+          if (creator?.status === 'blocked') {
+            const errText = 'Your creator account has been blocked by administrator. Please contact support.';
+            toast?.error(errText, 'Account Blocked');
+            throw new Error(errText);
+          }
+
           if (token && creator) {
             setCreatorSession(token, creator);
           }
@@ -692,10 +706,13 @@ function InnerAuthModal({ isOpen, onClose, initialRole = 'viewer', initialMode =
           setTimeout(() => {
             if (onSuccess) onSuccess(data);
             onClose();
-            const status = (creator?.kycStatus || 'pending').toLowerCase();
+            const status = (creator?.kycStatus).toLowerCase();
             let targetUrl = '/creators/kyc';
-            if (status === 'approved') {
+            if (creator?.status === 'active' && status === 'approved') {
               targetUrl = '/creators/dashboard';
+            }
+            else if (creator?.status === 'pending' && status === 'approved') {
+              targetUrl = '/creators/kyc';
             } else if (status === 'not_submitted') {
               targetUrl = '/creators/kyc';
             } else if (status === 'rejected') {
@@ -1132,7 +1149,7 @@ function InnerAuthModal({ isOpen, onClose, initialRole = 'viewer', initialMode =
                 <DollarSign className="h-4 w-4" />
               </div>
               <div className="min-w-0">
-                <span className="font-bold text-xs text-gray-900 block truncate">Keep 85%</span>
+                <span className="font-bold text-xs text-gray-900 block truncate">Keep 80.3%</span>
                 <span className="text-[10px] text-gray-500 block truncate">Creator share</span>
               </div>
             </div>

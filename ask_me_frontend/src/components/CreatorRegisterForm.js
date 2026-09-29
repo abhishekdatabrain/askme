@@ -378,7 +378,7 @@ export default function CreatorRegisterForm({ onClose, onComplete }) {
           </div>
           <h2 className="font-heading font-bold text-lg text-white mt-1">Creator Registration</h2>
           <p className="text-xs text-[#8B8B96] max-w-md mx-auto">
-            Surface live broadcast streams across YouTube, Twitch, Instagram, Kick & X. Keep <strong className="text-[#00E676]">85% net revenue share</strong> on guaranteed paid questions.
+            Surface live broadcast streams across YouTube, Twitch, Instagram, Kick & X. Keep <strong className="text-[#00E676]">80.3% net revenue share</strong> on guaranteed paid questions.
           </p>
         </div>
 
@@ -804,7 +804,7 @@ export default function CreatorRegisterForm({ onClose, onComplete }) {
                 </div>
                 <div className="col-span-2 pt-2 border-t border-[#1C1C26]">
                   <span className="text-[#8B8B96] block text-[10px]">Revenue Share Tier</span>
-                  <span className="text-[#00E676] font-bold">Keep 85% Net Share (AskMe 15% Fee)</span>
+                  <span className="text-[#00E676] font-bold">Keep 80.3% Net Share (AskMe 15% Fee)</span>
                 </div>
               </div>
             </div>
@@ -814,7 +814,7 @@ export default function CreatorRegisterForm({ onClose, onComplete }) {
                 <ShieldCheck className="h-4 w-4 text-[#00F5D4]" /> Next Steps for Payout Activation:
               </span>
               <p>
-                Platform owner will verify your PAN / Aadhaar / Bank details in the admin KYC approval queue. Once verified, instant 85% payouts and live stream OBS overlays will activate automatically!
+                Platform owner will verify your PAN / Aadhaar / Bank details in the admin KYC approval queue. Once verified, instant 80.3% payouts and live stream OBS overlays will activate automatically!
               </p>
             </div>
 

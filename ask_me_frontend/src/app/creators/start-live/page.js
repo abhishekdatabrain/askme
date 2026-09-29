@@ -185,7 +185,7 @@ export default function CreatorStartLivePage() {
               />
             </div>
 
-            <div>
+            {/* <div>
               <label className={`block text-xs font-extrabold mb-1.5 ${theme === 'light' ? 'text-[#0F172A]' : 'text-[#E2E8F0]'}`}>● Stream Category *</label>
               <select
                 value={form.category}
@@ -202,7 +202,7 @@ export default function CreatorStartLivePage() {
                 <option value="Politics">Politics</option>
 
               </select>
-            </div>
+            </div> */}
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>

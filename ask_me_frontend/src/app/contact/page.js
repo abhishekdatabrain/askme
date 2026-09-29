@@ -51,10 +51,18 @@ export default function ContactPage() {
     message: ''
   });
   const [submitting, setSubmitting] = useState(false);
+  const [agreedToConsent, setAgreedToConsent] = useState(false);
   const [openFaq, setOpenFaq] = useState(null);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!agreedToConsent) {
+      if (toast?.warning) {
+        toast.warning('Please check the consent box below to send your message.', 'Consent Required');
+      }
+      return;
+    }
+
     if (!formData.name.trim() || !formData.email.trim() || !formData.message.trim()) {
       if (toast?.warning) {
         toast.warning('Please fill in all required fields.', 'Incomplete Form');
@@ -93,6 +101,7 @@ export default function ContactPage() {
         subject: '',
         message: ''
       });
+      setAgreedToConsent(false);
     } catch (err) {
       console.error('Contact Form Submit Error:', err);
       if (toast?.error) {
@@ -262,8 +271,8 @@ export default function ContactPage() {
 
               <button
                 type="submit"
-                disabled={submitting}
-                className="w-full py-3.5 rounded-xl bg-[#EB1000] hover:bg-[#CC0E00] text-white text-xs font-bold uppercase tracking-wider transition-all shadow-lg shadow-[#EB1000]/30 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                disabled={submitting || !agreedToConsent}
+                className="w-full py-3.5 rounded-xl bg-[#EB1000] hover:bg-[#CC0E00] text-white text-xs font-bold uppercase tracking-wider transition-all shadow-lg shadow-[#EB1000]/30 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-[#EB1000] disabled:shadow-none"
               >
                 {submitting ? (
                   <span>Sending Message...</span>
@@ -275,23 +284,39 @@ export default function ContactPage() {
                 )}
               </button>
 
+
+
               {/* Contact Consent Disclaimer */}
               <div className="pt-4 mt-2 border-t border-[#222234] space-y-2 text-[11px] text-[#8E8E9F] leading-relaxed">
-                <h4 className="font-semibold text-[#C4C4D4] text-xs">Contact Consent Disclaimer</h4>
-                <p>
-                  By providing your mobile number, email address, or other contact details to{' '}
-                  <Link href="https://ask-me.live" target="_blank" rel="noopener noreferrer" className="text-[#EB1000] hover:underline font-medium">
-                    Ask-me.live
-                  </Link>
-                  , you acknowledge and agree that{' '}
-                  <Link href="https://ask-me.live" target="_blank" rel="noopener noreferrer" className="text-[#EB1000] hover:underline font-medium">
-                    Ask-me.live
-                  </Link>{' '}
-                  and its authorized representatives may contact you through calls, SMS, WhatsApp, email, or other communication channels for service related, transactional, account, support, marketplace, promotional, and other legitimate business purposes.
-                </p>
-                <p>
-                  You may opt out of promotional communications at any time. Service and transactional communications may still be sent where necessary to provide or administer our services.
-                </p>
+                {/* Consent Checkbox below Send button */}
+                <div className="flex items-start gap-3 py-2.5 px-3.5 rounded-xl bg-[#14141F] border border-[#222234] hover:border-[#2E2E44] transition-colors">
+                  <input
+                    type="checkbox"
+                    id="contactConsentCheck"
+                    required
+                    checked={agreedToConsent}
+                    onChange={(e) => setAgreedToConsent(e.target.checked)}
+                    className="mt-0.5 h-4 w-4 rounded bg-[#161622] border-[#28283C] text-[#EB1000] focus:ring-[#EB1000] cursor-pointer accent-[#EB1000] shrink-0"
+                  />
+                  <label htmlFor="contactConsentCheck" className="text-xs text-[#A0A0B2] cursor-pointer select-none leading-relaxed">
+                    I agree to the <span className="font-semibold text-white">Contact Consent Disclaimer</span>
+                    <p>
+                      By providing your mobile number, email address, or other contact details to{' '}
+                      <Link href="https://ask-me.live" target="_blank" rel="noopener noreferrer" className="text-[#EB1000] hover:underline font-medium">
+                        Ask-me.live
+                      </Link>
+                      , you acknowledge and agree that{' '}
+                      <Link href="https://ask-me.live" target="_blank" rel="noopener noreferrer" className="text-[#EB1000] hover:underline font-medium">
+                        Ask-me.live
+                      </Link>{' '}
+                      and its authorized representatives may contact you through calls, SMS, WhatsApp, email, or other communication channels for service related, transactional, account, support, marketplace, promotional, and other legitimate business purposes.
+                    </p>
+                    <p>
+                      You may opt out of promotional communications at any time. Service and transactional communications may still be sent where necessary to provide or administer our services.
+                    </p>
+                  </label>
+                </div>
+
               </div>
             </form>
           </div>

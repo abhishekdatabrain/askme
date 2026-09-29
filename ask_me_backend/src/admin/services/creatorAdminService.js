@@ -7,8 +7,8 @@ const { Donation } = require('../../models');
 
 class CreatorAdminService {
   mapCreatorRecord(c) {
-    const rawStatus = (c.status || 'active').toLowerCase();
-    const accountStatus = rawStatus === 'blocked' ? 'Blocked' : 'Active';
+    const rawStatus = (c.status).toLowerCase();
+    const accountStatus = rawStatus.charAt(0).toUpperCase() + rawStatus.slice(1);
 
     const rawKyc = (c.profile?.kyc_status || 'pending').toLowerCase();
     const kycStatus = rawKyc === 'approved' ? 'Approved' : rawKyc === 'rejected' ? 'Rejected' : 'Pending';

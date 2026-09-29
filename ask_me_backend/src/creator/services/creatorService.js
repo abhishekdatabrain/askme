@@ -253,6 +253,12 @@ const loginCreatorService = async ({ email, username, password }) => {
     throw err;
   }
 
+  if (creator.status === "blocked") {
+    const err = new Error("Your creator account has been blocked by administrator. Please contact support.");
+    err.statusCode = 403;
+    throw err;
+  }
+
   const profile = await CreatorProfile.findOne({ where: { creator_id: creator.id } });
   const rawStatus = (profile?.kyc_status || "not_submitted").toLowerCase();
   const kycStatus = rawStatus === "approved" ? "approved" : rawStatus === "rejected" ? "rejected" : rawStatus === "pending" ? "pending" : "not_submitted";

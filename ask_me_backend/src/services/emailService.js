@@ -338,8 +338,106 @@ const sendEmailOtp = async ({ email, otp }) => {
   }
 };
 
+/**
+ * Generate Responsive HTML Email Template for Creator KYC Submission ("Your KYC is under review")
+ */
+const buildKycUnderReviewEmailHtml = ({ name, reviewEta = "24 hours" }) => {
+  const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
+  const statusUrl = `${frontendUrl}/creators/kyc`;
+
+  return `
+  <!DOCTYPE html>
+  <html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your KYC is under review</title>
+    <style>
+      body { font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #0A0A0F; color: #FFFFFF; margin: 0; padding: 40px 16px; -webkit-font-smoothing: antialiased; }
+      .wrapper { width: 100%; max-width: 520px; margin: 0 auto; }
+      .brand-header { text-align: center; margin-bottom: 24px; }
+      .brand-text { font-size: 24px; font-weight: 900; color: #FFFFFF; text-decoration: none; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
+      .brand-red { color: #EB1000; }
+      .card { background-color: #12121A; border: 1px solid #1C1C28; border-radius: 24px; padding: 40px 36px; box-shadow: 0 20px 50px rgba(0,0,0,0.6); }
+      .title { font-size: 28px; font-weight: 800; color: #FFFFFF; margin: 0 0 16px 0; letter-spacing: -0.5px; line-height: 1.2; }
+      .status-pill { background-color: rgba(245, 158, 11, 0.18); color: #F59E0B; border: 1px solid rgba(245, 158, 11, 0.35); font-weight: 800; font-size: 11px; padding: 5px 14px; border-radius: 20px; font-family: sans-serif; display: inline-block; margin-bottom: 24px; text-transform: uppercase; letter-spacing: 1px; }
+      .body-text { font-size: 15px; color: #D1D5DB; line-height: 1.6; margin: 0 0 32px 0; font-weight: 400; }
+      .cta-btn { display: inline-block; background-color: #EB1000; color: #FFFFFF !important; font-weight: 800; font-size: 15px; padding: 14px 32px; border-radius: 14px; text-decoration: none; margin-bottom: 32px; box-shadow: 0 6px 25px rgba(235, 16, 0, 0.4); text-align: center; }
+      .divider { border-top: 1px solid #1F1F2E; margin-bottom: 24px; }
+      .footer-note { font-size: 13.5px; color: #94A3B8; line-height: 1.6; margin: 0; }
+      .outer-footer { text-align: center; margin-top: 24px; font-size: 12px; color: #64748B; }
+    </style>
+  </head>
+  <body>
+    <div class="wrapper">
+      <div class="brand-header">
+        <a href="${frontendUrl}" style="text-decoration: none;">
+          <img src="${frontendUrl}/flame-logo.png" alt="AskMe" style="height: 36px; vertical-align: middle; margin-right: 8px;" />
+          <span class="brand-text">AskMe<span class="brand-red">.live</span></span>
+        </a>
+      </div>
+
+      <div class="card">
+        <h1 class="title">Your KYC is under review</h1>
+        <div class="status-pill">IN REVIEW</div>
+
+        <p class="body-text">
+          We&rsquo;ve received your KYC details and our team is reviewing them now. We&rsquo;ll email you the moment your account is activated.
+        </p>
+
+        <div>
+          <a href="${statusUrl}" class="cta-btn">View Application Status</a>
+        </div>
+
+        <div class="divider"></div>
+
+        <p class="footer-note">
+          Reviews typically complete within ${reviewEta}. No action is needed from you right now.
+        </p>
+      </div>
+
+      <div class="outer-footer">
+        AskMe Compliance &bull; <a href="${frontendUrl}" style="color: #64748B; text-decoration: underline;">askme.live</a>
+      </div>
+    </div>
+  </body>
+  </html>
+  `;
+};
+
+/**
+ * ASYNCHRONOUS FIRE-AND-FORGET KYC UNDER REVIEW EMAIL SENDER
+ */
+const sendKycUnderReviewEmailAsync = ({ email, name, reviewEta }) => {
+  if (!email || !String(email).includes("@")) return;
+
+  setImmediate(async () => {
+    try {
+      const transporter = getTransporter();
+      const subject = "Your KYC is under review - AskMe.live";
+      const html = buildKycUnderReviewEmailHtml({ name, reviewEta });
+      const fromEmail = process.env.SMTP_FROM || process.env.MAIL_FROM || "AskMe Compliance <noreply@askme.live>";
+
+      if (transporter) {
+        await transporter.sendMail({
+          from: fromEmail,
+          to: email,
+          subject,
+          html,
+        });
+        console.log(`[EMAIL SERVICE] KYC Under Review email sent to ${email} via SMTP.`);
+      } else {
+        console.log(`[EMAIL SERVICE NOTICE] SMTP credentials not set. Simulated KYC Under Review Email dispatch for ${email}`);
+      }
+    } catch (err) {
+      console.warn(`[EMAIL SERVICE NOTICE] Asynchronous KYC email dispatch failed for ${email}:`, err.message);
+    }
+  });
+};
+
 module.exports = {
   sendWelcomeEmailAsync,
   sendEmailOtp,
+  sendKycUnderReviewEmailAsync,
 };
 

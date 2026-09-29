@@ -254,6 +254,19 @@ const submitKycService = async (creatorId, data) => {
       console.warn("Notice: KYC admin notification bypassed:", notifErr.message);
     }
 
+    try {
+      const { sendKycUnderReviewEmailAsync } = require("../../services/emailService");
+      if (creatorRec && creatorRec.email) {
+        sendKycUnderReviewEmailAsync({
+          email: creatorRec.email,
+          name: applicantName,
+          reviewEta: finalKycStatus === "manual_review" ? "24 to 48 hours" : "12 to 24 hours",
+        });
+      }
+    } catch (emailErr) {
+      console.warn("Notice: KYC email notification bypassed:", emailErr.message);
+    }
+
     return {
       kycStatus: finalKycStatus,
       submittedAt: new Date().toISOString(),

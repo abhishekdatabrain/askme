@@ -2,7 +2,7 @@
 
 let commissionSettings = {
   platformCommissionPercent: 15, // Default 15% platform cut
-  vipCommissionPercent: 10,      // Default 10% VIP creator cut
+  vipCommissionPercent: 15,      // Default 10% VIP creator cut
   minWithdrawalLimit: 500,        // Default ₹500 minimum payout threshold
   autoPayoutEnabled: true,
   historyLogs: [
@@ -42,9 +42,32 @@ const updateCommissionConfig = (newSettings, adminName = 'Super Admin') => {
   return commissionSettings;
 };
 
+// const getCreatorNetSharePercent = (isVip = false) => {
+//   const platformCut = isVip ? commissionSettings.vipCommissionPercent : commissionSettings.platformCommissionPercent;
+//   return (100 - platformCut) / 100;
+// };
 const getCreatorNetSharePercent = (isVip = false) => {
-  const platformCut = isVip ? commissionSettings.vipCommissionPercent : commissionSettings.platformCommissionPercent;
-  return (100 - platformCut) / 100;
+  const platformCut = isVip
+    ? commissionSettings.vipCommissionPercent
+    : commissionSettings.platformCommissionPercent;
+
+  const gstPercent = 18;
+  const gatewayFeePercent = 2;
+
+  // Platform commission
+  const platformFee = platformCut;
+
+  // GST on platform commission
+  const gstOnPlatformFee = (platformFee * gstPercent) / 100;
+
+  // Payment gateway fee on total transaction
+  const gatewayFee = gatewayFeePercent;
+
+  // Creator receives remaining amount
+  const creatorShare =
+    100 - platformFee - gstOnPlatformFee - gatewayFee;
+
+  return creatorShare / 100;
 };
 
 const getPlatformCutPercent = (isVip = false) => {

@@ -457,8 +457,8 @@ function LiveSessionsContent() {
                   <div
                     key={creator.creatorId}
                     className={`p-5 rounded-3xl border shadow-xl transition-all duration-300 hover:-translate-y-1 flex flex-col justify-between relative overflow-hidden group ${theme === 'light'
-                        ? 'bg-white border-[#E9ECEF] hover:border-[#EB1000]/60'
-                        : 'bg-gradient-to-b from-[#181824] to-[#111118] border-[#2A2A3C] hover:border-[#EB1000]/60 shadow-2xl'
+                      ? 'bg-white border-[#E9ECEF] hover:border-[#EB1000]/60'
+                      : 'bg-gradient-to-b from-[#181824] to-[#111118] border-[#2A2A3C] hover:border-[#EB1000]/60 shadow-2xl'
                       }`}
                   >
                     <div className="space-y-4">
@@ -467,7 +467,7 @@ function LiveSessionsContent() {
                         }`}>
                         <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#EB1000]/10 border border-[#EB1000]/30 text-[#EB1000] text-[11px] font-bold">
                           <Tag className="h-3 w-3 shrink-0 text-[#EB1000]" />
-                          <span>{creator.category || 'Live Session'}</span>
+                          <span>{creator.bio || creator.category}</span>
                         </div>
 
                         <span className="px-3 py-1 rounded-full bg-[#EB1000]/15 text-[#EB1000] border border-[#EB1000]/40 text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 shadow-sm shrink-0">
@@ -500,10 +500,10 @@ function LiveSessionsContent() {
                               }`}>
                               {creator.fullName || creator.cleanUsername || 'Creator'}
                             </h3>
-                            <p className={`text-xs font-semibold font-mono truncate mt-0.5 ${theme === 'light' ? 'text-[#6C757D]' : 'text-[#A0A0B0]'
+                            {/* <p className={`text-xs font-semibold font-mono truncate mt-0.5 ${theme === 'light' ? 'text-[#6C757D]' : 'text-[#A0A0B0]'
                               }`}>
                               {creator.username || `@${creator.cleanUsername}`}
-                            </p>
+                            </p> */}
                           </div>
                         </Link>
 
@@ -562,8 +562,8 @@ function LiveSessionsContent() {
 
                         return (
                           <div className={`flex items-center justify-between py-2 px-3 rounded-2xl border text-[11px] my-1 gap-1 ${theme === 'light'
-                              ? 'bg-[#F8F9FA] border-[#DEE2E6] text-[#1A1D20]'
-                              : 'bg-white/5 border-white/10 text-white'
+                            ? 'bg-[#F8F9FA] border-[#DEE2E6] text-[#1A1D20]'
+                            : 'bg-white/5 border-white/10 text-white'
                             }`}>
                             {/* Followers Stat */}
                             <div className="flex items-center gap-1.5 min-w-0">
@@ -666,8 +666,8 @@ function LiveSessionsContent() {
                             type="button"
                             onClick={() => setVipModalCreator(creator)}
                             className={`w-full py-3 px-4 rounded-full border font-black text-xs transition flex items-center justify-center gap-2 shadow-md hover:scale-[1.02] ${theme === 'light'
-                                ? 'bg-[#FFFBEB] hover:bg-[#FEF3C7] border-[#F59E0B] text-[#B45309]'
-                                : 'bg-[#1C1805] hover:bg-[#262007] border-[#B38F00] text-[#FFD60A]'
+                              ? 'bg-[#FFFBEB] hover:bg-[#FEF3C7] border-[#F59E0B] text-[#B45309]'
+                              : 'bg-[#1C1805] hover:bg-[#262007] border-[#B38F00] text-[#FFD60A]'
                               }`}
                           >
                             <span className="text-sm">💎</span> Join VIP Membership

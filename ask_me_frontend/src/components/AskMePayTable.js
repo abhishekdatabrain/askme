@@ -11,7 +11,7 @@ export default function AskMePayTable() {
       creator: 'Prince Live',
       viewer: 'Rahul_M',
       grossAmount: '₹500',
-      creatorShare: '₹425 (85%)',
+      creatorShare: '₹425 (80.3%)',
       platformCut: '₹75 (15%)',
       status: 'Released',
       platform: 'youtube',
@@ -23,7 +23,7 @@ export default function AskMePayTable() {
       creator: 'FinCal Strategy',
       viewer: 'Suresh_K',
       grossAmount: '₹1,000',
-      creatorShare: '₹850 (85%)',
+      creatorShare: '₹850 (80.3%)',
       platformCut: '₹150 (15%)',
       status: 'Released',
       platform: 'youtube',
@@ -35,7 +35,7 @@ export default function AskMePayTable() {
       creator: 'GamerX Xtreme',
       viewer: 'ProGamer_99',
       grossAmount: '₹299',
-      creatorShare: '₹254.15 (85%)',
+      creatorShare: '₹254.15 (80.3%)',
       platformCut: '₹44.85 (15%)',
       status: 'Recurring Active',
       platform: 'twitch',
@@ -47,7 +47,7 @@ export default function AskMePayTable() {
       creator: 'Startup Unfiltered',
       viewer: 'Venture_Partner',
       grossAmount: '₹2,500',
-      creatorShare: '₹2,125 (85%)',
+      creatorShare: '₹2,125 (80.3%)',
       platformCut: '₹375 (15%)',
       status: 'In (24h Hold)',
       platform: 'linkedin',
@@ -89,7 +89,7 @@ export default function AskMePayTable() {
           <span className="block font-heading font-black text-xl text-[#FFD60A] mt-0.5">₹1,48,500</span>
         </div>
         <div className="border-t sm:border-t-0 sm:border-x border-[#1C1C26] pt-2 sm:pt-0 sm:px-4">
-          <span className="text-[11px] text-[#8B8B96]">Creator 85% Payouts</span>
+          <span className="text-[11px] text-[#8B8B96]">Creator 80.3% Payouts</span>
           <span className="block font-heading font-black text-xl text-[#00E676] mt-0.5">₹1,26,225</span>
         </div>
         <div className="pt-2 sm:pt-0 sm:pl-4">
@@ -107,7 +107,7 @@ export default function AskMePayTable() {
               <th className="py-3 px-3">Type</th>
               <th className="py-3 px-3">Creator</th>
               <th className="py-3 px-3">Gross Amount</th>
-              <th className="py-3 px-3 text-[#00E676]">Creator (85%)</th>
+              <th className="py-3 px-3 text-[#00E676]">Creator (80.3%)</th>
               <th className="py-3 px-3 text-[#00F5D4]">AskMe Cut (15%)</th>
               <th className="py-3 px-3">Status</th>
             </tr>

@@ -32,8 +32,47 @@ const processViewerDonationService = async (data, authenticatedUser = null) => {
   } = data;
 
   const parsedAmount = parseFloat(amount || 0);
-  if (isNaN(parsedAmount) || parsedAmount <= 0) {
-    const err = new Error("Please enter a valid donation amount.");
+  if (isNaN(parsedAmount) || parsedAmount < 40) {
+    const err = new Error("Minimum donation amount is ₹40.");
+    err.statusCode = 400;
+    throw err;
+  }
+  if (parsedAmount > 99999) {
+    const err = new Error("Maximum donation amount is ₹99,999.");
+    err.statusCode = 400;
+    throw err;
+  }
+
+  // Range-based Super Ask character limit validation
+  const getSuperAskCharLimit = (amt) => {
+    const num = Math.floor(Number(amt) || 0);
+    if (num < 50) return 50;              // ₹40–₹49 = 50 chars
+    if (num < 100) return 60;             // ₹50–₹99 = 60 chars
+    if (num < 200) return 150;            // ₹100–₹199 = 150 chars
+    if (num < 400) return 200;            // ₹200–₹399 = 200 chars
+    if (num < 1000) return 225;           // ₹400–₹999 = 225 chars
+    if (num < 2000) return 250;           // ₹1,000–₹1,999 = 250 chars
+    if (num < 4000) return 270;           // ₹2,000–₹3,999 = 270 chars
+    if (num < 6000) return 290;           // ₹4,000–₹5,999 = 290 chars
+    if (num < 8000) return 310;           // ₹6,000–₹7,999 = 310 chars
+    if (num < 10000) return 330;          // ₹8,000–₹9,999 = 330 chars
+    if (num < 15000) return 350;          // ₹10,000–₹14,999 = 350 chars
+    if (num < 20000) return 375;          // ₹15,000–₹19,999 = 375 chars
+    if (num < 25000) return 400;          // ₹20,000–₹24,999 = 400 chars
+    if (num < 30000) return 425;          // ₹25,000–₹29,999 = 425 chars
+    if (num < 40000) return 450;          // ₹30,000–₹39,999 = 450 chars
+    if (num < 50000) return 475;          // ₹40,000–₹49,999 = 475 chars
+    if (num < 60000) return 500;          // ₹50,000–₹59,999 = 500 chars
+    if (num < 70000) return 550;          // ₹60,000–₹69,999 = 550 chars
+    if (num < 80000) return 600;          // ₹70,000–₹79,999 = 600 chars
+    if (num < 90000) return 650;          // ₹80,000–₹89,999 = 650 chars
+    if (num < 99999) return 700;          // ₹90,000–₹99,998 = 700 chars
+    return 750;                           // ₹99,999+ = 750 chars
+  };
+
+  const maxCharLimit = getSuperAskCharLimit(parsedAmount);
+  if (message && String(message).trim().length > maxCharLimit) {
+    const err = new Error(`Message text exceeds character limit of ${maxCharLimit} characters for amount ₹${parsedAmount}.`);
     err.statusCode = 400;
     throw err;
   }

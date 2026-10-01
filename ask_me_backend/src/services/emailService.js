@@ -1,4 +1,6 @@
 const nodemailer = require("nodemailer");
+const path = require("path");
+const fs = require("fs");
 
 /**
  * Configure Nodemailer Transport from environment variables with fallback
@@ -7,15 +9,36 @@ const getTransporter = () => {
   const host = process.env.SMTP_HOST || process.env.MAIL_HOST;
   const port = process.env.SMTP_PORT;
   const user = process.env.SMTP_USER;
-  const pass = process.env.SMTP_PASS;
+  const pass = process.env.SMTP_PASSWORD;
 
   if (host && user && pass) {
     return nodemailer.createTransport({
       host,
       port,
-      secure: port === 465,
+      secure: false,
+      requireTLS: true,
       auth: { user, pass },
+      authMethod: "PLAIN",
     });
+  }
+  return null;
+};
+
+/**
+ * Get logo attachment for inline CID embedding in emails
+ */
+const getLogoAttachment = () => {
+  try {
+    const logoPath = path.join(__dirname, "../assets/logo.png");
+    if (fs.existsSync(logoPath)) {
+      return {
+        filename: "logo.png",
+        path: logoPath,
+        cid: "askmelogo",
+      };
+    }
+  } catch (e) {
+    console.warn("Logo attachment warning:", e.message);
   }
   return null;
 };
@@ -26,7 +49,7 @@ const getTransporter = () => {
 const buildWelcomeEmailHtml = ({ name, role }) => {
   const isCreator = String(role).toLowerCase() === "creator";
   const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
-  const dashboardUrl = isCreator ? `${frontendUrl}/creators/dashboard` : `${frontendUrl}/viewers/dashboard`;
+  const dashboardUrl = isCreator ? `${frontendUrl}` : `${frontendUrl}`;
   const recipientName = name || (isCreator ? "Creator" : "Viewer");
 
   if (isCreator) {
@@ -60,7 +83,7 @@ const buildWelcomeEmailHtml = ({ name, role }) => {
       <div class="wrapper">
         <div class="brand-header">
           <a href="${frontendUrl}" style="text-decoration: none;">
-            <img src="${frontendUrl}/logo.png" alt="AskMe" style="height: 30px; vertical-align: middle; margin-right: 6px;" />
+            <img src="cid:askmelogo" alt="AskMe" style="height: 36px; vertical-align: middle; margin-right: 6px; border: 0;" />
             <span class="brand-text">AskMe<span class="brand-red">.live</span></span>
           </a>
         </div>
@@ -150,7 +173,7 @@ const buildWelcomeEmailHtml = ({ name, role }) => {
     <div class="wrapper">
       <div class="brand-header">
         <a href="${frontendUrl}" style="text-decoration: none;">
-          <img src="${frontendUrl}/logo.png" alt="AskMe" style="height: 30px; vertical-align: middle; margin-right: 6px;" />
+          <img src="cid:askmelogo" alt="AskMe" style="height: 36px; vertical-align: middle; margin-right: 6px; border: 0;" />
           <span class="brand-text">AskMe<span class="brand-red">.live</span></span>
         </a>
       </div>
@@ -216,7 +239,6 @@ const buildWelcomeEmailHtml = ({ name, role }) => {
 const sendWelcomeEmailAsync = ({ email, name, role }) => {
   if (!email || !String(email).includes("@")) return;
 
-  // Execute asynchronously via setImmediate (non-blocking)
   setImmediate(async () => {
     try {
       const transporter = getTransporter();
@@ -229,12 +251,16 @@ const sendWelcomeEmailAsync = ({ email, name, role }) => {
       const html = buildWelcomeEmailHtml({ name, role });
       const fromEmail = process.env.SMTP_FROM || process.env.MAIL_FROM || "AskMe Platform <noreply@askme.live>";
 
+      const logoAtt = getLogoAttachment();
+      const attachments = logoAtt ? [logoAtt] : [];
+
       if (transporter) {
         await transporter.sendMail({
           from: fromEmail,
           to: email,
           subject,
           html,
+          attachments,
         });
         console.log(`[EMAIL SERVICE] Async Welcome email sent to ${role} (${email}) via SMTP.`);
       } else {
@@ -278,7 +304,7 @@ const buildEmailOtpTemplate = ({ otp }) => {
     <div class="wrapper">
       <div class="brand-header">
         <a href="${frontendUrl}" style="text-decoration: none;">
-          <img src="${frontendUrl}/logo.png" alt="AskMe" style="height: 30px; vertical-align: middle; margin-right: 6px;" />
+          <img src="cid:askmelogo" alt="AskMe" style="height: 36px; vertical-align: middle; margin-right: 6px; border: 0;" />
           <span class="brand-text">AskMe<span class="brand-red">.live</span></span>
         </a>
       </div>
@@ -319,12 +345,16 @@ const sendEmailOtp = async ({ email, otp }) => {
     const html = buildEmailOtpTemplate({ otp });
     const fromEmail = process.env.SMTP_FROM || process.env.MAIL_FROM || "AskMe Verification <noreply@askme.live>";
 
+    const logoAtt = getLogoAttachment();
+    const attachments = logoAtt ? [logoAtt] : [];
+
     if (transporter) {
       await transporter.sendMail({
         from: fromEmail,
         to: email,
         subject,
         html,
+        attachments,
       });
       console.log(`[EMAIL SERVICE] Email verification OTP (${otp}) sent to ${email} via SMTP.`);
       return { success: true };
@@ -372,7 +402,7 @@ const buildKycUnderReviewEmailHtml = ({ name, reviewEta = "24 hours" }) => {
     <div class="wrapper">
       <div class="brand-header">
         <a href="${frontendUrl}" style="text-decoration: none;">
-          <img src="${frontendUrl}/flame-logo.png" alt="AskMe" style="height: 36px; vertical-align: middle; margin-right: 8px;" />
+          <img src="cid:askmelogo" alt="AskMe" style="height: 36px; vertical-align: middle; margin-right: 8px; border: 0;" />
           <span class="brand-text">AskMe<span class="brand-red">.live</span></span>
         </a>
       </div>
@@ -418,12 +448,16 @@ const sendKycUnderReviewEmailAsync = ({ email, name, reviewEta }) => {
       const html = buildKycUnderReviewEmailHtml({ name, reviewEta });
       const fromEmail = process.env.SMTP_FROM || process.env.MAIL_FROM || "AskMe Compliance <noreply@askme.live>";
 
+      const logoAtt = getLogoAttachment();
+      const attachments = logoAtt ? [logoAtt] : [];
+
       if (transporter) {
         await transporter.sendMail({
           from: fromEmail,
           to: email,
           subject,
           html,
+          attachments,
         });
         console.log(`[EMAIL SERVICE] KYC Under Review email sent to ${email} via SMTP.`);
       } else {
@@ -440,4 +474,5 @@ module.exports = {
   sendEmailOtp,
   sendKycUnderReviewEmailAsync,
 };
+
 

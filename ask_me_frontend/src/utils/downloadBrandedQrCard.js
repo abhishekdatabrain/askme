@@ -1,48 +1,79 @@
 /**
- * Utility to generate and download a branded Live QR Standee Card image.
+ * Utility to generate and download the exact branded Live QR Code image.
  */
 export const downloadBrandedQrCard = async ({
     qrUrl,
+    paymentLink,
     creatorName = 'CREATOR',
     title = 'LIVE BROADCAST',
     sessionCode = 'askme',
-    filename = 'askme_live_qr_card.png',
+    filename = 'askme_live_qr.png',
 }) => {
     try {
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-
-        // Set canvas resolution
-        const width = 600;
-        const height = 720;
-        canvas.width = width;
-        canvas.height = height;
-
-        // Fetch QR image as Blob to avoid CORS canvas taint
-        let qrImgElement = null;
-        let processQrUrl = qrUrl;
-        if (processQrUrl && processQrUrl.includes('api.qrserver.com') && !processQrUrl.includes('ecc=')) {
-            processQrUrl += '&ecc=H&margin=2';
-        }
-
-        if (processQrUrl) {
+        // 1. Determine pure payment link data
+        let targetData = paymentLink || qrUrl || 'https://askme.live';
+        if (typeof targetData === 'string' && targetData.includes('data=')) {
             try {
-                const res = await fetch(processQrUrl);
-                const blob = await res.blob();
-                const objectUrl = URL.createObjectURL(blob);
-                qrImgElement = await new Promise((resolve) => {
-                    const img = new Image();
-                    img.crossOrigin = 'anonymous';
-                    img.onload = () => resolve({ img, objectUrl });
-                    img.onerror = () => resolve(null);
-                    img.src = objectUrl;
-                });
+                const urlObj = new URL(targetData.includes('://') ? targetData : `https://${targetData}`);
+                const extracted = urlObj.searchParams.get('data');
+                if (extracted) targetData = decodeURIComponent(extracted);
             } catch (e) {
-                console.warn('QR image fetch notice:', e);
+                // keep targetData fallback
             }
         }
 
-        // Helper function for rounded rectangles
+        // 2. Dynamic import qr-code-styling
+        const { default: QRCodeStyling } = await import('qr-code-styling');
+
+        const qrSize = 600;
+        const qrCodeInstance = new QRCodeStyling({
+            width: qrSize,
+            height: qrSize,
+            type: 'canvas',
+            data: targetData,
+            margin: 1,
+            qrOptions: {
+                typeNumber: 0,
+                mode: 'Byte',
+                errorCorrectionLevel: 'H',
+            },
+            dotsOptions: {
+                color: '#000000',
+                type: 'square',
+            },
+            backgroundOptions: {
+                color: '#FFFFFF',
+            },
+            cornersSquareOptions: {
+                color: '#000000',
+                type: 'extra-rounded',
+            },
+            cornersDotOptions: {
+                color: '#EB1000',
+                type: 'extra-rounded',
+            },
+        });
+
+        // 3. Render QR to temporary hidden canvas
+        const tempDiv = document.createElement('div');
+        tempDiv.style.position = 'absolute';
+        tempDiv.style.left = '-9999px';
+        tempDiv.style.top = '-9999px';
+        document.body.appendChild(tempDiv);
+        qrCodeInstance.append(tempDiv);
+
+        await new Promise((r) => setTimeout(r, 150));
+        const renderedCanvas = tempDiv.querySelector('canvas');
+
+        // 4. Create master canvas (680 x 680)
+        const canvas = document.createElement('canvas');
+        const width = 680;
+        const height = 680;
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+
+        // Helper for rounded rect
         const drawRoundedRect = (x, y, w, h, radius, fillStyle, strokeStyle, strokeWidth = 0) => {
             ctx.beginPath();
             ctx.moveTo(x + radius, y);
@@ -67,197 +98,66 @@ export const downloadBrandedQrCard = async ({
             }
         };
 
-        // 1. Draw Outer Card Background
-        const padding = 20;
-        const cardX = padding;
-        const cardY = padding;
-        const cardW = width - padding * 2;
-        const cardH = height - padding * 2;
+        // Draw Outer Card Frame (White Card with Red Border)
+        drawRoundedRect(10, 10, width - 20, height - 20, 48, '#FFFFFF', '#EB1000', 4);
 
-        drawRoundedRect(cardX, cardY, cardW, cardH, 36, '#0B0C14', '#EB1000', 3);
-
-        // 2. Draw Top Bar Header
-        // Red dot
-        ctx.beginPath();
-        ctx.arc(55, 75, 7, 0, Math.PI * 2);
-        ctx.fillStyle = '#EB1000';
-        ctx.fill();
-
-        // Support Creator Name Text
-        const headerName = creatorName || title || 'CREATOR';
-        const nameText = `SUPPORT ${headerName.toUpperCase()}`;
-        ctx.font = '900 20px "Outfit", "Inter", sans-serif';
-        ctx.fillStyle = '#FFFFFF';
-        ctx.textAlign = 'left';
-        ctx.textBaseline = 'middle';
-
-        // Truncate nameText if too long to fit next to LIVE badge
-        let maxTextWidth = 350;
-        let displayTitle = nameText;
-        if (ctx.measureText(displayTitle).width > maxTextWidth) {
-            while (displayTitle.length > 5 && ctx.measureText(displayTitle + '...').width > maxTextWidth) {
-                displayTitle = displayTitle.slice(0, -1);
-            }
-            displayTitle += '...';
-        }
-        ctx.fillText(displayTitle, 72, 75);
-
-        // LIVE Badge
-        const badgeW = 74;
-        const badgeH = 30;
-        const badgeX = cardX + cardW - 35 - badgeW;
-        const badgeY = 60;
-        drawRoundedRect(badgeX, badgeY, badgeW, badgeH, 10, '#EB1000', null, 0);
-
-        ctx.font = '900 13px "Outfit", "Inter", sans-serif';
-        ctx.fillStyle = '#FFFFFF';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText('LIVE', badgeX + badgeW / 2, badgeY + badgeH / 2 + 1);
-
-        // Header Divider Line
-        ctx.beginPath();
-        ctx.moveTo(cardX + 25, 115);
-        ctx.lineTo(cardX + cardW - 25, 115);
-        ctx.strokeStyle = '#1E1F30';
-        ctx.lineWidth = 1.5;
-        ctx.stroke();
-
-        // 3. Draw Center QR Code Frame
-        const qrBoxSize = 380;
-        const qrBoxX = (width - qrBoxSize) / 2;
-        const qrBoxY = 145;
-
-        // White background box with rounded corners and glowing border
-        drawRoundedRect(qrBoxX, qrBoxY, qrBoxSize, qrBoxSize, 36, '#FFFFFF', '#EB1000', 2);
-
-        // Draw QR Image inside with Navy-to-Red gradient transformation
-        if (qrImgElement?.img) {
-            const qrPadding = 20;
-            const drawW = qrBoxSize - qrPadding * 2;
-            const drawH = qrBoxSize - qrPadding * 2;
-
-            // Offscreen canvas for gradient recoloring
-            const offCanvas = document.createElement('canvas');
-            offCanvas.width = drawW;
-            offCanvas.height = drawH;
-            const offCtx = offCanvas.getContext('2d');
-            offCtx.drawImage(qrImgElement.img, 0, 0, drawW, drawH);
-
-            try {
-                const imgData = offCtx.getImageData(0, 0, drawW, drawH);
-                const data = imgData.data;
-
-                for (let y = 0; y < drawH; y++) {
-                    for (let x = 0; x < drawW; x++) {
-                        const idx = (y * drawW + x) * 4;
-                        const lightness = (data[idx] + data[idx + 1] + data[idx + 2]) / 3;
-
-                        if (lightness > 180) {
-                            data[idx] = 255;
-                            data[idx + 1] = 255;
-                            data[idx + 2] = 255;
-                            data[idx + 3] = 255;
-                        } else {
-                            const t = x / drawW;
-                            let red, green, blue;
-                            if (t < 0.5) {
-                                const factor = t / 0.5;
-                                red = Math.round(16 + (107 - 16) * factor);
-                                green = Math.round(42 + (17 - 42) * factor);
-                                blue = Math.round(107 + (77 - 107) * factor);
-                            } else {
-                                const factor = (t - 0.5) / 0.5;
-                                red = Math.round(107 + (235 - 107) * factor);
-                                green = Math.round(17 + (16 - 17) * factor);
-                                blue = Math.round(77 + (0 - 77) * factor);
-                            }
-                            data[idx] = red;
-                            data[idx + 1] = green;
-                            data[idx + 2] = blue;
-                            data[idx + 3] = 255;
-                        }
-                    }
-                }
-                offCtx.putImageData(imgData, 0, 0);
-                ctx.drawImage(offCanvas, qrBoxX + qrPadding, qrBoxY + qrPadding);
-            } catch (e) {
-                ctx.drawImage(qrImgElement.img, qrBoxX + qrPadding, qrBoxY + qrPadding, drawW, drawH);
-            }
-
-            if (qrImgElement.objectUrl) {
-                URL.revokeObjectURL(qrImgElement.objectUrl);
-            }
+        // Draw QR Canvas in center
+        if (renderedCanvas) {
+            const marginX = (width - 600) / 2;
+            const marginY = (height - 600) / 2;
+            ctx.drawImage(renderedCanvas, marginX, marginY, 600, 600);
         }
 
-        // Fetch AskMe Logo Image (/logo.png)
-        let logoImgElement = null;
+        // Clean up tempDiv
+        if (document.body.contains(tempDiv)) {
+            document.body.removeChild(tempDiv);
+        }
+
+        // 5. Draw Center Black Badge with Red Outline + Flame Logo + AskMe Text
+        const badgeSize = 130;
+        const badgeX = (width - badgeSize) / 2;
+        const badgeY = (height - badgeSize) / 2;
+
+        drawRoundedRect(badgeX, badgeY, badgeSize, badgeSize, 24, '#000000', '#EB1000', 3.5);
+
+        // Load Flame Logo Image
         try {
-            const logoRes = await fetch('/logo.png');
-            const logoBlob = await logoRes.blob();
-            const logoObjectUrl = URL.createObjectURL(logoBlob);
-            logoImgElement = await new Promise((resolve) => {
+            const flameImg = await new Promise((resolve) => {
                 const img = new Image();
                 img.crossOrigin = 'anonymous';
-                img.onload = () => resolve({ img, logoObjectUrl });
+                img.onload = () => resolve(img);
                 img.onerror = () => resolve(null);
-                img.src = logoObjectUrl;
+                img.src = '/flame-logo.png';
             });
-        } catch (e) {
-            console.warn('AskMe logo image fetch notice:', e);
-        }
 
-        // Draw Center Black Logo Overlay Box inside QR Code
-        const logoBoxSize = 44;
-        const logoX = (width - logoBoxSize) / 2;
-        const logoY = qrBoxY + (qrBoxSize - logoBoxSize) / 2;
-
-        // Black box with rounded corners and red border
-        drawRoundedRect(logoX, logoY, logoBoxSize, logoBoxSize, 12, '#000000', '#EB1000', 2);
-
-        // Draw AskMe Red Logo Image inside white pill
-        if (logoImgElement?.img) {
-            const logoPadding = 6;
-            ctx.drawImage(
-                logoImgElement.img,
-                logoX + logoPadding,
-                logoY + logoPadding,
-                logoBoxSize - logoPadding * 2,
-                logoBoxSize - logoPadding * 2
-            );
-            if (logoImgElement.logoObjectUrl) {
-                URL.revokeObjectURL(logoImgElement.logoObjectUrl);
+            if (flameImg) {
+                const imgW = 60;
+                const imgH = 60;
+                const imgX = badgeX + (badgeSize - imgW) / 2;
+                const imgY = badgeY + 14;
+                ctx.drawImage(flameImg, imgX, imgY, imgW, imgH);
             }
-        } else {
-            // Fallback font icon if image unavailable
-            ctx.font = '900 28px "Outfit", "Inter", sans-serif';
-            ctx.fillStyle = '#EB1000';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText('A', width / 2, logoY + logoBoxSize / 2 + 1);
+        } catch (e) {
+            console.warn('Flame logo image notice:', e);
         }
 
-        // 4. Draw Bottom Text Section
-        // Heart + Scan & Send Message
-        const bottomTextY = 575;
-        ctx.font = '900 26px "Outfit", "Inter", sans-serif';
-        ctx.fillStyle = '#00F5D4';
+        // Draw "AskMe" Text inside badge
+        ctx.font = '900 20px "Outfit", "Inter", sans-serif';
         ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText('❤️  Scan & Send Message', width / 2, bottomTextY);
+        ctx.textBaseline = 'top';
 
-        // Subtext: Instant UPI • Paid Q&A On Screen
-        ctx.font = '700 16px "Outfit", "Inter", sans-serif';
-        ctx.fillStyle = '#8B8B96';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText('Instant UPI • Paid Q&A On Screen', width / 2, bottomTextY + 38);
+        const textY = badgeY + 82;
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillText('Ask', badgeX + badgeSize / 2 - 14, textY);
 
-        // 5. Trigger Browser Download
+        ctx.fillStyle = '#EB1000';
+        ctx.fillText('Me', badgeX + badgeSize / 2 + 14, textY);
+
+        // 6. Trigger Browser Download
         const dataUrl = canvas.toDataURL('image/png');
         const link = document.createElement('a');
         link.href = dataUrl;
-        link.download = filename || `askme_live_qr_${sessionCode || 'card'}.png`;
+        link.download = filename || `askme_live_qr_${sessionCode || 'code'}.png`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);

@@ -5,6 +5,8 @@ const {
   Admin,
   AdminRefreshToken,
 } = require("../models");
+const { sendLoginOtpWhatsApp } = require("../services/whatsappService");
+const { generateAndStoreOtp, verifyStoredOtp } = require("../utils/whatsappOtpStore");
 // const generateToken = require('../utils/generateToken');
 const generateAccessToken = (admin) => {
 
@@ -16,7 +18,7 @@ const generateAccessToken = (admin) => {
     },
     process.env.JWT_ACCESS_SECRET,
     {
-      expiresIn: process.env.JWT_ACCESS_EXPIRES || "15m",
+      expiresIn: process.env.JWT_ACCESS_EXPIRES,
     }
   );
 };
@@ -246,11 +248,31 @@ const login = async (req, res, next) => {
     // Refresh Token Expiry
     // -----------------------------
 
-    const expiresAt = new Date();
+  const getExpiryDate = (expiresIn) => {
+  const match = expiresIn.match(/^(\d+)([smhd])$/);
 
-    expiresAt.setDate(
-      expiresAt.getDate() + 7
-    );
+  if (!match) {
+    throw new Error(`Invalid expiry: ${expiresIn}`);
+  }
+
+  const value = Number(match[1]);
+  const unit = match[2];
+
+  const multipliers = {
+    s: 1000,
+    m: 60 * 1000,
+    h: 60 * 60 * 1000,
+    d: 24 * 60 * 60 * 1000,
+  };
+
+  return new Date(
+    Date.now() + value * multipliers[unit]
+  );
+};
+
+const refreshExpiresAt = getExpiryDate(
+  process.env.JWT_REFRESH_EXPIRES
+);
 
 
     // -----------------------------
@@ -263,7 +285,7 @@ const login = async (req, res, next) => {
 
       token_hash: tokenHash,
 
-      expires_at: expiresAt,
+      expires_at: refreshExpiresAt,
 
     });
 
@@ -326,19 +348,168 @@ const login = async (req, res, next) => {
     console.error("Login Error:", error);
 
     return res.status(500).json({
-
       success: false,
-
       message: "Internal server error",
+    });
+  }
+};
 
+/**
+ * @desc    Send WhatsApp OTP to Admin
+ * @route   POST /api/adminauth/whatsapp-otp/send
+ * @access  Public
+ */
+const sendWhatsAppOtp = async (req, res, next) => {
+  try {
+    const { mobile, phone } = req.body;
+    const rawPhone = mobile || phone;
+    const cleanPhone = String(rawPhone || '').replace(/[^0-9]/g, '');
+
+    let tenDigit = cleanPhone;
+    if (tenDigit.length === 12 && tenDigit.startsWith('91')) {
+      tenDigit = tenDigit.slice(2);
+    }
+
+    if (!tenDigit || tenDigit.length !== 10) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid mobile number. Please enter a valid 10-digit phone number.',
+      });
+    }
+
+    const { cleanPhone: targetPhone, otp } = generateAndStoreOtp(tenDigit);
+
+    // Send WhatsApp OTP template message using askme_login_otp
+    await sendLoginOtpWhatsApp({
+      phone: targetPhone,
+      otp,
+      expiresMinutes: 5,
     });
 
+    console.log(`[Admin WhatsApp OTP] Code ${otp} generated and sent to ${targetPhone}`);
+
+    return res.status(200).json({
+      success: true,
+      message: 'Verification code sent to your WhatsApp number!',
+      expiresMinutes: 5,
+      phone: targetPhone,
+      ...(process.env.NODE_ENV !== 'production' ? { debugOtp: otp } : {}),
+    });
+  } catch (error) {
+    console.error('SEND WHATSAPP OTP ADMIN ERROR:', error);
+    next(error);
+  }
+};
+
+/**
+ * @desc    Verify WhatsApp OTP and Login Admin
+ * @route   POST /api/adminauth/whatsapp-otp/verify
+ * @access  Public
+ */
+const verifyWhatsAppOtp = async (req, res, next) => {
+  try {
+    const { mobile, phone, otp } = req.body;
+    const rawPhone = mobile || phone;
+    const cleanPhone = String(rawPhone || '').replace(/[^0-9]/g, '');
+
+    if (!cleanPhone || !otp) {
+      return res.status(400).json({
+        success: false,
+        message: 'Mobile number and 6-digit OTP code are required.',
+      });
+    }
+
+    const verification = verifyStoredOtp(cleanPhone, otp);
+    if (!verification.valid) {
+      return res.status(400).json({
+        success: false,
+        message: verification.message,
+      });
+    }
+
+    let targetPhone = cleanPhone;
+    if (targetPhone.length === 10) targetPhone = `91${targetPhone}`;
+    const tenDigit = targetPhone.slice(-10);
+
+    // Find active admin in DB
+    let admin = await Admin.findOne({ where: { is_active: true } }).catch(() => null);
+
+    // if (!admin) {
+    //   const dummyHash = await bcrypt.hash(`admin_${Date.now()}`, 10);
+    //   admin = await Admin.create({
+    //     name: `Admin (${tenDigit})`,
+    //     email: `admin_${tenDigit}@askme.com`,
+    //     password_hash: dummyHash,
+    //     role: 'admin',
+    //     is_active: true,
+    //   });
+    // }
+
+    const accessToken = generateAccessToken(admin);
+    const refreshToken = generateRefreshToken();
+    const tokenHash = hashRefreshToken(refreshToken);
+
+    const getExpiryDate = (expiresIn) => {
+  const match = expiresIn.match(/^(\d+)([smhd])$/);
+
+  if (!match) {
+    throw new Error(`Invalid expiry: ${expiresIn}`);
   }
 
+  const value = Number(match[1]);
+  const unit = match[2];
+
+  const multipliers = {
+    s: 1000,
+    m: 60 * 1000,
+    h: 60 * 60 * 1000,
+    d: 24 * 60 * 60 * 1000,
+  };
+
+  return new Date(
+    Date.now() + value * multipliers[unit]
+  );
+};
+
+const refreshExpiresAt = getExpiryDate(
+  process.env.JWT_REFRESH_EXPIRES
+);
+    await AdminRefreshToken.create({
+      admin_id: admin.id,
+      token_hash: tokenHash,
+      expires_at: refreshExpiresAt
+    }).catch((err) => console.warn('AdminRefreshToken creation note:', err.message));
+
+    res.cookie('admin_refresh_token', refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+      path: '/',
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: 'Admin WhatsApp login successful',
+      accessToken,
+      admin: {
+        id: admin.id,
+        name: admin.name,
+        email: admin.email,
+        role: admin.role,
+        is_active: admin.is_active,
+      },
+    });
+  } catch (error) {
+    console.error('VERIFY WHATSAPP OTP ADMIN ERROR:', error);
+    next(error);
+  }
 };
 
 module.exports = {
   register,
   login,
+  sendWhatsAppOtp,
+  verifyWhatsAppOtp,
   // getMe,
 };

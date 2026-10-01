@@ -756,18 +756,62 @@ export default function CreatorKycPage() {
             }
         }
 
-        setFormData(prev => ({
-            ...prev,
-            fullName: rawName || prev.fullName,
-            accountHolderName: rawName || prev.accountHolderName,
-            mobileNumber: numOnly || prev.mobileNumber,
-            mobileCountryCode: codePrefix || prev.mobileCountryCode,
-        }));
+        const initialYtHandle = user.youtubeChannel || (user.username ? `@${user.username.replace(/^@+/, '')}` : '');
+
+        setFormData(prev => {
+            const currentLinks = [...(prev.socialLinks || [])];
+            const ytIdx = currentLinks.findIndex(l => (l.platform || '').toLowerCase() === 'youtube');
+            if (ytIdx >= 0) {
+                if (!currentLinks[ytIdx].link && initialYtHandle) {
+                    currentLinks[ytIdx] = { ...currentLinks[ytIdx], link: initialYtHandle };
+                }
+            } else if (initialYtHandle) {
+                currentLinks.unshift({ platform: 'youtube', link: initialYtHandle });
+            }
+            return {
+                ...prev,
+                fullName: rawName || prev.fullName,
+                accountHolderName: rawName || prev.accountHolderName,
+                mobileNumber: numOnly || prev.mobileNumber,
+                mobileCountryCode: codePrefix || prev.mobileCountryCode,
+                socialLinks: currentLinks,
+            };
+        });
 
         if (rawName) {
             setIsNameLocked(true);
         }
         setIsMobileLocked(true); // Always keep verified mobile locked per requirements
+
+        // Fetch creator profile to fill saved YouTube social links
+        const fetchCreatorProfileLinks = async () => {
+            try {
+                const resProf = await fetch(API_ENDPOINTS.CREATORS.PROFILE, {
+                    headers: savedToken ? { Authorization: `Bearer ${savedToken}` } : {},
+                });
+                if (resProf.ok) {
+                    const profData = await resProf.json();
+                    const links = profData.socialLinks || profData.data?.socialLinks || profData.data?.social_links || [];
+                    const ytLinkRec = links.find(l => (l.platform || '').toLowerCase() === 'youtube');
+                    const fetchedYtUrl = ytLinkRec?.profile_url || ytLinkRec?.url || initialYtHandle;
+                    if (fetchedYtUrl) {
+                        setFormData(prev => {
+                            const currentLinks = [...(prev.socialLinks || [])];
+                            const ytIdx = currentLinks.findIndex(l => (l.platform || '').toLowerCase() === 'youtube');
+                            if (ytIdx >= 0) {
+                                currentLinks[ytIdx] = { ...currentLinks[ytIdx], link: currentLinks[ytIdx].link || fetchedYtUrl };
+                            } else {
+                                currentLinks.unshift({ platform: 'youtube', link: fetchedYtUrl });
+                            }
+                            return { ...prev, socialLinks: currentLinks, youtubeUrl: fetchedYtUrl };
+                        });
+                    }
+                }
+            } catch (err) {
+                console.warn('Profile links fetch note:', err.message);
+            }
+        };
+        fetchCreatorProfileLinks();
 
         const checkKycStatus = async () => {
             try {
@@ -1483,7 +1527,7 @@ export default function CreatorKycPage() {
                                                             type="text"
                                                             value={item.link}
                                                             onChange={(e) => handleUpdateSocialLink(idx, 'link', e.target.value)}
-                                                            placeholder={`Channel handle or URL (e.g. @${creatorUser?.username || 'creator'})...`}
+                                                            placeholder={`Channel handle or URL (e.g. @${String(creatorUser?.username || 'creator').replace(/^@+/, '')})...`}
                                                             className={`w-full px-3.5 py-2.5 rounded-xl border text-xs outline-none transition font-mono ${theme === 'light' ? 'bg-white border-[#E2E8F0] text-[#0F172A]' : 'bg-[#101018] border-[#2A2A3E] text-white'}`}
                                                         />
                                                         {(formData.socialLinks || []).length > 1 && (

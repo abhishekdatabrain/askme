@@ -86,6 +86,7 @@ export default function CreatorActiveSessionPage() {
     if (!activeSession) return;
     const cName = creator?.fullName || creator?.full_name || creator?.username || activeSession.title || 'Creator';
     const success = await downloadBrandedQrCard({
+      paymentLink: activeSession.paymentLink,
       qrUrl: activeSession.qrCodeUrl,
       creatorName: cName,
       title: activeSession.title,

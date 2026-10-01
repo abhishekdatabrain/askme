@@ -108,6 +108,7 @@ const loginCreator = async (req, res, next) => {
  */
 const googleAuthCreator = async (req, res, next) => {
   try {
+    
     const result = await googleAuthCreatorService(req.body);
     return res.status(200).json({
       status: "success",
@@ -1023,10 +1024,11 @@ const sendWhatsAppOtpCreator = async (req, res, next) => {
  */
 const verifyWhatsAppOtpCreator = async (req, res, next) => {
   try {
-    const result = await verifyWhatsAppOtpCreatorService(req.body);
+    const creatorId = getAuthenticatedCreatorId(req) || req.body.creatorId || req.body.creator_id;
+    const result = await verifyWhatsAppOtpCreatorService({ ...req.body, creatorId });
     return res.status(200).json({
       status: "success",
-      message: "Creator WhatsApp login successful!",
+      message: "Mobile number verified and updated successfully!",
       data: result,
     });
   } catch (error) {

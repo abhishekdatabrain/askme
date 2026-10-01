@@ -23,7 +23,12 @@ const Admin = sequelize.define(
                 isEmail: true,
             },
         },
+        phone: {
+            type: DataTypes.STRING(255),
+            allowNull: false,
+            unique: true,
 
+        },
         password_hash: {
             type: DataTypes.STRING(255),
             allowNull: false,

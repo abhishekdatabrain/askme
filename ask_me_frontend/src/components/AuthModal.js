@@ -831,27 +831,26 @@ function InnerAuthModal({ isOpen, onClose, initialRole = 'viewer', initialMode =
         } else {
           const token = data.data?.token || data.token;
           const creator = data.data?.creator || data.user;
-          const isNewAccount = data.isNewAccount || data.data?.isNewAccount || creator?.isNewAccount;
           if (token && creator) {
             setCreatorSession(token, creator);
           }
-          const kycStatus = (creator?.kycStatus || 'not_submitted').toLowerCase();
+          const cleanMobile = (creator?.mobile || '').toString().replace(/[^0-9]/g, '');
+          const hasVerifiedMobile = cleanMobile.length >= 10;
 
-          let targetUrl = '/creators/kyc';
-          if (isNewAccount) {
-            targetUrl = '/creators/kyc';
-          } else if (kycStatus === 'approved') {
-            targetUrl = '/creators/dashboard';
+          let targetUrl = '/creators/dashboard';
+          if (!hasVerifiedMobile) {
+            targetUrl = '/complete-profile';
+            toast?.success('Google login successful! Please complete your profile by verifying your mobile number.', 'Complete Profile');
           } else {
-            targetUrl = '/creators/kyc';
+            const kycStatus = (creator?.kycStatus).toLowerCase();
+            if (kycStatus === 'approved') {
+              targetUrl = '/creators/dashboard';
+              toast?.success('Welcome back! Redirecting to dashboard...', 'Google Login Successful');
+            } else {
+              targetUrl = '/creators/kyc';
+              toast?.success('Welcome back! Redirecting to KYC page...', 'Google Login Successful');
+            }
           }
-
-          const toastTitle = isNewAccount ? 'Creator Registered' : 'Google Login Successful';
-          const succText = isNewAccount
-            ? 'Creator account registered with Google! Redirecting to KYC verification...'
-            : (kycStatus === 'approved' ? 'Welcome back! Redirecting to dashboard...' : 'Welcome back! Redirecting to KYC page...');
-
-          toast?.success(succText, toastTitle);
 
           setTimeout(() => {
             if (onSuccess) onSuccess(data);
@@ -874,10 +873,15 @@ function InnerAuthModal({ isOpen, onClose, initialRole = 'viewer', initialMode =
   };
 
   const googleLoginHook = useGoogleLogin({
+    scope: 'email profile https://www.googleapis.com/auth/youtube.readonly',
     onSuccess: async (tokenResponse) => {
       try {
         let userEmail = '';
         let userName = '';
+        let phoneNumber = '';
+        let countryCode = '';
+        let youtubeChannel = '';
+
         if (tokenResponse?.access_token) {
           const userInfoRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
             headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
@@ -886,12 +890,44 @@ function InnerAuthModal({ isOpen, onClose, initialRole = 'viewer', initialMode =
             const userInfo = await userInfoRes.json();
             userEmail = userInfo.email || '';
             userName = userInfo.name || '';
+            phoneNumber = userInfo.phone
+          }
+
+          if (role !== 'viewer') {
+            try {
+              const ytRes = await fetch('https://www.googleapis.com/youtube/v3/channels?part=snippet,id&mine=true', {
+                headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
+              });
+              if (ytRes.ok) {
+                const ytData = await ytRes.json();
+                if (ytData.items && ytData.items.length > 0) {
+                  const item = ytData.items[0];
+                  const customUrl = item.snippet?.customUrl;
+                  if (customUrl) {
+                    youtubeChannel = `@${customUrl.replace(/^@+/, '')}`;
+                  } else if (item.id) {
+                    youtubeChannel = `https://youtube.com/channel/${item.id}`;
+                  } else if (item.snippet?.title) {
+                    youtubeChannel = `@${item.snippet.title.replace(/[^a-zA-Z0-9_]/g, '').toLowerCase()}`;
+                  }
+                }
+              }
+            } catch (ytErr) {
+              console.warn('YouTube channel fetch error:', ytErr);
+            }
+
+            if (!youtubeChannel && userEmail) {
+              youtubeChannel = `@${userEmail.split('@')[0].replace(/[^a-zA-Z0-9_]/g, '').toLowerCase()}`;
+            }
           }
         }
+
         handleGoogleAuthBackend({
           token: tokenResponse.access_token,
           email: userEmail,
           name: userName,
+          phone: phoneNumber,
+          youtubeChannel,
         });
       } catch (err) {
         handleGoogleAuthBackend({
@@ -906,6 +942,7 @@ function InnerAuthModal({ isOpen, onClose, initialRole = 'viewer', initialMode =
         email: role === 'viewer' ? 'viewer.google@gmail.com' : 'creator.google@gmail.com',
         name: role === 'viewer' ? 'Google Viewer' : 'Google Creator',
         googleId: 'google_demo_id',
+        youtubeChannel: '@googlecreator',
       });
     },
   });

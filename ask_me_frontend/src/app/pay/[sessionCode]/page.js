@@ -29,12 +29,38 @@ import {
   UserPlus,
   ArrowLeft
 } from 'lucide-react';
-import { API_ENDPOINTS } from '@/config/api';
+import { API_ENDPOINTS, getMediaUrl } from '@/config/api';
 import { getViewerToken, getViewerUser, setViewerSession, clearViewerSession, removeCookie } from '@/utils/cookies';
 import Logo from '@/components/Logo';
 import GoogleAuthProvider from '@/components/GoogleAuthProvider';
 import { useGoogleLogin } from '@react-oauth/google';
 import { getSocket } from '@/config/socket';
+
+const getSuperAskCharLimit = (amt) => {
+  const num = Math.floor(Number(amt) || 0);
+  if (num < 50) return 50;              // ₹40–₹49 = 50 chars
+  if (num < 100) return 60;             // ₹50–₹99 = 60 chars
+  if (num < 200) return 150;            // ₹100–₹199 = 150 chars
+  if (num < 400) return 200;            // ₹200–₹399 = 200 chars
+  if (num < 1000) return 225;           // ₹400–₹999 = 225 chars
+  if (num < 2000) return 250;           // ₹1,000–₹1,999 = 250 chars
+  if (num < 4000) return 270;           // ₹2,000–₹3,999 = 270 chars
+  if (num < 6000) return 290;           // ₹4,000–₹5,999 = 290 chars
+  if (num < 8000) return 310;           // ₹6,000–₹7,999 = 310 chars
+  if (num < 10000) return 330;          // ₹8,000–₹9,999 = 330 chars
+  if (num < 15000) return 350;          // ₹10,000–₹14,999 = 350 chars
+  if (num < 20000) return 375;          // ₹15,000–₹19,999 = 375 chars
+  if (num < 25000) return 400;          // ₹20,000–₹24,999 = 400 chars
+  if (num < 30000) return 425;          // ₹25,000–₹29,999 = 425 chars
+  if (num < 40000) return 450;          // ₹30,000–₹39,999 = 450 chars
+  if (num < 50000) return 475;          // ₹40,000–₹49,999 = 475 chars
+  if (num < 60000) return 500;          // ₹50,000–₹59,999 = 500 chars
+  if (num < 70000) return 550;          // ₹60,000–₹69,999 = 550 chars
+  if (num < 80000) return 600;          // ₹70,000–₹79,999 = 600 chars
+  if (num < 90000) return 650;          // ₹80,000–₹89,999 = 650 chars
+  if (num < 99999) return 700;          // ₹90,000–₹99,998 = 700 chars
+  return 750;                           // ₹99,999+ = 750 chars
+};
 
 function ViewerPaymentContent() {
   const params = useParams();
@@ -63,6 +89,17 @@ function ViewerPaymentContent() {
   const [paymentMethod, setPaymentMethod] = useState('upi'); // 'upi' | 'card' | 'netbanking'
   const [isVipMember, setIsVipMember] = useState(false);
   const [agreedToConsent, setAgreedToConsent] = useState(false);
+
+  // Dynamic Range-based Super Ask Character Limit
+  const maxCharLimit = getSuperAskCharLimit(amount);
+
+  // Auto-trim message if amount changes to a lower tier
+  useEffect(() => {
+    const limit = getSuperAskCharLimit(amount);
+    if (message.length > limit) {
+      setMessage((prev) => prev.slice(0, limit));
+    }
+  }, [amount]);
 
   // Auth Modal State
   const [showAuthModal, setShowAuthModal] = useState(false);
@@ -505,8 +542,12 @@ function ViewerPaymentContent() {
     if (e && e.preventDefault) e.preventDefault();
 
     const numericAmount = parseFloat(amount);
-    if (!numericAmount || numericAmount <= 0) {
-      alert('Please enter a valid amount.');
+    if (!numericAmount || numericAmount < 40) {
+      alert('Minimum donation amount is ₹40.');
+      return;
+    }
+    if (numericAmount > 99999) {
+      alert('Maximum donation amount is ₹99,999.');
       return;
     }
 
@@ -818,14 +859,12 @@ function ViewerPaymentContent() {
             <div className="flex items-center gap-4 border-b border-[#1C1C26] pb-5">
               {creatorData?.profileImage ? (
                 <img
-                  src={creatorData.profileImage}
+                  src={getMediaUrl(creatorData.profileImage)}
                   alt={creatorData.fullName}
                   className="h-16 w-16 rounded-2xl object-cover border-2 border-[#00F5D4]/40 shadow-md shrink-0"
                 />
               ) : (
-                <div className="h-16 w-16 rounded-2xl bg-[#1C1C26] border-2 border-[#00F5D4]/30 flex items-center justify-center text-[#00F5D4] font-black text-2xl shrink-0">
-                  {(creatorData?.fullName || 'C').charAt(0).toUpperCase()}
-                </div>
+                <Logo size="xl" className="rounded-2xl shrink-0" />
               )}
 
               <div>
@@ -886,7 +925,7 @@ function ViewerPaymentContent() {
 
                   {/* Preset Chips */}
                   <div className="grid grid-cols-5 gap-2 mb-3">
-                    {['50', '100', '250', '500', '1000'].map(val => (
+                    {['40','50', '100', '250', '500'].map(val => (
                       <button
                         key={val}
                         type="button"
@@ -905,11 +944,12 @@ function ViewerPaymentContent() {
                     <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white font-black text-base">₹</span>
                     <input
                       type="number"
-                      min="1"
+                      min="40"
+                      max="99999"
                       required
                       value={amount}
                       onChange={(e) => setAmount(e.target.value)}
-                      placeholder="Enter custom amount"
+                      placeholder="Enter amount (₹40 - ₹99,999)"
                       className="w-full rounded-2xl bg-[#0A0A0F] border border-[#1C1C26] pl-8 pr-4 py-3 text-base text-white font-bold placeholder-[#8B8B96] focus:outline-none focus:border-[#00F5D4] transition"
                     />
                   </div>
@@ -1019,16 +1059,22 @@ function ViewerPaymentContent() {
 
                 {/* 3. Message / Paid Question */}
                 <div>
-                  <label className="block text-xs font-bold text-white mb-1.5">
-                    Live Stream Message / Paid Question <span className="text-[#FF3D71]">*</span>
-                  </label>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="text-xs font-bold text-white">
+                      Live Stream Message / Paid Question <span className="text-[#FF3D71]">*</span>
+                    </label>
+                    <span className={`text-[11px] font-mono font-bold transition-colors ${message.length >= maxCharLimit ? 'text-[#FF3D71]' : 'text-[#00F5D4]'}`}>
+                      {message.length}/{maxCharLimit}
+                    </span>
+                  </div>
                   <textarea
                     rows={3}
                     required
+                    maxLength={maxCharLimit}
                     value={message}
-                    onChange={(e) => setMessage(e.target.value)}
+                    onChange={(e) => setMessage(e.target.value.slice(0, maxCharLimit))}
                     placeholder="Ask a question or send a shoutout to appear live on stream overlay..."
-                    className="w-full rounded-2xl bg-[#0A0A0F] border border-[#1C1C26] p-3 text-xs text-white placeholder-[#8B8B96] focus:outline-none focus:border-[#00F5D4]"
+                    className={`w-full rounded-2xl bg-[#0A0A0F] border p-3 text-xs text-white placeholder-[#8B8B96] focus:outline-none transition ${message.length >= maxCharLimit ? 'border-[#FF3D71] focus:border-[#FF3D71]' : 'border-[#1C1C26] focus:border-[#00F5D4]'}`}
                   />
                 </div>
 
@@ -1109,8 +1155,8 @@ function ViewerPaymentContent() {
 
             {/* Header */}
             <div className="text-center space-y-1.5 pt-2">
-              <div className="h-12 w-12 rounded-2xl bg-brand-gradient flex items-center justify-center text-white font-black text-2xl mx-auto shadow-lg glow-teal">
-                <Lock className="h-6 w-6 stroke-[2.5]" />
+              <div className="flex justify-center">
+                <Logo size="xl" className="mx-auto shadow-lg glow-teal" />
               </div>
               <h3 className="font-heading font-black text-xl text-white">
                 {authMode === 'login' ? 'Viewer Login Required' : 'Create Viewer Account'}

@@ -6,6 +6,8 @@ export const API_ENDPOINTS = {
   AUTH: {
     LOGIN: `${API_BASE_URL}/adminauth/login`,
     REGISTER: `${API_BASE_URL}/adminauth/register`,
+    WHATSAPP_SEND_OTP: `${API_BASE_URL}/adminauth/whatsapp-otp/send`,
+    WHATSAPP_VERIFY_OTP: `${API_BASE_URL}/adminauth/whatsapp-otp/verify`,
     CREATOR_REGISTER: `${API_BASE_URL}/auth/creator/register`,
     LOGOUT: `${API_BASE_URL}/auth/logout`,
     ME: `${API_BASE_URL}/auth/me`,

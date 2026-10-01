@@ -120,7 +120,7 @@ const registerCreatorService = async (data) => {
       {
         creator_id: creator.id,
         display_name: creatorName,
-        bio: bio || `${category || ""} Creator`,
+        bio: bio || `${category}`,
         kyc_status: "not_submitted",
         is_payment_enabled: false,
       },
@@ -284,10 +284,11 @@ const loginCreatorService = async ({ email, username, password }) => {
 /**
  * Google Auth Creator Service (with Google ID Token Verification)
  */
-const googleAuthCreatorService = async ({ idToken, credential, token: bodyToken, email, name }) => {
+const googleAuthCreatorService = async ({ idToken, credential, token: bodyToken, email, name, mobile, youtubeChannel, youtubeUrl }) => {
   const incomingToken = idToken || credential || bodyToken;
   let verifiedEmail = (email || "").trim().toLowerCase();
   let verifiedName = (name || "").trim();
+  let fetchedYoutubeUrl = (youtubeChannel || youtubeUrl || "").trim();
 
   if (incomingToken) {
     if (process.env.GOOGLE_CLIENT_ID) {
@@ -326,6 +327,31 @@ const googleAuthCreatorService = async ({ idToken, credential, token: bodyToken,
         console.warn("Google UserInfo API fetch note:", userinfoErr.message);
       }
     }
+
+    // Fetch YouTube Channel info using Google OAuth Access Token
+    if (!fetchedYoutubeUrl) {
+      try {
+        const ytRes = await fetch("https://www.googleapis.com/youtube/v3/channels?part=snippet,id&mine=true", {
+          headers: { Authorization: `Bearer ${incomingToken}` },
+        });
+        if (ytRes.ok) {
+          const ytData = await ytRes.json();
+          if (ytData.items && ytData.items.length > 0) {
+            const item = ytData.items[0];
+            const customUrl = item.snippet?.customUrl;
+            if (customUrl) {
+              fetchedYoutubeUrl = `@${customUrl.replace(/^@+/, '')}`;
+            } else if (item.id) {
+              fetchedYoutubeUrl = `https://youtube.com/channel/${item.id}`;
+            } else if (item.snippet?.title) {
+              fetchedYoutubeUrl = `@${item.snippet.title.replace(/[^a-zA-Z0-9_]/g, '').toLowerCase()}`;
+            }
+          }
+        }
+      } catch (ytErr) {
+        console.warn("YouTube channel fetch note:", ytErr.message);
+      }
+    }
   }
 
   if (!verifiedEmail) {
@@ -335,8 +361,14 @@ const googleAuthCreatorService = async ({ idToken, credential, token: bodyToken,
   }
 
   if (!verifiedName) {
-    verifiedName = verifiedEmail.split("@")[0] || "Google Creator";
+    verifiedName = verifiedEmail.split("@")[0];
   }
+
+  // Fallback YouTube channel handle from verified email if not found
+  // if (!fetchedYoutubeUrl) {
+  //   const defaultHandle = verifiedEmail.split("@")[0].replace(/[^a-zA-Z0-9_]/g, "").toLowerCase();
+  //   fetchedYoutubeUrl = `@${defaultHandle}`;
+  // }
 
   let isNewAccount = false;
   let creator = await CreatorsModel.findOne({ where: { email: verifiedEmail } });
@@ -362,9 +394,10 @@ const googleAuthCreatorService = async ({ idToken, credential, token: bodyToken,
           full_name: verifiedName,
           username: cleanUsername,
           email: verifiedEmail,
+          mobile: mobile,
           password: hashedPassword,
           country: "India",
-          status: "active",
+          status: "pending",
         },
         { transaction }
       );
@@ -373,7 +406,7 @@ const googleAuthCreatorService = async ({ idToken, credential, token: bodyToken,
         {
           creator_id: creator.id,
           display_name: verifiedName,
-          bio: "Tech Creator",
+          bio: "",
           kyc_status: "not_submitted",
           is_payment_enabled: false,
         },
@@ -404,8 +437,23 @@ const googleAuthCreatorService = async ({ idToken, credential, token: bodyToken,
     }
   }
 
+  // Save or update YouTube channel social link in CreatorSocialLink table
+  if (fetchedYoutubeUrl && CreatorSocialLink) {
+    try {
+      const [linkRec, created] = await CreatorSocialLink.findOrCreate({
+        where: { creator_id: creator.id, platform: "youtube" },
+        defaults: { creator_id: creator.id, platform: "youtube", profile_url: fetchedYoutubeUrl },
+      });
+      if (!created && linkRec && fetchedYoutubeUrl) {
+        await linkRec.update({ profile_url: fetchedYoutubeUrl });
+      }
+    } catch (socErr) {
+      console.warn("Saving Google YouTube social link note:", socErr.message);
+    }
+  }
+
   const profile = await CreatorProfile.findOne({ where: { creator_id: creator.id } });
-  const rawStatus = (profile?.kyc_status || "not_submitted").toLowerCase();
+  const rawStatus = (profile?.kyc_status).toLowerCase();
   const kycStatus = rawStatus === "approved" ? "approved" : rawStatus === "rejected" ? "rejected" : rawStatus === "pending" ? "pending" : "not_submitted";
 
   const jwtToken = generateToken(creator.id, "creator");
@@ -420,6 +468,7 @@ const googleAuthCreatorService = async ({ idToken, credential, token: bodyToken,
       country: creator.country,
       role: "creator",
       status: creator.status,
+      youtubeChannel: fetchedYoutubeUrl,
       kycStatus,
       isNewAccount,
     },

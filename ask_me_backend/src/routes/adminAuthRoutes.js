@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { register, login } = require('../controllers/adminAuthController');
+const { register, login, sendWhatsAppOtp, verifyWhatsAppOtp } = require('../controllers/adminAuthController');
 const { registerCreator } = require('../creator/controllers/creatorController');
 const { protect, authorize } = require('../middlewares/authMiddleware');
 const {
@@ -40,6 +40,10 @@ router.post(
   "/login",
   login
 );
+
+// WhatsApp OTP Send & Verify
+router.post("/whatsapp-otp/send", sendWhatsAppOtp);
+router.post("/whatsapp-otp/verify", verifyWhatsAppOtp);
 /**
  * @route   GET /api/auth/me
  * @desc    Get authenticated user profile

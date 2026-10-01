@@ -35,11 +35,11 @@ export function removeCookie(name) {
 
 // Dedicated Admin Session Helpers
 export function getAdminToken() {
-  return getCookie('askme_admin_token') || getCookie('askme_token');
+  return getCookie('askme_admin_token');
 }
 
 export function getAdminUser() {
-  return getCookieJson('askme_admin_user') || getCookieJson('askme_user');
+  return getCookieJson('askme_admin_user');
 }
 
 export function setAdminSession(token, user) {

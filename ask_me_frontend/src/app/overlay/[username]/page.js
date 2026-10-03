@@ -157,6 +157,7 @@ function StreamOverlayContent() {
         {/* Branded QR Code */}
         <div className="flex justify-center my-1">
           <BrandedQrCode
+            paymentLink={overlayData?.paymentLink}
             qrUrl={qrUrl}
             size="sm"
             showCenterLogo={true}

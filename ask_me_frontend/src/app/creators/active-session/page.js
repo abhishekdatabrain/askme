@@ -87,7 +87,7 @@ export default function CreatorActiveSessionPage() {
     const cName = creator?.fullName || creator?.full_name || creator?.username || activeSession.title || 'Creator';
     const success = await downloadBrandedQrCard({
       paymentLink: activeSession.paymentLink,
-      qrUrl: activeSession.qrCodeUrl,
+      // qrUrl: activeSession.qrCodeUrl,
       creatorName: cName,
       title: activeSession.title,
       sessionCode: activeSession.sessionCode || 'askme',
@@ -212,44 +212,43 @@ export default function CreatorActiveSessionPage() {
   return (
     <>
       <div className="flex-1 flex flex-col min-w-0">
-        <header className={`border-b sticky top-0 z-30 shrink-0 px-6 py-4 flex items-center justify-between transition-colors ${theme === 'light' ? 'border-[#E2E8F0] bg-white/95 backdrop-blur-md text-[#0F172A] shadow-sm' : 'border-[#222236] bg-[#0A0A0F]/95 backdrop-blur-md text-white shadow-sm'
+        <header className={`border-b sticky top-0 z-30 shrink-0 px-4 sm:px-6 py-3.5 sm:py-4 flex items-center justify-between transition-colors ${theme === 'light' ? 'border-[#E2E8F0] bg-white/95 backdrop-blur-md text-[#0F172A] shadow-sm' : 'border-[#222236] bg-[#0A0A0F]/95 backdrop-blur-md text-white shadow-sm'
           }`}>
-          <div>
-            <h1 className={`font-heading font-black text-xl flex items-center gap-2.5 ${theme === 'light' ? 'text-[#0F172A]' : 'text-white'}`}>
-              <Radio className="h-5 w-5 text-[#EB1000]" /> Active Broadcast Session
+          <div className="min-w-0 flex-1">
+            <h1 className={`font-heading font-black text-lg sm:text-xl flex items-center gap-2 truncate ${theme === 'light' ? 'text-[#0F172A]' : 'text-white'}`}>
+              <Radio className="h-5 w-5 text-[#EB1000] shrink-0" /> Active Broadcast Session
             </h1>
-            <p className={`text-xs mt-0.5 font-medium ${theme === 'light' ? 'text-[#64748B]' : 'text-[#A0A0B2]'}`}>
+            <p className={`text-[11px] sm:text-xs mt-0.5 font-medium truncate ${theme === 'light' ? 'text-[#64748B]' : 'text-[#A0A0B2]'}`}>
               Monitor your current live stream session, UPI QR code & OBS overlay URLs.
             </p>
           </div>
-
         </header>
 
-        <main className="p-6 max-w-5xl w-full mx-auto space-y-6">
+        <main className="p-4 sm:p-6 max-w-5xl w-full mx-auto space-y-5 sm:space-y-6">
           {isLoading ? (
             <div className="p-12 text-center flex flex-col items-center justify-center space-y-3">
               <RefreshCw className="h-8 w-8 text-[#EB1000] animate-spin" />
               <p className="text-xs text-[#A0A0B2] font-semibold">Loading active live session...</p>
             </div>
           ) : activeSession ? (
-            <div className={`p-6 sm:p-8 rounded-3xl border space-y-6 shadow-2xl relative overflow-hidden transition-all duration-300 ${theme === 'light' ? 'bg-white border-[#E2E8F0] shadow-slate-200/60' : 'bg-[#12121C]/95 backdrop-blur-xl border-[#222236] shadow-black/80'
+            <div className={`p-4 sm:p-8 rounded-2xl sm:rounded-3xl border space-y-5 sm:space-y-6 shadow-2xl relative overflow-hidden transition-all duration-300 ${theme === 'light' ? 'bg-white border-[#E2E8F0] shadow-slate-200/60' : 'bg-[#12121C]/95 backdrop-blur-xl border-[#222236] shadow-black/80'
               }`}>
               {/* Gradient Top Accent Bar */}
               <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#EB1000] via-[#FF5500] to-[#EB1000]" />
 
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b pb-5 border-current/10">
-                <div className="flex items-center gap-3.5">
-                  <div className="p-3.5 rounded-2xl bg-[#EB1000]/10 text-[#EB1000] border border-[#EB1000]/30 shrink-0">
-                    <Radio className="h-7 w-7 animate-pulse" />
+                <div className="flex items-start sm:items-center gap-3.5 min-w-0">
+                  <div className="p-3 sm:p-3.5 rounded-2xl bg-[#EB1000]/10 text-[#EB1000] border border-[#EB1000]/30 shrink-0 mt-0.5 sm:mt-0">
+                    <Radio className="h-6 w-6 sm:h-7 sm:w-7 animate-pulse" />
                   </div>
-                  <div>
+                  <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="px-3 py-1 rounded-full bg-[#00E676]/10 text-[#00E676] border border-[#00E676]/30 text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 shadow-sm">
+                      <span className="px-2.5 sm:px-3 py-1 rounded-full bg-[#00E676]/10 text-[#00E676] border border-[#00E676]/30 text-[9px] sm:text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 shadow-sm">
                         <span className="h-2 w-2 rounded-full bg-[#00E676] animate-pulse" />
                         CURRENTLY BROADCASTING LIVE
                       </span>
                       {timeRemaining && (
-                        <span className={`px-3 py-1 rounded-full text-[10px] font-bold flex items-center gap-1.5 border ${timeRemaining.includes('Expired')
+                        <span className={`px-2.5 sm:px-3 py-1 rounded-full text-[9px] sm:text-[10px] font-bold flex items-center gap-1.5 border ${timeRemaining.includes('Expired')
                           ? 'bg-[#FF9500]/10 text-[#FF9500] border-[#FF9500]/40'
                           : 'bg-[#FFD60A]/10 text-[#FFD60A] border-[#FFD60A]/30'
                           }`}>
@@ -257,17 +256,17 @@ export default function CreatorActiveSessionPage() {
                         </span>
                       )}
                     </div>
-                    <h3 className={`font-heading font-black text-2xl sm:text-3xl tracking-tight mt-1.5 ${theme === 'light' ? 'text-[#0F172A]' : 'text-white'}`}>
+                    <h3 className={`font-heading font-black text-xl sm:text-3xl tracking-tight mt-1.5 break-words ${theme === 'light' ? 'text-[#0F172A]' : 'text-white'}`}>
                       {activeSession.title}
                     </h3>
                   </div>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-3 shrink-0">
+                <div className="flex flex-wrap items-center gap-2.5 sm:gap-3 shrink-0 pt-2 sm:pt-0">
                   <button
                     type="button"
                     onClick={toggleQrDisabled}
-                    className={`px-5 py-2.5 rounded-xl text-xs font-black border transition-all flex items-center gap-2 cursor-pointer shadow-md ${isQrDisabled
+                    className={`flex-1 sm:flex-initial px-4 sm:px-5 py-2.5 rounded-xl text-xs font-black border transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md ${isQrDisabled
                       ? 'bg-gradient-to-r from-[#00E676] to-[#00C853] text-black border-[#00E676] hover:brightness-110 shadow-[#00E676]/20'
                       : 'bg-[#12121C] text-[#FF3B30] border-[#FF3B30]/60 hover:bg-[#FF3B30]/10 hover:border-[#FF3B30]'
                       }`}
@@ -285,7 +284,7 @@ export default function CreatorActiveSessionPage() {
 
                   <button
                     onClick={handleEndSession}
-                    className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#EB1000] to-[#CC0E00] text-white font-black text-xs shadow-lg shadow-[#EB1000]/30 hover:opacity-95 transition-all flex items-center gap-2 shrink-0 cursor-pointer"
+                    className="flex-1 sm:flex-initial px-4 sm:px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#EB1000] to-[#CC0E00] text-white font-black text-xs shadow-lg shadow-[#EB1000]/30 hover:opacity-95 transition-all flex items-center justify-center gap-2 shrink-0 cursor-pointer"
                   >
                     <StopCircle className="h-4 w-4" /> End Live Session
                   </button>
@@ -293,12 +292,12 @@ export default function CreatorActiveSessionPage() {
               </div>
 
               {/* Generated Outputs Grid */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5">
                 {/* QR & Payment Link Card */}
-                <div className={`p-5 rounded-2xl border flex flex-col sm:flex-row items-center sm:items-start gap-5 transition-all relative overflow-hidden ${theme === 'light' ? 'bg-[#F8FAFC] border-[#E2E8F0]' : 'bg-[#181826] border-[#2A2A3E]'}`}>
+                <div className={`p-4 sm:p-5 rounded-2xl border flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-5 transition-all relative overflow-hidden ${theme === 'light' ? 'bg-[#F8FAFC] border-[#E2E8F0]' : 'bg-[#181826] border-[#2A2A3E]'}`}>
                   {/* QR Code Container */}
                   <div className="relative shrink-0 flex items-center justify-center">
-                    <BrandedQrCode paymentLink={activeSession.paymentLink} qrUrl={activeSession.qrCodeUrl} size="sm" showBrandHeader={false} />
+                    <BrandedQrCode paymentLink={activeSession.paymentLink} size="sm" showBrandHeader={false} />
                   </div>
 
                   <div className="space-y-2.5 min-w-0 flex-1 w-full text-center sm:text-left flex flex-col justify-between self-stretch">
@@ -335,15 +334,14 @@ export default function CreatorActiveSessionPage() {
                       >
                         <Download className="h-3.5 w-3.5" /> Download QR
                       </button>
-                     
                     </div>
                   </div>
                 </div>
 
                 {/* OBS Overlay Card */}
-                <div className={`p-5 rounded-2xl border flex flex-col sm:flex-row items-center sm:items-start gap-4 transition-all ${theme === 'light' ? 'bg-[#F8FAFC] border-[#E2E8F0]' : 'bg-[#181826] border-[#2A2A3E]'}`}>
-                  <div className="h-32 w-32 rounded-2xl bg-[#EB1000]/10 border border-[#EB1000]/30 flex flex-col items-center justify-center text-[#EB1000] shrink-0 shadow-sm">
-                    <Monitor className="h-8 w-8" />
+                <div className={`p-4 sm:p-5 rounded-2xl border flex flex-col sm:flex-row items-center sm:items-start gap-4 transition-all ${theme === 'light' ? 'bg-[#F8FAFC] border-[#E2E8F0]' : 'bg-[#181826] border-[#2A2A3E]'}`}>
+                  <div className="h-28 w-28 sm:h-32 sm:w-32 rounded-2xl bg-[#EB1000]/10 border border-[#EB1000]/30 flex flex-col items-center justify-center text-[#EB1000] shrink-0 shadow-sm">
+                    <Monitor className="h-7 w-7 sm:h-8 sm:w-8" />
                     <span className="text-[9px] font-black mt-1.5 uppercase tracking-wider">OBS Source</span>
                   </div>
                   <div className="space-y-2 min-w-0 flex-1 w-full text-center sm:text-left">
@@ -372,7 +370,7 @@ export default function CreatorActiveSessionPage() {
               </div>
             </div>
           ) : (
-            <div className={`p-12 rounded-3xl border text-center space-y-4 shadow-xl ${theme === 'light' ? 'bg-white border-[#E2E8F0]' : 'bg-[#12121C] border-[#222236]'
+            <div className={`p-8 sm:p-12 rounded-3xl border text-center space-y-4 shadow-xl ${theme === 'light' ? 'bg-white border-[#E2E8F0]' : 'bg-[#12121C] border-[#222236]'
               }`}>
               <div className="h-16 w-16 mx-auto rounded-2xl bg-[#EB1000]/10 text-[#EB1000] flex items-center justify-center border border-[#EB1000]/30">
                 <Radio className="h-8 w-8" />

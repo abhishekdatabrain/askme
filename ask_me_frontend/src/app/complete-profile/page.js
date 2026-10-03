@@ -105,7 +105,7 @@ export default function CompleteProfilePage() {
           'Content-Type': 'application/json',
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
-        body: JSON.stringify({ phone: cleanPhone, mobile: cleanPhone }),
+        body: JSON.stringify({ phone: cleanPhone, mobile: cleanPhone, type: 'register', isRegister: true }),
       });
 
       const data = await res.json();
@@ -161,6 +161,8 @@ export default function CompleteProfilePage() {
           mobile,
           otp: cleanOtp,
           creatorId: creator?.id,
+          type: 'register',
+          isRegister: true,
         }),
       });
 
@@ -179,7 +181,7 @@ export default function CompleteProfilePage() {
         setSuccessMsg(succText);
         toast?.success(succText, 'Profile Verified');
 
-        const kycStatus = (updatedCreator?.kycStatus || 'pending').toLowerCase();
+        const kycStatus = (updatedCreator?.kycStatus).toLowerCase();
         const targetUrl = kycStatus === 'approved' ? '/creators/dashboard' : '/creators/kyc';
 
         setTimeout(() => {
@@ -405,7 +407,7 @@ export default function CompleteProfilePage() {
                   </>
                 ) : (
                   <>
-                    <span>Verify & Continue to Dashboard</span>
+                    <span>Verify & Continue </span>
                     <ArrowRight className="w-4 h-4" />
                   </>
                 )}

@@ -1,5 +1,7 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const { Op } = require("sequelize");
+
 const crypto = require("crypto");
 const {
   Admin,
@@ -248,31 +250,31 @@ const login = async (req, res, next) => {
     // Refresh Token Expiry
     // -----------------------------
 
-  const getExpiryDate = (expiresIn) => {
-  const match = expiresIn.match(/^(\d+)([smhd])$/);
+    const getExpiryDate = (expiresIn) => {
+      const match = expiresIn.match(/^(\d+)([smhd])$/);
 
-  if (!match) {
-    throw new Error(`Invalid expiry: ${expiresIn}`);
-  }
+      if (!match) {
+        throw new Error(`Invalid expiry: ${expiresIn}`);
+      }
 
-  const value = Number(match[1]);
-  const unit = match[2];
+      const value = Number(match[1]);
+      const unit = match[2];
 
-  const multipliers = {
-    s: 1000,
-    m: 60 * 1000,
-    h: 60 * 60 * 1000,
-    d: 24 * 60 * 60 * 1000,
-  };
+      const multipliers = {
+        s: 1000,
+        m: 60 * 1000,
+        h: 60 * 60 * 1000,
+        d: 24 * 60 * 60 * 1000,
+      };
 
-  return new Date(
-    Date.now() + value * multipliers[unit]
-  );
-};
+      return new Date(
+        Date.now() + value * multipliers[unit]
+      );
+    };
 
-const refreshExpiresAt = getExpiryDate(
-  process.env.JWT_REFRESH_EXPIRES
-);
+    const refreshExpiresAt = getExpiryDate(
+      process.env.JWT_REFRESH_EXPIRES
+    );
 
 
     // -----------------------------
@@ -359,6 +361,11 @@ const refreshExpiresAt = getExpiryDate(
  * @route   POST /api/adminauth/whatsapp-otp/send
  * @access  Public
  */
+/**
+ * @desc    Send WhatsApp OTP to Admin (verifies admin exists & is_active in admins table first)
+ * @route   POST /api/adminauth/whatsapp-otp/send
+ * @access  Public
+ */
 const sendWhatsAppOtp = async (req, res, next) => {
   try {
     const { mobile, phone } = req.body;
@@ -377,16 +384,36 @@ const sendWhatsAppOtp = async (req, res, next) => {
       });
     }
 
+    // 1. Check if admin exists in `admins` table and is_active = true
+    const admin = await Admin.findOne({
+      where: {
+        [Op.or]: [
+          { phone: tenDigit },
+          { phone: `91${tenDigit}` },
+          { phone: `+91${tenDigit}` },
+        ],
+        is_active: true,
+      },
+    });
+
+    if (!admin) {
+      return res.status(404).json({
+        success: false,
+        message: 'No active Admin account found matching this mobile number.',
+      });
+    }
+
+    // 2. Only if active admin exists, generate and store OTP
     const { cleanPhone: targetPhone, otp } = generateAndStoreOtp(tenDigit);
 
-    // Send WhatsApp OTP template message using askme_login_otp
+    // 3. Send WhatsApp OTP
     await sendLoginOtpWhatsApp({
       phone: targetPhone,
       otp,
       expiresMinutes: 5,
     });
 
-    console.log(`[Admin WhatsApp OTP] Code ${otp} generated and sent to ${targetPhone}`);
+    console.log(`[Admin WhatsApp OTP] Code ${otp} generated and sent to ${targetPhone} for Admin ID ${admin.id}`);
 
     return res.status(200).json({
       success: true,
@@ -412,14 +439,20 @@ const verifyWhatsAppOtp = async (req, res, next) => {
     const rawPhone = mobile || phone;
     const cleanPhone = String(rawPhone || '').replace(/[^0-9]/g, '');
 
-    if (!cleanPhone || !otp) {
+    let tenDigit = cleanPhone;
+    if (tenDigit.length === 12 && tenDigit.startsWith('91')) {
+      tenDigit = tenDigit.slice(2);
+    }
+
+    if (!tenDigit || !otp) {
       return res.status(400).json({
         success: false,
         message: 'Mobile number and 6-digit OTP code are required.',
       });
     }
 
-    const verification = verifyStoredOtp(cleanPhone, otp);
+    // 1. Validate OTP, expiry, and unused status
+    const verification = verifyStoredOtp(tenDigit, otp);
     if (!verification.valid) {
       return res.status(400).json({
         success: false,
@@ -427,57 +460,53 @@ const verifyWhatsAppOtp = async (req, res, next) => {
       });
     }
 
-    let targetPhone = cleanPhone;
-    if (targetPhone.length === 10) targetPhone = `91${targetPhone}`;
-    const tenDigit = targetPhone.slice(-10);
+    // 2. Find active Admin matching phone number
+    const { Op } = require("sequelize");
+    const admin = await Admin.findOne({
+      where: {
+        [Op.or]: [
+          { phone: tenDigit },
+          { phone: `91${tenDigit}` },
+          { phone: `+91${tenDigit}` },
+        ],
+        is_active: true,
+      },
+    });
 
-    // Find active admin in DB
-    let admin = await Admin.findOne({ where: { is_active: true } }).catch(() => null);
+    if (!admin) {
+      return res.status(404).json({
+        success: false,
+        message: 'Admin account not found or is inactive.',
+      });
+    }
 
-    // if (!admin) {
-    //   const dummyHash = await bcrypt.hash(`admin_${Date.now()}`, 10);
-    //   admin = await Admin.create({
-    //     name: `Admin (${tenDigit})`,
-    //     email: `admin_${tenDigit}@askme.com`,
-    //     password_hash: dummyHash,
-    //     role: 'admin',
-    //     is_active: true,
-    //   });
-    // }
-
+    // 3. Generate Auth Tokens & Session
     const accessToken = generateAccessToken(admin);
     const refreshToken = generateRefreshToken();
     const tokenHash = hashRefreshToken(refreshToken);
 
     const getExpiryDate = (expiresIn) => {
-  const match = expiresIn.match(/^(\d+)([smhd])$/);
+      const match = (expiresIn || '7d').match(/^(\d+)([smhd])$/);
+      if (!match) {
+        return new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+      }
+      const value = Number(match[1]);
+      const unit = match[2];
+      const multipliers = {
+        s: 1000,
+        m: 60 * 1000,
+        h: 60 * 60 * 1000,
+        d: 24 * 60 * 60 * 1000,
+      };
+      return new Date(Date.now() + value * multipliers[unit]);
+    };
 
-  if (!match) {
-    throw new Error(`Invalid expiry: ${expiresIn}`);
-  }
+    const refreshExpiresAt = getExpiryDate(process.env.JWT_REFRESH_EXPIRES || '7d');
 
-  const value = Number(match[1]);
-  const unit = match[2];
-
-  const multipliers = {
-    s: 1000,
-    m: 60 * 1000,
-    h: 60 * 60 * 1000,
-    d: 24 * 60 * 60 * 1000,
-  };
-
-  return new Date(
-    Date.now() + value * multipliers[unit]
-  );
-};
-
-const refreshExpiresAt = getExpiryDate(
-  process.env.JWT_REFRESH_EXPIRES
-);
     await AdminRefreshToken.create({
       admin_id: admin.id,
       token_hash: tokenHash,
-      expires_at: refreshExpiresAt
+      expires_at: refreshExpiresAt,
     }).catch((err) => console.warn('AdminRefreshToken creation note:', err.message));
 
     res.cookie('admin_refresh_token', refreshToken, {
@@ -496,6 +525,7 @@ const refreshExpiresAt = getExpiryDate(
         id: admin.id,
         name: admin.name,
         email: admin.email,
+        phone: admin.phone,
         role: admin.role,
         is_active: admin.is_active,
       },

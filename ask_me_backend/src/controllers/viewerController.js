@@ -1195,7 +1195,7 @@ const getPublicCategories = async (req, res, next) => {
  */
 const sendWhatsAppOtpViewer = async (req, res, next) => {
   try {
-    const { mobile, phone } = req.body;
+    const { mobile, phone, type, isRegister } = req.body;
     const rawPhone = mobile || phone;
     const cleanPhone = String(rawPhone || '').replace(/[^0-9]/g, '');
 
@@ -1211,22 +1211,46 @@ const sendWhatsAppOtpViewer = async (req, res, next) => {
       });
     }
 
-    const { cleanPhone: targetPhone, otp } = generateAndStoreOtp(tenDigit);
+    const isRegistrationFlow = type === 'register' || isRegister === true || type !== 'login';
+
+    // DB Validation: Only check if number exists during LOGIN flow (skip during registration)
+    if (!isRegistrationFlow) {
+      const targetPhone = `91${tenDigit}`;
+
+      const user = await User.findOne({
+        where: {
+          [Op.or]: [
+            { phone: targetPhone },
+            { phone: tenDigit },
+            { phone: `+91${tenDigit}` },
+          ],
+        },
+      }).catch(() => null);
+
+      if (!user) {
+        return res.status(400).json({
+          status: 'fail',
+          message: 'This mobile number is not registered. Please use a registered number.',
+        });
+      }
+    }
+
+    const { cleanPhone: targetPhoneOtp, otp } = generateAndStoreOtp(tenDigit);
 
     // Send WhatsApp OTP template message using askme_login_otp
     await sendLoginOtpWhatsApp({
-      phone: targetPhone,
+      phone: targetPhoneOtp,
       otp,
       expiresMinutes: 5,
     });
 
-    console.log(`[WhatsApp OTP] Code ${otp} generated and sent to ${targetPhone}`);
+    console.log(`[WhatsApp OTP Viewer] Code ${otp} generated and sent to ${targetPhoneOtp} (Flow: ${isRegistrationFlow ? 'register' : 'login'})`);
 
     return res.status(200).json({
       status: 'success',
       message: 'Verification code sent to your WhatsApp number!',
       expiresMinutes: 5,
-      phone: targetPhone,
+      phone: targetPhoneOtp,
       ...(process.env.NODE_ENV !== 'production' ? { debugOtp: otp } : {}),
     });
   } catch (error) {
@@ -1236,13 +1260,13 @@ const sendWhatsAppOtpViewer = async (req, res, next) => {
 };
 
 /**
- * @desc    Verify WhatsApp OTP and Login/Register Viewer
+ * @desc    Verify WhatsApp OTP and Login Viewer
  * @route   POST /api/viewers/whatsapp-otp/verify
  * @access  Public
  */
 const verifyWhatsAppOtpViewer = async (req, res, next) => {
   try {
-    const { mobile, phone, otp } = req.body;
+    const { mobile, phone, otp, type, isRegister } = req.body;
     const rawPhone = mobile || phone;
     const cleanPhone = String(rawPhone || '').replace(/[^0-9]/g, '');
 
@@ -1261,50 +1285,56 @@ const verifyWhatsAppOtpViewer = async (req, res, next) => {
       });
     }
 
+    const isRegistrationFlow = type === 'register' || isRegister === true || type !== 'login';
+    if (isRegistrationFlow) {
+      return res.status(200).json({
+        status: 'success',
+        message: 'Mobile number verified via WhatsApp!',
+      });
+    }
+
     // Find existing viewer by phone or whatsapp email
     let targetPhone = cleanPhone;
-    if (targetPhone.length === 10) targetPhone = `91${targetPhone}`;
+    if (targetPhone.length === 12 && targetPhone.startsWith('91')) {
+      targetPhone = targetPhone.slice(2);
+    }
 
     const tenDigit = targetPhone.slice(-10);
+    const fullPhone = `91${tenDigit}`;
 
-    // let user = await User.findOne({
-    //   where: {
-    //     [Op.or]: [
-    //       { phone: targetPhone },
-    //       { phone: tenDigit },
-    //       { email: `${targetPhone}@whatsapp.user` },
-    //       { email: `${tenDigit}@whatsapp.user` },
-    //     ],
-    //   },
-    // }).catch(() => null);
+    let user = await User.findOne({
+      where: {
+        [Op.or]: [
+          { phone: fullPhone },
+          { phone: tenDigit },
+          { phone: `+91${tenDigit}` },
+          
+        ],
+      },
+    }).catch(() => null);
 
-    // if (!user) {
-    //   // Auto-register new viewer
-    //   const randomPassword = await bcrypt.hash(`wa_${Date.now()}_${Math.random()}`, 10);
-    //   user = await User.create({
-    //     name: `Viewer ${tenDigit.slice(-4)}`,
-    //     email: `${targetPhone}@whatsapp.user`,
-    //     phone: targetPhone,
-    //     password: randomPassword,
-    //     role: 'user', // Viewer role in users table
-    //   });
-    // }
+    if (!user) {
+      return res.status(400).json({
+        status: 'fail',
+        message: 'This mobile number is not registered. Please use a registered number.',
+      });
+    }
 
-    //const token = generateToken(user.id, user.role || 'user');
+    const token = generateToken(user.id, user.role);
 
     return res.status(200).json({
       status: 'success',
       message: 'WhatsApp authentication successful!',
-      // data: {
-      //   token,
-      //   user: {
-      //     id: user.id,
-      //     name: user.name,
-      //     email: user.email,
-      //     phone: user.phone,
-      //     role: user.role,
-      //   },
-      // },
+      data: {
+        token,
+        user: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          phone: user.phone,
+          role: user.role,
+        },
+      },
     });
   } catch (error) {
     console.error('VERIFY WHATSAPP OTP VIEWER ERROR:', error);

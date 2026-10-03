@@ -154,7 +154,7 @@ export default function CreatorStartLivePage() {
   return (
     <>
       <div className="flex-1 flex flex-col min-w-0">
-        <header className={`border-b sticky top-0 z-30 shrink-0 px-6 py-4 flex items-center justify-between transition-colors ${theme === 'light' ? 'border-[#E2E8F0] bg-white/95 backdrop-blur-md text-[#0F172A] shadow-sm' : 'border-[#222236] bg-[#0A0A0F]/95 backdrop-blur-md text-white shadow-sm'
+        <header className={`border-b sticky top-0 z-30 shrink-0 px-4 sm:px-6 py-4 flex items-center justify-between transition-colors ${theme === 'light' ? 'border-[#E2E8F0] bg-white/95 backdrop-blur-md text-[#0F172A] shadow-sm' : 'border-[#222236] bg-[#0A0A0F]/95 backdrop-blur-md text-white shadow-sm'
           }`}>
           <div>
             <h1 className={`font-heading font-black text-xl flex items-center gap-2.5 ${theme === 'light' ? 'text-[#0F172A]' : 'text-white'}`}>
@@ -167,7 +167,7 @@ export default function CreatorStartLivePage() {
 
         </header>
 
-        <main className="p-6 max-w-5xl w-full mx-auto space-y-6">
+        <main className="p-4 sm:p-6 max-w-5xl w-full mx-auto space-y-6">
           <form onSubmit={handleCreateSession} className={`p-6 sm:p-8 rounded-3xl border space-y-6 shadow-2xl relative overflow-hidden transition-all duration-300 ${theme === 'light' ? 'bg-white border-[#E2E8F0] shadow-slate-200/60' : 'bg-[#12121C]/95 backdrop-blur-xl border-[#222236] shadow-black/80'
             }`}>
             <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#EB1000] via-[#FF5500] to-[#EB1000]" />

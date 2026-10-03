@@ -27,7 +27,7 @@ import { API_ENDPOINTS } from '@/config/api';
 import { getViewerToken, getViewerUser, clearViewerSession, removeCookie } from '@/utils/cookies';
 import Logo from '@/components/Logo';
 
-function ViewerSidebarContent({ theme: propTheme, onToggleTheme, activeTab: currentTab, onSelectTab }) {
+function ViewerSidebarContent({ theme: propTheme, onToggleTheme, activeTab: currentTab, onSelectTab, isMobileDrawer = false, onNavigate }) {
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -178,6 +178,9 @@ function ViewerSidebarContent({ theme: propTheme, onToggleTheme, activeTab: curr
   );
 
   const handleNavClick = (item) => {
+    if (onNavigate) onNavigate();
+    setMobileOpen(false);
+
     if (item.id === 'past-streams') {
       router.push('/viewers/past-streams');
       return;
@@ -217,25 +220,27 @@ function ViewerSidebarContent({ theme: propTheme, onToggleTheme, activeTab: curr
   };
 
   const renderSidebarContent = () => (
-    <div className="flex flex-col justify-between h-full p-4 selection:bg-[#EB1000] selection:text-white">
-      <div className="space-y-5">
-        {/* BRANDING HEADER */}
-        <div className="flex items-center justify-between px-2 pt-2">
-          <Link href="/" onClick={() => setMobileOpen(false)} className="flex items-center gap-2.5 group">
-            <Logo size="md" />
-            <div>
-              <span className={`font-heading font-black text-lg block leading-none ${theme === 'light' ? 'text-[#0F172A]' : 'text-white'}`}>
-                AskMe <span className="text-[#EB1000]">VIEWER</span>
-              </span>
-            </div>
-          </Link>
-          <button
-            onClick={() => setMobileOpen(false)}
-            className="md:hidden p-2 rounded-xl text-[#8B8B96] hover:text-white"
-          >
-            <X className="h-5 w-5" />
-          </button>
-        </div>
+    <div className="flex flex-col justify-between h-full p-4 overflow-y-auto selection:bg-[#EB1000] selection:text-white">
+      <div className="space-y-4">
+        {/* BRANDING HEADER (Only when not in layout mobile drawer) */}
+        {!isMobileDrawer && (
+          <div className="flex items-center justify-between px-2 pt-2">
+            <Link href="/" onClick={() => setMobileOpen(false)} className="flex items-center gap-2.5 group">
+              <Logo size="md" />
+              <div>
+                <span className={`font-heading font-black text-lg block leading-none ${theme === 'light' ? 'text-[#0F172A]' : 'text-white'}`}>
+                  AskMe <span className="text-[#EB1000]">VIEWER</span>
+                </span>
+              </div>
+            </Link>
+            <button
+              onClick={() => setMobileOpen(false)}
+              className="md:hidden p-2 rounded-xl text-[#8B8B96] hover:text-white"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
+        )}
 
         {/* VIEWER USER PROFILE SUMMARY PILL */}
         {viewerUser && (

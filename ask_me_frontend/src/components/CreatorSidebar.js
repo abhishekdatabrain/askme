@@ -28,7 +28,7 @@ import { API_ENDPOINTS } from '@/config/api';
 import { getCreatorToken, getCreatorUser, setCookie, clearCreatorSession } from '@/utils/cookies';
 import Logo from '@/components/Logo';
 
-function CreatorSidebarContent({ theme: propTheme, onToggleTheme }) {
+function CreatorSidebarContent({ theme: propTheme, onToggleTheme, onNavigate, isMobileDrawer = false }) {
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -167,24 +167,27 @@ function CreatorSidebarContent({ theme: propTheme, onToggleTheme }) {
   ];
 
   return (
-    <aside className={`w-64 border-r flex flex-col h-screen sticky top-0 shrink-0 z-30 select-none transition-colors duration-200 ${theme === 'light' ? 'bg-[#F8F9FA] border-[#E9ECEF]' : 'bg-[#13131A] border-[#1C1C26]'
-      }`}>
-      {/* Studio Header & Branding */}
-      <div className={`p-5 border-b flex items-center justify-between ${theme === 'light' ? 'border-[#E9ECEF]' : 'border-[#1C1C26]'
-        }`}>
-        <Link href="/creators/dashboard" className="flex items-center gap-2.5 group">
-          <Logo size="md" />
-          <div>
-            <span className={`font-heading font-black text-lg block leading-none ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'
-              }`}>
-              AskMe
-            </span>
-            <span className={`text-[10px] font-bold uppercase tracking-wider block mt-1 ${theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'
-              }`}>
-              Creator            </span>
-          </div>
-        </Link>
-      </div>
+    <aside className={`flex flex-col select-none transition-colors duration-200 ${
+      isMobileDrawer 
+        ? 'w-full h-full min-h-0' 
+        : 'w-64 border-r h-screen sticky top-0 shrink-0 z-30'
+    } ${theme === 'light' ? 'bg-[#F8F9FA] border-[#E9ECEF]' : 'bg-[#13131A] border-[#1C1C26]'}`}>
+      {/* Studio Header & Branding (Only rendered on desktop or non-drawer layout) */}
+      {!isMobileDrawer && (
+        <div className={`p-5 border-b flex items-center justify-between ${theme === 'light' ? 'border-[#E9ECEF]' : 'border-[#1C1C26]'}`}>
+          <Link href="/creators/dashboard" className="flex items-center gap-2.5 group">
+            <Logo size="md" />
+            <div>
+              <span className={`font-heading font-black text-lg block leading-none ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'}`}>
+                AskMe
+              </span>
+              <span className={`text-[10px] font-bold uppercase tracking-wider block mt-1 ${theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'}`}>
+                Creator Studio
+              </span>
+            </div>
+          </Link>
+        </div>
+      )}
 
       {/* Creator Profile Summary Pill */}
       {creatorUser && (
@@ -227,6 +230,7 @@ function CreatorSidebarContent({ theme: propTheme, onToggleTheme }) {
             <Link
               key={item.name}
               href={item.href}
+              onClick={() => { if (onNavigate) onNavigate(); }}
               className={`flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${isActive
                 ? 'bg-brand-gradient text-white shadow-lg glow-brand font-black'
                 : theme === 'light'

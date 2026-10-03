@@ -220,7 +220,7 @@ function InnerAuthModal({ isOpen, onClose, initialRole = 'viewer', initialMode =
       const res = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone: cleanPhone, mobile: cleanPhone }),
+        body: JSON.stringify({ phone: cleanPhone, mobile: cleanPhone, type: 'login' }),
       });
 
       const data = await res.json();
@@ -345,7 +345,7 @@ function InnerAuthModal({ isOpen, onClose, initialRole = 'viewer', initialMode =
       const res = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone: cleanMobile }),
+        body: JSON.stringify({ phone: cleanMobile, type: 'register' }),
       });
 
       const data = await res.json();
@@ -1473,7 +1473,7 @@ function InnerAuthModal({ isOpen, onClose, initialRole = 'viewer', initialMode =
                 </div>
 
                 {/* Username & Password */}
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
 
                   <div>
                     <label className="block text-xs font-bold text-gray-700 mb-1">Password *</label>
@@ -1625,7 +1625,7 @@ function InnerAuthModal({ isOpen, onClose, initialRole = 'viewer', initialMode =
                             maxLength={6}
                             value={loginOtp}
                             onChange={(e) => setLoginOtp(e.target.value.replace(/\D/g, ''))}
-                            placeholder="123456"
+                            placeholder="******"
                             className="w-full py-2 px-3 rounded-xl border border-emerald-300 text-sm text-center font-mono font-bold tracking-widest bg-white text-black outline-none focus:border-[#25D366]"
                           />
                         </div>
@@ -1663,7 +1663,7 @@ function InnerAuthModal({ isOpen, onClose, initialRole = 'viewer', initialMode =
                             loginOtpStep === 'idle' ? (
                               <>
                                 <MessageSquare className="h-4 w-4" />
-                                <span>Get OTP on WhatsApp</span>
+                                <span>Send OTP on WhatsApp</span>
                                 <ArrowRight className="h-4 w-4" />
                               </>
                             ) : (

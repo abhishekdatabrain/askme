@@ -2217,7 +2217,7 @@ export default function Home() {
 
                 {/* White QR Code Display Container */}
                 <div className="p-5 rounded-2xl bg-[#08080E] border border-[#202030] flex flex-col items-center justify-center space-y-3">
-                  <div className="bg-white p-4 rounded-2xl shadow-2xl flex flex-col items-center justify-center">
+                  <div className="bg-white rounded-2xl shadow-2xl flex flex-col items-center justify-center">
                     <OriginalScannerImage className="w-44 sm:w-48 h-auto" />
                   </div>
                   <div className="text-[12px] sm:text-[13px] font-mono text-[#EB1000] font-bold tracking-tight">

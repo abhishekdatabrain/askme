@@ -283,35 +283,7 @@ export default function DedicatedSessionQuestionsPage() {
                   </select>
                 </div>
 
-                {/* From Date */}
-                <div className="flex items-center gap-1 shrink-0">
-                  <span className={`text-[11px] font-bold flex items-center gap-0.5 ${theme === 'light' ? 'text-[#64748B]' : 'text-[#A0A0B2]'}`}>
-                    <Calendar className="h-3 w-3 text-[#EB1000]" /> From:
-                  </span>
-                  <input
-                    type="date"
-                    value={startDate}
-                    onChange={(e) => setStartDate(e.target.value)}
-                    className={`px-2 py-1.5 rounded-xl text-xs border outline-none font-medium transition ${theme === 'light'
-                      ? 'bg-white border-[#E2E8F0] text-[#0F172A] focus:border-[#EB1000]'
-                      : 'bg-[#12121C] border-[#222236] text-white focus:border-[#EB1000]'
-                      }`}
-                  />
-                </div>
-
-                {/* To Date */}
-                <div className="flex items-center gap-1 shrink-0">
-                  <span className={`text-[11px] font-bold ${theme === 'light' ? 'text-[#64748B]' : 'text-[#A0A0B2]'}`}>To:</span>
-                  <input
-                    type="date"
-                    value={endDate}
-                    onChange={(e) => setEndDate(e.target.value)}
-                    className={`px-2 py-1.5 rounded-xl text-xs border outline-none font-medium transition ${theme === 'light'
-                      ? 'bg-white border-[#E2E8F0] text-[#0F172A] focus:border-[#EB1000]'
-                      : 'bg-[#12121C] border-[#222236] text-white focus:border-[#EB1000]'
-                      }`}
-                  />
-                </div>
+             
 
                 {/* Search Button & Reset */}
                 <div className="flex items-center gap-1.5 shrink-0">

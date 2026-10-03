@@ -77,7 +77,7 @@ const createLiveSessionService = async (creatorId, data) => {
 
     const origin = process.env.FRONTEND_URL || "http://localhost:3000";
     const paymentLink = `${origin}/pay/${sessionCode}?creatorId=${creatorId}&sessionId=${newSession.id}`;
-    const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&ecc=H&margin=2&data=${encodeURIComponent(paymentLink)}`;
+    //const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&ecc=H&margin=2&data=${encodeURIComponent(paymentLink)}`;
     const overlayUrl = `${origin}/overlay/${creator.username}`;
 
     await QrCode.create(
@@ -85,7 +85,7 @@ const createLiveSessionService = async (creatorId, data) => {
         session_id: newSession.id,
         qr_token: `QR-${newSession.id}-${Date.now()}`,
         payment_url: paymentLink,
-        qr_image_url: qrCodeUrl,
+        qr_image_url: paymentLink,
         status: "active",
         expires_at: qrExpiresAt,
         qrcode_duration: durationNum,
@@ -131,7 +131,7 @@ const createLiveSessionService = async (creatorId, data) => {
         totalAmount: 0,
       },
       paymentLink,
-      qrCodeUrl,
+     // qrCodeUrl,
       overlayUrl,
     };
   } catch (error) {

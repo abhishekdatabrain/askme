@@ -10,6 +10,7 @@ export default function ViewerLayout({ children }) {
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [loading, setLoading] = useState(true);
   const [theme, setTheme] = useState('dark');
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Exclude auth pages (login & register) from sidebar & auth layout protection
   const isAuthPage = pathname === '/' || pathname === '/';
@@ -71,16 +72,88 @@ export default function ViewerLayout({ children }) {
   }
 
   return (
-    <div className={`h-screen w-full font-sans flex overflow-hidden selection:bg-[#EB1000] selection:text-white transition-colors duration-200 ${theme === 'light' ? 'bg-[#F8FAFC] text-[#0F172A]' : 'bg-[#0A0A0F] text-[#F5F5F7]'
+    <div className={`h-screen w-full font-sans flex flex-col md:flex-row overflow-hidden selection:bg-[#EB1000] selection:text-white transition-colors duration-200 ${theme === 'light' ? 'bg-[#F8FAFC] text-[#0F172A]' : 'bg-[#0A0A0F] text-[#F5F5F7]'
       }`}>
-      {/* 1. FIXED DESKTOP SIDEBAR - STAYS MOUNTED ACCROSS ALL PAGES */}
+      {/* 1. MOBILE TOP HEADER (< md) */}
+      <div className={`md:hidden flex items-center justify-between px-4 py-3 border-b z-40 shrink-0 ${
+        theme === 'light' ? 'bg-white border-[#E2E8F0]' : 'bg-[#0D0D14] border-[#1F1F30]'
+      }`}>
+        <div className="flex items-center gap-2.5">
+          <div className="h-7 w-7 rounded-lg bg-[#EB1000] flex items-center justify-center text-white font-black text-xs shadow-sm">
+            a
+          </div>
+          <div>
+            <span className={`font-heading font-black text-sm block leading-none ${theme === 'light' ? 'text-[#0F172A]' : 'text-white'}`}>
+              AskMe
+            </span>
+            <span className="text-[9px] font-bold uppercase tracking-wider block text-[#EB1000] mt-0.5">
+              Viewer Hub
+            </span>
+          </div>
+        </div>
+        <button
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          className={`p-2 rounded-xl border cursor-pointer ${
+            theme === 'light' ? 'bg-[#F1F5F9] border-[#E2E8F0] text-[#0F172A]' : 'bg-[#14141F] border-[#1F1F30] text-white'
+          }`}
+          aria-label="Toggle Navigation Menu"
+        >
+          <svg className="h-5 w-5 fill-none stroke-current" viewBox="0 0 24 24" strokeWidth="2">
+            {mobileMenuOpen ? (
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            ) : (
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+            )}
+          </svg>
+        </button>
+      </div>
+
+      {/* 2. MOBILE DRAWER SLIDE-OVER OVERLAY */}
+      {mobileMenuOpen && (
+        <div className="md:hidden fixed inset-0 z-50 flex">
+          <div
+            className="fixed inset-0 bg-black/80 backdrop-blur-sm transition-opacity"
+            onClick={() => setMobileMenuOpen(false)}
+          />
+          <div className={`relative w-72 sm:w-80 max-w-[85vw] h-full shadow-2xl flex flex-col z-50 border-r overflow-hidden ${
+            theme === 'light' ? 'bg-white border-[#E2E8F0]' : 'bg-[#0D0D14] border-[#1F1F30]'
+          }`}>
+            <div className={`p-3.5 border-b flex items-center justify-between shrink-0 ${
+              theme === 'light' ? 'bg-[#F8FAFC] border-[#E2E8F0]' : 'bg-[#0A0A0F] border-[#1F1F30]'
+            }`}>
+              <span className="font-heading font-black text-xs uppercase tracking-wider text-[#EB1000]">Viewer Navigation</span>
+              <button
+                onClick={() => setMobileMenuOpen(false)}
+                className={`p-1.5 rounded-lg border cursor-pointer ${
+                  theme === 'light' ? 'bg-white border-[#E2E8F0] text-gray-600' : 'bg-[#1C1C26] border-[#252533] text-gray-400'
+                }`}
+                aria-label="Close Navigation"
+              >
+                <svg className="h-4 w-4 fill-none stroke-current" viewBox="0 0 24 24" strokeWidth="2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto min-h-0">
+              <ViewerSidebar
+                theme={theme}
+                onToggleTheme={(t) => setTheme(t)}
+                isMobileDrawer={true}
+                onNavigate={() => setMobileMenuOpen(false)}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 3. FIXED DESKTOP SIDEBAR - STAYS MOUNTED ACCROSS ALL PAGES */}
       <div className={`hidden md:block h-screen overflow-y-auto shrink-0 z-40 border-r ${theme === 'light' ? 'border-[#E2E8F0] bg-white' : 'border-[#1F1F30] bg-[#0D0D14]'
         }`}>
         <ViewerSidebar theme={theme} onToggleTheme={(t) => setTheme(t)} />
       </div>
 
-      {/* 2. DYNAMIC MAIN VIEWPORT WITH STICKY HEADER SCROLL SUPPORT */}
-      <div className="flex-1 flex flex-col min-w-0 h-screen overflow-y-auto relative">
+      {/* 4. DYNAMIC MAIN VIEWPORT WITH STICKY HEADER SCROLL SUPPORT */}
+      <div className="flex-1 flex flex-col min-w-0 h-full overflow-y-auto relative">
         {children}
       </div>
     </div>

@@ -1,9 +1,10 @@
 const { Follow, User, Notification, Creator } = require("../models");
 const { getIO } = require("../config/socket");
 const { sendGoLiveWhatsAppAlert } = require("./whatsappService");
+const { sendGoLiveEmailToFollowersAsync } = require("./emailService");
 
 /**
- * Trigger Mass Automated Notification (In-App + WhatsApp) to all followers when Creator starts Live Session
+ * Trigger Mass Automated Notification (In-App + WhatsApp + Email) to all followers when Creator starts Live Session
  */
 const triggerGoLiveBroadcast = async ({ creatorId, sessionId, title, sessionCode }) => {
   if (!creatorId) return null;
@@ -36,10 +37,13 @@ const triggerGoLiveBroadcast = async ({ creatorId, sessionId, title, sessionCode
     const followerUserIds = [];
     const notificationRecords = [];
     const recipients = [];
+    const emailFollowers = [];
 
     follows.forEach((f) => {
       const viewerId = f.viewer?.id || f['viewer.id'] || f.viewer_id;
       const viewerName = f.viewer?.name || f['viewer.name'] || '';
+      const viewerEmail = f.viewer?.email || f['viewer.email'];
+      console.log(viewerEmail,"viewerEmail");
       const viewerPhone = f.viewer?.phone || f['viewer.phone'];
 
       if (viewerId) {
@@ -59,6 +63,18 @@ const triggerGoLiveBroadcast = async ({ creatorId, sessionId, title, sessionCode
       if (viewerPhone) {
         recipients.push({ phone: viewerPhone, name: viewerName });
       }
+
+      if (viewerEmail) {
+        emailFollowers.push({ name: viewerName, email: viewerEmail });
+      }
+    });
+
+    // Send Go-Live Email to all followers asynchronously
+    sendGoLiveEmailToFollowersAsync({
+      followers: emailFollowers,
+      creatorName,
+      sessionTitle: title,
+      sessionCode,
     });
 
     // Recipients list contains ONLY followers (viewers)
@@ -74,7 +90,6 @@ const triggerGoLiveBroadcast = async ({ creatorId, sessionId, title, sessionCode
           sessionTitle: title,
           sessionCode,
         });
-        console.log(`[Broadcast Service] WhatsApp alert dispatched to "${r.name}" (${r.phone}):`, JSON.stringify(waRes));
         return waRes;
       } catch (err) {
         console.warn(`[Broadcast Service] WhatsApp alert error for phone ${r.phone}:`, err.message);
@@ -88,6 +103,7 @@ const triggerGoLiveBroadcast = async ({ creatorId, sessionId, title, sessionCode
       success: true,
       followersCount: follows.length,
       notifiedUsersCount: followerUserIds.length,
+      emailsSentCount: emailFollowers.length,
     };
   } catch (err) {
     console.error("[Broadcast Service] Failed to trigger Go-Live broadcast:", err.message);

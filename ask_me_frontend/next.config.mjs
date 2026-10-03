@@ -4,6 +4,8 @@ const nextConfig = {
   allowedDevOrigins: [
     "192.168.1.11",
     "192.168.1.21",
+    "192.168.1.8",
+
   ],
   reactCompiler: true,
 };

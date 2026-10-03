@@ -1,5 +1,6 @@
 /**
- * Utility to generate and download the exact branded Live QR Code image.
+ * Utility to generate and download the exact branded Live QR Code image
+ * matching the SessionQRCode style.
  */
 export const downloadBrandedQrCard = async ({
     qrUrl,
@@ -25,36 +26,40 @@ export const downloadBrandedQrCard = async ({
         // 2. Dynamic import qr-code-styling
         const { default: QRCodeStyling } = await import('qr-code-styling');
 
-        const qrSize = 600;
+        const qrSize = 520;
         const qrCodeInstance = new QRCodeStyling({
             width: qrSize,
             height: qrSize,
             type: 'canvas',
             data: targetData,
-            margin: 1,
+            image: '/logo.png',
             qrOptions: {
-                typeNumber: 0,
-                mode: 'Byte',
                 errorCorrectionLevel: 'H',
             },
             dotsOptions: {
-                color: '#000000',
-                type: 'square',
-            },
-            backgroundOptions: {
-                color: '#FFFFFF',
+                type: 'rounded',
+                color: '#ff5555',
             },
             cornersSquareOptions: {
-                color: '#000000',
                 type: 'extra-rounded',
+                color: '#ff5555',
             },
             cornersDotOptions: {
-                color: '#EB1000',
-                type: 'extra-rounded',
+                type: 'square',
+                color: '#ffffff',
+            },
+            backgroundOptions: {
+                color: '#000000',
+            },
+            imageOptions: {
+                crossOrigin: 'anonymous',
+                hideBackgroundDots: true,
+                imageSize: 0.27,
+                margin: 0,
             },
         });
 
-        // 3. Render QR to temporary hidden canvas
+        // 3. Render QR to temporary hidden div
         const tempDiv = document.createElement('div');
         tempDiv.style.position = 'absolute';
         tempDiv.style.left = '-9999px';
@@ -62,50 +67,27 @@ export const downloadBrandedQrCard = async ({
         document.body.appendChild(tempDiv);
         qrCodeInstance.append(tempDiv);
 
-        await new Promise((r) => setTimeout(r, 150));
+        // Wait for canvas rendering and logo image load
+        await new Promise((r) => setTimeout(r, 400));
         const renderedCanvas = tempDiv.querySelector('canvas');
 
-        // 4. Create master canvas (680 x 680)
+        // 4. Create master canvas (600 x 660)
         const canvas = document.createElement('canvas');
-        const width = 680;
-        const height = 680;
+        const width = 600;
+        const height = 660;
         canvas.width = width;
         canvas.height = height;
         const ctx = canvas.getContext('2d');
 
-        // Helper for rounded rect
-        const drawRoundedRect = (x, y, w, h, radius, fillStyle, strokeStyle, strokeWidth = 0) => {
-            ctx.beginPath();
-            ctx.moveTo(x + radius, y);
-            ctx.lineTo(x + w - radius, y);
-            ctx.quadraticCurveTo(x + w, y, x + w, y + radius);
-            ctx.lineTo(x + w, y + h - radius);
-            ctx.quadraticCurveTo(x + w, y + h, x + w - radius, y + h);
-            ctx.lineTo(x + radius, y + h);
-            ctx.quadraticCurveTo(x, y + h, x, y + h - radius);
-            ctx.lineTo(x, y + radius);
-            ctx.quadraticCurveTo(x, y, x + radius, y);
-            ctx.closePath();
+        // Fill Solid Black Background
+        ctx.fillStyle = '#000000';
+        ctx.fillRect(0, 0, width, height);
 
-            if (fillStyle) {
-                ctx.fillStyle = fillStyle;
-                ctx.fill();
-            }
-            if (strokeStyle && strokeWidth > 0) {
-                ctx.strokeStyle = strokeStyle;
-                ctx.lineWidth = strokeWidth;
-                ctx.stroke();
-            }
-        };
-
-        // Draw Outer Card Frame (White Card with Red Border)
-        drawRoundedRect(10, 10, width - 20, height - 20, 48, '#FFFFFF', '#EB1000', 4);
-
-        // Draw QR Canvas in center
+        // Draw High-Res QR Canvas in center
         if (renderedCanvas) {
-            const marginX = (width - 600) / 2;
-            const marginY = (height - 600) / 2;
-            ctx.drawImage(renderedCanvas, marginX, marginY, 600, 600);
+            const marginX = (width - qrSize) / 2;
+            const marginY = 25;
+            ctx.drawImage(renderedCanvas, marginX, marginY, qrSize, qrSize);
         }
 
         // Clean up tempDiv
@@ -113,45 +95,28 @@ export const downloadBrandedQrCard = async ({
             document.body.removeChild(tempDiv);
         }
 
-        // 5. Draw Center Black Badge with Red Outline + Flame Logo + AskMe Text
-        const badgeSize = 130;
-        const badgeX = (width - badgeSize) / 2;
-        const badgeY = (height - badgeSize) / 2;
+        // 5. Draw Bottom Branding Text ("Ask-me.live")
+        const textY = 595;
+        ctx.font = '800 38px Arial, Helvetica, sans-serif';
+        ctx.textBaseline = 'middle';
 
-        drawRoundedRect(badgeX, badgeY, badgeSize, badgeSize, 24, '#000000', '#EB1000', 3.5);
+        // Measure text parts to center horizontally
+        const part1 = 'Ask-me';
+        const part2 = '.live';
+        const part1Width = ctx.measureText(part1).width;
+        const part2Width = ctx.measureText(part2).width;
+        const totalWidth = part1Width + part2Width;
 
-        // Load Flame Logo Image
-        try {
-            const flameImg = await new Promise((resolve) => {
-                const img = new Image();
-                img.crossOrigin = 'anonymous';
-                img.onload = () => resolve(img);
-                img.onerror = () => resolve(null);
-                img.src = '/flame-logo.png';
-            });
+        const startX = (width - totalWidth) / 2;
 
-            if (flameImg) {
-                const imgW = 60;
-                const imgH = 60;
-                const imgX = badgeX + (badgeSize - imgW) / 2;
-                const imgY = badgeY + 14;
-                ctx.drawImage(flameImg, imgX, imgY, imgW, imgH);
-            }
-        } catch (e) {
-            console.warn('Flame logo image notice:', e);
-        }
-
-        // Draw "AskMe" Text inside badge
-        ctx.font = '900 20px "Outfit", "Inter", sans-serif';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'top';
-
-        const textY = badgeY + 82;
+        // Draw "Ask-me" in White
         ctx.fillStyle = '#FFFFFF';
-        ctx.fillText('Ask', badgeX + badgeSize / 2 - 14, textY);
+        ctx.textAlign = 'left';
+        ctx.fillText(part1, startX, textY);
 
-        ctx.fillStyle = '#EB1000';
-        ctx.fillText('Me', badgeX + badgeSize / 2 + 14, textY);
+        // Draw ".live" in Red (#FF3B3B)
+        ctx.fillStyle = '#FF3B3B';
+        ctx.fillText(part2, startX + part1Width, textY);
 
         // 6. Trigger Browser Download
         const dataUrl = canvas.toDataURL('image/png');

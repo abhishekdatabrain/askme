@@ -782,17 +782,45 @@ const verifyCreatorUpiService = async (creatorId, upiId) => {
  * Send WhatsApp OTP to Creator
  */
 const sendWhatsAppOtpCreatorService = async (data) => {
-  const { mobile, phone } = data || {};
+  const { mobile, phone, type, isRegister } = data || {};
   const rawPhone = mobile || phone;
   const cleanPhone = String(rawPhone || "").replace(/[^0-9]/g, "");
 
-  if (!cleanPhone || cleanPhone.length < 10) {
+  let tenDigit = cleanPhone;
+  if (tenDigit.length === 12 && tenDigit.startsWith("91")) {
+    tenDigit = tenDigit.slice(2);
+  }
+
+  if (!tenDigit || tenDigit.length < 10) {
     const err = new Error("Please provide a valid 10-digit mobile number.");
     err.statusCode = 400;
     throw err;
   }
 
-  const { cleanPhone: targetPhone, otp } = generateAndStoreOtp(cleanPhone);
+  const isRegistrationFlow = type === 'register' || isRegister === true || type !== 'login';
+
+  // DB Validation: Only check if creator exists during LOGIN flow (skip during registration)
+  if (!isRegistrationFlow) {
+    const fullPhone = `91${tenDigit}`;
+
+    const creator = await CreatorsModel.findOne({
+      where: {
+        [Op.or]: [
+          { mobile: fullPhone },
+          { mobile: tenDigit },
+          { mobile: `+91${tenDigit}` },
+        ],
+      },
+    });
+
+    if (!creator) {
+      const err = new Error("This mobile number is not registered. Please use a registered number.");
+      err.statusCode = 400;
+      throw err;
+    }
+  }
+
+  const { cleanPhone: targetPhone, otp } = generateAndStoreOtp(tenDigit);
 
   await sendLoginOtpWhatsApp({
     phone: targetPhone,
@@ -800,7 +828,7 @@ const sendWhatsAppOtpCreatorService = async (data) => {
     expiresMinutes: 5,
   });
 
-  console.log(`[WhatsApp OTP Creator] Code ${otp} sent to ${targetPhone} (Template: askme_login_otp)`);
+  console.log(`[WhatsApp OTP Creator] Code ${otp} sent to ${targetPhone} (Flow: ${isRegistrationFlow ? 'register' : 'login'})`);
 
   return {
     message: "Verification code sent to your WhatsApp number!",
@@ -814,7 +842,7 @@ const sendWhatsAppOtpCreatorService = async (data) => {
  * Verify WhatsApp OTP and Login / Register Creator
  */
 const verifyWhatsAppOtpCreatorService = async (data) => {
-  const { mobile, phone, otp } = data || {};
+  const { mobile, phone, otp, type, isRegister } = data || {};
   const rawPhone = mobile || phone;
   const cleanPhone = String(rawPhone || "").replace(/[^0-9]/g, "");
 
@@ -831,88 +859,55 @@ const verifyWhatsAppOtpCreatorService = async (data) => {
     throw err;
   }
 
+  const isRegistrationFlow = type === 'register' || isRegister === true || type !== 'login';
+
+  if (isRegistrationFlow) {
+    return {
+      message: "Mobile number verified via WhatsApp!",
+    };
+  }
+
   let targetPhone = cleanPhone;
-  if (targetPhone.length === 10) targetPhone = `91${targetPhone}`;
+  if (targetPhone.length === 12 && targetPhone.startsWith("91")) {
+    targetPhone = targetPhone.slice(2);
+  }
   const tenDigit = targetPhone.slice(-10);
+  const fullPhone = `91${tenDigit}`;
 
-  // let creator = await CreatorsModel.findOne({
-  //   where: {
-  //     [Op.or]: [
-  //       { mobile: targetPhone },
-  //       { mobile: tenDigit },
-  //       { email: `${targetPhone}@whatsapp.creator` },
-  //       { email: `${tenDigit}@whatsapp.creator` },
-  //     ],
-  //   },
-  // });
+  let creator = await CreatorsModel.findOne({
+    where: {
+      [Op.or]: [
+        { mobile: fullPhone },
+        { mobile: tenDigit },
+        { mobile: `+91${tenDigit}` },
+      ],
+    },
+  });
 
-  // if (!creator) {
-  //   const transaction = await sequelize.transaction();
-  //   try {
-  //     const cleanUsername = `creator_${tenDigit.slice(-6)}_${Math.floor(100 + Math.random() * 900)}`;
-  //     const hashedPassword = await bcrypt.hash(`wa_${Date.now()}_${Math.random()}`, 10);
-  //     const creatorName = `Creator ${tenDigit.slice(-4)}`;
+  if (!creator) {
+    const err = new Error("This mobile number is not registered. Please use a registered number.");
+    err.statusCode = 400;
+    throw err;
+  }
 
-  //     creator = await CreatorsModel.create(
-  //       {
-  //         role: "creator",
-  //         full_name: creatorName,
-  //         username: cleanUsername,
-  //         email: `${targetPhone}@whatsapp.creator`,
-  //         mobile: targetPhone,
-  //         password: hashedPassword,
-  //         status: "active",
-  //       },
-  //       { transaction }
-  //     );
+  const token = generateToken(creator.id, "creator");
+  const profile = await CreatorProfile.findOne({ where: { creator_id: creator.id } });
 
-  //     await CreatorProfile.create(
-  //       {
-  //         creator_id: creator.id,
-  //         display_name: creatorName,
-  //         bio: "Creator on AskMe",
-  //         kyc_status: "approved",
-  //         is_payment_enabled: true,
-  //       },
-  //       { transaction }
-  //     );
-
-  //     await Wallet.create(
-  //       {
-  //         creator_id: creator.id,
-  //         total_earnings: 0,
-  //         available_balance: 0,
-  //         pending_balance: 0,
-  //         withdrawn_amount: 0,
-  //       },
-  //       { transaction }
-  //     );
-
-  //     await transaction.commit();
-  //   } catch (createErr) {
-  //     await transaction.rollback();
-  //     throw createErr;
-  //   }
-  // }
-
-  // const token = generateToken(creator.id, "creator");
-
-  // const profile = await CreatorProfile.findOne({ where: { creator_id: creator.id } });
-
-  // return {
-  //   token,
-  //   creator: {
-  //     id: creator.id,
-  //     role: creator.role,
-  //     fullName: creator.full_name,
-  //     full_name: creator.full_name,
-  //     username: creator.username,
-  //     cleanUsername: creator.username,
-  //     email: creator.email,
-  //     mobile: creator.mobile,
-  //     kycStatus: profile?.kyc_status || "approved",
-  //   },
-  // };
+  return {
+    token,
+    creator: {
+      id: creator.id,
+      role: creator.role || "creator",
+      fullName: creator.full_name,
+      full_name: creator.full_name,
+      username: creator.username,
+      cleanUsername: creator.username,
+      email: creator.email,
+      mobile: creator.mobile,
+      kycStatus: profile?.kyc_status || "pending",
+      status: creator.status,
+    },
+  };
 };
 
 /**

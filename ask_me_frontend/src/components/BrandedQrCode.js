@@ -1,20 +1,21 @@
 'use client';
 
 import React, { useEffect, useRef } from 'react';
+import './SessionQRCode.css';
 
 export default function BrandedQrCode({
   paymentLink,
   qrUrl,
-  size = 'md', // 'sm' | 'md' | 'lg' | 'xl' | number
+  size = 'md',
   className = '',
   showCenterLogo = true,
-  logoUrl = '/flame-logo.png',
+  logoUrl = '/logo.png',
   alt = 'AskMe Live Payment QR Code',
 }) {
   const qrRef = useRef(null);
 
   // Extract pure payment link if URL is an external API generator URL
-  let rawUrl = paymentLink || qrUrl || 'https://askme.live';
+  let rawUrl = paymentLink || qrUrl;
   if (typeof rawUrl === 'string' && rawUrl.includes('data=')) {
     try {
       const urlObj = new URL(rawUrl.includes('://') ? rawUrl : `https://${rawUrl}`);
@@ -29,61 +30,54 @@ export default function BrandedQrCode({
 
   const targetUrl = rawUrl;
 
-  const numericSizeMap = {
-    sm: { box: 200, centerBox: 'h-12 w-12 p-1' },
-    md: { box: 260, centerBox: 'h-16 w-16 p-1.5' },
-    lg: { box: 340, centerBox: 'h-15 w-15 p-2' },
-    xl: { box: 420, centerBox: 'h-20 w-20 p-2.5' },
-  };
-
-  const config = typeof size === 'number'
-    ? { box: size, centerBox: 'h-14 w-14 p-1.5' }
-    : (numericSizeMap[size] || numericSizeMap.md);
-
-  const pixelSize = config.box;
-
   useEffect(() => {
-    if (!qrRef.current || !targetUrl) return;
+    if (!targetUrl || !qrRef.current) return;
 
     let isMounted = true;
 
-    import('qr-code-styling').then(({ default: QRCodeStyling }) => {
-      if (!isMounted || !qrRef.current) return;
+    import('qr-code-styling')
+      .then(({ default: QRCodeStyling }) => {
+        if (!isMounted || !qrRef.current) return;
 
-      qrRef.current.innerHTML = '';
+        qrRef.current.innerHTML = '';
 
-      const qrCodeInstance = new QRCodeStyling({
-        width: pixelSize,
-        height: pixelSize,
-        type: 'canvas',
-        data: targetUrl,
-        margin: 1,
-        qrOptions: {
-          typeNumber: 0,
-          mode: 'Byte',
-          errorCorrectionLevel: 'H',
-        },
-        dotsOptions: {
-          color: '#000000',
-          type: 'square',
-        },
-        backgroundOptions: {
-          color: '#FFFFFF',
-        },
-        cornersSquareOptions: {
-          color: '#000000',
-          type: 'extra-rounded',
-        },
-        cornersDotOptions: {
-          color: '#EB1000',
-          type: 'extra-rounded',
-        },
+        const qrCode = new QRCodeStyling({
+          width: 172,
+          height: 172,
+          type: 'canvas',
+          data: targetUrl,
+          image: logoUrl,
+          qrOptions: {
+            errorCorrectionLevel: 'H',
+          },
+          dotsOptions: {
+            type: 'rounded',
+            color: '#ff5555',
+          },
+          cornersSquareOptions: {
+            type: 'extra-rounded',
+            color: '#ff5555',
+          },
+          cornersDotOptions: {
+            type: 'square',
+            color: '#ffffff',
+          },
+          backgroundOptions: {
+            color: '#000000',
+          },
+          imageOptions: {
+            crossOrigin: 'anonymous',
+            hideBackgroundDots: true,
+            imageSize: 0.27,
+            margin: 0,
+          },
+        });
+
+        qrCode.append(qrRef.current);
+      })
+      .catch((err) => {
+        console.warn('QRCodeStyling load error:', err);
       });
-
-      qrCodeInstance.append(qrRef.current);
-    }).catch((err) => {
-      console.warn('QRCodeStyling load notice:', err);
-    });
 
     return () => {
       isMounted = false;
@@ -91,33 +85,16 @@ export default function BrandedQrCode({
         qrRef.current.innerHTML = '';
       }
     };
-  }, [targetUrl, pixelSize]);
+  }, [targetUrl, logoUrl]);
 
   return (
-    <div className={`relative inline-flex flex-col items-center group ${className}`}>
-      {/* Crisp White Outer Container - Fits Edge to Edge */}
-      <div className="relative rounded-2xl bg-white p-1.5 border-2 border-[#EB1000]/40 shadow-xl flex items-center justify-center overflow-hidden shrink-0">
-        {/* QR Code Canvas */}
-        <div
-          ref={qrRef}
-          className="rounded-xl overflow-hidden bg-white flex items-center justify-center"
-        />
-
-        {/* Center Black Rounded Badge with Red Flame & AskMe Text */}
-        {showCenterLogo && (
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
-            <div className={`rounded-2xl bg-black border-2 border-[#EB1000] shadow-2xl flex flex-col items-center justify-center overflow-hidden transition-transform duration-200 group-hover:scale-105 ${config.centerBox}`}>
-              <img
-                src={logoUrl}
-                alt={alt}
-                className="h-4/5 w-4/5 object-contain"
-              />
-              <span className="text-[9px] font-black tracking-tight text-white leading-none mt-0.5">
-                Ask<span className="text-[#EB1000]">Me</span>
-              </span>
-            </div>
-          </div>
-        )}
+    <div className={`askme-qr ${className}`}>
+      <div className="qr-wrapper">
+        <div ref={qrRef} />
+      </div>
+      <div className="qr-brand">
+        <span>Ask-me</span>
+        <span className="live">.live</span>
       </div>
     </div>
   );

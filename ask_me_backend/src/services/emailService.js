@@ -76,7 +76,7 @@ const buildWelcomeEmailHtml = ({ name, role }) => {
         body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #0A0A0F; color: #F5F5F7; margin: 0; padding: 40px 16px; -webkit-font-smoothing: antialiased; }
         .wrapper { width: 100%; max-width: 540px; margin: 0 auto; }
         .brand-header { text-align: center; margin-bottom: 24px; }
-        .brand-text { font-size: 24px; font-weight: 900; color: #FFFFFF; text-decoration: none; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
+        .brand-text { font-size: 24px; font-weight: 900; color: #1C1C28; text-decoration: none; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
         .brand-red { color: #EB1000; }
         .card { background-color: #12121A; border: 1px solid #1C1C28; border-radius: 24px; padding: 40px 36px; box-shadow: 0 20px 50px rgba(0,0,0,0.6); }
         .title { font-size: 28px; font-weight: 900; color: #FFFFFF; margin: 0 0 14px 0; letter-spacing: -0.5px; line-height: 1.2; }
@@ -300,7 +300,7 @@ const buildEmailOtpTemplate = ({ otp }) => {
       body { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #0A0A0F; color: #FFFFFF; margin: 0; padding: 40px 16px; -webkit-font-smoothing: antialiased; }
       .wrapper { width: 100%; max-width: 520px; margin: 0 auto; }
       .brand-header { text-align: left; margin-bottom: 24px; }
-      .brand-text { font-size: 24px; font-weight: 900; color: #FFFFFF; text-decoration: none; }
+      .brand-text { font-size: 24px; font-weight: 900; color: rgba(11, 10, 10, 1); text-decoration: none; }
       .brand-red { color: #EB1000; }
       .card { background-color: #12121A; border: 1px solid #1C1C28; border-radius: 24px; padding: 40px 36px; box-shadow: 0 20px 50px rgba(0,0,0,0.6); }
       .title { font-size: 28px; font-weight: 800; color: #FFFFFF; margin: 0 0 10px 0; letter-spacing: -0.5px; }
@@ -361,8 +361,6 @@ const sendEmailOtp = async ({ email, otp }) => {
     // Test SMTP connection/authentication
     await transporter.verify();
 
-    console.log("✅ SMTP connection verified");
-
     const subject = "Your AskMe Verification Code";
     const html = buildEmailOtpTemplate({ otp });
 
@@ -381,13 +379,6 @@ const sendEmailOtp = async ({ email, otp }) => {
       html,
       attachments,
     });
-
-    console.log("========== EMAIL SENT ==========");
-console.log("Message ID:", info.messageId);
-console.log("Response:", info.response);
-console.log("Accepted:", info.accepted);
-console.log("Rejected:", info.rejected);
-console.log("Envelope:", info.envelope);
 
     return {
       success: true,
@@ -417,7 +408,7 @@ const buildKycUnderReviewEmailHtml = ({ name, reviewEta = "24 hours" }) => {
       body { font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #0A0A0F; color: #FFFFFF; margin: 0; padding: 40px 16px; -webkit-font-smoothing: antialiased; }
       .wrapper { width: 100%; max-width: 520px; margin: 0 auto; }
       .brand-header { text-align: center; margin-bottom: 24px; }
-      .brand-text { font-size: 24px; font-weight: 900; color: #FFFFFF; text-decoration: none; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
+      .brand-text { font-size: 24px; font-weight: 900; color: #101010ff; text-decoration: none; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
       .brand-red { color: #EB1000; }
       .card { background-color: #12121A; border: 1px solid #1C1C28; border-radius: 24px; padding: 40px 36px; box-shadow: 0 20px 50px rgba(0,0,0,0.6); }
       .title { font-size: 28px; font-weight: 800; color: #FFFFFF; margin: 0 0 16px 0; letter-spacing: -0.5px; line-height: 1.2; }

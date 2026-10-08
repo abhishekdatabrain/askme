@@ -79,8 +79,9 @@ function InnerAuthModal({ isOpen, onClose, initialRole = 'viewer', initialMode =
   const [waSuccess, setWaSuccess] = useState('');
   const [waDebugOtp, setWaDebugOtp] = useState('');
 
-  // Registration WhatsApp OTP Verification State
+  // Registration WhatsApp / SMS OTP Verification State
   const [regWaStep, setRegWaStep] = useState('idle'); // 'idle' | 'otp_sent' | 'verified'
+  const [regWaChannel, setRegWaChannel] = useState('whatsapp'); // 'whatsapp' | 'sms'
   const [regWaOtp, setRegWaOtp] = useState('');
   const [regWaLoading, setRegWaLoading] = useState(false);
   const [regWaError, setRegWaError] = useState('');
@@ -182,9 +183,10 @@ function InnerAuthModal({ isOpen, onClose, initialRole = 'viewer', initialMode =
     }
   };
 
-  // Hybrid Login Flow State (Email or Phone Number + WhatsApp OTP)
+  // Hybrid Login Flow State (Email or Phone Number + WhatsApp/SMS OTP)
   const [loginInput, setLoginInput] = useState('');
   const [loginOtpStep, setLoginOtpStep] = useState('idle'); // 'idle' | 'otp_sent'
+  const [loginOtpChannel, setLoginOtpChannel] = useState('whatsapp'); // 'whatsapp' | 'sms'
   const [loginOtp, setLoginOtp] = useState('');
   const [loginOtpLoading, setLoginOtpLoading] = useState(false);
 
@@ -210,6 +212,7 @@ function InnerAuthModal({ isOpen, onClose, initialRole = 'viewer', initialMode =
     }
     setErrorMsg('');
     setSuccessMsg('');
+    setLoginOtpChannel('whatsapp');
     setLoginOtpLoading(true);
 
     try {
@@ -236,6 +239,52 @@ function InnerAuthModal({ isOpen, onClose, initialRole = 'viewer', initialMode =
       }
     } catch (err) {
       const errText = 'Server error while sending WhatsApp OTP.';
+      setErrorMsg(errText);
+      toast?.error(errText, 'OTP Error');
+    } finally {
+      setLoginOtpLoading(false);
+    }
+  };
+
+  const handleSendLoginSmsOtp = async (e) => {
+    if (e) e.preventDefault();
+    const targetInput = loginInput || mobile;
+    const cleanPhone = (targetInput || '').replace(/[^0-9]/g, '');
+    if (!cleanPhone || cleanPhone.length !== 10) {
+      const errText = 'Please enter a valid 10-digit mobile number.';
+      setErrorMsg(errText);
+      toast?.error(errText, 'Mobile Required');
+      return;
+    }
+    setErrorMsg('');
+    setSuccessMsg('');
+    setLoginOtpChannel('sms');
+    setLoginOtpLoading(true);
+
+    try {
+      const endpoint = role === 'viewer'
+        ? API_ENDPOINTS.VIEWERS.SMS_SEND_OTP
+        : API_ENDPOINTS.CREATORS.SMS_SEND_OTP;
+
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone: cleanPhone, mobile: cleanPhone, type: 'login' }),
+      });
+
+      const data = await res.json();
+      if (res.ok && data.status === 'success') {
+        const msg = data.message || `SMS OTP sent to +91 ${cleanPhone}`;
+        setSuccessMsg(msg);
+        toast?.success(msg, 'SMS OTP Sent');
+        setLoginOtpStep('otp_sent');
+      } else {
+        const errText = data.message || 'Failed to send SMS OTP.';
+        setErrorMsg(errText);
+        toast?.error(errText, 'OTP Error');
+      }
+    } catch (err) {
+      const errText = 'Server error while sending SMS OTP.';
       setErrorMsg(errText);
       toast?.error(errText, 'OTP Error');
     } finally {
@@ -336,6 +385,7 @@ function InnerAuthModal({ isOpen, onClose, initialRole = 'viewer', initialMode =
     }
     setRegWaError('');
     setRegWaSuccess('');
+    setRegWaChannel('whatsapp');
     try {
       setRegWaLoading(true);
       const endpoint = role === 'viewer'
@@ -371,6 +421,52 @@ function InnerAuthModal({ isOpen, onClose, initialRole = 'viewer', initialMode =
     }
   };
 
+  const handleSendRegSmsOtp = async () => {
+    const cleanMobile = (mobile || '').replace(/[^0-9]/g, '');
+    if (!cleanMobile || cleanMobile.length !== 10) {
+      const errText = 'Please enter a valid 10-digit mobile number first.';
+      setRegWaError(errText);
+      toast?.error(errText, 'Mobile Required');
+      return;
+    }
+    setRegWaError('');
+    setRegWaSuccess('');
+    setRegWaChannel('sms');
+    try {
+      setRegWaLoading(true);
+      const endpoint = role === 'viewer'
+        ? API_ENDPOINTS.VIEWERS.SMS_SEND_OTP
+        : API_ENDPOINTS.CREATORS.SMS_SEND_OTP;
+
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone: cleanMobile, type: 'register' }),
+      });
+
+      const data = await res.json();
+      if (res.ok && data.status === 'success') {
+        const msg = data.message || `SMS OTP sent to +91 ${cleanMobile}`;
+        setRegWaSuccess(msg);
+        toast?.success(msg, 'SMS OTP Sent');
+        if (data.data?.debugOtp) {
+          setRegWaDebugOtp(String(data.data.debugOtp));
+        }
+        setRegWaStep('otp_sent');
+      } else {
+        const errText = data.message || 'Failed to send SMS OTP.';
+        setRegWaError(errText);
+        toast?.error(errText, 'OTP Error');
+      }
+    } catch (err) {
+      const errText = 'Server error while sending SMS OTP.';
+      setRegWaError(errText);
+      toast?.error(errText, 'OTP Error');
+    } finally {
+      setRegWaLoading(false);
+    }
+  };
+
   const handleVerifyRegWaOtp = async () => {
     const cleanMobile = (mobile || '').replace(/[^0-9]/g, '');
     if (!regWaOtp || regWaOtp.length < 4) {
@@ -395,7 +491,9 @@ function InnerAuthModal({ isOpen, onClose, initialRole = 'viewer', initialMode =
 
       const data = await res.json();
       if (res.ok && data.status === 'success') {
-        const msg = 'Mobile number verified via WhatsApp!';
+        const msg = regWaChannel === 'sms'
+          ? 'Mobile number verified via SMS!'
+          : 'Mobile number verified via WhatsApp!';
         setRegWaSuccess(msg);
         toast?.success(msg, 'Mobile Verified!');
         setRegWaStep('verified');
@@ -1420,31 +1518,75 @@ function InnerAuthModal({ isOpen, onClose, initialRole = 'viewer', initialMode =
                       />
                     </div>
 
-                    {/* Send WhatsApp OTP Button */}
-                    {mobile.length === 10 && regWaStep === 'idle' && (
-                      <button
-                        type="button"
-                        onClick={handleSendRegWaOtp}
-                        disabled={regWaLoading}
-                        className="mt-1.5 w-full py-2 px-3 rounded-xl bg-[#25D366] hover:bg-[#20BD5A] text-white text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-sm cursor-pointer disabled:opacity-50"
-                      >
-                        {regWaLoading ? (
-                          <RefreshCw className="h-3.5 w-3.5 animate-spin" />
-                        ) : (
-                          <>
-                            <MessageSquare className="h-3.5 w-3.5" />
-                            <span>Send OTP to Verify Mobile Number (WhatsApp)</span>
-                          </>
-                        )}
-                      </button>
+                    {/* Send WhatsApp & SMS OTP Buttons */}
+                    {mobile.length === 10 && regWaStep !== 'verified' && (
+                      <div className="mt-1.5 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <button
+                          type="button"
+                          onClick={handleSendRegWaOtp}
+                          disabled={regWaLoading}
+                          className={`w-full py-2 px-2.5 rounded-xl text-white text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-sm cursor-pointer ${
+                            regWaLoading && regWaChannel === 'whatsapp'
+                              ? 'bg-[#25D366] opacity-80 cursor-wait'
+                              : regWaLoading
+                              ? 'bg-[#25D366] opacity-60 cursor-not-allowed'
+                              : regWaChannel === 'whatsapp' && regWaStep === 'otp_sent'
+                              ? 'bg-[#25D366] ring-2 ring-[#25D366]/50'
+                              : 'bg-[#25D366] hover:bg-[#20BD5A]'
+                          }`}
+                        >
+                          {regWaLoading && regWaChannel === 'whatsapp' ? (
+                            <>
+                              <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                              <span>Sending OTP...</span>
+                            </>
+                          ) : (
+                            <>
+                              <MessageSquare className="h-3.5 w-3.5" />
+                              <span>Send WhatsApp OTP</span>
+                            </>
+                          )}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleSendRegSmsOtp}
+                          disabled={regWaLoading}
+                          className={`w-full py-2 px-2.5 rounded-xl text-white text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-sm cursor-pointer ${
+                            regWaLoading && regWaChannel === 'sms'
+                              ? 'bg-gradient-to-r from-blue-600 to-indigo-600 opacity-80 cursor-wait'
+                              : regWaLoading
+                              ? 'bg-gradient-to-r from-blue-600 to-indigo-600 opacity-60 cursor-not-allowed'
+                              : regWaChannel === 'sms' && regWaStep === 'otp_sent'
+                              ? 'bg-gradient-to-r from-blue-600 to-indigo-600 ring-2 ring-blue-500/50'
+                              : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500'
+                          }`}
+                        >
+                          {regWaLoading && regWaChannel === 'sms' ? (
+                            <>
+                              <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                              <span>Sending OTP...</span>
+                            </>
+                          ) : (
+                            <>
+                              <Phone className="h-3.5 w-3.5" />
+                              <span>Send SMS OTP</span>
+                            </>
+                          )}
+                        </button>
+                      </div>
                     )}
 
                     {/* Enter OTP Field */}
                     {regWaStep === 'otp_sent' && (
-                      <div className="mt-2 p-2.5 rounded-2xl bg-emerald-50/80 border border-emerald-200 space-y-2">
-                        <div className="flex items-center justify-between text-[11px] font-bold text-emerald-900">
-                          <span>Enter OTP sent to WhatsApp (+91 {mobile}):</span>
-
+                      <div className={`mt-2 p-2.5 rounded-2xl space-y-2 transition-all ${
+                        regWaChannel === 'sms'
+                          ? 'bg-blue-50/80 border border-blue-200'
+                          : 'bg-emerald-50/80 border border-emerald-200'
+                      }`}>
+                        <div className={`flex items-center justify-between text-[11px] font-bold ${
+                          regWaChannel === 'sms' ? 'text-blue-900' : 'text-emerald-900'
+                        }`}>
+                          <span>Enter 6-digit {regWaChannel === 'sms' ? 'SMS' : 'WhatsApp'} OTP (+91 {mobile}):</span>
                         </div>
                         <div className="flex items-center gap-2">
                           <input
@@ -1453,16 +1595,46 @@ function InnerAuthModal({ isOpen, onClose, initialRole = 'viewer', initialMode =
                             value={regWaOtp}
                             onChange={(e) => setRegWaOtp(e.target.value.replace(/\D/g, ''))}
                             placeholder="******"
-                            className="w-full py-1.5 px-3 rounded-xl border border-emerald-300 text-xs text-center font-mono font-bold tracking-widest text-black outline-none focus:border-[#25D366]"
+                            className={`w-full py-1.5 px-3 rounded-xl border text-xs text-center font-mono font-bold tracking-widest bg-white text-black outline-none transition ${
+                              regWaChannel === 'sms'
+                                ? 'border-blue-300 focus:border-blue-600'
+                                : 'border-emerald-300 focus:border-[#25D366]'
+                            }`}
                           />
                           <button
                             type="button"
                             onClick={handleVerifyRegWaOtp}
                             disabled={regWaLoading || !regWaOtp}
-                            className="px-3.5 py-1.5 rounded-xl bg-[#25D366] hover:bg-[#20BD5A] text-white text-xs font-bold shrink-0 transition shadow-xs cursor-pointer disabled:opacity-50"
+                            className={`px-3.5 py-1.5 rounded-xl text-white text-xs font-bold shrink-0 transition shadow-xs cursor-pointer disabled:opacity-50 ${
+                              regWaChannel === 'sms'
+                                ? 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500'
+                                : 'bg-[#25D366] hover:bg-[#20BD5A]'
+                            }`}
                           >
                             {regWaLoading ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : 'Verify'}
                           </button>
+                        </div>
+                        <div className="flex justify-between items-center text-[10px] text-gray-500">
+                          <span>Didn't receive code?</span>
+                          <div className="flex items-center gap-1.5">
+                            <button
+                              type="button"
+                              onClick={handleSendRegWaOtp}
+                              disabled={regWaLoading}
+                              className="text-emerald-600 font-bold hover:underline cursor-pointer"
+                            >
+                              Resend WhatsApp
+                            </button>
+                            <span>|</span>
+                            <button
+                              type="button"
+                              onClick={handleSendRegSmsOtp}
+                              disabled={regWaLoading}
+                              className="text-blue-600 font-bold hover:underline cursor-pointer"
+                            >
+                              Resend SMS
+                            </button>
+                          </div>
                         </div>
                         {regWaError && (
                           <p className="text-[10px] text-rose-600 font-medium">{regWaError}</p>
@@ -1608,9 +1780,15 @@ function InnerAuthModal({ isOpen, onClose, initialRole = 'viewer', initialMode =
 
                     {/* CASE 3: PHONE DETECTED & OTP SENT -> SHOW 6-DIGIT OTP BOX */}
                     {loginInputType === 'phone' && loginOtpStep === 'otp_sent' && (
-                      <div className="p-3.5 rounded-2xl bg-emerald-50/80 border border-emerald-200 space-y-2.5 animate-fadeIn">
-                        <div className="flex items-center justify-between text-xs font-bold text-emerald-900">
-                          <span>Enter 6-digit WhatsApp OTP sent to +91 {loginInput.replace(/\D/g, '')}:</span>
+                      <div className={`p-3.5 rounded-2xl space-y-2.5 animate-fadeIn transition-all ${
+                        loginOtpChannel === 'sms'
+                          ? 'bg-blue-50/80 border border-blue-200'
+                          : 'bg-emerald-50/80 border border-emerald-200'
+                      }`}>
+                        <div className={`flex items-center justify-between text-xs font-bold ${
+                          loginOtpChannel === 'sms' ? 'text-blue-900' : 'text-emerald-900'
+                        }`}>
+                          <span>Enter 6-digit {loginOtpChannel === 'sms' ? 'SMS' : 'WhatsApp'} OTP sent to +91 {loginInput.replace(/\D/g, '')}:</span>
                           <button
                             type="button"
                             onClick={() => setLoginOtpStep('idle')}
@@ -1626,54 +1804,117 @@ function InnerAuthModal({ isOpen, onClose, initialRole = 'viewer', initialMode =
                             value={loginOtp}
                             onChange={(e) => setLoginOtp(e.target.value.replace(/\D/g, ''))}
                             placeholder="******"
-                            className="w-full py-2 px-3 rounded-xl border border-emerald-300 text-sm text-center font-mono font-bold tracking-widest bg-white text-black outline-none focus:border-[#25D366]"
+                            className={`w-full py-2 px-3 rounded-xl border text-sm text-center font-mono font-bold tracking-widest bg-white text-black outline-none transition ${
+                              loginOtpChannel === 'sms'
+                                ? 'border-blue-300 focus:border-blue-600'
+                                : 'border-emerald-300 focus:border-[#25D366]'
+                            }`}
                           />
                         </div>
                         <div className="flex items-center justify-between pt-1">
-                          <span className="text-[10px] text-emerald-700">Didn't receive code?</span>
-                          <button
-                            type="button"
-                            onClick={handleSendLoginWaOtp}
-                            disabled={loginOtpLoading}
-                            className="text-[11px] font-bold text-[#25D366] hover:underline cursor-pointer disabled:opacity-50"
-                          >
-                            {loginOtpLoading ? 'Sending...' : 'Resend OTP'}
-                          </button>
+                          <span className={`text-[10px] ${loginOtpChannel === 'sms' ? 'text-blue-700' : 'text-emerald-700'}`}>Didn't receive code?</span>
+                          <div className="flex items-center gap-1.5 text-[11px]">
+                            <button
+                              type="button"
+                              onClick={handleSendLoginWaOtp}
+                              disabled={loginOtpLoading}
+                              className="font-bold text-[#25D366] hover:underline cursor-pointer disabled:opacity-50"
+                            >
+                              Resend WhatsApp
+                            </button>
+                            <span>|</span>
+                            <button
+                              type="button"
+                              onClick={handleSendLoginSmsOtp}
+                              disabled={loginOtpLoading}
+                              className="font-bold text-blue-600 hover:underline cursor-pointer disabled:opacity-50"
+                            >
+                              Resend SMS
+                            </button>
+                          </div>
                         </div>
                       </div>
                     )}
 
                     {/* DYNAMIC ACTION BUTTON FOR LOGIN */}
-                    <button
-                      type="submit"
-                      disabled={loading || loginOtpLoading}
-                      className={`w-full py-3 px-4 rounded-2xl font-black text-xs shadow-lg transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 ${loginInputType === 'phone'
-                        ? 'bg-[#25D366] hover:bg-[#20BD5A] text-white shadow-[#25D366]/25'
-                        : 'bg-[#EB1000] hover:bg-[#D00E00] text-white shadow-[#EB1000]/25'
-                        }`}
-                    >
-                      {loading || loginOtpLoading ? (
-                        <>
-                          <RefreshCw className="h-4 w-4 animate-spin" />
-                          <span>Processing...</span>
-                        </>
-                      ) : (
-                        <>
-                          {loginInputType === 'phone' ? (
-                            loginOtpStep === 'idle' ? (
-                              <>
-                                <MessageSquare className="h-4 w-4" />
-                                <span>Send OTP on WhatsApp</span>
-                                <ArrowRight className="h-4 w-4" />
-                              </>
-                            ) : (
+                    {loginInputType === 'phone' ? (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <button
+                          type="button"
+                          onClick={handleSendLoginWaOtp}
+                          disabled={loading || loginOtpLoading}
+                          className={`w-full py-3 px-3 rounded-2xl text-white font-black text-xs shadow-lg transition flex items-center justify-center gap-1.5 cursor-pointer ${
+                            loginOtpLoading && loginOtpChannel === 'whatsapp'
+                              ? 'bg-[#25D366] opacity-80 cursor-wait'
+                              : loginOtpLoading
+                              ? 'bg-[#25D366] opacity-60 cursor-not-allowed'
+                              : loginOtpChannel === 'whatsapp' && loginOtpStep === 'otp_sent'
+                              ? 'bg-[#25D366] ring-2 ring-[#25D366]/50 shadow-[#25D366]/25'
+                              : 'bg-[#25D366] hover:bg-[#20BD5A] shadow-[#25D366]/25'
+                          }`}
+                        >
+                          {loginOtpLoading && loginOtpChannel === 'whatsapp' ? (
+                            <>
+                              <RefreshCw className="h-4 w-4 animate-spin" />
+                              <span>Sending OTP...</span>
+                            </>
+                          ) : (
+                            <>
+                              <MessageSquare className="h-4 w-4" />
+                              <span>Send WhatsApp OTP</span>
+                            </>
+                          )}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleSendLoginSmsOtp}
+                          disabled={loading || loginOtpLoading}
+                          className={`w-full py-3 px-3 rounded-2xl text-white font-black text-xs shadow-lg transition flex items-center justify-center gap-1.5 cursor-pointer ${
+                            loginOtpLoading && loginOtpChannel === 'sms'
+                              ? 'bg-gradient-to-r from-blue-600 to-indigo-600 opacity-80 cursor-wait'
+                              : loginOtpLoading
+                              ? 'bg-gradient-to-r from-blue-600 to-indigo-600 opacity-60 cursor-not-allowed'
+                              : loginOtpChannel === 'sms' && loginOtpStep === 'otp_sent'
+                              ? 'bg-gradient-to-r from-blue-600 to-indigo-600 ring-2 ring-blue-500/50 shadow-blue-600/25'
+                              : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 shadow-blue-600/25'
+                          }`}
+                        >
+                          {loginOtpLoading && loginOtpChannel === 'sms' ? (
+                            <>
+                              <RefreshCw className="h-4 w-4 animate-spin" />
+                              <span>Sending OTP...</span>
+                            </>
+                          ) : (
+                            <>
+                              <Phone className="h-4 w-4" />
+                              <span>Send SMS OTP</span>
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        type="submit"
+                        disabled={loading || loginOtpLoading}
+                        className={`w-full py-3 px-4 rounded-2xl font-black text-xs shadow-lg transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 ${loginInputType === 'phone'
+                          ? 'bg-[#25D366] hover:bg-[#20BD5A] text-white shadow-[#25D366]/25'
+                          : 'bg-[#EB1000] hover:bg-[#D00E00] text-white shadow-[#EB1000]/25'
+                          }`}
+                      >
+                        {loading || loginOtpLoading ? (
+                          <>
+                            <RefreshCw className="h-4 w-4 animate-spin" />
+                            <span>Processing...</span>
+                          </>
+                        ) : (
+                          <>
+                            {loginInputType === 'phone' ? (
                               <>
                                 <CheckCircle2 className="h-4 w-4" />
                                 <span>Verify & Login</span>
                                 <ArrowRight className="h-4 w-4" />
                               </>
-                            )
-                          ) : (
+                            ) : (
                             <>
                               <span>Sign In as {role === 'viewer' ? 'Viewer' : 'Creator'}</span>
                               <ArrowRight className="h-4 w-4" />
@@ -1682,10 +1923,11 @@ function InnerAuthModal({ isOpen, onClose, initialRole = 'viewer', initialMode =
                         </>
                       )}
                     </button>
-                  </div>
-                ) : (
-                  /* VIEWER REGISTER MODE FORM FIELDS */
+                  )}
+                </div>
+              ) : (
                   <>
+                    {/* VIEWER REGISTER MODE FORM FIELDS */}
                     <div>
                       <label className="block text-xs font-bold text-gray-700 mb-1">
                         Full Name <span className="text-[#EB1000]">*</span>
@@ -1804,9 +2046,15 @@ function InnerAuthModal({ isOpen, onClose, initialRole = 'viewer', initialMode =
                           Mobile Number <span className="text-[#EB1000]">*</span>
                         </label>
                         {regWaStep === 'verified' && (
-                          <span className="text-[10px] font-extrabold text-[#25D366] flex items-center gap-1 bg-[#25D366]/10 px-2 py-0.5 rounded-full border border-[#25D366]/30">
-                            <Check className="h-3 w-3" /> WhatsApp Verified
-                          </span>
+                          regWaChannel === 'sms' ? (
+                            <span className="text-[10px] font-extrabold text-blue-600 flex items-center gap-1 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200">
+                              <Check className="h-3 w-3" /> SMS Verified
+                            </span>
+                          ) : (
+                            <span className="text-[10px] font-extrabold text-[#25D366] flex items-center gap-1 bg-[#25D366]/10 px-2 py-0.5 rounded-full border border-[#25D366]/30">
+                              <Check className="h-3 w-3" /> WhatsApp Verified
+                            </span>
+                          )
                         )}
                       </div>
                       <div className="relative">
@@ -1826,30 +2074,75 @@ function InnerAuthModal({ isOpen, onClose, initialRole = 'viewer', initialMode =
                         />
                       </div>
 
-                      {/* Send WhatsApp OTP Button */}
-                      {mobile.length === 10 && regWaStep === 'idle' && (
-                        <button
-                          type="button"
-                          onClick={handleSendRegWaOtp}
-                          disabled={regWaLoading}
-                          className="mt-1.5 w-full py-2 px-3 rounded-xl bg-[#25D366] hover:bg-[#20BD5A] text-white text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-sm cursor-pointer disabled:opacity-50"
-                        >
-                          {regWaLoading ? (
-                            <RefreshCw className="h-3.5 w-3.5 animate-spin" />
-                          ) : (
-                            <>
-                              <MessageSquare className="h-3.5 w-3.5" />
-                              <span>Send WhatsApp OTP to Verify Mobile</span>
-                            </>
-                          )}
-                        </button>
+                      {/* Send WhatsApp & SMS OTP Buttons */}
+                      {mobile.length === 10 && regWaStep !== 'verified' && (
+                        <div className="mt-1.5 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          <button
+                            type="button"
+                            onClick={handleSendRegWaOtp}
+                            disabled={regWaLoading}
+                            className={`w-full py-2 px-2.5 rounded-xl text-white text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-sm cursor-pointer ${
+                              regWaLoading && regWaChannel === 'whatsapp'
+                                ? 'bg-[#25D366] opacity-80 cursor-wait'
+                                : regWaLoading
+                                ? 'bg-[#25D366] opacity-60 cursor-not-allowed'
+                                : regWaChannel === 'whatsapp' && regWaStep === 'otp_sent'
+                                ? 'bg-[#25D366] ring-2 ring-[#25D366]/50'
+                                : 'bg-[#25D366] hover:bg-[#20BD5A]'
+                            }`}
+                          >
+                            {regWaLoading && regWaChannel === 'whatsapp' ? (
+                              <>
+                                <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                                <span>Sending OTP...</span>
+                              </>
+                            ) : (
+                              <>
+                                <MessageSquare className="h-3.5 w-3.5" />
+                                <span>Send WhatsApp OTP</span>
+                              </>
+                            )}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={handleSendRegSmsOtp}
+                            disabled={regWaLoading}
+                            className={`w-full py-2 px-2.5 rounded-xl text-white text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-sm cursor-pointer ${
+                              regWaLoading && regWaChannel === 'sms'
+                                ? 'bg-gradient-to-r from-blue-600 to-indigo-600 opacity-80 cursor-wait'
+                                : regWaLoading
+                                ? 'bg-gradient-to-r from-blue-600 to-indigo-600 opacity-60 cursor-not-allowed'
+                                : regWaChannel === 'sms' && regWaStep === 'otp_sent'
+                                ? 'bg-gradient-to-r from-blue-600 to-indigo-600 ring-2 ring-blue-500/50'
+                                : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500'
+                            }`}
+                          >
+                            {regWaLoading && regWaChannel === 'sms' ? (
+                              <>
+                                <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                                <span>Sending OTP...</span>
+                              </>
+                            ) : (
+                              <>
+                                <Phone className="h-3.5 w-3.5" />
+                                <span>Send SMS OTP</span>
+                              </>
+                            )}
+                          </button>
+                        </div>
                       )}
 
                       {/* Enter OTP Field */}
                       {regWaStep === 'otp_sent' && (
-                        <div className="mt-2 p-2.5 rounded-2xl bg-emerald-50/80 border border-emerald-200 space-y-2">
-                          <div className="flex items-center justify-between text-[11px] font-bold text-emerald-900">
-                            <span>Enter OTP sent to WhatsApp (+91 {mobile}):</span>
+                        <div className={`mt-2 p-2.5 rounded-2xl space-y-2 transition-all ${
+                          regWaChannel === 'sms'
+                            ? 'bg-blue-50/80 border border-blue-200'
+                            : 'bg-emerald-50/80 border border-emerald-200'
+                        }`}>
+                          <div className={`flex items-center justify-between text-[11px] font-bold ${
+                            regWaChannel === 'sms' ? 'text-blue-900' : 'text-emerald-900'
+                          }`}>
+                            <span>Enter 6-digit {regWaChannel === 'sms' ? 'SMS' : 'WhatsApp'} OTP (+91 {mobile}):</span>
                           </div>
                           <div className="flex items-center gap-2">
                             <input
@@ -1858,16 +2151,46 @@ function InnerAuthModal({ isOpen, onClose, initialRole = 'viewer', initialMode =
                               value={regWaOtp}
                               onChange={(e) => setRegWaOtp(e.target.value.replace(/\D/g, ''))}
                               placeholder="******"
-                              className="w-full py-1.5 px-3 rounded-xl border border-emerald-300 text-xs text-center font-mono font-bold tracking-widest bg-white text-black outline-none focus:border-[#25D366]"
+                              className={`w-full py-1.5 px-3 rounded-xl border text-xs text-center font-mono font-bold tracking-widest bg-white text-black outline-none transition ${
+                                regWaChannel === 'sms'
+                                  ? 'border-blue-300 focus:border-blue-600'
+                                  : 'border-emerald-300 focus:border-[#25D366]'
+                              }`}
                             />
                             <button
                               type="button"
                               onClick={handleVerifyRegWaOtp}
                               disabled={regWaLoading || !regWaOtp}
-                              className="px-3.5 py-1.5 rounded-xl bg-[#25D366] hover:bg-[#20BD5A] text-white text-xs font-bold shrink-0 transition shadow-xs cursor-pointer disabled:opacity-50"
+                              className={`px-3.5 py-1.5 rounded-xl text-white text-xs font-bold shrink-0 transition shadow-xs cursor-pointer disabled:opacity-50 ${
+                                regWaChannel === 'sms'
+                                  ? 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500'
+                                  : 'bg-[#25D366] hover:bg-[#20BD5A]'
+                              }`}
                             >
                               {regWaLoading ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : 'Verify'}
                             </button>
+                          </div>
+                          <div className="flex justify-between items-center text-[10px] text-gray-500">
+                            <span>Didn't receive code?</span>
+                            <div className="flex items-center gap-1.5">
+                              <button
+                                type="button"
+                                onClick={handleSendRegWaOtp}
+                                disabled={regWaLoading}
+                                className="text-emerald-600 font-bold hover:underline cursor-pointer"
+                              >
+                                Resend WhatsApp
+                              </button>
+                              <span>|</span>
+                              <button
+                                type="button"
+                                onClick={handleSendRegSmsOtp}
+                                disabled={regWaLoading}
+                                className="text-blue-600 font-bold hover:underline cursor-pointer"
+                              >
+                                Resend SMS
+                              </button>
+                            </div>
                           </div>
                           {regWaError && (
                             <p className="text-[10px] text-rose-600 font-medium">{regWaError}</p>

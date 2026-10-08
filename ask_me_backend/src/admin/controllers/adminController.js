@@ -11,6 +11,8 @@ const platformSettingsService = require('../services/platformSettingsService');
 const adminSearchService = require('../services/adminSearchService');
 const viewerAdminService = require('../services/viewerAdminService');
 const monthlySettlementService = require('../services/monthlySettlementService');
+const AdminFcmToken = require('../../models/AdminFcmTokenModel');
+
 
 const getDashboardOverview = async (req, res, next) => {
   try {
@@ -45,13 +47,13 @@ const getCreatorById = async (req, res, next) => {
   }
 };
 
-const approveCreatorKyc = async (req, res, next) => {
+const approveCreatorAcount = async (req, res, next) => {
   try {
     const adminId = req.user?.id;
-    const result = await kycService.approveKyc(req.params.id, adminId, req);
+    const result = await creatorAdminService.approveCreatorAccount(req.params.id, adminId, req);
     return res.status(200).json({
       status: 'success',
-      message: 'Creator KYC Approved successfully.',
+      message: 'Creator Account Approved successfully.',
       data: result,
     });
   } catch (error) {
@@ -407,11 +409,67 @@ const settleMonth = async (req, res, next) => {
   }
 };
 
+const saveNotificationToken = async (req, res, next) => {
+  try {
+    const adminId = req.user?.id || req.admin?.id || 1;
+    const { token: fcmToken, deviceInfo } = req.body;
+
+    if (!fcmToken || typeof fcmToken !== 'string') {
+      return res.status(400).json({
+        status: 'fail',
+        message: 'FCM Notification token is required.',
+      });
+    }
+
+    const cleanToken = fcmToken.trim();
+
+    const [tokenRecord, created] = await AdminFcmToken.findOrCreate({
+      where: { fcm_token: cleanToken },
+      defaults: {
+        admin_id: adminId,
+        fcm_token: cleanToken,
+        device_info: deviceInfo || req.headers['user-agent'] || 'Web Browser',
+        is_active: true,
+      },
+    });
+
+    if (!created) {
+      await tokenRecord.update({
+        admin_id: adminId,
+        is_active: true,
+        device_info: deviceInfo || req.headers['user-agent'] || tokenRecord.device_info,
+      });
+    }
+
+    return res.status(200).json({
+      status: 'success',
+      message: 'Admin FCM notification token saved successfully.',
+      data: { id: tokenRecord.id, fcmToken: tokenRecord.fcm_token },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const testAdminNotification = async (req, res, next) => {
+  try {
+    const { sendAdminNotification } = require('../services/fcmService');
+    const result = await sendAdminNotification({
+      title: 'Test Admin Push Notification 🚀',
+      body: 'This is a test notification from AskMe Admin System.',
+      data: { type: 'TEST_NOTIFICATION', time: new Date().toISOString() },
+    });
+    return res.status(200).json({ status: 'success', result });
+  } catch (err) {
+    next(err);
+  }
+};
+
 module.exports = {
   getDashboardOverview,
   getCreators,
   getCreatorById,
-  approveCreatorKyc,
+  approveCreatorAcount,
   rejectCreatorKyc,
   toggleBlockCreator,
   deleteCreator,
@@ -444,4 +502,7 @@ module.exports = {
   getViewerById,
   toggleBlockViewer,
   settleMonth,
+  saveNotificationToken,
+  testAdminNotification,
 };
+

@@ -255,6 +255,21 @@ const submitKycService = async (creatorId, data) => {
     }
 
     try {
+      const { sendAdminNotification } = require("../../admin/services/fcmService");
+      sendAdminNotification({
+        title: "New Creator KYC Submitted",
+        body: `${applicantName} has submitted KYC verification.`,
+        data: {
+          type: "KYC_SUBMITTED",
+          creatorId: String(creatorId),
+        },
+      });
+    } catch (fcmErr) {
+      console.warn("Notice: FCM push notification for KYC dispatch bypass:", fcmErr.message);
+    }
+
+
+    try {
       const { sendKycUnderReviewEmailAsync } = require("../../services/emailService");
       if (creatorRec && creatorRec.email) {
         sendKycUnderReviewEmailAsync({

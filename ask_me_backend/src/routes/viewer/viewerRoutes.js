@@ -5,11 +5,13 @@ const {
   loginViewer,
   googleAuthViewer,
   sendWhatsAppOtpViewer,
+  sendSmsOtpViewer,
   verifyWhatsAppOtpViewer,
   sendEmailOtpViewer,
   verifyEmailOtpViewer,
   truecallerAuthViewer,
   getViewerProfile,
+  deleteViewerAccount,
   getPublicLiveFeed,
   getCreatorPublicProfile,
   toggleFollowCreator,
@@ -60,6 +62,8 @@ router.post('/whatsapp-otp/send', sendWhatsAppOtpViewer);
  * @access  Public
  */
 router.post('/whatsapp-otp/verify', verifyWhatsAppOtpViewer);
+router.post('/sms-otp/send', sendSmsOtpViewer);
+router.post('/sms-otp/verify', verifyWhatsAppOtpViewer);
 
 /**
  * @route   POST /api/viewers/email-otp/send
@@ -88,6 +92,14 @@ router.post('/truecaller-auth', truecallerAuthViewer);
  * @access  Public / Private
  */
 router.get('/profile', getViewerProfile);
+
+/**
+ * @route   DELETE /api/viewers/account
+ * @desc    Delete Viewer Account
+ * @access  Private
+ */
+router.delete('/account', protect, deleteViewerAccount);
+router.delete('/profile', protect, deleteViewerAccount);
 
 /**
  * @route   GET /api/viewers/public/live-feed

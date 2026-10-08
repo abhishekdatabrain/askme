@@ -54,6 +54,14 @@ export default function AdminNotifications() {
           { ...newNotif, status: newNotif.isRead || newNotif.status === 'read' ? 'read' : 'unread' },
           ...prev
         ]);
+        try {
+          if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
+            new Notification(newNotif.title || 'Admin Alert 🔔', {
+              body: newNotif.message || '',
+              icon: '/favicon.ico',
+            });
+          }
+        } catch (e) {}
       };
       socket.on('admin_notification', handleNewNotif);
       return () => {

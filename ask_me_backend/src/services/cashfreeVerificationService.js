@@ -8,7 +8,7 @@ dotenv.config();
 const callCashfreeAPI = (endpointPath, payload, method = 'POST') => {
   const clientId = process.env.CASHFREE_CLIENT_ID || '';
   const clientSecret = process.env.CASHFREE_CLIENT_SECRET || '';
-  const envMode = (process.env.CASHFREE_ENV || 'SANDBOX').toLowerCase();
+  const envMode = (process.env.CASHFREE_ENV || '').toLowerCase();
 
   const baseUrl = (envMode === 'production' || envMode === 'prod')
     ? 'api.cashfree.com'

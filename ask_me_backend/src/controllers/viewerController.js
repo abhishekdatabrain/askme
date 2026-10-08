@@ -1260,6 +1260,84 @@ const sendWhatsAppOtpViewer = async (req, res, next) => {
 };
 
 /**
+ * @desc    Send SMS OTP to Viewer via BhashSMS
+ * @route   POST /api/viewers/sms-otp/send
+ * @access  Public
+ */
+const sendSmsOtpViewer = async (req, res, next) => {
+  try {
+    const { sendBhashSms } = require('../services/bhashSmsService');
+    const { mobile, phone, type, isRegister } = req.body;
+    const rawPhone = mobile || phone;
+    const cleanPhone = String(rawPhone || '').replace(/[^0-9]/g, '');
+
+    if (!cleanPhone) {
+      return res.status(400).json({
+        status: 'fail',
+        message: 'Please provide a valid mobile number.',
+      });
+    }
+
+    let targetPhone = cleanPhone;
+    if (targetPhone.length === 12 && targetPhone.startsWith('91')) {
+      targetPhone = targetPhone.slice(2);
+    }
+
+    const tenDigit = targetPhone.slice(-10);
+
+    if (tenDigit.length !== 10) {
+      return res.status(400).json({
+        status: 'fail',
+        message: 'Please enter a valid 10-digit mobile number.',
+      });
+    }
+
+    const isRegistrationFlow = type === 'register' || isRegister === true || type !== 'login';
+
+    // if (!isRegistrationFlow) {
+    //   const fullPhone = `91${tenDigit}`;
+    //   const user = await User.findOne({
+    //     where: {
+    //       [Op.or]: [
+    //         { phone: fullPhone },
+    //         { phone: tenDigit },
+    //         { phone: `+91${tenDigit}` },
+    //       ],
+    //     },
+    //   }).catch(() => null);
+
+    //   if (!user) {
+    //     return res.status(400).json({
+    //       status: 'fail',
+    //       message: 'This mobile number is not registered. Please use a registered number.',
+    //     });
+    //   }
+    // }
+
+    const { cleanPhone: targetPhoneOtp, otp } = generateAndStoreOtp(tenDigit);
+
+    await sendBhashSms({
+      phone: targetPhoneOtp,
+      otp,
+    });
+
+    console.log(`[SMS OTP Viewer] Code ${otp} generated and sent via BhashSMS to ${targetPhoneOtp} (Flow: ${isRegistrationFlow ? 'register' : 'login'})`);
+
+    return res.status(200).json({
+      status: 'success',
+      message: 'Verification code sent via SMS to your mobile number!',
+      expiresMinutes: 5,
+      phone: targetPhoneOtp,
+      ...(process.env.NODE_ENV !== 'production' ? { debugOtp: otp } : {}),
+    });
+  } catch (error) {
+    console.error('SEND SMS OTP VIEWER ERROR:', error);
+    next(error);
+  }
+};
+
+
+/**
  * @desc    Verify WhatsApp OTP and Login Viewer
  * @route   POST /api/viewers/whatsapp-otp/verify
  * @access  Public
@@ -1412,16 +1490,54 @@ const verifyEmailOtpViewer = async (req, res, next) => {
 
 const { truecallerAuthViewer } = require('./truecaller.controller');
 
+/**
+ * @desc    Delete Viewer Account
+ * @route   DELETE /api/viewers/account
+ * @access  Private (JWT Protected)
+ */
+const deleteViewerAccount = async (req, res, next) => {
+  try {
+    const userId = req.user?.id || req.user?.userId;
+
+    if (!userId) {
+      return res.status(401).json({
+        status: 'fail',
+        message: 'Unauthorized. User ID not found.',
+      });
+    }
+
+    const user = await User.findByPk(userId);
+    if (!user) {
+      return res.status(404).json({
+        status: 'fail',
+        message: 'Viewer profile not found.',
+      });
+    }
+
+    await user.destroy();
+
+    return res.status(200).json({
+      status: 'success',
+      message: 'Viewer account deleted successfully.',
+    });
+  } catch (error) {
+    console.error('DELETE VIEWER ACCOUNT ERROR:', error);
+    next(error);
+  }
+};
+
 module.exports = {
   registerViewer,
   loginViewer,
   googleAuthViewer,
   sendWhatsAppOtpViewer,
+  sendSmsOtpViewer,
   verifyWhatsAppOtpViewer,
   sendEmailOtpViewer,
   verifyEmailOtpViewer,
   truecallerAuthViewer,
   getViewerProfile,
+  deleteViewerAccount,
   getPublicLiveFeed,
   getCreatorPublicProfile,
   toggleFollowCreator,
@@ -1430,4 +1546,5 @@ module.exports = {
   getPublicPastStreams,
   getPublicCategories,
 };
+
 

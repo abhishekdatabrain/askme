@@ -124,6 +124,29 @@ class CreatorAdminService {
     return creatorData;
   }
 
+  async approveCreatorAccount(id, adminId, req) {
+    const creator = await creatorRepository.findById(id);
+    if (!creator) {
+      throw new NotFoundError('Creator not found');
+    }
+
+    await creatorRepository.updateStatus(id, CREATOR_ACCOUNT_STATUS.ACTIVE);
+
+    try {
+      const notificationService = require('./notificationService');
+      await notificationService.createNotification({
+        creatorId: id,
+        type: 'account_activated',
+        title: 'Account Activated ✅',
+        message: 'Your creator account status has been activated by the admin.',
+      });
+    } catch (e) {
+      console.warn('Account activation notification notice:', e.message);
+    }
+
+    return { creatorId: id, accountStatus: 'Active', status: CREATOR_ACCOUNT_STATUS.ACTIVE };
+  }
+
   async toggleBlockCreator(id, adminId, req) {
     const creator = await creatorRepository.findById(id);
     if (!creator) {

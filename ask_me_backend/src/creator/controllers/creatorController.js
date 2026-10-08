@@ -12,6 +12,7 @@ const {
   loginCreatorService,
   googleAuthCreatorService,
   sendWhatsAppOtpCreatorService,
+  sendSmsOtpCreatorService,
   verifyWhatsAppOtpCreatorService,
   truecallerAuthCreatorService,
   getCreatorProfileService,
@@ -19,6 +20,7 @@ const {
   getCreatorBankAccountService,
   saveCreatorBankAccountService,
   verifyCreatorUpiService,
+  deleteCreatorAccountService,
 } = require("../services/creatorService");
 const {
   submitKycService,
@@ -108,7 +110,7 @@ const loginCreator = async (req, res, next) => {
  */
 const googleAuthCreator = async (req, res, next) => {
   try {
-    
+
     const result = await googleAuthCreatorService(req.body);
     return res.status(200).json({
       status: "success",
@@ -1020,6 +1022,25 @@ const sendWhatsAppOtpCreator = async (req, res, next) => {
 };
 
 /**
+ * Send SMS OTP Creator via BhashSMS
+ */
+const sendSmsOtpCreator = async (req, res, next) => {
+  try {
+    const result = await sendSmsOtpCreatorService(req.body);
+    return res.status(200).json({
+      status: "success",
+      message: result.message || "OTP sent via SMS!",
+      data: result,
+    });
+  } catch (error) {
+    if (error.statusCode) {
+      return res.status(error.statusCode).json({ status: "fail", message: error.message });
+    }
+    next(error);
+  }
+};
+
+/**
  * Verify WhatsApp OTP Creator
  */
 const verifyWhatsAppOtpCreator = async (req, res, next) => {
@@ -1138,11 +1159,31 @@ const verifyEmailOtpCreator = async (req, res, next) => {
   }
 };
 
+/**
+ * @desc    Delete Creator Account
+ * @route   DELETE /api/creators/account
+ * @access  Private (JWT Protected)
+ */
+const deleteCreatorAccount = async (req, res, next) => {
+  try {
+    const creatorId = getAuthenticatedCreatorId(req);
+    const result = await deleteCreatorAccountService(creatorId);
+    return res.status(200).json({
+      status: "success",
+      message: result.message || "Creator account deleted successfully.",
+    });
+  } catch (error) {
+    console.error("DELETE CREATOR ACCOUNT ERROR:", error);
+    next(error);
+  }
+};
+
 module.exports = {
   registerCreator,
   loginCreator,
   googleAuthCreator,
   sendWhatsAppOtpCreator,
+  sendSmsOtpCreator,
   verifyWhatsAppOtpCreator,
   sendEmailOtpCreator,
   verifyEmailOtpCreator,
@@ -1151,6 +1192,7 @@ module.exports = {
   getKycStatus,
   getCreatorProfile,
   updateCreatorProfile,
+  deleteCreatorAccount,
   createLiveSession,
   getLiveSessions,
   closeLiveSession,

@@ -1282,7 +1282,7 @@ export default function CreatorKycPage() {
                                     </h2>
                                     <p className={`text-xs mt-1 font-medium ${theme === 'light' ? 'text-[#64748B]' : 'text-[#A0A0B2]'
                                         }`}>
-                                        Cashfree-powered PAN, Aadhaar e-KYC, and Bank Account Penny Drop verification.
+                                        PAN, Aadhaar e-KYC, and Bank Account verification.
                                     </p>
                                 </div>
                                 <span className="self-start sm:self-auto px-3.5 py-1.5 rounded-full bg-[#EB1000]/10 text-[#EB1000] border border-[#EB1000]/30 text-xs font-black shrink-0 flex items-center gap-1.5 shadow-sm">
@@ -1624,12 +1624,12 @@ export default function CreatorKycPage() {
                                 <form onSubmit={handleNextStep} className="space-y-6">
                                     {/* Step Header */}
                                     <div className="flex items-center gap-3">
-                                        <span className="p-2.5 rounded-2xl bg-indigo-600/10 text-indigo-400 border border-indigo-500/20 shrink-0 shadow-sm">
+                                        <span className="p-2.5 rounded-2xl bg-[#EB1000]/10 text-[#FF3B30] border border-[#EB1000]/20 shrink-0 shadow-sm">
                                             <FileText className="h-5 w-5" />
                                         </span>
                                         <div>
                                             <h3 className={`font-black text-base tracking-tight ${theme === 'light' ? 'text-[#0F172A]' : 'text-white'}`}>
-                                                Step 2 — Cashfree & DigiLocker Verification
+                                                Step 2 — Verification
                                             </h3>
                                             <p className="text-xs text-[#94A3B8] font-medium">Verify your PAN card & complete Aadhaar e-KYC via DigiLocker.</p>
                                         </div>
@@ -1639,7 +1639,7 @@ export default function CreatorKycPage() {
                                     <div className={`p-6 rounded-3xl border space-y-4 transition-all ${theme === 'light' ? 'bg-white border-[#E2E8F0]' : 'bg-[#141422] border-[#26263A]'}`}>
                                         <div className="flex items-center justify-between border-b pb-3 border-current/10">
                                             <div className="flex items-center gap-2">
-                                                <CreditCard className="h-4 w-4 text-indigo-400" />
+                                                <CreditCard className="h-4 w-4 text-[#FF3B30]" />
                                                 <h4 className={`text-xs font-black uppercase tracking-wider ${theme === 'light' ? 'text-[#0F172A]' : 'text-white'}`}>
                                                     1. PAN Card Verification
                                                 </h4>
@@ -1668,7 +1668,7 @@ export default function CreatorKycPage() {
                                                         value={formData.panNumber}
                                                         onChange={(e) => handleInputChange('panNumber', e.target.value.toUpperCase())}
                                                         placeholder="e.g. ABCDE1234F"
-                                                        className={`w-full px-4 py-3.5 rounded-xl border text-xs outline-none font-mono uppercase font-bold tracking-wider pr-28 transition-all ${theme === 'light' ? 'bg-[#F8FAFC] border-[#CBD5E1] text-[#0F172A] focus:border-indigo-600' : 'bg-[#0B0B12] border-[#26263A] text-white focus:border-indigo-500'
+                                                        className={`w-full px-4 py-3.5 rounded-xl border text-xs outline-none font-mono uppercase font-bold tracking-wider pr-28 transition-all ${theme === 'light' ? 'bg-[#F8FAFC] border-[#CBD5E1] text-[#0F172A] focus:border-[#FF3B30]' : 'bg-[#0B0B12] border-[#26263A] text-white focus:border-[#FF3B30]'
                                                             }`}
                                                     />
                                                     {panVerificationData?.verified ? (
@@ -1680,7 +1680,7 @@ export default function CreatorKycPage() {
                                                             type="button"
                                                             onClick={handleVerifyPan}
                                                             disabled={isVerifyingPan || !formData.panNumber}
-                                                            className="absolute right-2 top-1/2 -translate-y-1/2 px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-extrabold transition shadow-md disabled:opacity-50 flex items-center gap-1.5 cursor-pointer"
+                                                            className="absolute right-2 top-1/2 -translate-y-1/2 px-4 py-2 rounded-lg bg-gradient-to-r from-[#FF3B30] to-[#EB1000] hover:from-[#FF4D43] hover:to-[#FF1A0A] shadow-md shadow-[#EB1000]/25 text-white text-[11px] font-extrabold transition shadow-md disabled:opacity-50 flex items-center gap-1.5 cursor-pointer"
                                                         >
                                                             {isVerifyingPan ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : 'Verify'}
                                                         </button>
@@ -1769,9 +1769,9 @@ export default function CreatorKycPage() {
                                     <div className={`p-6 rounded-3xl border space-y-5 transition-all ${theme === 'light' ? 'bg-white border-[#E2E8F0]' : 'bg-[#141422] border-[#26263A]'}`}>
                                         <div className="flex items-center justify-between border-b pb-3 border-current/10">
                                             <div className="flex items-center gap-2">
-                                                <ShieldCheck className="h-4 w-4 text-indigo-400" />
+                                                <ShieldCheck className="h-4 w-4 text-[#FF3B30]" />
                                                 <h4 className={`text-xs font-black uppercase tracking-wider ${theme === 'light' ? 'text-[#0F172A]' : 'text-white'}`}>
-                                                    2. DigiLocker Aadhaar Verification
+                                                    2.Aadhaar Verification
                                                 </h4>
                                             </div>
                                             {aadhaarVerificationData?.verified ? (
@@ -1788,19 +1788,19 @@ export default function CreatorKycPage() {
                                         {!aadhaarVerificationData?.verified ? (
                                             <div className="space-y-5">
                                                 {/* DigiLocker Banner Card */}
-                                                <div className="p-5 rounded-2xl bg-gradient-to-r from-[#180A0C] via-[#161624] to-[#0F172A] border border-indigo-500/30 space-y-4">
+                                                <div className="p-5 rounded-2xl bg-gradient-to-r from-[#180A0C] via-[#161624] to-[#0F172A] border border-[#EB1000]/30 space-y-4">
                                                     <div className="flex items-center justify-between">
                                                         <div className="flex items-center gap-2 text-xs font-extrabold text-white">
-                                                            <Sparkles className="h-4 w-4 text-indigo-400" />
+                                                            <Sparkles className="h-4 w-4 text-[#FF3B30]" />
                                                             <span>Verify your Aadhaar with DigiLocker</span>
                                                         </div>
-                                                        <span className="text-[10px] font-extrabold text-indigo-400 bg-indigo-500/10 px-2.5 py-1 rounded-full border border-indigo-500/30">
+                                                        <span className="text-[10px] font-extrabold text-[#FF3B30] bg-[#EB1000]/10 px-2.5 py-1 rounded-full border border-[#EB1000]/30">
                                                             Recommended
                                                         </span>
                                                     </div>
-                                                    <p className="text-xs text-[#94A3B8] leading-relaxed">
+                                                    {/* <p className="text-xs text-[#94A3B8] leading-relaxed">
                                                         Seamless and secure way to share your verified government documents directly from DigiLocker.
-                                                    </p>
+                                                    </p> */}
 
                                                     <div>
                                                         <label className="block text-xs font-extrabold mb-2 text-white">
@@ -1814,7 +1814,7 @@ export default function CreatorKycPage() {
                                                             value={formData.aadhaarNumber || ''}
                                                             onChange={(e) => handleInputChange('aadhaarNumber', e.target.value.replace(/\D/g, ''))}
                                                             placeholder="e.g. 123456789012"
-                                                            className="w-full px-4 py-3.5 rounded-xl border border-[#26263A] bg-[#0B0B12] text-white text-sm outline-none font-mono font-bold tracking-widest focus:border-indigo-500"
+                                                            className="w-full px-4 py-3.5 rounded-xl border border-[#26263A] bg-[#0B0B12] text-white text-sm outline-none font-mono font-bold tracking-widest focus:border-[#FF3B30]"
                                                         />
                                                     </div>
 
@@ -1825,7 +1825,7 @@ export default function CreatorKycPage() {
                                                                 type="checkbox"
                                                                 checked={digiConsentAgreed}
                                                                 onChange={(e) => setDigiConsentAgreed(e.target.checked)}
-                                                                className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 border-gray-600 bg-gray-900 cursor-pointer"
+                                                                className="w-4 h-4 rounded text-[#FF3B30] focus:ring-[#FF3B30] accent-[#FF3B30] border-gray-600 bg-gray-900 cursor-pointer"
                                                             />
                                                             <span>I agree to share my verified Aadhaar details with AskMe</span>
                                                         </label>
@@ -1841,17 +1841,15 @@ export default function CreatorKycPage() {
                                                                 }
                                                                 if (formData.aadhaarNumber && formData.aadhaarNumber.length === 12) {
                                                                     await handleSendDigiLockerOtp();
-                                                                } else {
-                                                                    await handleInitDigiLocker();
-                                                                }
+                                                                } 
                                                             }}
                                                             disabled={!digiConsentAgreed || isSendingDigiLockerOtp || isInitiatingDigiLocker}
-                                                            className="flex-1 py-3.5 px-6 rounded-xl bg-gradient-to-r from-indigo-600 via-indigo-500 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white font-black text-xs uppercase tracking-wider transition-all shadow-xl shadow-indigo-600/30 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                                                            className="flex-1 py-3.5 px-6 rounded-xl bg-gradient-to-r from-[#FF3B30] via-[#EB1000] to-[#C90D00] hover:from-[#FF4D43] hover:to-[#EB1000] text-white font-black text-xs uppercase tracking-wider transition-all shadow-xl shadow-[#EB1000]/30 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
                                                         >
                                                             {isSendingDigiLockerOtp || isInitiatingDigiLocker ? (
                                                                 <><RefreshCw className="h-4 w-4 animate-spin" /> Connecting to DigiLocker...</>
                                                             ) : (
-                                                                <><ShieldCheck className="h-4 w-4" /> Verify with DigiLocker</>
+                                                                <><ShieldCheck className="h-4 w-4" /> Verify </>
                                                             )}
                                                         </button>
                                                     </div>
@@ -1955,7 +1953,7 @@ export default function CreatorKycPage() {
                                         <button
                                             type="submit"
                                             disabled={!panVerificationData?.verified || !aadhaarVerificationData?.verified}
-                                            className="w-full sm:w-auto px-8 py-3.5 rounded-xl bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white font-black text-xs uppercase tracking-wider shadow-xl shadow-indigo-600/30 hover:scale-[1.02] transition-all disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
+                                            className="w-full sm:w-auto px-8 py-3.5 rounded-xl bg-gradient-to-r from-[#FF3B30] to-[#EB1000] hover:from-[#FF4D43] hover:to-[#FF1A0A] text-white font-black text-xs uppercase tracking-wider shadow-xl shadow-[#EB1000]/30 hover:scale-[1.02] transition-all disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
                                         >
                                             <span>Continue to Bank Details</span>
                                             <ArrowRight className="h-4 w-4" />
@@ -2368,8 +2366,8 @@ export default function CreatorKycPage() {
                                     </div>
 
                                     {/* Commercial Model Glance */}
-                                    <div className="p-4 rounded-2xl bg-indigo-500/10 border border-indigo-500/30 text-indigo-300 space-y-2">
-                                        <h5 className="font-black text-xs uppercase tracking-wider text-indigo-400">CREATOR COMMERCIAL MODEL AT A GLANCE</h5>
+                                    <div className="p-4 rounded-2xl bg-[#EB1000]/10 border border-[#EB1000]/30 text-[#FF6B60] space-y-2">
+                                        <h5 className="font-black text-xs uppercase tracking-wider text-[#FF3B30]">CREATOR COMMERCIAL MODEL AT A GLANCE</h5>
                                         <ul className="list-disc pl-5 space-y-1 text-[11px]">
                                             <li><strong>Viewer pays:</strong> 100%</li>
                                             <li><strong>AskMe standard Platform Fee:</strong> 15%</li>

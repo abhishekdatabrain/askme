@@ -16,7 +16,7 @@ const {
   getDashboardOverview,
   getCreators,
   getCreatorById,
-  approveCreatorKyc,
+  approveCreatorAcount,
   rejectCreatorKyc,
   toggleBlockCreator,
   deleteCreator,
@@ -49,11 +49,17 @@ const {
   processWithdrawal,
   completeWithdrawal,
   settleMonth,
+  saveNotificationToken,
+  testAdminNotification,
 } = require('../controllers/adminController');
 
 // All Admin Routes require Authentication & Admin Authorization (RBAC)
 router.use(protect);
 router.use(authorize('admin'));
+
+// Admin FCM Notification Token registration API & Test Route
+router.post('/notification-token', saveNotificationToken);
+router.get('/test-fcm', testAdminNotification);
 
 // 0. Global Admin Search
 router.get('/search', globalAdminSearch);
@@ -64,7 +70,8 @@ router.get('/dashboard', getDashboardOverview);
 // 2. Creator Management
 router.get('/creators', validate(creatorListQuerySchema, 'query'), getCreators);
 router.get('/creators/:id', getCreatorById);
-router.put('/creators/:id/approve-kyc', approveCreatorKyc);
+router.put('/creators/:id/approve-acount', approveCreatorAcount);
+router.put('/creators/:id/approve-account', approveCreatorAcount);
 router.put('/creators/:id/reject-kyc', validate(kycReviewSchema, 'body'), rejectCreatorKyc);
 router.put('/creators/:id/toggle-block', toggleBlockCreator);
 router.put('/creators/:id/block', toggleBlockCreator);

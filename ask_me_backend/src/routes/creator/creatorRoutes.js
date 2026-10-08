@@ -6,6 +6,7 @@ const {
   loginCreator,
   googleAuthCreator,
   sendWhatsAppOtpCreator,
+  sendSmsOtpCreator,
   verifyWhatsAppOtpCreator,
   sendEmailOtpCreator,
   verifyEmailOtpCreator,
@@ -14,6 +15,7 @@ const {
   getKycStatus,
   getCreatorProfile,
   updateCreatorProfile,
+  deleteCreatorAccount,
   createLiveSession,
   getLiveSessions,
   closeLiveSession,
@@ -69,6 +71,8 @@ router.post('/login', loginCreator);
 router.post('/google-auth', googleAuthCreator);
 router.post('/whatsapp-otp/send', sendWhatsAppOtpCreator);
 router.post('/whatsapp-otp/verify', verifyWhatsAppOtpCreator);
+router.post('/sms-otp/send', sendSmsOtpCreator);
+router.post('/sms-otp/verify', verifyWhatsAppOtpCreator);
 router.post('/email-otp/send', sendEmailOtpCreator);
 router.post('/email-otp/verify', verifyEmailOtpCreator);
 router.post('/truecaller-auth', truecallerAuthCreator);
@@ -106,12 +110,14 @@ router.post('/kyc/verify-bank', verifyBankController);
 router.post('/kyc', protect, submitKyc);
 router.get('/kyc/status', protect, getKycStatus);
 
-// Profile
+// Profile & Account Deletion
 router.get('/profile', protect, getCreatorProfile);
 router.get('/profile/:id', protect, getCreatorProfile);
 router.get('/profile/creator/:creatorId', protect, getCreatorProfile);
 router.put('/profile', protect, updateCreatorProfile);
 router.put('/profile/:id', protect, updateCreatorProfile);
+router.delete('/profile', protect, deleteCreatorAccount);
+router.delete('/account', protect, deleteCreatorAccount);
 
 // Bank Account & UPI
 router.get('/bank-account', protect, getCreatorBankAccount);

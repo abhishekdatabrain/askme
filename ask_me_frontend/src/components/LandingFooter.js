@@ -136,6 +136,11 @@ export default function LandingFooter() {
                   </Link>
                 </li>
                 <li>
+                  <Link href="/delete-account" className="hover:text-red-400 transition-colors font-semibold text-red-400/90">
+                    Delete Account
+                  </Link>
+                </li>
+                <li>
                   <a href="#safety" className="hover:text-white transition-colors">
                     Safety
                   </a>

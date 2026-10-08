@@ -16,7 +16,10 @@ export default function CreatorLayout({ children }) {
     pathname === '/creators' ||
     pathname === '/creators/' ||
     pathname === '/' ||
+    pathname === '/creators/login' ||
+    pathname?.startsWith('/creators/login') ||
     pathname === '/creators/register' ||
+    pathname?.startsWith('/creators/register') ||
     pathname === '/creators/kyc' ||
     pathname?.startsWith('/creators/kyc');
 

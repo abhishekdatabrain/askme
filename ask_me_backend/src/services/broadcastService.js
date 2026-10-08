@@ -69,7 +69,52 @@ const triggerGoLiveBroadcast = async ({ creatorId, sessionId, title, sessionCode
       }
     });
 
-    // Send Go-Live Email to all followers asynchronously
+    // 1. Bulk Insert In-App Notifications for all followers into DB
+    if (notificationRecords.length > 0) {
+      await Notification.bulkCreate(notificationRecords).catch((err) => {
+        console.error('[Broadcast Service] Notification DB bulkCreate error:', err.message);
+      });
+      console.log(`[Broadcast Service] Saved ${notificationRecords.length} in-app Go-Live notifications to DB.`);
+    }
+
+    // 2. Real-time Socket.io Push Notifications to online follower viewers
+    try {
+      const io = getIO();
+      if (io) {
+        followerUserIds.forEach((viewerId) => {
+          // Push live notification alert to individual user socket channel
+          io.to(`user_${viewerId}`).emit('notification', {
+            type: 'go_live',
+            title: `🔴 ${creatorName} is NOW LIVE!`,
+            message: `"${title}" has started! Join the live stream and ask your questions.`,
+            creatorId,
+            sessionId,
+            sessionCode,
+          });
+
+          io.to(`user_${viewerId}`).emit('creator_live', {
+            creatorId,
+            creatorName,
+            sessionTitle: title,
+            sessionCode,
+          });
+        });
+
+        // Broadcast to global feed
+        io.emit('creator_went_live', {
+          creatorId,
+          creatorName,
+          sessionTitle: title,
+          sessionCode,
+        });
+
+        console.log(`[Broadcast Service] Socket.io push notification emitted to ${followerUserIds.length} follower viewer(s).`);
+      }
+    } catch (socketErr) {
+      console.warn('[Broadcast Service] Socket push notification error:', socketErr.message);
+    }
+
+    // 3. Send Go-Live Email to all followers asynchronously
     sendGoLiveEmailToFollowersAsync({
       followers: emailFollowers,
       creatorName,

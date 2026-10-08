@@ -106,14 +106,14 @@ export default function CreatorManagement({ activeSubTab }) {
 
     try {
       if (action === 'approve') {
-        await fetch(`${API_ENDPOINTS.ADMIN.CREATORS}/${id}/approve-kyc`, { method: 'PUT', headers });
-        toast.success(`Creator KYC approved & activated in database! (${targetCreator?.name || id})`, 'Creator Approved');
+        await fetch(`${API_ENDPOINTS.ADMIN.CREATORS}/${id}/approve-acount`, { method: 'PUT', headers });
+        toast.success(`Account is activated! (${targetCreator?.name || id})`, 'Creator Approved');
       } else if (action === 'reject') {
         await fetch(`${API_ENDPOINTS.ADMIN.CREATORS}/${id}/reject-kyc`, { method: 'PUT', headers, body: JSON.stringify({ reason: 'Invalid documents' }) });
         toast.error(`Creator KYC rejected for ${targetCreator?.name || id}.`, 'Creator Rejected');
       } else if (action === 'block') {
         await fetch(`${API_ENDPOINTS.ADMIN.CREATORS}/${id}/block`, { method: 'PUT', headers });
-        toast.warning(`Account status toggled for ${targetCreator?.name || id} in database!`, 'Status Updated');
+        toast.warning(`Account status toggled for ${targetCreator?.name || id} `, 'Status Updated');
       }
     } catch (e) {
       toast.error('Failed to update creator action in backend database.', 'Database Sync Error');
@@ -121,7 +121,7 @@ export default function CreatorManagement({ activeSubTab }) {
 
     setCreators(prev => prev.map(c => {
       if (c.id === id) {
-        if (action === 'approve') return { ...c, kycStatus: 'Approved', accountStatus: 'Active' };
+        if (action === 'approve') return { ...c, accountStatus: 'Active' };
         if (action === 'reject') return { ...c, kycStatus: 'Rejected' };
         if (action === 'block') return { ...c, accountStatus: c.accountStatus === 'Blocked' ? 'Active' : 'Blocked' };
       }
@@ -249,7 +249,7 @@ export default function CreatorManagement({ activeSubTab }) {
                     <button
                       onClick={() => handleAction(c.id, 'approve')}
                       title="Approve Creator"
-                      className={`p-1.5 rounded-lg transition cursor-pointer ${c.kycStatus === 'Approved' && c.accountStatus === 'Active'
+                      className={`p-1.5 rounded-lg transition cursor-pointer ${c.accountStatus === 'Active'
                         ? 'bg-[#00E676]/10 text-[#00E676] border border-[#00E676]/30'
                         : 'bg-[#1C1C26] text-[#8B8B96] hover:text-[#00E676] hover:bg-[#00E676]/10'
                         }`}

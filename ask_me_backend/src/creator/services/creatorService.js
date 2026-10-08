@@ -190,6 +190,21 @@ const registerCreatorService = async (data) => {
 
     await transaction.commit();
 
+    // Send FCM Push Notification to active logged-in admins
+    try {
+      const { sendAdminNotification } = require("../../admin/services/fcmService");
+      sendAdminNotification({
+        title: "New Creator Registration",
+        body: `${creatorName} has registered as a creator.`,
+        data: {
+          type: "CREATOR_REGISTERED",
+          creatorId: String(creator.id),
+        },
+      });
+    } catch (fcmErr) {
+      console.warn("FCM push notification dispatch notice:", fcmErr.message);
+    }
+
     sendWelcomeEmailAsync({
       email: creator.email,
       name: creator.full_name,
@@ -424,7 +439,37 @@ const googleAuthCreatorService = async ({ idToken, credential, token: bodyToken,
         { transaction }
       );
 
+      try {
+        const adminNotificationService = require("../../admin/services/notificationService");
+        await adminNotificationService.createNotification(
+          {
+            creatorId: creator.id,
+            type: "creator_registration",
+            title: "New Creator Registered 🚀",
+            message: `New Creator ${verifiedName} (${verifiedEmail}) registered on AskMe via Google.`,
+          },
+          { transaction }
+        );
+      } catch (notifErr) {
+        console.warn("Notice: Google Creator registration admin notification warning:", notifErr.message);
+      }
+
       await transaction.commit();
+
+      // Send FCM Push Notification to active logged-in admins
+      try {
+        const { sendAdminNotification } = require("../../admin/services/fcmService");
+        sendAdminNotification({
+          title: "New Creator Registration",
+          body: `${verifiedName || creator.full_name} has registered as a creator.`,
+          data: {
+            type: "CREATOR_REGISTERED",
+            creatorId: String(creator.id),
+          },
+        });
+      } catch (fcmErr) {
+        console.warn("FCM push notification dispatch notice:", fcmErr.message);
+      }
 
       sendWelcomeEmailAsync({
         email: creator.email,
@@ -839,6 +884,72 @@ const sendWhatsAppOtpCreatorService = async (data) => {
 };
 
 /**
+ * Send SMS OTP for Creator via BhashSMS
+ */
+const sendSmsOtpCreatorService = async (data) => {
+  const { sendBhashSms } = require('../../services/bhashSmsService');
+  const { phone, mobile, type, isRegister } = data || {};
+  const rawPhone = phone || mobile;
+  const cleanPhone = String(rawPhone || "").replace(/[^0-9]/g, "");
+
+  if (!cleanPhone) {
+    const err = new Error("Mobile number is required.");
+    err.statusCode = 400;
+    throw err;
+  }
+
+  let targetPhone = cleanPhone;
+  if (targetPhone.length === 12 && targetPhone.startsWith("91")) {
+    targetPhone = targetPhone.slice(2);
+  }
+  const tenDigit = targetPhone.slice(-10);
+
+  if (tenDigit.length !== 10) {
+    const err = new Error("Please provide a valid 10-digit mobile number.");
+    err.statusCode = 400;
+    throw err;
+  }
+
+  const isRegistrationFlow = type === 'register' || isRegister === true || type !== 'login';
+
+  // if (!isRegistrationFlow) {
+  //   const fullPhone = `91${tenDigit}`;
+  //   const creator = await CreatorsModel.findOne({
+  //     where: {
+  //       [Op.or]: [
+  //         { mobile: fullPhone },
+  //         { mobile: tenDigit },
+  //         { mobile: `+91${tenDigit}` },
+  //       ],
+  //     },
+  //   });
+
+  //   if (!creator) {
+  //     const err = new Error("This mobile number is not registered. Please use a registered number.");
+  //     err.statusCode = 400;
+  //     throw err;
+  //   }
+  // }
+
+  const { cleanPhone: finalPhone, otp } = generateAndStoreOtp(tenDigit);
+
+  await sendBhashSms({
+    phone: finalPhone,
+    otp,
+  });
+
+  console.log(`[SMS OTP Creator] Code ${otp} sent to ${finalPhone} via BhashSMS (Flow: ${isRegistrationFlow ? 'register' : 'login'})`);
+
+  return {
+    message: "Verification code sent via SMS to your mobile number!",
+    expiresMinutes: 5,
+    phone: finalPhone,
+    ...(process.env.NODE_ENV !== "production" ? { debugOtp: otp } : {}),
+  };
+};
+
+
+/**
  * Verify WhatsApp OTP and Login / Register Creator
  */
 const verifyWhatsAppOtpCreatorService = async (data) => {
@@ -999,11 +1110,36 @@ const truecallerAuthCreatorService = async (data) => {
   };
 };
 
+/**
+ * Delete Creator Account Service
+ */
+const deleteCreatorAccountService = async (creatorId) => {
+  const creator = await CreatorsModel.findByPk(creatorId);
+  if (!creator) {
+    const err = new Error("Creator account not found.");
+    err.statusCode = 404;
+    throw err;
+  }
+
+  try {
+    await creator.update({ status: 'deleted' });
+  } catch (err) {
+    console.warn("Could not update creator status to deleted:", err.message);
+  }
+
+  await creator.destroy();
+
+  return {
+    message: "Creator account deleted successfully.",
+  };
+};
+
 module.exports = {
   registerCreatorService,
   loginCreatorService,
   googleAuthCreatorService,
   sendWhatsAppOtpCreatorService,
+  sendSmsOtpCreatorService,
   verifyWhatsAppOtpCreatorService,
   truecallerAuthCreatorService,
   getCreatorProfileService,
@@ -1011,4 +1147,7 @@ module.exports = {
   getCreatorBankAccountService,
   saveCreatorBankAccountService,
   verifyCreatorUpiService,
+  deleteCreatorAccountService,
 };
+
+

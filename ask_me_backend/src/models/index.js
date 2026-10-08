@@ -1,5 +1,6 @@
 const Admin = require("./AdminModel");
 const AdminRefreshToken = require("./AdminRefreshTokenModel");
+const AdminFcmToken = require("./AdminFcmTokenModel");
 const Follow = require("./FollowModel");
 const Notification = require("./NotificationModel");
 const User = require("./userModel");
@@ -33,9 +34,11 @@ SupportTicket.belongsTo(Creator, { foreignKey: "creator_id", as: "creator" });
 User.hasMany(SupportTicket, { foreignKey: "user_id", as: "supportTickets" });
 SupportTicket.belongsTo(User, { foreignKey: "user_id", as: "user" });
 
-// Admin & Refresh Token
+// Admin & Refresh Token / FCM Tokens
 Admin.hasMany(AdminRefreshToken, { foreignKey: "admin_id", as: "refreshTokens" });
 AdminRefreshToken.belongsTo(Admin, { foreignKey: "admin_id", as: "admin" });
+Admin.hasMany(AdminFcmToken, { foreignKey: "admin_id", as: "fcmTokens" });
+AdminFcmToken.belongsTo(Admin, { foreignKey: "admin_id", as: "admin" });
 
 // Creator & Profile
 Creator.hasOne(CreatorProfile, { foreignKey: "creator_id", as: "profile" });
@@ -131,6 +134,7 @@ WithdrawalRequest.belongsTo(WalletSettlement, { foreignKey: "settlement_id", as:
 module.exports = {
   Admin,
   AdminRefreshToken,
+  AdminFcmToken,
   Follow,
   Notification,
   User,

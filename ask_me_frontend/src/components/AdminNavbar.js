@@ -9,6 +9,7 @@ import {
 import { API_ENDPOINTS, getMediaUrl } from '@/config/api';
 import { getAdminToken } from '@/utils/cookies';
 import { getSocket } from '@/config/socket';
+import { requestAdminFcmToken, onForegroundMessage } from '@/config/firebase';
 import Logo from '@/components/Logo';
 
 export default function AdminNavbar({ activeView, setActiveView, onOpenAuthModal, isLoggedIn, onLogout, systemStatus = "OPERATIONAL", theme = 'dark', onToggleTheme }) {
@@ -51,6 +52,36 @@ export default function AdminNavbar({ activeView, setActiveView, onOpenAuthModal
   useEffect(() => {
     fetchNotifications();
 
+    // Register Admin FCM Push Notification Token
+    const adminToken = getAdminToken();
+    if (adminToken) {
+      requestAdminFcmToken(adminToken).catch((err) => {
+        console.warn('Admin FCM token registration notice:', err.message);
+      });
+    }
+
+    // Foreground FCM listener
+    let unsubForeground = () => {};
+    onForegroundMessage((payload) => {
+      if (payload?.notification) {
+        const { title, body } = payload.notification;
+        if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
+          try {
+            new Notification(title || 'New Notification 🔔', {
+              body: body || '',
+              icon: '/favicon.ico',
+            });
+          } catch (e) {
+            console.warn('Foreground desktop notification error:', e.message);
+          }
+        }
+        fetchNotifications();
+      }
+    }).then((unsub) => {
+      if (typeof unsub === 'function') unsubForeground = unsub;
+    }).catch(() => {});
+
+
     // 15-second interval fallback to keep notifications synced
     const interval = setInterval(fetchNotifications, 15000);
 
@@ -66,15 +97,35 @@ export default function AdminNavbar({ activeView, setActiveView, onOpenAuthModal
           },
           ...prev,
         ]);
+
+        // Browser Desktop Push Notification Trigger
+        try {
+          if (typeof window !== 'undefined' && 'Notification' in window) {
+            if (Notification.permission === 'granted') {
+              new Notification(newNotif.title || 'Admin Alert 🔔', {
+                body: newNotif.message || '',
+                icon: '/favicon.ico',
+              });
+            } else if (Notification.permission !== 'denied') {
+              Notification.requestPermission().catch(() => {});
+            }
+          }
+        } catch (pushErr) {
+          console.warn('Browser Push Notification notice:', pushErr.message);
+        }
       };
       socket.on('admin_notification', handleNewNotif);
       return () => {
         clearInterval(interval);
         socket.off('admin_notification', handleNewNotif);
+        if (typeof unsubForeground === 'function') unsubForeground();
       };
     }
 
-    return () => clearInterval(interval);
+    return () => {
+      clearInterval(interval);
+      if (typeof unsubForeground === 'function') unsubForeground();
+    };
   }, []);
 
   // Debounced Search logic

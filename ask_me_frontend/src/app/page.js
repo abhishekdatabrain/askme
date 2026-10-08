@@ -198,7 +198,7 @@ export default function Home() {
       username: '@askme',
       category: 'TECH & AI SYSTEMS',
       // subscribers: '420K',
-      avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=800&q=80',
+      avatar: '/podcast-live.jpeg',
       title: 'Live',
       streamTitle: '"AI Coding, Autonomous Agents & Next-Gen Developer Stack Q&A Session"',
       broadcastingTo: 'YouTube & Twitch',

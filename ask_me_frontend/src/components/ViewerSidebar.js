@@ -26,8 +26,12 @@ import {
 import { API_ENDPOINTS } from '@/config/api';
 import { getViewerToken, getViewerUser, clearViewerSession, removeCookie } from '@/utils/cookies';
 import Logo from '@/components/Logo';
+import { getSocket } from '@/config/socket';
+import { useToast } from '@/context/ToastContext';
+import { requestViewerFcmToken } from '@/config/firebase';
 
 function ViewerSidebarContent({ theme: propTheme, onToggleTheme, activeTab: currentTab, onSelectTab, isMobileDrawer = false, onNavigate }) {
+  const { toast } = useToast();
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -85,6 +89,7 @@ function ViewerSidebarContent({ theme: propTheme, onToggleTheme, activeTab: curr
       .catch(() => { });
 
     const u = getViewerUser();
+    const token = getViewerToken();
     if (u) {
       fetch(`${API_ENDPOINTS.VIEWERS.MY_QUESTIONS}?userId=${u.id || ''}&email=${encodeURIComponent(u.email || '')}`)
         .then(res => res.json())
@@ -94,6 +99,48 @@ function ViewerSidebarContent({ theme: propTheme, onToggleTheme, activeTab: curr
           }
         })
         .catch(() => { });
+
+      if (u.id) {
+        requestViewerFcmToken(token, u.id).catch(() => {});
+
+        const socket = getSocket();
+        if (socket) {
+          socket.emit('join_user', { userId: u.id });
+
+          const handleLiveAlert = (data) => {
+            if (!data) return;
+            const creatorTitle = data.creatorName ? `🔴 ${data.creatorName} is NOW LIVE!` : (data.title || '🔴 Creator is NOW LIVE!');
+            const streamMsg = data.message || (data.sessionTitle ? `"${data.sessionTitle}" has started! Click to watch.` : 'Live broadcast has started! Click to watch.');
+            toast.info(streamMsg, creatorTitle);
+
+            if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
+              try {
+                const notif = new Notification(creatorTitle, {
+                  body: streamMsg,
+                  icon: '/favicon.ico',
+                });
+                notif.onclick = () => {
+                  window.focus();
+                  if (data.sessionCode) {
+                    router.push(`/pay/${data.sessionCode}`);
+                  }
+                };
+              } catch (e) {}
+            }
+          };
+
+          socket.on('notification', handleLiveAlert);
+          socket.on('creator_live', handleLiveAlert);
+          socket.on('creator_went_live', handleLiveAlert);
+
+          return () => {
+            socket.emit('leave_user', { userId: u.id });
+            socket.off('notification', handleLiveAlert);
+            socket.off('creator_live', handleLiveAlert);
+            socket.off('creator_went_live', handleLiveAlert);
+          };
+        }
+      }
     }
   }, []);
 

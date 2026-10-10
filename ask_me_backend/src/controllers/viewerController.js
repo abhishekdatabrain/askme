@@ -8,6 +8,8 @@ const CreatorSocialLinkModel = require('../models/CreatorSocialLinkModel');
 const DonationSession = require('../models/DonationSessionModels');
 const FollowModel = require('../models/FollowModel');
 const Donation = require('../models/DonationModel');
+const Notification = require('../models/NotificationModel');
+const UserFcmToken = require('../models/UserFcmTokenModel');
 const { sendLoginOtpWhatsApp } = require('../services/whatsappService');
 const { generateAndStoreOtp, verifyStoredOtp } = require('../utils/whatsappOtpStore');
 const { generateAndStoreEmailOtp, verifyStoredEmailOtp } = require('../utils/emailOtpStore');
@@ -1213,27 +1215,8 @@ const sendWhatsAppOtpViewer = async (req, res, next) => {
 
     const isRegistrationFlow = type === 'register' || isRegister === true || type !== 'login';
 
-    // DB Validation: Only check if number exists during LOGIN flow (skip during registration)
-    if (!isRegistrationFlow) {
-      const targetPhone = `91${tenDigit}`;
-
-      const user = await User.findOne({
-        where: {
-          [Op.or]: [
-            { phone: targetPhone },
-            { phone: tenDigit },
-            { phone: `+91${tenDigit}` },
-          ],
-        },
-      }).catch(() => null);
-
-      if (!user) {
-        return res.status(400).json({
-          status: 'fail',
-          message: 'This mobile number is not registered. Please use a registered number.',
-        });
-      }
-    }
+    // DB Validation: Skip blocking check during login flow to allow seamless WhatsApp 1-tap sign-in / auto-register
+    // (matches sendSmsOtpViewer behavior)
 
     const { cleanPhone: targetPhoneOtp, otp } = generateAndStoreOtp(tenDigit);
 
@@ -1386,10 +1369,11 @@ const verifyWhatsAppOtpViewer = async (req, res, next) => {
           { phone: fullPhone },
           { phone: tenDigit },
           { phone: `+91${tenDigit}` },
-          
         ],
       },
     }).catch(() => null);
+
+   
 
     if (!user) {
       return res.status(400).json({
@@ -1526,6 +1510,127 @@ const deleteViewerAccount = async (req, res, next) => {
   }
 };
 
+/**
+ * @desc    Save / Register Viewer FCM Push Notification Token
+ * @route   POST /api/viewers/notification-token
+ * @access  Private / Public
+ */
+const saveViewerFcmToken = async (req, res, next) => {
+  try {
+    const userId = req.user?.id || req.body.userId;
+    const { token: fcmToken, deviceInfo } = req.body;
+
+    if (!fcmToken || typeof fcmToken !== 'string') {
+      return res.status(400).json({
+        status: 'fail',
+        message: 'FCM Notification token is required.',
+      });
+    }
+
+    if (!userId) {
+      return res.status(400).json({
+        status: 'fail',
+        message: 'User ID is required to register FCM token.',
+      });
+    }
+
+    const cleanToken = fcmToken.trim();
+    const [tokenRecord, created] = await UserFcmToken.findOrCreate({
+      where: { fcm_token: cleanToken },
+      defaults: {
+        user_id: userId,
+        fcm_token: cleanToken,
+        device_info: deviceInfo || 'Web Browser',
+        is_active: true,
+      },
+    });
+
+    if (!created) {
+      await tokenRecord.update({
+        user_id: userId,
+        device_info: deviceInfo || tokenRecord.device_info,
+        is_active: true,
+      });
+    }
+
+    console.log(`[FCM] Viewer ${userId} FCM push token saved successfully.`);
+    return res.status(200).json({
+      status: 'success',
+      message: 'Viewer FCM notification token saved successfully.',
+      data: { id: tokenRecord.id, fcmToken: tokenRecord.fcm_token },
+    });
+  } catch (error) {
+    console.error('SAVE VIEWER FCM TOKEN ERROR:', error);
+    next(error);
+  }
+};
+
+/**
+ * @desc    Get Viewer Notifications List
+ * @route   GET /api/viewers/notifications
+ * @access  Private
+ */
+const getViewerNotifications = async (req, res, next) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ status: 'fail', message: 'Unauthorized' });
+    }
+
+    const notifs = await Notification.findAll({
+      where: { user_id: userId },
+      order: [['created_at', 'DESC']],
+      limit: 50,
+      raw: true,
+    });
+
+    return res.status(200).json({
+      status: 'success',
+      data: {
+        notifications: notifs.map(n => ({
+          id: n.id,
+          title: n.title,
+          message: n.message,
+          type: n.type,
+          isRead: Boolean(n.is_read),
+          createdAt: n.created_at,
+          creatorId: n.creator_id,
+        })),
+      },
+    });
+  } catch (error) {
+    console.error('GET VIEWER NOTIFICATIONS ERROR:', error);
+    next(error);
+  }
+};
+
+/**
+ * @desc    Mark All Viewer Notifications as Read
+ * @route   PUT /api/viewers/notifications/mark-read
+ * @access  Private
+ */
+const markViewerNotificationsRead = async (req, res, next) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ status: 'fail', message: 'Unauthorized' });
+    }
+
+    await Notification.update(
+      { is_read: true },
+      { where: { user_id: userId } }
+    );
+
+    return res.status(200).json({
+      status: 'success',
+      message: 'All notifications marked as read.',
+    });
+  } catch (error) {
+    console.error('MARK VIEWER NOTIFICATIONS READ ERROR:', error);
+    next(error);
+  }
+};
+
 module.exports = {
   registerViewer,
   loginViewer,
@@ -1545,6 +1650,9 @@ module.exports = {
   getViewerQuestions,
   getPublicPastStreams,
   getPublicCategories,
+  saveViewerFcmToken,
+  getViewerNotifications,
+  markViewerNotificationsRead,
 };
 
 

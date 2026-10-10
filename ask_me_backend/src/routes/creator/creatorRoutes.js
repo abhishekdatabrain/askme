@@ -26,6 +26,9 @@ const {
   getOverlayData,
   getOverlayAlerts,
   handlePaymentWebhook,
+  createCashfreeOrder,
+  verifyCashfreeOrder,
+  handleCashfreePaymentWebhook,
   getCreatorWalletDetails,
   requestWithdrawal,
   getCreatorWithdrawals,
@@ -83,6 +86,9 @@ router.post('/truecaller-auth', truecallerAuthCreator);
 router.get('/pay/session/:sessionCode', getPublicSessionDetails);
 router.post('/pay/process', processViewerDonation);
 router.post('/pay/webhook', handlePaymentWebhook);
+router.post('/pay/cashfree/order', createCashfreeOrder);
+router.post('/pay/cashfree/verify', verifyCashfreeOrder);
+router.post('/pay/cashfree/webhook', handleCashfreePaymentWebhook);
 router.get('/overlay/data/:identifier', getOverlayData);
 router.get('/overlay/alerts/:creatorId', getOverlayAlerts);
 router.get('/live-sessions/:sessionId/messages', getSessionMessages);

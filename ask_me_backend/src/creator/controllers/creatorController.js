@@ -376,6 +376,54 @@ const handlePaymentWebhook = async (req, res, next) => {
   }
 };
 
+const {
+  createCashfreeOrderService,
+  verifyCashfreeOrderService,
+  handleCashfreeWebhookService,
+} = require("../../services/cashfreePgService");
+
+/**
+ * Create Cashfree Payment Order
+ */
+const createCashfreeOrder = async (req, res, next) => {
+  try {
+    const result = await createCashfreeOrderService(req.body, req.user);
+    return res.status(200).json({ status: "success", ...result });
+  } catch (error) {
+    if (error.statusCode) {
+      return res.status(error.statusCode).json({ status: "fail", message: error.message });
+    }
+    next(error);
+  }
+};
+
+/**
+ * Verify Cashfree Payment Order Status
+ */
+const verifyCashfreeOrder = async (req, res, next) => {
+  try {
+    const result = await verifyCashfreeOrderService(req.body);
+    return res.status(200).json({ status: "success", ...result });
+  } catch (error) {
+    if (error.statusCode) {
+      return res.status(error.statusCode).json({ status: "fail", message: error.message });
+    }
+    next(error);
+  }
+};
+
+/**
+ * Cashfree Payment Gateway Webhook
+ */
+const handleCashfreePaymentWebhook = async (req, res, next) => {
+  try {
+    const result = await handleCashfreeWebhookService(req.body, req.headers);
+    return res.status(200).json(result);
+  } catch (error) {
+    return res.status(200).json({ status: "success", message: "Webhook received" });
+  }
+};
+
 /**
  * Get OBS Overlay Data
  */
@@ -1203,6 +1251,9 @@ module.exports = {
   getOverlayData,
   getOverlayAlerts,
   handlePaymentWebhook,
+  createCashfreeOrder,
+  verifyCashfreeOrder,
+  handleCashfreePaymentWebhook,
   getCreatorWalletDetails,
   requestWithdrawal,
   getCreatorWithdrawals,

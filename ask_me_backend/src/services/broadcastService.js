@@ -114,7 +114,27 @@ const triggerGoLiveBroadcast = async ({ creatorId, sessionId, title, sessionCode
       console.warn('[Broadcast Service] Socket push notification error:', socketErr.message);
     }
 
-    // 3. Send Go-Live Email to all followers asynchronously
+    // 3. Send FCM Push Notification to all follower devices
+    try {
+      const { sendFollowersLiveNotification } = require("../admin/services/fcmService");
+      await sendFollowersLiveNotification({
+        followerUserIds,
+        title: `🔴 ${creatorName} is NOW LIVE!`,
+        body: `"${title}" has started! Join the live stream and ask your questions.`,
+        data: {
+          type: "GO_LIVE",
+          creatorId: String(creatorId),
+          sessionId: String(sessionId || ""),
+          sessionCode: String(sessionCode || ""),
+          creatorName: String(creatorName),
+          url: sessionCode ? `/pay/${sessionCode}` : "/viewers/notifications",
+        },
+      });
+    } catch (fcmErr) {
+      console.warn("[Broadcast Service] FCM followers push notification warning:", fcmErr.message);
+    }
+
+    // 4. Send Go-Live Email to all followers asynchronously
     sendGoLiveEmailToFollowersAsync({
       followers: emailFollowers,
       creatorName,

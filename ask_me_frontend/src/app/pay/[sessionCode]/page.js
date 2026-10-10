@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, Suspense } from 'react';
+import React, { useState, useEffect, useRef, Suspense } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import {
@@ -35,6 +35,7 @@ import Logo from '@/components/Logo';
 import GoogleAuthProvider from '@/components/GoogleAuthProvider';
 import { useGoogleLogin } from '@react-oauth/google';
 import { getSocket } from '@/config/socket';
+import { loadCashfree, cashfreeRequest, createCashfreeAttempt } from '@/utils/cashfree';
 
 const getSuperAskCharLimit = (amt) => {
   const num = Math.floor(Number(amt) || 0);
@@ -513,6 +514,10 @@ function ViewerPaymentContent() {
     }
   };
 
+  // Payment Gateway Selector State (Razorpay default)
+  const [paymentGateway, setPaymentGateway] = useState('Razorpay'); // 'Razorpay' | 'Cashfree'
+  const cashfreeBusy = useRef(false);
+
   // Razorpay Mode Modal State
   const [showRazorpayModal, setShowRazorpayModal] = useState(false);
   const [razorpayTab, setRazorpayTab] = useState('upi'); // 'upi' | 'card' | 'netbanking' | 'wallet'
@@ -521,6 +526,107 @@ function ViewerPaymentContent() {
   const [testCardExpiry, setTestCardExpiry] = useState('12/28');
   const [testCardCvv, setTestCardCvv] = useState('123');
   const [selectedBank, setSelectedBank] = useState('HDFC Bank');
+
+  // Recover Cashfree verification after refresh or redirect
+  useEffect(() => {
+    if (!sessionCodeParam) return;
+    const stored = sessionStorage.getItem(`askme_cashfree_${sessionCodeParam}`);
+    if (!stored) return;
+    let attempt;
+    try { attempt = JSON.parse(stored); } catch { return; }
+    if (!attempt.orderId) return;
+    let cancelled = false;
+    cashfreeRequest(API_ENDPOINTS.CREATORS.CASHFREE_VERIFY, {
+      orderId: attempt.orderId,
+      verificationToken: attempt.verificationToken,
+    }).then((verified) => {
+      if (!cancelled && verified.paymentStatus === 'success') setPaymentSuccess(verified.result);
+    }).catch(() => { });
+    return () => { cancelled = true; };
+  }, [sessionCodeParam]);
+
+  // Launch Cashfree SDK Checkout
+  const launchCashfree = async () => {
+    if (cashfreeBusy.current) return;
+    cashfreeBusy.current = true;
+    setIsProcessing(true);
+    const storageKey = `askme_cashfree_${sessionCodeParam}`;
+    try {
+      const currentUser = viewerUser || getViewerUser();
+      const payload = {
+        sessionCode: sessionCodeParam,
+        sessionId: sessionData?.id || querySessionId,
+        creatorId: creatorData?.id || queryCreatorId,
+        amount: String(amount),
+        viewerName: isAnonymous ? 'Anonymous Supporter' : (viewerName || currentUser?.name || 'Supporter'),
+        viewerEmail,
+        viewerPhone,
+        message,
+        anonymous: isAnonymous,
+        agreedToConsent,
+        isVip: isVipMember,
+        viewerId: currentUser?.id || null,
+      };
+      const fingerprint = JSON.stringify(payload);
+      let attempt;
+      try { attempt = JSON.parse(sessionStorage.getItem(storageKey) || 'null'); } catch { attempt = null; }
+      if (attempt?.orderId) {
+        let previous;
+        try {
+          previous = await cashfreeRequest(API_ENDPOINTS.CREATORS.CASHFREE_VERIFY, {
+            orderId: attempt.orderId,
+            verificationToken: attempt.verificationToken,
+          });
+        } catch (error) {
+          if (error.statusCode !== 404) throw error;
+          previous = { paymentStatus: 'created' };
+        }
+        if (previous.paymentStatus === 'success') {
+          setPaymentSuccess(previous.result);
+          return;
+        }
+        if (attempt.fingerprint !== fingerprint && previous.hasPendingPayment) {
+          alert('Your previous Cashfree payment is pending. Please wait for verification before changing the question or amount.');
+          return;
+        }
+      }
+      if (!attempt || attempt.fingerprint !== fingerprint) {
+        attempt = createCashfreeAttempt(fingerprint);
+        sessionStorage.setItem(storageKey, JSON.stringify(attempt));
+      }
+      const order = await cashfreeRequest(API_ENDPOINTS.CREATORS.CASHFREE_ORDER, {
+        ...payload,
+        idempotencyKey: attempt.idempotencyKey,
+        verificationToken: attempt.verificationToken,
+      }, getViewerToken());
+      attempt.orderId = order.orderId;
+      sessionStorage.setItem(storageKey, JSON.stringify(attempt));
+      if (order.result) {
+        setPaymentSuccess(order.result);
+        return;
+      }
+      const cashfree = await loadCashfree(order.environment);
+      const checkout = await cashfree.checkout({ paymentSessionId: order.paymentSessionId, redirectTarget: '_modal' });
+      let verified;
+      for (let check = 0; check < 6; check += 1) {
+        verified = await cashfreeRequest(API_ENDPOINTS.CREATORS.CASHFREE_VERIFY, {
+          orderId: attempt.orderId,
+          verificationToken: attempt.verificationToken,
+        });
+        if (verified.paymentStatus !== 'pending' || checkout?.error || check === 5) break;
+        await new Promise((resolve) => setTimeout(resolve, 3000));
+      }
+      if (verified.paymentStatus === 'success') setPaymentSuccess(verified.result);
+      else if (verified.paymentStatus === 'failed') alert('Cashfree payment failed. You can retry the same payment.');
+      else if (verified.paymentStatus === 'cancelled' || (checkout?.error && !verified.hasPendingPayment)) alert('Cashfree checkout was cancelled or could not complete.');
+      else alert('Cashfree payment is pending. Your question will appear after verification.');
+    } catch (error) {
+      alert(error.message || 'Cashfree payment could not complete. Please retry verification before paying again.');
+    } finally {
+      cashfreeBusy.current = false;
+      setIsProcessing(false);
+    }
+  };
 
   // Helper to load Native Razorpay Checkout Script if user prefers
   const loadRazorpayScript = () => {
@@ -573,6 +679,11 @@ function ViewerPaymentContent() {
         chk.focus();
         chk.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }
+      return;
+    }
+
+    if (paymentGateway === 'Cashfree') {
+      await launchCashfree();
       return;
     }
 
@@ -1076,6 +1187,37 @@ function ViewerPaymentContent() {
                     placeholder="Ask a question or send a shoutout to appear live on stream overlay..."
                     className={`w-full rounded-2xl bg-[#0A0A0F] border p-3 text-xs text-white placeholder-[#8B8B96] focus:outline-none transition ${message.length >= maxCharLimit ? 'border-[#FF3D71] focus:border-[#FF3D71]' : 'border-[#1C1C26] focus:border-[#00F5D4]'}`}
                   />
+                </div>
+
+                {/* Payment Gateway Selector */}
+                <div className="mt-4 mb-1">
+                  <label className="text-xs font-bold text-white mb-2 block">
+                    Select Payment Gateway <span className="text-[#FF3D71]">*</span>
+                  </label>
+                  <div className="flex items-center gap-4">
+                    <label className={`flex items-center gap-2.5 cursor-pointer bg-[#0A0A0F] border py-2.5 px-4 rounded-xl text-xs font-semibold text-white transition ${paymentGateway === 'Razorpay' ? 'border-[#00F5D4] bg-[#00F5D4]/10' : 'border-[#1C1C26] hover:border-[#28283C]'}`}>
+                      <input
+                        type="radio"
+                        name="paymentGateway"
+                        value="Razorpay"
+                        checked={paymentGateway === 'Razorpay'}
+                        onChange={(e) => setPaymentGateway(e.target.value)}
+                        className="h-4 w-4 text-[#00F5D4] focus:ring-[#00F5D4] accent-[#00F5D4] cursor-pointer"
+                      />
+                      <span>Razorpay</span>
+                    </label>
+                    <label className={`flex items-center gap-2.5 cursor-pointer bg-[#0A0A0F] border py-2.5 px-4 rounded-xl text-xs font-semibold text-white transition ${paymentGateway === 'Cashfree' ? 'border-[#00F5D4] bg-[#00F5D4]/10' : 'border-[#1C1C26] hover:border-[#28283C]'}`}>
+                      <input
+                        type="radio"
+                        name="paymentGateway"
+                        value="Cashfree"
+                        checked={paymentGateway === 'Cashfree'}
+                        onChange={(e) => setPaymentGateway(e.target.value)}
+                        className="h-4 w-4 text-[#00F5D4] focus:ring-[#00F5D4] accent-[#00F5D4] cursor-pointer"
+                      />
+                      <span>Cashfree</span>
+                    </label>
+                  </div>
                 </div>
 
                 {/* Submit / Pay Button */}

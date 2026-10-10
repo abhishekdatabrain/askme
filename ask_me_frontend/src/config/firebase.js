@@ -80,6 +80,68 @@ export const requestAdminFcmToken = async (adminToken) => {
   return null;
 };
 
+/**
+ * Register Service Worker & Request FCM Token for Viewer (User)
+ * @param {string} viewerToken JWT authorization token for Viewer
+ * @param {string|number} userId Viewer User ID
+ */
+export const requestViewerFcmToken = async (viewerToken, userId) => {
+  try {
+    if (typeof window === 'undefined' || !('serviceWorker' in navigator)) {
+      return null;
+    }
+
+    const supported = await isSupported();
+    if (!supported) {
+      return null;
+    }
+
+    // 1. Request Browser Notification Permission
+    const permission = await Notification.requestPermission();
+    if (permission !== 'granted') {
+      return null;
+    }
+
+    // 2. Register Firebase Messaging Service Worker
+    const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js', {
+      scope: '/',
+    });
+
+    const messaging = getMessaging(app);
+    const vapidKey = process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY;
+
+    // 3. Obtain FCM Token
+    const fcmToken = await getToken(messaging, {
+      serviceWorkerRegistration: registration,
+      ...(vapidKey ? { vapidKey } : {}),
+    });
+
+    if (fcmToken) {
+      console.log('✅ Viewer FCM Token Generated:', fcmToken);
+
+      // 4. Send token to backend endpoint: POST /api/viewers/notification-token
+      const apiUrl = API_ENDPOINTS.VIEWERS.NOTIFICATION_TOKEN;
+      await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(viewerToken ? { Authorization: `Bearer ${viewerToken}` } : {}),
+        },
+        body: JSON.stringify({
+          token: fcmToken,
+          userId,
+          deviceInfo: `${navigator.userAgent || 'Web Browser'} (${window.innerWidth}x${window.innerHeight})`,
+        }),
+      });
+
+      return fcmToken;
+    }
+  } catch (err) {
+    console.warn('Viewer FCM Token Generation Notice:', err.message);
+  }
+  return null;
+};
+
 
 /**
  * Foreground message listener

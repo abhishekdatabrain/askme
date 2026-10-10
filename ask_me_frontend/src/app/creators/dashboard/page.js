@@ -247,8 +247,16 @@ function CreatorDashboardContent() {
     }
 
     setCreator(u);
-    const initialStatus = String(u.kycStatus || 'pending').toLowerCase();
-    setKycStatus(initialStatus === 'approved' || initialStatus === 'verified' ? 'approved' : initialStatus === 'rejected' ? 'rejected' : 'pending');
+    const initialKyc = String(u.kycStatus || u.kyc_status || 'not_submitted').toLowerCase();
+    const initialStatus = String(u.status || '').toLowerCase();
+
+    // Guard: creator can only access dashboard if kyc_status is approved AND status is active
+    if (initialKyc !== 'approved' || initialStatus !== 'active') {
+      window.location.href = '/creators/kyc';
+      return;
+    }
+
+    setKycStatus('approved');
 
     const fetchData = async () => {
       try {
@@ -261,8 +269,11 @@ function CreatorDashboardContent() {
         const dataStatus = await resStatus.json();
         if (dataStatus.status === 'success' && dataStatus.data?.kycStatus) {
           const raw = String(dataStatus.data.kycStatus).toLowerCase();
-          const statusVal = raw === 'approved' || raw === 'verified' ? 'approved' : raw === 'rejected' || raw === 'action_required' ? 'rejected' : 'pending';
-          setKycStatus(statusVal);
+          if (raw !== 'approved') {
+            window.location.href = '/creators/kyc';
+            return;
+          }
+          setKycStatus('approved');
         }
 
         // Fetch Wallet Details

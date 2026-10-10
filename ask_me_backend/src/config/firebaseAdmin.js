@@ -1,16 +1,23 @@
-const admin = require('firebase-admin');
+const { initializeApp, cert, getApps } = require('firebase-admin/app');
+const { getMessaging: getAdminMessaging } = require('firebase-admin/messaging');
 
 let firebaseApp = null;
 
 const initFirebaseAdmin = () => {
   if (firebaseApp) return firebaseApp;
 
+  const existingApps = getApps();
+  if (existingApps.length > 0) {
+    firebaseApp = existingApps[0];
+    return firebaseApp;
+  }
+
   try {
     // 1. Service Account JSON String in Env (FIREBASE_SERVICE_ACCOUNT_KEY)
     if (process.env.FIREBASE_SERVICE_ACCOUNT_KEY) {
       const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY);
-      firebaseApp = admin.initializeApp({
-        credential: admin.credential.cert(serviceAccount),
+      firebaseApp = initializeApp({
+        credential: cert(serviceAccount),
       });
       console.log('[FIREBASE ADMIN] Initialized via FIREBASE_SERVICE_ACCOUNT_KEY.');
       return firebaseApp;
@@ -18,9 +25,13 @@ const initFirebaseAdmin = () => {
 
     // 2. Individual Environment Variables
     if (process.env.FIREBASE_PROJECT_ID && process.env.FIREBASE_CLIENT_EMAIL && process.env.FIREBASE_PRIVATE_KEY) {
-      const privateKey = process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n');
-      firebaseApp = admin.initializeApp({
-        credential: admin.credential.cert({
+      let privateKey = process.env.FIREBASE_PRIVATE_KEY;
+      if (typeof privateKey === 'string') {
+        privateKey = privateKey.replace(/^"|"$/g, '').replace(/\\n/g, '\n');
+      }
+
+      firebaseApp = initializeApp({
+        credential: cert({
           projectId: process.env.FIREBASE_PROJECT_ID,
           clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
           privateKey,
@@ -37,8 +48,8 @@ const initFirebaseAdmin = () => {
       const filePath = path.resolve(process.env.FIREBASE_SERVICE_ACCOUNT_PATH);
       if (fs.existsSync(filePath)) {
         const serviceAccount = require(filePath);
-        firebaseApp = admin.initializeApp({
-          credential: admin.credential.cert(serviceAccount),
+        firebaseApp = initializeApp({
+          credential: cert(serviceAccount),
         });
         console.log('[FIREBASE ADMIN] Initialized via service account file.');
         return firebaseApp;
@@ -56,7 +67,7 @@ const initFirebaseAdmin = () => {
 const getMessaging = () => {
   const app = initFirebaseAdmin();
   if (app) {
-    return admin.messaging();
+    return getAdminMessaging(app);
   }
   return null;
 };
@@ -65,3 +76,4 @@ module.exports = {
   initFirebaseAdmin,
   getMessaging,
 };
+

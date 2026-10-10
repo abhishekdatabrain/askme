@@ -63,6 +63,20 @@ const initSocket = (server) => {
       console.log(`[Socket.IO] Socket ${socket.id} left room: ${roomName}`);
     });
 
+    // 2.1 JOIN USER NOTIFICATION ROOM: user_{userId}
+    socket.on('join_user', ({ userId }) => {
+      if (!userId) return;
+      const roomName = `user_${userId}`;
+      socket.join(roomName);
+      console.log(`[Socket.IO] Socket ${socket.id} joined user notification room: ${roomName}`);
+    });
+
+    socket.on('leave_user', ({ userId }) => {
+      if (!userId) return;
+      const roomName = `user_${userId}`;
+      socket.leave(roomName);
+    });
+
     // 3. SEND NORMAL CHAT MESSAGE
     socket.on('send_message', async ({ sessionId, senderType, senderId, senderName, message }) => {
       if (!sessionId || !message || !message.trim()) return;

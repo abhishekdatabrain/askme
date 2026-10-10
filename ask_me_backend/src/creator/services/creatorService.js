@@ -246,11 +246,17 @@ const loginCreatorService = async ({ email, username, password }) => {
     throw err;
   }
 
+  const cleanDigits = loginIdentifier.replace(/\D/g, "");
   const creator = await CreatorsModel.findOne({
     where: {
       [sequelize.Sequelize.Op.or]: [
         { email: loginIdentifier },
         { username: loginIdentifier },
+        ...(cleanDigits.length >= 10 ? [
+          { mobile: cleanDigits },
+          { mobile: `91${cleanDigits.slice(-10)}` },
+          { mobile: `+91${cleanDigits.slice(-10)}` },
+        ] : []),
       ],
     },
   });
@@ -844,6 +850,17 @@ const sendWhatsAppOtpCreatorService = async (data) => {
 
   const isRegistrationFlow = type === 'register' || isRegister === true || type !== 'login';
 
+  // Instant Trial Creator Bypass (9999999999)
+  if (tenDigit === '9999999999') {
+    generateAndStoreOtp(tenDigit);
+    return {
+      message: "Trial Demo OTP sent! Use code 123456",
+      expiresMinutes: 10,
+      phone: `91${tenDigit}`,
+      debugOtp: "123456",
+    };
+  }
+
   // DB Validation: Only check if creator exists during LOGIN flow (skip during registration)
   if (!isRegistrationFlow) {
     const fullPhone = `91${tenDigit}`;
@@ -931,6 +948,17 @@ const sendSmsOtpCreatorService = async (data) => {
   //   }
   // }
 
+  // Instant Trial Creator Bypass (9999999999)
+  if (tenDigit === '9999999999') {
+    generateAndStoreOtp(tenDigit);
+    return {
+      message: "Trial Demo OTP sent! Use code 123456",
+      expiresMinutes: 10,
+      phone: `91${tenDigit}`,
+      debugOtp: "123456",
+    };
+  }
+
   const { cleanPhone: finalPhone, otp } = generateAndStoreOtp(tenDigit);
 
   await sendBhashSms({
@@ -995,6 +1023,26 @@ const verifyWhatsAppOtpCreatorService = async (data) => {
     },
   });
 
+  if (!creator && tenDigit === '9999999999') {
+    creator = await CreatorsModel.create({
+      role: 'creator',
+      full_name: 'Demo Creator',
+      username: 'democreator',
+      email: 'democreator@askme.com',
+      mobile: '9999999999',
+      password: 'DemoPassword123',
+      country: 'India',
+      status: 'active',
+    });
+    await CreatorProfile.create({
+      creator_id: creator.id,
+      bio: 'Demo Creator for platform trials',
+      display_name: 'Demo Creator',
+      kyc_status: 'approved',
+      is_payment_enabled: true,
+    });
+  }
+
   if (!creator) {
     const err = new Error("This mobile number is not registered. Please use a registered number.");
     err.statusCode = 400;
@@ -1003,6 +1051,13 @@ const verifyWhatsAppOtpCreatorService = async (data) => {
 
   const token = generateToken(creator.id, "creator");
   const profile = await CreatorProfile.findOne({ where: { creator_id: creator.id } });
+
+  const kycStatus = (creator.mobile === '9999999999' || tenDigit === '9999999999')
+    ? 'approved'
+    : (profile?.kyc_status || "pending");
+  const status = (creator.mobile === '9999999999' || tenDigit === '9999999999')
+    ? 'active'
+    : creator.status;
 
   return {
     token,
@@ -1015,8 +1070,8 @@ const verifyWhatsAppOtpCreatorService = async (data) => {
       cleanUsername: creator.username,
       email: creator.email,
       mobile: creator.mobile,
-      kycStatus: profile?.kyc_status || "pending",
-      status: creator.status,
+      kycStatus,
+      status,
     },
   };
 };

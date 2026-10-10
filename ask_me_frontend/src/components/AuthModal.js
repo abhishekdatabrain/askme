@@ -96,6 +96,15 @@ function InnerAuthModal({ isOpen, onClose, initialRole = 'viewer', initialMode =
   const [regEmailSuccess, setRegEmailSuccess] = useState('');
   const [regEmailDebugOtp, setRegEmailDebugOtp] = useState('');
 
+  const getCreatorRedirectUrl = (creatorObj) => {
+    const kyc = String(creatorObj?.kycStatus || creatorObj?.kyc_status || 'not_submitted').toLowerCase();
+    const accStatus = String(creatorObj?.status || '').toLowerCase();
+    if (kyc === 'approved' && accStatus === 'active') {
+      return '/creators/dashboard';
+    }
+    return '/creators/kyc';
+  };
+
   const handleSendRegEmailOtp = async () => {
     const cleanEmail = (email || '').trim().toLowerCase();
     if (!cleanEmail || !cleanEmail.includes('@')) {
@@ -232,6 +241,9 @@ function InnerAuthModal({ isOpen, onClose, initialRole = 'viewer', initialMode =
         setSuccessMsg(msg);
         toast?.success(msg, 'WhatsApp OTP Sent');
         setLoginOtpStep('otp_sent');
+        if (cleanPhone === '9999999999') {
+          setLoginOtp('123456');
+        }
       } else {
         const errText = data.message || 'Failed to send WhatsApp OTP.';
         setErrorMsg(errText);
@@ -278,6 +290,9 @@ function InnerAuthModal({ isOpen, onClose, initialRole = 'viewer', initialMode =
         setSuccessMsg(msg);
         toast?.success(msg, 'SMS OTP Sent');
         setLoginOtpStep('otp_sent');
+        if (cleanPhone === '9999999999') {
+          setLoginOtp('123456');
+        }
       } else {
         const errText = data.message || 'Failed to send SMS OTP.';
         setErrorMsg(errText);
@@ -297,7 +312,7 @@ function InnerAuthModal({ isOpen, onClose, initialRole = 'viewer', initialMode =
     const targetInput = loginInput || mobile;
     const cleanPhone = (targetInput || '').replace(/[^0-9]/g, '');
     if (!loginOtp || loginOtp.length < 4) {
-      const errText = 'Please enter the 6-digit OTP code sent to your WhatsApp.';
+      const errText = `Please enter the 6-digit OTP code sent to your ${loginOtpChannel === 'sms' ? 'SMS' : 'WhatsApp'}.`;
       setErrorMsg(errText);
       toast?.error(errText, 'OTP Required');
       return;
@@ -308,18 +323,18 @@ function InnerAuthModal({ isOpen, onClose, initialRole = 'viewer', initialMode =
 
     try {
       const endpoint = role === 'viewer'
-        ? API_ENDPOINTS.VIEWERS.WHATSAPP_VERIFY_OTP
-        : API_ENDPOINTS.CREATORS.WHATSAPP_VERIFY_OTP;
+        ? (loginOtpChannel === 'sms' ? (API_ENDPOINTS.VIEWERS.SMS_VERIFY_OTP || API_ENDPOINTS.VIEWERS.WHATSAPP_VERIFY_OTP) : API_ENDPOINTS.VIEWERS.WHATSAPP_VERIFY_OTP)
+        : (loginOtpChannel === 'sms' ? (API_ENDPOINTS.CREATORS.SMS_VERIFY_OTP || API_ENDPOINTS.CREATORS.WHATSAPP_VERIFY_OTP) : API_ENDPOINTS.CREATORS.WHATSAPP_VERIFY_OTP);
 
       const res = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone: cleanPhone, mobile: cleanPhone, otp: loginOtp }),
+        body: JSON.stringify({ phone: cleanPhone, mobile: cleanPhone, otp: loginOtp, type: 'login' }),
       });
 
       const data = await res.json();
       if (res.ok && data.status === 'success') {
-        const msg = 'WhatsApp Mobile Verified! Logged in successfully.';
+        const msg = `${loginOtpChannel === 'sms' ? 'SMS' : 'WhatsApp'} Mobile Verified! Logged in successfully.`;
         setSuccessMsg(msg);
         toast?.success(msg, 'Login Successful');
 
@@ -351,18 +366,12 @@ function InnerAuthModal({ isOpen, onClose, initialRole = 'viewer', initialMode =
           setTimeout(() => {
             if (onSuccess) onSuccess(data);
             onClose();
-            const status = (creator?.kycStatus || 'pending').toLowerCase();
-            let targetUrl = '/creators/kyc';
-            if (status === 'approved') {
-              targetUrl = '/creators/dashboard';
-            } else {
-              targetUrl = '/creators/kyc';
-            }
+            const targetUrl = getCreatorRedirectUrl(creator);
             window.location.href = targetUrl;
           }, 800);
         }
       } else {
-        const errText = data.message || 'Invalid or expired WhatsApp OTP code.';
+        const errText = data.message || `Invalid or expired ${loginOtpChannel === 'sms' ? 'SMS' : 'WhatsApp'} OTP code.`;
         setErrorMsg(errText);
         toast?.error(errText, 'Verification Failed');
       }
@@ -470,7 +479,7 @@ function InnerAuthModal({ isOpen, onClose, initialRole = 'viewer', initialMode =
   const handleVerifyRegWaOtp = async () => {
     const cleanMobile = (mobile || '').replace(/[^0-9]/g, '');
     if (!regWaOtp || regWaOtp.length < 4) {
-      const errText = 'Please enter the 6-digit OTP code sent to your WhatsApp.';
+      const errText = `Please enter the 6-digit OTP code sent to your ${regWaChannel === 'sms' ? 'SMS' : 'WhatsApp'}.`;
       setRegWaError(errText);
       toast?.error(errText, 'OTP Required');
       return;
@@ -480,13 +489,13 @@ function InnerAuthModal({ isOpen, onClose, initialRole = 'viewer', initialMode =
     try {
       setRegWaLoading(true);
       const endpoint = role === 'viewer'
-        ? API_ENDPOINTS.VIEWERS.WHATSAPP_VERIFY_OTP
-        : API_ENDPOINTS.CREATORS.WHATSAPP_VERIFY_OTP;
+        ? (regWaChannel === 'sms' ? (API_ENDPOINTS.VIEWERS.SMS_VERIFY_OTP || API_ENDPOINTS.VIEWERS.WHATSAPP_VERIFY_OTP) : API_ENDPOINTS.VIEWERS.WHATSAPP_VERIFY_OTP)
+        : (regWaChannel === 'sms' ? (API_ENDPOINTS.CREATORS.SMS_VERIFY_OTP || API_ENDPOINTS.CREATORS.WHATSAPP_VERIFY_OTP) : API_ENDPOINTS.CREATORS.WHATSAPP_VERIFY_OTP);
 
       const res = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone: cleanMobile, otp: regWaOtp }),
+        body: JSON.stringify({ phone: cleanMobile, mobile: cleanMobile, otp: regWaOtp, type: 'register', isRegister: true }),
       });
 
       const data = await res.json();
@@ -498,7 +507,7 @@ function InnerAuthModal({ isOpen, onClose, initialRole = 'viewer', initialMode =
         toast?.success(msg, 'Mobile Verified!');
         setRegWaStep('verified');
       } else {
-        const errText = data.message || 'Invalid WhatsApp OTP code.';
+        const errText = data.message || `Invalid ${regWaChannel === 'sms' ? 'SMS' : 'WhatsApp'} OTP code.`;
         setRegWaError(errText);
         toast?.error(errText, 'Verification Failed');
       }
@@ -653,6 +662,18 @@ function InnerAuthModal({ isOpen, onClose, initialRole = 'viewer', initialMode =
     setSuccessMsg('');
     setLoginOtpStep('idle');
     setLoginOtp('');
+    if (loginInput) {
+      const type = getLoginInputType(loginInput);
+      if (type === 'phone') {
+        setEmail('');
+        setMobile(loginInput.replace(/\D/g, ''));
+      } else if (type === 'email') {
+        setEmail(loginInput);
+        setMobile('');
+      }
+    } else if (email && !email.includes('@')) {
+      setEmail('');
+    }
   };
 
   // --- FORM SUBMIT HANDLER ---
@@ -804,18 +825,7 @@ function InnerAuthModal({ isOpen, onClose, initialRole = 'viewer', initialMode =
           setTimeout(() => {
             if (onSuccess) onSuccess(data);
             onClose();
-            const status = (creator?.kycStatus).toLowerCase();
-            let targetUrl = '/creators/kyc';
-            if (creator?.status === 'active' && status === 'approved') {
-              targetUrl = '/creators/dashboard';
-            }
-            else if (creator?.status === 'pending' && status === 'approved') {
-              targetUrl = '/creators/kyc';
-            } else if (status === 'not_submitted') {
-              targetUrl = '/creators/kyc';
-            } else if (status === 'rejected') {
-              targetUrl = '/creators/kyc';
-            }
+            const targetUrl = getCreatorRedirectUrl(creator);
             window.location.href = targetUrl;
           }, 800);
         } else {
@@ -935,18 +945,16 @@ function InnerAuthModal({ isOpen, onClose, initialRole = 'viewer', initialMode =
           const cleanMobile = (creator?.mobile || '').toString().replace(/[^0-9]/g, '');
           const hasVerifiedMobile = cleanMobile.length >= 10;
 
-          let targetUrl = '/creators/dashboard';
+          let targetUrl = '/creators/kyc';
           if (!hasVerifiedMobile) {
             targetUrl = '/complete-profile';
             toast?.success('Google login successful! Please complete your profile by verifying your mobile number.', 'Complete Profile');
           } else {
-            const kycStatus = (creator?.kycStatus).toLowerCase();
-            if (kycStatus === 'approved') {
-              targetUrl = '/creators/dashboard';
+            targetUrl = getCreatorRedirectUrl(creator);
+            if (targetUrl === '/creators/dashboard') {
               toast?.success('Welcome back! Redirecting to dashboard...', 'Google Login Successful');
             } else {
-              targetUrl = '/creators/kyc';
-              toast?.success('Welcome back! Redirecting to KYC page...', 'Google Login Successful');
+              toast?.success('Redirecting to Creator KYC Verification...', 'KYC Verification Required');
             }
           }
 
@@ -1087,7 +1095,8 @@ function InnerAuthModal({ isOpen, onClose, initialRole = 'viewer', initialMode =
           setTimeout(() => {
             if (onSuccess) onSuccess(result);
             onClose();
-            window.location.href = '/creators/dashboard';
+            const targetUrl = getCreatorRedirectUrl(creator);
+            window.location.href = targetUrl;
           }, 800);
         }
       } else {
@@ -1136,7 +1145,7 @@ function InnerAuthModal({ isOpen, onClose, initialRole = 'viewer', initialMode =
       const res = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone: clean }),
+        body: JSON.stringify({ phone: clean, mobile: clean, type: 'login' }),
       });
 
       const data = await res.json();
@@ -1184,7 +1193,7 @@ function InnerAuthModal({ isOpen, onClose, initialRole = 'viewer', initialMode =
       const res = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone: cleanPhone, otp: waOtp }),
+        body: JSON.stringify({ phone: cleanPhone, mobile: cleanPhone, otp: waOtp, type: 'login' }),
       });
 
       const data = await res.json();
@@ -1194,12 +1203,18 @@ function InnerAuthModal({ isOpen, onClose, initialRole = 'viewer', initialMode =
         toast?.success(succMsg, 'Login Successful');
 
         if (role === 'viewer') {
-          if (data.data?.token && data.data?.user) {
-            setViewerSession(data.data.token, data.data.user);
+          const token = data.data?.token || data.token;
+          const user = data.data?.user || data.user;
+          if (token && user) {
+            setViewerSession(token, user);
+            if (typeof window !== 'undefined') {
+              localStorage.setItem('askme_viewer_token', token);
+              localStorage.setItem('askme_viewer_user', JSON.stringify(user));
+            }
           }
           setTimeout(() => {
             setShowWaModal(false);
-            if (onSuccess) onSuccess(data.data);
+            if (onSuccess) onSuccess(data.data || data);
             onClose();
             window.location.href = '/viewers/dashboard';
           }, 800);
@@ -1213,7 +1228,8 @@ function InnerAuthModal({ isOpen, onClose, initialRole = 'viewer', initialMode =
             setShowWaModal(false);
             if (onSuccess) onSuccess(data);
             onClose();
-            window.location.href = '/creators/live-sessions';
+            const targetUrl = getCreatorRedirectUrl(creator);
+            window.location.href = targetUrl;
           }, 800);
         }
       } else {
@@ -1236,7 +1252,7 @@ function InnerAuthModal({ isOpen, onClose, initialRole = 'viewer', initialMode =
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md animate-fadeIn">
       {/* Modal Card */}
       <div
-        className="relative w-full max-w-lg bg-white rounded-[32px] shadow-2xl border border-gray-100 overflow-hidden flex flex-col max-h-[92vh] animate-scaleUp"
+        className="relative w-full max-w-lg sm:max-w-xl bg-white rounded-[32px] shadow-2xl border border-gray-100 overflow-hidden flex flex-col max-h-[92vh] animate-scaleUp"
         onClick={(e) => e.stopPropagation()}
       >
         {/* HEADER BAR */}
@@ -1312,36 +1328,41 @@ function InnerAuthModal({ isOpen, onClose, initialRole = 'viewer', initialMode =
               <button
                 type="button"
                 onClick={() => handleRoleChange('viewer')}
-                className={`p-3 rounded-2xl border text-left flex items-center gap-3 transition cursor-pointer ${role === 'viewer'
-                  ? 'border-2 border-[#EB1000] bg-[#FFF8F8] shadow-sm'
-                  : 'border-gray-200 bg-white hover:bg-gray-50'
-                  }`}
+                className={`p-3 rounded-2xl border text-left flex items-center gap-3 transition cursor-pointer min-h-[66px] h-full ${
+                  role === 'viewer'
+                    ? 'border-2 border-[#EB1000] bg-[#FFF8F8] shadow-xs'
+                    : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50/60'
+                }`}
               >
-                <div className={`h-10 w-10 rounded-xl flex items-center justify-center shrink-0 ${role === 'viewer' ? 'bg-gray-200/80 text-gray-700' : 'bg-gray-100 text-gray-500'
-                  }`}>
+                <div
+                  className={`h-10 w-10 rounded-xl flex items-center justify-center shrink-0 ${
+                    role === 'viewer' ? 'bg-gray-200/80 text-gray-700' : 'bg-gray-100 text-gray-500'
+                  }`}
+                >
                   <User className="h-5 w-5" />
                 </div>
-                <div>
-                  <h4 className="font-bold text-xs text-gray-900">Viewer / Fan</h4>
-                  <p className="text-[11px] text-gray-500 mt-0.5">Ask live questions</p>
+                <div className="min-w-0">
+                  <h4 className="font-bold text-xs text-gray-900 leading-snug">Viewer / Fan</h4>
+                  <p className="text-[11px] text-gray-500 mt-0.5 truncate">Ask live questions</p>
                 </div>
               </button>
 
-              {/* Creator Pro Toggle Card */}
+              {/* Creator Toggle Card */}
               <button
                 type="button"
                 onClick={() => handleRoleChange('creator')}
-                className={`p-3 rounded-2xl border text-left flex items-center gap-3 transition cursor-pointer ${role === 'creator'
-                  ? 'border-2 border-[#EB1000] bg-[#FFF8F8] shadow-sm'
-                  : 'border-gray-200 bg-white hover:bg-gray-50'
-                  }`}
+                className={`p-3 rounded-2xl border text-left flex items-center gap-3 transition cursor-pointer min-h-[66px] h-full ${
+                  role === 'creator'
+                    ? 'border-2 border-[#EB1000] bg-[#FFF8F8] shadow-xs'
+                    : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50/60'
+                }`}
               >
-                <div className="h-10 w-10 rounded-2xl bg-[#EB1000] text-white flex items-center justify-center shrink-0 shadow-sm">
+                <div className="h-10 w-10 rounded-xl bg-[#EB1000] text-white flex items-center justify-center shrink-0 shadow-xs">
                   <Sparkles className="h-5 w-5" />
                 </div>
-                <div>
-                  <h4 className="font-bold text-xs text-gray-900">Creator </h4>
-                  <p className="text-[11px] text-gray-500 mt-0.5">Monetize Q&As & Streams</p>
+                <div className="min-w-0">
+                  <h4 className="font-bold text-xs text-gray-900 leading-snug">Creator</h4>
+                  <p className="text-[11px] text-gray-500 mt-0.5 truncate">Monetize Q&As & Streams</p>
                 </div>
               </button>
             </div>
@@ -1366,43 +1387,50 @@ function InnerAuthModal({ isOpen, onClose, initialRole = 'viewer', initialMode =
           <form onSubmit={handleSubmit} className="space-y-3.5">
             {role === 'creator' && mode === 'register' ? (
               <div className="space-y-3.5">
-                {/* First Name & Last Name */}
-                <div className="grid grid-cols-2 gap-3">
+                {/* First Name & Last Name (Two-Column Desktop Grid) */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-bold text-gray-700 mb-1">First Name *</label>
+                    <label className="block text-xs font-bold text-gray-700 mb-1.5">
+                      First Name <span className="text-[#EB1000]">*</span>
+                    </label>
                     <div className="relative">
-                      <User className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                      <User className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
                       <input
                         type="text"
                         required
                         value={firstname}
                         onChange={(e) => setFirstname(e.target.value)}
                         placeholder="e.g. Technical"
-                        className="w-full pl-10 pr-3 py-2.5 rounded-2xl border border-gray-200 text-xs bg-gray-50/50 text-gray-900 placeholder-gray-400 focus:bg-white focus:border-[#EB1000] outline-none transition"
+                        className="w-full h-10.5 pl-10 pr-3.5 rounded-2xl border border-gray-200 text-xs bg-gray-50/50 text-gray-900 placeholder-gray-400 focus:bg-white focus:border-[#EB1000] outline-none transition shadow-xs"
                       />
                     </div>
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-gray-700 mb-1">Last Name *</label>
+                    <label className="block text-xs font-bold text-gray-700 mb-1.5">
+                      Last Name <span className="text-[#EB1000]">*</span>
+                    </label>
                     <div className="relative">
-                      <User className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                      <User className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
                       <input
                         type="text"
                         required
                         value={lastname}
                         onChange={(e) => setLastname(e.target.value)}
                         placeholder="e.g. Burner"
-                        className="w-full pl-10 pr-3 py-2.5 rounded-2xl border border-gray-200 text-xs bg-gray-50/50 text-gray-900 placeholder-gray-400 focus:bg-white focus:border-[#EB1000] outline-none transition"
+                        className="w-full h-10.5 pl-10 pr-3.5 rounded-2xl border border-gray-200 text-xs bg-gray-50/50 text-gray-900 placeholder-gray-400 focus:bg-white focus:border-[#EB1000] outline-none transition shadow-xs"
                       />
                     </div>
                   </div>
                 </div>
 
-                {/* Email & Mobile Number */}
-                <div className="grid grid-cols-2 gap-3">
+                {/* Email Address & Mobile Number (Two-Column Desktop Grid) */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-start">
+                  {/* Email Address Column */}
                   <div>
-                    <div className="flex items-center justify-between mb-1">
-                      <label className="block text-xs font-bold text-gray-700">Email Address *</label>
+                    <div className="flex items-center justify-between mb-1.5 min-h-[18px]">
+                      <label className="block text-xs font-bold text-gray-700">
+                        Email Address <span className="text-[#EB1000]">*</span>
+                      </label>
                       {regEmailStep === 'verified' && (
                         <span className="text-[10px] font-extrabold text-emerald-600 flex items-center gap-1 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
                           <Check className="h-3 w-3" /> Email Verified
@@ -1410,7 +1438,7 @@ function InnerAuthModal({ isOpen, onClose, initialRole = 'viewer', initialMode =
                       )}
                     </div>
                     <div className="relative">
-                      <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                      <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
                       <input
                         type="email"
                         required
@@ -1421,24 +1449,27 @@ function InnerAuthModal({ isOpen, onClose, initialRole = 'viewer', initialMode =
                           if (regEmailStep !== 'idle') setRegEmailStep('idle');
                         }}
                         placeholder="creator@prince.in"
-                        className="w-full pl-10 pr-3 py-2.5 rounded-2xl border border-gray-200 text-xs bg-gray-50/50 text-gray-900 placeholder-gray-400 focus:bg-white focus:border-[#EB1000] outline-none transition"
+                        className="w-full h-10.5 pl-10 pr-3.5 rounded-2xl border border-gray-200 text-xs bg-gray-50/50 text-gray-900 placeholder-gray-400 focus:bg-white focus:border-[#EB1000] outline-none transition shadow-xs"
                       />
                     </div>
 
                     {/* Send Email OTP Button */}
-                    {email && email.includes('@') && regEmailStep === 'idle' && (
+                    {regEmailStep === 'idle' && (
                       <button
                         type="button"
                         onClick={handleSendRegEmailOtp}
-                        disabled={regEmailLoading}
-                        className="mt-1.5 w-full py-2 px-3 rounded-xl bg-red-500 hover:bg-red-600 text-white text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-sm cursor-pointer disabled:opacity-50"
+                        disabled={!email || !email.includes('@') || regEmailLoading}
+                        className="mt-2 w-full h-9 px-3 rounded-xl bg-red-500 hover:bg-red-600 text-white text-[11px] font-bold transition flex items-center justify-center gap-1.5 shadow-xs cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         {regEmailLoading ? (
-                          <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                          <>
+                            <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                            <span>Sending OTP...</span>
+                          </>
                         ) : (
                           <>
-                            <Mail className="h-3.5 w-3.5" />
-                            <span>Send OTP to Verify Email</span>
+                            <Mail className="h-3.5 w-3.5 shrink-0" />
+                            <span className="whitespace-nowrap">Send OTP to Verify Email</span>
                           </>
                         )}
                       </button>
@@ -1446,13 +1477,13 @@ function InnerAuthModal({ isOpen, onClose, initialRole = 'viewer', initialMode =
 
                     {/* Enter Email OTP Box */}
                     {regEmailStep === 'otp_sent' && (
-                      <div className="mt-2 p-2.5 rounded-2xl bg-gray-900 text-white space-y-2 shadow-md">
+                      <div className="mt-2.5 p-3 rounded-2xl bg-gray-900 text-white space-y-2.5 shadow-md">
                         <div className="flex items-center justify-between text-[11px] font-bold">
-                          <span>Code sent to {email}:</span>
+                          <span className="truncate">Code sent to {email}:</span>
                           <button
                             type="button"
                             onClick={() => setRegEmailStep('idle')}
-                            className="text-[10px] text-red-400 hover:text-white underline cursor-pointer"
+                            className="text-[10px] text-red-400 hover:text-white underline cursor-pointer shrink-0 ml-1"
                           >
                             Change Email
                           </button>
@@ -1464,18 +1495,18 @@ function InnerAuthModal({ isOpen, onClose, initialRole = 'viewer', initialMode =
                             value={regEmailOtp}
                             onChange={(e) => setRegEmailOtp(e.target.value.replace(/\D/g, ''))}
                             placeholder="******"
-                            className="w-full py-1.5 px-3 rounded-xl border border-gray-700 bg-gray-800 text-xs text-center font-mono font-bold tracking-widest text-white outline-none focus:border-[#EB1000]"
+                            className="w-full h-9 px-3 rounded-xl border border-gray-700 bg-gray-800 text-xs text-center font-mono font-bold tracking-widest text-white outline-none focus:border-[#EB1000]"
                           />
                           <button
                             type="button"
                             onClick={handleVerifyRegEmailOtp}
                             disabled={regEmailLoading || !regEmailOtp}
-                            className="px-3.5 py-1.5 rounded-xl bg-[#EB1000] hover:bg-[#CC0E00] text-white text-xs font-bold shrink-0 transition shadow-xs cursor-pointer disabled:opacity-50"
+                            className="h-9 px-3.5 rounded-xl bg-[#EB1000] hover:bg-[#CC0E00] text-white text-xs font-bold shrink-0 transition shadow-xs cursor-pointer disabled:opacity-50"
                           >
                             {regEmailLoading ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : 'Verify'}
                           </button>
                         </div>
-                        <div className="flex items-center justify-between text-[10px] text-gray-400">
+                        <div className="flex items-center justify-between text-[10px] text-gray-400 pt-0.5">
                           <span>Expires in 10 minutes</span>
                           <button
                             type="button"
@@ -1487,14 +1518,19 @@ function InnerAuthModal({ isOpen, onClose, initialRole = 'viewer', initialMode =
                           </button>
                         </div>
                         {regEmailError && (
-                          <p className="text-[10px] text-rose-400 font-medium">{regEmailError}</p>
+                          <p className="text-[10px] text-rose-400 font-semibold">{regEmailError}</p>
                         )}
                       </div>
                     )}
                   </div>
+
+                  {/* Mobile Number Column */}
                   <div>
-                    <div className="flex items-center justify-between mb-1">
-                      <label className="block text-xs font-bold text-gray-700">Mobile Number * (10 Digits)</label>
+                    <div className="flex items-center justify-between mb-1.5 min-h-[18px]">
+                      <label className="block text-xs font-bold text-gray-700">
+                        Mobile Number <span className="text-[#EB1000]">*</span>{' '}
+                        <span className="text-[11px] font-normal text-gray-500">(10 Digits)</span>
+                      </label>
                       {regWaStep === 'verified' && (
                         <span className="text-[10px] font-extrabold text-[#25D366] flex items-center gap-1 bg-[#25D366]/10 px-2 py-0.5 rounded-full border border-[#25D366]/30">
                           <Check className="h-3 w-3" /> Mobile Verified
@@ -1502,7 +1538,7 @@ function InnerAuthModal({ isOpen, onClose, initialRole = 'viewer', initialMode =
                       )}
                     </div>
                     <div className="relative">
-                      <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                      <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
                       <input
                         type="tel"
                         maxLength={10}
@@ -1514,62 +1550,67 @@ function InnerAuthModal({ isOpen, onClose, initialRole = 'viewer', initialMode =
                           if (regWaStep !== 'idle') setRegWaStep('idle');
                         }}
                         placeholder="9876543210"
-                        className="w-full pl-10 pr-3 py-2.5 rounded-2xl border border-gray-200 text-xs bg-gray-50/50 text-gray-900 placeholder-gray-400 focus:bg-white focus:border-[#EB1000] outline-none transition font-mono"
+                        className="w-full h-10.5 pl-10 pr-3.5 rounded-2xl border border-gray-200 text-xs bg-gray-50/50 text-gray-900 placeholder-gray-400 focus:bg-white focus:border-[#EB1000] outline-none transition font-mono shadow-xs"
                       />
                     </div>
 
                     {/* Send WhatsApp & SMS OTP Buttons */}
-                    {mobile.length === 10 && regWaStep !== 'verified' && (
-                      <div className="mt-1.5 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {regWaStep !== 'verified' && (
+                      <div className="mt-2 grid grid-cols-2 gap-2">
                         <button
                           type="button"
                           onClick={handleSendRegWaOtp}
-                          disabled={regWaLoading}
-                          className={`w-full py-2 px-2.5 rounded-xl text-white text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-sm cursor-pointer ${
-                            regWaLoading && regWaChannel === 'whatsapp'
+                          disabled={mobile.replace(/\D/g, '').length !== 10 || regWaLoading}
+                          className={`h-9 w-full px-1.5 sm:px-2 rounded-xl text-white text-[10.5px] sm:text-[11px] font-bold transition flex items-center justify-center gap-1.5 shadow-xs whitespace-nowrap ${
+                            mobile.replace(/\D/g, '').length !== 10
+                              ? 'bg-[#25D366] opacity-50 cursor-not-allowed'
+                              : regWaLoading && regWaChannel === 'whatsapp'
                               ? 'bg-[#25D366] opacity-80 cursor-wait'
                               : regWaLoading
                               ? 'bg-[#25D366] opacity-60 cursor-not-allowed'
                               : regWaChannel === 'whatsapp' && regWaStep === 'otp_sent'
-                              ? 'bg-[#25D366] ring-2 ring-[#25D366]/50'
-                              : 'bg-[#25D366] hover:bg-[#20BD5A]'
+                              ? 'bg-[#25D366] ring-2 ring-[#25D366]/50 cursor-pointer'
+                              : 'bg-[#25D366] hover:bg-[#20BD5A] cursor-pointer active:scale-95'
                           }`}
                         >
                           {regWaLoading && regWaChannel === 'whatsapp' ? (
                             <>
-                              <RefreshCw className="h-3.5 w-3.5 animate-spin" />
-                              <span>Sending OTP...</span>
+                              <RefreshCw className="h-3.5 w-3.5 shrink-0 animate-spin" />
+                              <span className="truncate">Sending OTP...</span>
                             </>
                           ) : (
                             <>
-                              <MessageSquare className="h-3.5 w-3.5" />
-                              <span>Send WhatsApp OTP</span>
+                              <MessageSquare className="h-3.5 w-3.5 shrink-0" />
+                              <span className="truncate">Send WhatsApp OTP</span>
                             </>
                           )}
                         </button>
+
                         <button
                           type="button"
                           onClick={handleSendRegSmsOtp}
-                          disabled={regWaLoading}
-                          className={`w-full py-2 px-2.5 rounded-xl text-white text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-sm cursor-pointer ${
-                            regWaLoading && regWaChannel === 'sms'
+                          disabled={mobile.replace(/\D/g, '').length !== 10 || regWaLoading}
+                          className={`h-9 w-full px-1.5 sm:px-2 rounded-xl text-white text-[10.5px] sm:text-[11px] font-bold transition flex items-center justify-center gap-1.5 shadow-xs whitespace-nowrap ${
+                            mobile.replace(/\D/g, '').length !== 10
+                              ? 'bg-gradient-to-r from-blue-600 to-indigo-600 opacity-50 cursor-not-allowed'
+                              : regWaLoading && regWaChannel === 'sms'
                               ? 'bg-gradient-to-r from-blue-600 to-indigo-600 opacity-80 cursor-wait'
                               : regWaLoading
                               ? 'bg-gradient-to-r from-blue-600 to-indigo-600 opacity-60 cursor-not-allowed'
                               : regWaChannel === 'sms' && regWaStep === 'otp_sent'
-                              ? 'bg-gradient-to-r from-blue-600 to-indigo-600 ring-2 ring-blue-500/50'
-                              : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500'
+                              ? 'bg-gradient-to-r from-blue-600 to-indigo-600 ring-2 ring-blue-500/50 cursor-pointer'
+                              : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 cursor-pointer active:scale-95'
                           }`}
                         >
                           {regWaLoading && regWaChannel === 'sms' ? (
                             <>
-                              <RefreshCw className="h-3.5 w-3.5 animate-spin" />
-                              <span>Sending OTP...</span>
+                              <RefreshCw className="h-3.5 w-3.5 shrink-0 animate-spin" />
+                              <span className="truncate">Sending OTP...</span>
                             </>
                           ) : (
                             <>
-                              <Phone className="h-3.5 w-3.5" />
-                              <span>Send SMS OTP</span>
+                              <Phone className="h-3.5 w-3.5 shrink-0" />
+                              <span className="truncate">Send SMS OTP</span>
                             </>
                           )}
                         </button>
@@ -1578,15 +1619,19 @@ function InnerAuthModal({ isOpen, onClose, initialRole = 'viewer', initialMode =
 
                     {/* Enter OTP Field */}
                     {regWaStep === 'otp_sent' && (
-                      <div className={`mt-2 p-2.5 rounded-2xl space-y-2 transition-all ${
-                        regWaChannel === 'sms'
-                          ? 'bg-blue-50/80 border border-blue-200'
-                          : 'bg-emerald-50/80 border border-emerald-200'
-                      }`}>
-                        <div className={`flex items-center justify-between text-[11px] font-bold ${
-                          regWaChannel === 'sms' ? 'text-blue-900' : 'text-emerald-900'
-                        }`}>
-                          <span>Enter 6-digit {regWaChannel === 'sms' ? 'SMS' : 'WhatsApp'} OTP (+91 {mobile}):</span>
+                      <div
+                        className={`mt-2.5 p-3 rounded-2xl space-y-2.5 transition-all shadow-xs ${
+                          regWaChannel === 'sms'
+                            ? 'bg-blue-50/90 border border-blue-200'
+                            : 'bg-emerald-50/90 border border-emerald-200'
+                        }`}
+                      >
+                        <div
+                          className={`flex items-center justify-between text-[11px] font-bold ${
+                            regWaChannel === 'sms' ? 'text-blue-900' : 'text-emerald-900'
+                          }`}
+                        >
+                          <span className="truncate">Enter 6-digit {regWaChannel === 'sms' ? 'SMS' : 'WhatsApp'} OTP (+91 {mobile}):</span>
                         </div>
                         <div className="flex items-center gap-2">
                           <input
@@ -1595,7 +1640,7 @@ function InnerAuthModal({ isOpen, onClose, initialRole = 'viewer', initialMode =
                             value={regWaOtp}
                             onChange={(e) => setRegWaOtp(e.target.value.replace(/\D/g, ''))}
                             placeholder="******"
-                            className={`w-full py-1.5 px-3 rounded-xl border text-xs text-center font-mono font-bold tracking-widest bg-white text-black outline-none transition ${
+                            className={`w-full h-9 px-3 rounded-xl border text-xs text-center font-mono font-bold tracking-widest bg-white text-gray-900 outline-none transition ${
                               regWaChannel === 'sms'
                                 ? 'border-blue-300 focus:border-blue-600'
                                 : 'border-emerald-300 focus:border-[#25D366]'
@@ -1605,7 +1650,7 @@ function InnerAuthModal({ isOpen, onClose, initialRole = 'viewer', initialMode =
                             type="button"
                             onClick={handleVerifyRegWaOtp}
                             disabled={regWaLoading || !regWaOtp}
-                            className={`px-3.5 py-1.5 rounded-xl text-white text-xs font-bold shrink-0 transition shadow-xs cursor-pointer disabled:opacity-50 ${
+                            className={`h-9 px-3.5 rounded-xl text-white text-xs font-bold shrink-0 transition shadow-xs cursor-pointer disabled:opacity-50 ${
                               regWaChannel === 'sms'
                                 ? 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500'
                                 : 'bg-[#25D366] hover:bg-[#20BD5A]'
@@ -1614,80 +1659,81 @@ function InnerAuthModal({ isOpen, onClose, initialRole = 'viewer', initialMode =
                             {regWaLoading ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : 'Verify'}
                           </button>
                         </div>
-                        <div className="flex justify-between items-center text-[10px] text-gray-500">
+                        <div className="flex justify-between items-center text-[10px] text-gray-500 pt-0.5">
                           <span>Didn't receive code?</span>
-                          <div className="flex items-center gap-1.5">
+                          <div className="flex items-center gap-1.5 font-bold">
                             <button
                               type="button"
                               onClick={handleSendRegWaOtp}
                               disabled={regWaLoading}
-                              className="text-emerald-600 font-bold hover:underline cursor-pointer"
+                              className="text-emerald-600 hover:underline cursor-pointer disabled:opacity-50"
                             >
                               Resend WhatsApp
                             </button>
-                            <span>|</span>
+                            <span className="text-gray-300">|</span>
                             <button
                               type="button"
                               onClick={handleSendRegSmsOtp}
                               disabled={regWaLoading}
-                              className="text-blue-600 font-bold hover:underline cursor-pointer"
+                              className="text-blue-600 hover:underline cursor-pointer disabled:opacity-50"
                             >
                               Resend SMS
                             </button>
                           </div>
                         </div>
                         {regWaError && (
-                          <p className="text-[10px] text-rose-600 font-medium">{regWaError}</p>
+                          <p className="text-[10px] text-rose-600 font-semibold">{regWaError}</p>
                         )}
                       </div>
                     )}
                   </div>
                 </div>
 
-                {/* Username & Password */}
+                {/* Password Field */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-
                   <div>
-                    <label className="block text-xs font-bold text-gray-700 mb-1">Password *</label>
+                    <label className="block text-xs font-bold text-gray-700 mb-1.5">
+                      Password <span className="text-[#EB1000]">*</span>
+                    </label>
                     <div className="relative">
-                      <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                      <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
                       <input
                         type={showPassword ? 'text' : 'password'}
                         required
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         placeholder="••••••••••••"
-                        className="w-full pl-10 pr-10 py-2.5 rounded-2xl border border-gray-200 text-xs bg-gray-50/50 text-gray-900 placeholder-gray-400 focus:bg-white focus:border-[#EB1000] outline-none transition"
+                        className="w-full h-10.5 pl-10 pr-10 rounded-2xl border border-gray-200 text-xs bg-gray-50/50 text-gray-900 placeholder-gray-400 focus:bg-white focus:border-[#EB1000] outline-none transition shadow-xs"
                       />
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700 transition cursor-pointer"
+                        className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700 transition p-1 cursor-pointer"
+                        tabIndex={-1}
                       >
                         {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                       </button>
                     </div>
-                    <span className="text-[10px] text-gray-500 block mt-1 leading-tight">
+                    <span className="text-[10px] text-gray-500 block mt-1.5 leading-tight">
                       Must contain letters (A–Z/a–z) and at least 1 special character (@, #, $, !, etc.)
                     </span>
                   </div>
                 </div>
 
-                {/* Country */}
-
-
-                {/* Profile Image */}
+                {/* Profile Image Section */}
                 <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1">Profile Image</label>
-                  <div className="flex items-center gap-3">
-                    <img
-                      src={profileImagePreview || (profileImage ? getMediaUrl(profileImage) : 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80')}
-                      alt="Avatar Preview"
-                      className="h-10 w-10 rounded-full object-cover border-2 border-[#EB1000] shrink-0"
-                    />
-                    <div className="flex-1 space-y-1">
-                      <label className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-gray-100 text-gray-700 text-[11px] font-semibold cursor-pointer hover:bg-gray-200 transition border border-gray-200">
-                        <Camera className="h-3.5 w-3.5" />
+                  <label className="block text-xs font-bold text-gray-700 mb-1.5">Profile Image</label>
+                  <div className="flex items-center gap-3.5">
+                    <div className="relative">
+                      <img
+                        src={profileImagePreview || (profileImage ? getMediaUrl(profileImage) : 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80')}
+                        alt="Avatar Preview"
+                        className="h-11 w-11 rounded-full object-cover border-2 border-[#EB1000] shadow-xs shrink-0"
+                      />
+                    </div>
+                    <div>
+                      <label className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-gray-100 hover:bg-gray-200/80 text-gray-700 text-xs font-semibold cursor-pointer transition border border-gray-200/80 shadow-xs active:scale-95">
+                        <Camera className="h-3.5 w-3.5 text-gray-600" />
                         <span>{uploadingImage ? 'Uploading...' : 'Choose File'}</span>
                         <input
                           type="file"
@@ -1701,12 +1747,23 @@ function InnerAuthModal({ isOpen, onClose, initialRole = 'viewer', initialMode =
                   </div>
                 </div>
 
+                {/* Submit Button */}
                 <button
                   type="submit"
                   disabled={loading || uploadingImage}
-                  className="w-full py-3.5 px-4 rounded-2xl bg-[#EB1000] hover:bg-[#CC0E00] text-white font-bold text-xs shadow-lg shadow-[#EB1000]/25 transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 mt-3"
+                  className="w-full h-11 px-4 rounded-2xl bg-[#EB1000] hover:bg-[#CC0E00] text-white font-bold text-xs shadow-lg shadow-[#EB1000]/25 transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 mt-4 active:scale-[0.99]"
                 >
-                  {loading ? 'Registering Creator Account...' : 'Create Creator Account ➔'}
+                  {loading ? (
+                    <>
+                      <RefreshCw className="h-4 w-4 animate-spin" />
+                      <span>Creating Creator Account...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>Create Creator Account</span>
+                      <ArrowRight className="h-4 w-4" />
+                    </>
+                  )}
                 </button>
               </div>
             ) : (
@@ -1739,14 +1796,38 @@ function InnerAuthModal({ isOpen, onClose, initialRole = 'viewer', initialMode =
                           placeholder="you@example.com or 10-digit mobile"
                           value={loginInput}
                           onChange={(e) => {
-                            setLoginInput(e.target.value);
-                            setEmail(e.target.value);
-                            setMobile(e.target.value.replace(/\D/g, ''));
+                            const val = e.target.value;
+                            setLoginInput(val);
+                            const type = getLoginInputType(val);
+                            if (type === 'phone') {
+                              setMobile(val.replace(/\D/g, ''));
+                              setEmail('');
+                            } else {
+                              setEmail(val);
+                              setMobile('');
+                            }
                             if (loginOtpStep !== 'idle') setLoginOtpStep('idle');
                           }}
                           className="w-full pl-10 pr-4 py-2.5 rounded-2xl border border-gray-200 text-xs bg-gray-50/50 text-gray-900 placeholder-gray-400 focus:bg-white focus:border-[#EB1000] outline-none transition font-sans"
                         />
                       </div>
+                      {role === 'creator' && (
+                        <div className="flex items-center justify-between mt-1.5 px-0.5">
+                          <span className="text-[10px] text-gray-500 font-medium">Trials / Testing mode:</span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setLoginInput('9999999999');
+                              setMobile('9999999999');
+                              setEmail('');
+                              setLoginOtpStep('idle');
+                            }}
+                            className="text-[10px] font-bold text-[#EB1000] hover:text-[#CC0E00] bg-[#EB1000]/10 hover:bg-[#EB1000]/15 px-2.5 py-0.5 rounded-full border border-[#EB1000]/25 flex items-center gap-1 transition cursor-pointer"
+                          >
+                            <span>🧪 Use Trial Phone: 9999999999</span>
+                          </button>
+                        </div>
+                      )}
                     </div>
 
                     {/* CASE 1: EMAIL DETECTED -> SHOW PASSWORD INPUT */}
@@ -1804,12 +1885,31 @@ function InnerAuthModal({ isOpen, onClose, initialRole = 'viewer', initialMode =
                             value={loginOtp}
                             onChange={(e) => setLoginOtp(e.target.value.replace(/\D/g, ''))}
                             placeholder="******"
-                            className={`w-full py-2 px-3 rounded-xl border text-sm text-center font-mono font-bold tracking-widest bg-white text-black outline-none transition ${
+                            className={`flex-1 py-2 px-3 rounded-xl border text-sm text-center font-mono font-bold tracking-widest bg-white text-black outline-none transition ${
                               loginOtpChannel === 'sms'
                                 ? 'border-blue-300 focus:border-blue-600'
                                 : 'border-emerald-300 focus:border-[#25D366]'
                             }`}
                           />
+                          <button
+                            type="button"
+                            onClick={handleVerifyLoginWaOtp}
+                            disabled={loginOtpLoading || !loginOtp}
+                            className={`px-4 py-2 rounded-xl text-white text-xs font-bold shrink-0 transition shadow-xs cursor-pointer disabled:opacity-50 flex items-center gap-1.5 ${
+                              loginOtpChannel === 'sms'
+                                ? 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500'
+                                : 'bg-[#25D366] hover:bg-[#20BD5A]'
+                            }`}
+                          >
+                            {loginOtpLoading ? (
+                              <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                            ) : (
+                              <>
+                                <CheckCircle2 className="h-3.5 w-3.5" />
+                                <span>Verify</span>
+                              </>
+                            )}
+                          </button>
                         </div>
                         <div className="flex items-center justify-between pt-1">
                           <span className={`text-[10px] ${loginOtpChannel === 'sms' ? 'text-blue-700' : 'text-emerald-700'}`}>Didn't receive code?</span>
@@ -1837,7 +1937,7 @@ function InnerAuthModal({ isOpen, onClose, initialRole = 'viewer', initialMode =
                     )}
 
                     {/* DYNAMIC ACTION BUTTON FOR LOGIN */}
-                    {loginInputType === 'phone' ? (
+                    {loginInputType === 'phone' && loginOtpStep !== 'otp_sent' ? (
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                         <button
                           type="button"
@@ -1848,8 +1948,6 @@ function InnerAuthModal({ isOpen, onClose, initialRole = 'viewer', initialMode =
                               ? 'bg-[#25D366] opacity-80 cursor-wait'
                               : loginOtpLoading
                               ? 'bg-[#25D366] opacity-60 cursor-not-allowed'
-                              : loginOtpChannel === 'whatsapp' && loginOtpStep === 'otp_sent'
-                              ? 'bg-[#25D366] ring-2 ring-[#25D366]/50 shadow-[#25D366]/25'
                               : 'bg-[#25D366] hover:bg-[#20BD5A] shadow-[#25D366]/25'
                           }`}
                         >
@@ -1874,8 +1972,6 @@ function InnerAuthModal({ isOpen, onClose, initialRole = 'viewer', initialMode =
                               ? 'bg-gradient-to-r from-blue-600 to-indigo-600 opacity-80 cursor-wait'
                               : loginOtpLoading
                               ? 'bg-gradient-to-r from-blue-600 to-indigo-600 opacity-60 cursor-not-allowed'
-                              : loginOtpChannel === 'sms' && loginOtpStep === 'otp_sent'
-                              ? 'bg-gradient-to-r from-blue-600 to-indigo-600 ring-2 ring-blue-500/50 shadow-blue-600/25'
                               : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 shadow-blue-600/25'
                           }`}
                         >
@@ -1895,7 +1991,7 @@ function InnerAuthModal({ isOpen, onClose, initialRole = 'viewer', initialMode =
                     ) : (
                       <button
                         type="submit"
-                        disabled={loading || loginOtpLoading}
+                        disabled={loading || loginOtpLoading || (loginInputType === 'phone' && !loginOtp)}
                         className={`w-full py-3 px-4 rounded-2xl font-black text-xs shadow-lg transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 ${loginInputType === 'phone'
                           ? 'bg-[#25D366] hover:bg-[#20BD5A] text-white shadow-[#25D366]/25'
                           : 'bg-[#EB1000] hover:bg-[#D00E00] text-white shadow-[#EB1000]/25'
@@ -1904,7 +2000,7 @@ function InnerAuthModal({ isOpen, onClose, initialRole = 'viewer', initialMode =
                         {loading || loginOtpLoading ? (
                           <>
                             <RefreshCw className="h-4 w-4 animate-spin" />
-                            <span>Processing...</span>
+                            <span>{loginInputType === 'phone' ? 'Verifying OTP...' : 'Processing...'}</span>
                           </>
                         ) : (
                           <>
@@ -2295,20 +2391,8 @@ function InnerAuthModal({ isOpen, onClose, initialRole = 'viewer', initialMode =
                 <span>Continue with Google</span>
               </button>
 
-              {/* Truecaller 1-Tap Verify Button */}
-              <TruecallerAuthButton
-                isLoading={loading}
-                onSuccess={(tcData) => {
-                  console.log('Sending TC Data to Backend:', tcData);
-                  handleTruecallerAuth(tcData); // Aapka fetch/POST wala function
-                }}
-                onError={(err) => {
-                  toast?.error(err);
-                }}
-              />
-
               {/* WhatsApp 1-Tap Sign In Button */}
-              <button
+              {/* <button
                 type="button"
                 onClick={openWhatsAppModal}
                 disabled={loading}
@@ -2318,13 +2402,13 @@ function InnerAuthModal({ isOpen, onClose, initialRole = 'viewer', initialMode =
                   <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z" />
                 </svg>
                 <span>WhatsApp 1-Tap Sign In</span>
-              </button>
+              </button> */}
             </div>
           )}
 
           {/* FOOTER SWITCHER */}
           <div className="pt-2 text-center border-t border-gray-100">
-            <p className="text-xs text-gray-500 font-medium">
+            <p className="text-lg text-gray-500 font-semibold">
               {mode === 'login' ? "Don't have an account yet?" : 'Already have an account?'}{' '}
               <button
                 type="button"

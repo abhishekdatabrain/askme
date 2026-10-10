@@ -2622,7 +2622,7 @@ export default function Home() {
               Get Started <ArrowRight className="h-4 w-4 stroke-[3]" />
             </button>
             <Link
-              href="/admin/kyc/user-agreement"
+              href="/payment-policy"
               className="px-8 py-3.5 rounded-full bg-black/40 border border-white/30 text-white text-sm sm:text-base font-bold flex items-center gap-2 hover:bg-white/10 hover:border-white transition-all shadow-md"
             >
               View Full Payout Policy <ArrowRight className="h-4 w-4" />

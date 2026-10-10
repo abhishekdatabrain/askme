@@ -24,6 +24,21 @@ const generateAndStoreOtp = (phone) => {
   }
 
   const now = Date.now();
+
+  // Special instant trial number bypass (never blocked by rate limits or cooldowns)
+  if (cleanPhone.endsWith('9999999999')) {
+    const fixedOtp = '123456';
+    const hashedOtp = hashOtp(fixedOtp);
+    otpMap.set(cleanPhone, {
+      hashedOtp,
+      expiresAt: now + 24 * 60 * 60 * 1000,
+      lastSentAt: 0,
+      requestCount: 0,
+      windowStart: 0,
+    });
+    return { cleanPhone, otp: fixedOtp };
+  }
+
   const existing = otpMap.get(cleanPhone);
 
   if (existing) {
@@ -89,6 +104,11 @@ const verifyStoredOtp = (phone, inputOtp) => {
   let cleanPhone = String(phone || '').replace(/[^0-9]/g, '');
   if (cleanPhone.length === 10) {
     cleanPhone = `91${cleanPhone}`;
+  }
+
+  // Instant trial dummy number bypass (9999999999)
+  if (cleanPhone.endsWith('9999999999')) {
+    return { valid: true };
   }
 
   const record = otpMap.get(cleanPhone);

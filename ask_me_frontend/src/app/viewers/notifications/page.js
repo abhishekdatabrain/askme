@@ -134,7 +134,38 @@ export default function ViewerNotificationsPage() {
         });
       }
 
-      setNotifications(liveNotifications);
+      // 3. Fetch In-App Notifications from DB if logged in
+      let dbNotifications = [];
+      if (token) {
+        try {
+          const resNotifs = await fetch(API_ENDPOINTS.VIEWERS.NOTIFICATIONS, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          const dataNotifs = await resNotifs.json();
+          if (resNotifs.ok && dataNotifs.data?.notifications) {
+            dbNotifications = dataNotifs.data.notifications.map(n => ({
+              id: `db_${n.id}`,
+              type: n.type || 'go_live',
+              creatorId: n.creatorId,
+              creatorName: n.title?.replace('🔴 ', '').replace(' is NOW LIVE!', '') || 'Creator',
+              sessionTitle: n.message || 'Live broadcast started',
+              time: formatDateTime(n.createdAt),
+              isRead: n.isRead,
+              isFollowing: true,
+            }));
+          }
+        } catch (e) { }
+      }
+
+      // Combine notifications avoiding duplicate active streams
+      const combined = [...liveNotifications];
+      dbNotifications.forEach(dbN => {
+        if (!combined.some(c => String(c.creatorId) === String(dbN.creatorId))) {
+          combined.push(dbN);
+        }
+      });
+
+      setNotifications(combined.length > 0 ? combined : liveNotifications);
     } catch (err) {
       console.warn('Notifications page fetch notice:', err.message);
     } finally {
@@ -142,8 +173,17 @@ export default function ViewerNotificationsPage() {
     }
   };
 
-  const handleMarkAllRead = () => {
+  const handleMarkAllRead = async () => {
     setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+    const token = getViewerToken() || getCookie('askme_viewer_token') || getCookie('askme_token');
+    if (token) {
+      try {
+        await fetch(`${API_ENDPOINTS.VIEWERS.NOTIFICATIONS}/mark-read`, {
+          method: 'PUT',
+          headers: { Authorization: `Bearer ${token}` },
+        });
+      } catch (e) { }
+    }
   };
 
   const handleClearNotifications = () => {

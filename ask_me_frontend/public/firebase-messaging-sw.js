@@ -21,11 +21,11 @@ const messaging = firebase.messaging();
 messaging.onBackgroundMessage((payload) => {
   console.log('[firebase-messaging-sw.js] Background notification received:', payload);
 
-  const notificationTitle = payload.notification?.title || payload.data?.title || 'New Creator Registration';
+  const notificationTitle = payload.notification?.title || payload.data?.title || 'AskMe Live Notification';
   const notificationOptions = {
-    body: payload.notification?.body || payload.data?.body || 'A new creator has registered.',
-    icon: '/favicon.ico',
-    badge: '/favicon.ico',
+    body: payload.notification?.body || payload.data?.body || 'A creator you follow is now live!',
+    icon: '/askme-logo.png',
+    badge: '/askme-logo.png',
     data: payload.data || {},
   };
 
@@ -39,8 +39,16 @@ self.addEventListener('notificationclick', (event) => {
   event.notification.close();
 
   const data = event.notification.data || {};
-  const creatorId = data.creatorId || data.creator_id;
-  const targetUrl = creatorId ? `/admin/creators/${creatorId}` : '/admin/creators';
+  let targetUrl = '/';
+  if (data.url) {
+    targetUrl = data.url;
+  } else if (data.sessionCode) {
+    targetUrl = `/pay/${data.sessionCode}`;
+  } else if (data.type === 'GO_LIVE') {
+    targetUrl = data.sessionCode ? `/pay/${data.sessionCode}` : '/viewers/notifications';
+  } else if (data.creatorId || data.creator_id) {
+    targetUrl = `/admin/creators/${data.creatorId || data.creator_id}`;
+  }
 
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {

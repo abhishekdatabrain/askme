@@ -502,164 +502,149 @@ const buildGoLiveEmailHtml = ({ viewerName, creatorName, sessionTitle, sessionCo
 <html lang="en" xmlns="http://www.w3.org/1999/xhtml">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="color-scheme" content="dark light">
-<meta name="supported-color-schemes" content="dark light">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="dark">
+<meta name="supported-color-schemes" content="dark">
 <title>🔴 ${creatorName} is Live on AskMe</title>
 <style>
-  body{margin:0;padding:0;background:#070708;-webkit-text-size-adjust:100%}
-  table{border-collapse:collapse}
-  img{border:0;display:block;max-width:100%;height:auto}
-  a{text-decoration:none}
-  .f{font-family:Inter,'Helvetica Neue',Helvetica,Arial,sans-serif}
-  .h1{font-size:40px;line-height:44px;font-weight:800;color:#fff;letter-spacing:-1px;margin:0}
-  .h2{font-size:26px;line-height:32px;font-weight:800;color:#fff;letter-spacing:-.4px;margin:0}
-  .h3{font-size:16px;line-height:22px;font-weight:700;color:#fff;margin:0 0 6px}
-  .p{font-size:15px;line-height:24px;color:#b9b9c0;margin:0}
-  .btn{display:inline-block;padding:16px 30px;border-radius:999px;font-weight:700;font-size:15px}
-  @media (max-width:620px){
-    .w{width:100%!important}
-    .px{padding-left:22px!important;padding-right:22px!important}
-    .h1{font-size:32px!important;line-height:36px!important}
-    .h2{font-size:23px!important;line-height:29px!important}
-    .col{display:block!important;width:100%!important;padding:0 0 12px!important}
-    .stack{display:block!important;width:100%!important;text-align:center!important}
-    .qr{margin:0 auto 22px!important}
+  body { margin: 0; padding: 0; background-color: #0A0A0F; color: #F5F5F7; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; }
+  table { border-collapse: collapse; }
+  img { border: 0; display: block; }
+  a { text-decoration: none; }
+  @media only screen and (max-width: 600px) {
+    .container { width: 100% !important; padding: 16px 12px !important; }
+    .card-body { padding: 24px 20px !important; }
+    .btn-cta { width: 100% !important; box-sizing: border-box !important; }
+    .title-h1 { font-size: 24px !important; }
   }
 </style>
 </head>
-<body style="margin:0;padding:0;background:#070708;">
+<body style="margin: 0; padding: 32px 12px; background-color: #0A0A0F; color: #F5F5F7;">
 
-<!-- Preheader -->
-<div style="display:none;max-height:0;overflow:hidden;opacity:0;color:#070708;font-size:1px;line-height:1px;">
-  ${creatorName} is live now: "${sessionTitle}". Ask a question they'll actually see on screen!&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;
+<!-- Hidden Preheader -->
+<div style="display:none; max-height:0; overflow:hidden; opacity:0; color:#0A0A0F; font-size:1px; line-height:1px;">
+  🔴 ${creatorName} is now live on AskMe: "${sessionTitle}". Join now and get your question answered on screen!
 </div>
 
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="#070708" style="background:#070708;">
-<tr><td align="center" style="padding:0;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #0A0A0F;">
+  <tr>
+    <td align="center">
+      <table role="presentation" class="container" width="560" cellpadding="0" cellspacing="0" style="max-width: 560px; width: 100%; margin: 0 auto;">
+        
+        <!-- BRAND HEADER -->
+        <tr>
+          <td align="center" style="padding-bottom: 24px;">
+            <a href="${frontendUrl}" style="text-decoration: none; display: inline-flex; align-items: center;">
+              <table role="presentation" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td valign="middle" style="padding-right: 8px;">
+                    <img src="cid:askmelogo" width="34" height="34" alt="AskMe" style="width: 34px; height: 34px; border: 0;" />
+                  </td>
+                  <td valign="middle">
+                    <span style="font-size: 24px; font-weight: 900; color: #FFFFFF; letter-spacing: -0.5px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+                      AskMe<span style="color: #EB1000;">.live</span>
+                    </span>
+                  </td>
+                </tr>
+              </table>
+            </a>
+          </td>
+        </tr>
 
-<table role="presentation" class="w" width="600" cellpadding="0" cellspacing="0" style="width:600px;max-width:600px;">
+        <!-- MAIN CARD -->
+        <tr>
+          <td style="background-color: #12121A; border: 1px solid #1F1F30; border-radius: 24px; padding: 36px 32px; box-shadow: 0 20px 50px rgba(0,0,0,0.6);" class="card-body">
+            
+            <!-- LIVE BADGE -->
+            <div style="margin-bottom: 18px;">
+              <span style="display: inline-block; background-color: rgba(235, 16, 0, 0.12); border: 1px solid rgba(235, 16, 0, 0.35); color: #FF3B30; font-size: 11px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase; padding: 6px 14px; border-radius: 999px;">
+                🔴 LIVE STREAM STARTED
+              </span>
+            </div>
 
-  <!-- LOGO BAND -->
-  <tr><td align="center" bgcolor="#ffffff" style="background:#ffffff;padding:26px 20px 22px;">
-    <a href="${frontendUrl}">
-      <img src="cid:askmelogo" width="170" alt="Ask-me.live by FuturePast" style="margin:0 auto;width:170px;">
-    </a>
-  </td></tr>
-  <tr><td height="5" bgcolor="#FF3B30" style="background:#FF3B30;font-size:0;line-height:0;">&nbsp;</td></tr>
+            <!-- TITLE & SUBTITLE -->
+            <h1 class="title-h1" style="margin: 0 0 12px 0; font-size: 28px; line-height: 1.25; font-weight: 900; color: #FFFFFF; letter-spacing: -0.5px;">
+              ${creatorName} is Live Now!
+            </h1>
+            <p style="margin: 0 0 24px 0; font-size: 15px; line-height: 1.6; color: #94A3B8;">
+              Hi ${nameDisplay}, <strong style="color: #FFFFFF;">${creatorName}</strong> has just started broadcasting. Join the live stream, send your questions directly with UPI, and get them answered live on screen!
+            </p>
 
-  <!-- HERO -->
-  <tr><td class="px" bgcolor="#070708" align="center" style="background:#070708;background-image:radial-gradient(ellipse at 50% 0%,#3a0d0a 0%,#070708 70%);padding:56px 40px 50px;">
-    <p class="f" style="margin:0 0 18px;font-size:13px;letter-spacing:3px;font-weight:700;color:#FF3B30;">🔴 LIVE NOW &bull; DISCOVER &bull; ENGAGE</p>
-    <h1 class="f h1">${creatorName} is live.<br>Now you can ask them anything.</h1>
-    <p class="f p" style="margin:22px auto 0;max-width:460px;font-size:17px;line-height:27px;">Hi ${nameDisplay}, <strong>${creatorName}</strong> has just started a live stream: <em>"${sessionTitle}"</em>. Ask-me.live lets you send a question they'll actually see on screen, and tells you the moment they answer.</p>
-    <table role="presentation" cellpadding="0" cellspacing="0" style="margin:32px auto 0;">
-      <tr><td align="center" bgcolor="#FF3B30" style="border-radius:999px;background:#FF3B30;">
-        <a href="${streamUrl}" class="f btn" style="color:#ffffff;">Watch &amp; Ask ${creatorName}</a>
-      </td></tr>
-    </table>
-    <p class="f" style="margin:16px 0 0;font-size:13px;color:#7c7c86;">Instant UPI &middot; Direct Q&amp;A On Screen</p>
-  </td></tr>
+            <!-- SESSION DETAILS CARD -->
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #181824; border: 1px solid #252538; border-radius: 16px; margin-bottom: 26px;">
+              <tr>
+                <td style="padding: 18px 20px;">
+                  <div style="font-size: 11px; font-weight: 700; color: #EB1000; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px;">
+                    Broadcasting Topic
+                  </div>
+                  <div style="font-size: 17px; font-weight: 800; color: #FFFFFF; line-height: 1.4; margin-bottom: 10px;">
+                    &ldquo;${sessionTitle}&rdquo;
+                  </div>
+                  <table role="presentation" cellpadding="0" cellspacing="0">
+                    <tr>
+                      <td style="font-size: 12px; color: #94A3B8;">
+                        Host: <strong style="color: #FFFFFF;">${creatorName}</strong> &bull; AskMe Q&amp;A On Screen Enabled
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+            </table>
 
-  <!-- SCOOT STEPS -->
-  <tr><td class="px" bgcolor="#0e0e10" style="background:#0e0e10;padding:40px 40px 34px;border-top:1px solid #1e1e22;">
-    <h2 class="f h2" style="text-align:center;">Scan. Ask. Scoot. Get answered.</h2>
-    <p class="f p" style="text-align:center;margin:10px 0 26px;">Four taps between you and ${creatorName}&rsquo;s reply.</p>
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
-      <tr>
-        <td class="col" width="25%" valign="top" style="padding:0 6px;">
-          <table role="presentation" width="100%" bgcolor="#151518" style="background:#151518;border:1px solid #26262b;border-radius:16px;"><tr><td align="center" style="padding:18px 8px;">
-            <div style="font-size:26px;line-height:30px;">📱</div>
-            <p class="f" style="margin:8px 0 2px;font-size:14px;font-weight:700;color:#fff;">Scan</p>
-            <p class="f" style="margin:0;font-size:12px;line-height:17px;color:#9a9aa3;">Creator&rsquo;s QR or link</p>
-          </td></tr></table>
-        </td>
-        <td class="col" width="25%" valign="top" style="padding:0 6px;">
-          <table role="presentation" width="100%" bgcolor="#151518" style="background:#151518;border:1px solid #26262b;border-radius:16px;"><tr><td align="center" style="padding:18px 8px;">
-            <div style="font-size:26px;line-height:30px;">💬</div>
-            <p class="f" style="margin:8px 0 2px;font-size:14px;font-weight:700;color:#fff;">Ask</p>
-            <p class="f" style="margin:0;font-size:12px;line-height:17px;color:#9a9aa3;">Type your question</p>
-          </td></tr></table>
-        </td>
-        <td class="col" width="25%" valign="top" style="padding:0 6px;">
-          <table role="presentation" width="100%" bgcolor="#151518" style="background:#151518;border:1px solid #26262b;border-radius:16px;"><tr><td align="center" style="padding:18px 8px;">
-            <div style="font-size:26px;line-height:30px;">🛴</div>
-            <p class="f" style="margin:8px 0 2px;font-size:14px;font-weight:700;color:#fff;">Scoot</p>
-            <p class="f" style="margin:0;font-size:12px;line-height:17px;color:#9a9aa3;">Back to the stream</p>
-          </td></tr></table>
-        </td>
-        <td class="col" width="25%" valign="top" style="padding:0 6px;">
-          <table role="presentation" width="100%" bgcolor="#151518" style="background:#151518;border:1px solid #FF3B30;border-radius:16px;"><tr><td align="center" style="padding:18px 8px;">
-            <div style="font-size:26px;line-height:30px;">🔔</div>
-            <p class="f" style="margin:8px 0 2px;font-size:14px;font-weight:700;color:#fff;">Get answered</p>
-            <p class="f" style="margin:0;font-size:12px;line-height:17px;color:#9a9aa3;">Pinged the instant they reply</p>
-          </td></tr></table>
-        </td>
-      </tr>
-    </table>
-  </td></tr>
+            <!-- PRIMARY ACTION BUTTON -->
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 28px;">
+              <tr>
+                <td align="center">
+                  <a href="${streamUrl}" class="btn-cta" style="display: block; width: 100%; text-align: center; background: linear-gradient(135deg, #FF3B30 0%, #EB1000 100%); color: #FFFFFF !important; font-weight: 800; font-size: 15px; padding: 15px 24px; border-radius: 14px; text-decoration: none; box-shadow: 0 8px 25px rgba(235, 16, 0, 0.4); box-sizing: border-box;">
+                    Join Live Stream &amp; Ask Questions &rarr;
+                  </a>
+                </td>
+              </tr>
+            </table>
 
-  <!-- FEATURES -->
-  <tr><td class="px" bgcolor="#070708" style="background:#070708;padding:46px 40px 12px;">
-    <h2 class="f h2">Everything in one place</h2>
-    <p class="f p" style="margin:10px 0 26px;">Built for fans who want to be heard and creators who want a better way to talk to their community.</p>
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+            <!-- HOW IT WORKS MINI GUIDE -->
+            <div style="border-top: 1px solid #1F1F30; padding-top: 22px;">
+              <div style="font-size: 12px; font-weight: 800; color: #E2E8F0; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 14px;">
+                How to get answered:
+              </div>
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td width="33%" valign="top" style="padding-right: 8px;">
+                    <div style="font-size: 13px; font-weight: 800; color: #FFFFFF; margin-bottom: 3px;">1. Open Stream</div>
+                    <div style="font-size: 12px; color: #64748B; line-height: 1.4;">Watch the live broadcast with ease.</div>
+                  </td>
+                  <td width="33%" valign="top" style="padding: 0 4px;">
+                    <div style="font-size: 13px; font-weight: 800; color: #FFFFFF; margin-bottom: 3px;">2. Ask with UPI</div>
+                    <div style="font-size: 12px; color: #64748B; line-height: 1.4;">Instant payment sends your question.</div>
+                  </td>
+                  <td width="33%" valign="top" style="padding-left: 8px;">
+                    <div style="font-size: 13px; font-weight: 800; color: #FFFFFF; margin-bottom: 3px;">3. On Screen</div>
+                    <div style="font-size: 12px; color: #64748B; line-height: 1.4;">See it live on stream &amp; get answered!</div>
+                  </td>
+                </tr>
+              </table>
+            </div>
 
-      <tr>
-        <td class="col" width="50%" valign="top" style="padding:0 7px 14px 0;">
-          <table role="presentation" width="100%" bgcolor="#121214" style="background:#121214;border:1px solid #232328;border-radius:16px;"><tr><td style="padding:22px 20px;">
-            <div style="font-size:24px;line-height:28px;margin-bottom:10px;">🔴</div>
-            <p class="f h3">See who&rsquo;s live, everywhere</p>
-            <p class="f p" style="font-size:14px;line-height:21px;">One feed for every creator streaming right now across YouTube, Instagram, Twitch, Kick, X, LinkedIn Live and Facebook.</p>
-          </td></tr></table>
-        </td>
-        <td class="col" width="50%" valign="top" style="padding:0 0 14px 7px;">
-          <table role="presentation" width="100%" bgcolor="#121214" style="background:#121214;border:1px solid #232328;border-radius:16px;"><tr><td style="padding:22px 20px;">
-            <div style="font-size:24px;line-height:28px;margin-bottom:10px;">⚡</div>
-            <p class="f h3">Ask and get noticed</p>
-            <p class="f p" style="font-size:14px;line-height:21px;">Pay to send a question that goes to ${creatorName}&rsquo;s review queue, not lost in a chat stream.</p>
-          </td></tr></table>
-        </td>
-      </tr>
+          </td>
+        </tr>
 
-      <tr>
-        <td class="col" width="50%" valign="top" style="padding:0 7px 14px 0;">
-          <table role="presentation" width="100%" bgcolor="#121214" style="background:#121214;border:1px solid #232328;border-radius:16px;"><tr><td style="padding:22px 20px;">
-            <div style="font-size:24px;line-height:28px;margin-bottom:10px;">🔔</div>
-            <p class="f h3">Never miss your creator</p>
-            <p class="f p" style="font-size:14px;line-height:21px;">Get notified when they answer your question, when they go live, and before a scheduled stream starts.</p>
-          </td></tr></table>
-        </td>
-        <td class="col" width="50%" valign="top" style="padding:0 0 14px 7px;">
-          <table role="presentation" width="100%" bgcolor="#121214" style="background:#121214;border:1px solid #232328;border-radius:16px;"><tr><td style="padding:22px 20px;">
-            <div style="font-size:24px;line-height:28px;margin-bottom:10px;">🛴</div>
-            <p class="f h3">Scoot Mode</p>
-            <p class="f p" style="font-size:14px;line-height:21px;">Send your question and the screen scoots out of the way, so the stream stays front and centre while you wait.</p>
-          </td></tr></table>
-        </td>
-      </tr>
-    </table>
-  </td></tr>
+        <!-- FOOTER -->
+        <tr>
+          <td align="center" style="padding-top: 24px; font-size: 12px; color: #64748B; line-height: 1.6;">
+            <div>
+              AskMe Live Platform &bull; <a href="${frontendUrl}" style="color: #94A3B8; text-decoration: underline;">askme.live</a>
+            </div>
+            <div style="margin-top: 4px; font-size: 11px;">
+              You received this alert because you follow <strong>${creatorName}</strong> on AskMe.
+            </div>
+          </td>
+        </tr>
 
-  <!-- FINAL CTA -->
-  <tr><td class="px" align="center" bgcolor="#FF3B30" style="background:#FF3B30;background-image:linear-gradient(135deg,#FF3B30 0%,#b3150d 100%);padding:52px 40px;">
-    <h2 class="f h2" style="font-size:30px;line-height:36px;">Every meaningful question deserves to be heard.</h2>
-    <p class="f" style="margin:14px auto 28px;max-width:440px;font-size:16px;line-height:25px;color:#ffe3e0;">Join ${creatorName}&rsquo;s live session now on Ask-me.live.</p>
-    <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 auto;"><tr>
-      <td align="center" bgcolor="#ffffff" style="border-radius:999px;background:#ffffff;"><a href="${streamUrl}" class="f btn" style="color:#b3150d;">Join Live Stream Now</a></td>
-    </tr></table>
-    <p class="f" style="margin:22px 0 0;font-size:14px;color:#fff;">Questions? Write to us at <a href="mailto:hello@ask-me.live" style="color:#fff;font-weight:700;text-decoration:underline;">hello@ask-me.live</a></p>
-  </td></tr>
-
-  <!-- FOOTER -->
-  <tr><td class="px" align="center" bgcolor="#070708" style="background:#070708;padding:34px 40px 40px;">
-    <p class="f" style="margin:0 0 6px;font-size:14px;font-weight:700;color:#fff;">Ask-me.live <span style="color:#7c7c86;font-weight:400;">by FuturePast</span></p>
-    <p class="f" style="margin:0 0 14px;font-size:12px;line-height:19px;color:#7c7c86;">FuturePast Ventures LLP &middot; Pune, Maharashtra, India<br>hello@ask-me.live &middot; <a href="${frontendUrl}" style="color:#9a9aa3;">ask-me.live</a></p>
-  </td></tr>
-
+      </table>
+    </td>
+  </tr>
 </table>
-</td></tr>
-</table>
+
 </body>
 </html>`;
 };

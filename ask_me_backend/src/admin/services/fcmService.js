@@ -82,6 +82,100 @@ const sendAdminNotification = async ({ title, body, data = {} }) => {
   }
 };
 
+const UserFcmToken = require('../../models/UserFcmTokenModel');
+
+/**
+ * Send FCM push notification to all active devices of followed viewers
+ */
+const sendFollowersLiveNotification = async ({ followerUserIds, title, body, data = {} }) => {
+  if (!followerUserIds || followerUserIds.length === 0) return { success: false, reason: 'no_followers' };
+
+  try {
+    console.log(`\n🔔 [FCM SERVICE] Sending Live Notification to ${followerUserIds.length} followers: "${title}"`);
+
+    const activeTokenRecords = await UserFcmToken.findAll({
+      where: {
+        user_id: followerUserIds,
+        is_active: true,
+      },
+    });
+
+    if (!activeTokenRecords || activeTokenRecords.length === 0) {
+      console.log('ℹ️ [FCM SERVICE] No active viewer FCM tokens found for these followers.');
+      return { success: false, reason: 'no_tokens' };
+    }
+
+    const tokens = activeTokenRecords.map((r) => r.fcm_token).filter(Boolean);
+    if (tokens.length === 0) return { success: false, reason: 'no_tokens' };
+
+    const messaging = getMessaging();
+    if (!messaging) {
+      console.log('[FCM SERVICE NOTICE] Firebase Admin Messaging not initialized. Skipping push dispatch.');
+      return { success: false, reason: 'firebase_not_configured' };
+    }
+
+    const stringifiedData = {};
+    Object.keys(data).forEach((key) => {
+      stringifiedData[key] = String(data[key]);
+    });
+
+    const linkUrl = stringifiedData.url || stringifiedData.link || '/';
+    const payload = {
+      tokens,
+      notification: {
+        title,
+        body,
+      },
+      data: stringifiedData,
+      webpush: {
+        notification: {
+          title,
+          body,
+          icon: '/askme-logo.png',
+          badge: '/askme-logo.png',
+        },
+        fcmOptions: {
+          link: linkUrl,
+        },
+      },
+    };
+
+    const response = await messaging.sendEachForMulticast(payload);
+    console.log(`[FCM SERVICE] Live push notification sent to ${tokens.length} viewer token(s). Success: ${response.successCount}, Failure: ${response.failureCount}`);
+
+    // Deactivate failed tokens
+    if (response.failureCount > 0) {
+      const tokensToRemove = [];
+      response.responses.forEach((resp, idx) => {
+        if (!resp.success) {
+          const errCode = resp.error?.code;
+          if (
+            errCode === 'messaging/invalid-registration-token' ||
+            errCode === 'messaging/registration-token-not-registered' ||
+            errCode === 'messaging/invalid-argument'
+          ) {
+            tokensToRemove.push(tokens[idx]);
+          }
+        }
+      });
+
+      if (tokensToRemove.length > 0) {
+        await UserFcmToken.update(
+          { is_active: false },
+          { where: { fcm_token: tokensToRemove } }
+        );
+        console.log(`[FCM SERVICE] Deactivated ${tokensToRemove.length} invalid viewer FCM token(s).`);
+      }
+    }
+
+    return { success: true, successCount: response.successCount };
+  } catch (err) {
+    console.error('❌ [FCM SERVICE ERROR] Failed to send followers push notification:', err.message);
+    return { success: false, error: err.message };
+  }
+};
+
 module.exports = {
   sendAdminNotification,
+  sendFollowersLiveNotification,
 };

@@ -19,6 +19,9 @@ const {
   getViewerQuestions,
   getPublicPastStreams,
   getPublicCategories,
+  saveViewerFcmToken,
+  getViewerNotifications,
+  markViewerNotificationsRead,
 } = require('../../controllers/viewerController');
 const { getPublicTestimonials } = require('../../controllers/creatorTestimonialController');
 const {
@@ -171,5 +174,26 @@ router.get('/vip/my-memberships', protect, getViewerMemberships);
  * @access  Public / Private
  */
 router.get('/my-questions', getViewerQuestions);
+
+/**
+ * @route   POST /api/viewers/notification-token
+ * @desc    Save Viewer FCM Push Notification Token
+ * @access  Public / Private
+ */
+router.post('/notification-token', saveViewerFcmToken);
+
+/**
+ * @route   GET /api/viewers/notifications
+ * @desc    Get In-App Notifications for Viewer
+ * @access  Private
+ */
+router.get('/notifications', protect, getViewerNotifications);
+
+/**
+ * @route   PUT /api/viewers/notifications/mark-read
+ * @desc    Mark All Viewer Notifications as Read
+ * @access  Private
+ */
+router.put('/notifications/mark-read', protect, markViewerNotificationsRead);
 
 module.exports = router;

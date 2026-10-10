@@ -1,6 +1,7 @@
 const Admin = require("./AdminModel");
 const AdminRefreshToken = require("./AdminRefreshTokenModel");
 const AdminFcmToken = require("./AdminFcmTokenModel");
+const UserFcmToken = require("./UserFcmTokenModel");
 const Follow = require("./FollowModel");
 const Notification = require("./NotificationModel");
 const User = require("./userModel");
@@ -39,6 +40,10 @@ Admin.hasMany(AdminRefreshToken, { foreignKey: "admin_id", as: "refreshTokens" }
 AdminRefreshToken.belongsTo(Admin, { foreignKey: "admin_id", as: "admin" });
 Admin.hasMany(AdminFcmToken, { foreignKey: "admin_id", as: "fcmTokens" });
 AdminFcmToken.belongsTo(Admin, { foreignKey: "admin_id", as: "admin" });
+
+// User & FCM Tokens
+User.hasMany(UserFcmToken, { foreignKey: "user_id", as: "fcmTokens" });
+UserFcmToken.belongsTo(User, { foreignKey: "user_id", as: "user" });
 
 // Creator & Profile
 Creator.hasOne(CreatorProfile, { foreignKey: "creator_id", as: "profile" });
@@ -135,6 +140,7 @@ module.exports = {
   Admin,
   AdminRefreshToken,
   AdminFcmToken,
+  UserFcmToken,
   Follow,
   Notification,
   User,

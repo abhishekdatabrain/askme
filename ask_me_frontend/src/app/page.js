@@ -629,7 +629,6 @@ export default function Home() {
       highlights: [
         'All visible queue never gets buried in chat spam',
         'Real-time status updates: In-Queue, On-Screen Broadcasted, and Answered',
-        'Automatic refund protection if your question cannot be reached',
       ],
     },
     {
@@ -654,7 +653,7 @@ export default function Home() {
       categoryTag: 'FOR VIEWERS',
       question: 'What happens if the stream ends before my question is answered?',
       answer:
-        'If a creator ends their broadcast without answering your queued question, our automated system immediately triggers a 100% full refund back to your original payment method.',
+        'If a creator ends their broadcast without answering your queued question, our automated system immediately triggers a no refund back to your original payment method.',
     },
     {
       id: 'q5',
@@ -3649,13 +3648,13 @@ export default function Home() {
                   Designed for Viewers
                 </h3>
                 <p className="text-xs text-[#8E8E9F] font-medium leading-relaxed">
-                  Recognition, queue tracking, priority support, and instant refund protection if a question goes unanswered.
+                  Recognition, queue tracking, priority support .
                 </p>
               </div>
 
               <div className="pt-3 border-t border-[#1C1C2A] flex items-center gap-1.5 text-[11px] text-[#06B6D4] font-medium">
                 <span className="h-1.5 w-1.5 rounded-full bg-[#06B6D4]"></span>
-                <span>Instant auto-refunds</span>
+                <span>Instant tracking</span>
               </div>
             </div>
           </div>

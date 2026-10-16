@@ -112,8 +112,24 @@ export default function CreatorManagement({ activeSubTab }) {
         await fetch(`${API_ENDPOINTS.ADMIN.CREATORS}/${id}/reject-kyc`, { method: 'PUT', headers, body: JSON.stringify({ reason: 'Invalid documents' }) });
         toast.error(`Creator KYC rejected for ${targetCreator?.name || id}.`, 'Creator Rejected');
       } else if (action === 'block') {
-        await fetch(`${API_ENDPOINTS.ADMIN.CREATORS}/${id}/block`, { method: 'PUT', headers });
-        toast.warning(`Account status toggled for ${targetCreator?.name || id} `, 'Status Updated');
+        const isCurrentlyBlocked = targetCreator?.accountStatus === 'Blocked';
+        let blockPayload = {};
+        if (!isCurrentlyBlocked) {
+          const reasonInput = window.prompt(
+            `Suspend Creator: ${targetCreator?.name || id}\nEnter suspension reason (or click OK for default):`,
+            'Account activity violation - Terms of Service and Community Rules'
+          );
+          if (reasonInput === null) return; // User cancelled
+          if (reasonInput.trim()) {
+            blockPayload.reason = reasonInput.trim();
+          }
+        }
+        await fetch(`${API_ENDPOINTS.ADMIN.CREATORS}/${id}/block`, {
+          method: 'PUT',
+          headers,
+          body: JSON.stringify(blockPayload),
+        });
+        toast.warning(`Account status updated for ${targetCreator?.name || id}`, 'Status Updated');
       }
     } catch (e) {
       toast.error('Failed to update creator action in backend database.', 'Database Sync Error');

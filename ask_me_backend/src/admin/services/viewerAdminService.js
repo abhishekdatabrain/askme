@@ -27,6 +27,7 @@ class ViewerAdminService {
       id: v.id,
       name: fullName,
       email: v.email || 'N/A',
+      phone: v.phone || 'N/A',
       role: (v.role === 'viewer') ? 'Viewer' : (v.role || 'Viewer'),
       status,
       avatar: avatarInitials,
@@ -51,6 +52,7 @@ class ViewerAdminService {
       where[Op.or] = [
         { name: { [Op.iLike]: q } },
         { email: { [Op.iLike]: q } },
+        { phone: { [Op.iLike]: q } },
       ];
     }
 
@@ -172,6 +174,15 @@ class ViewerAdminService {
 
     await viewerRepository.updateRoleOrStatus(id, newRole);
     return { viewerId: id, status: newRole === 'blocked' ? 'Blocked' : 'Active' };
+  }
+
+  async deleteViewer(id, adminId) {
+    const viewerRecord = await viewerRepository.findRawById(id);
+    if (!viewerRecord) {
+      throw new NotFoundError('Viewer not found');
+    }
+    await viewerRepository.deleteById(id);
+    return { viewerId: id };
   }
 }
 

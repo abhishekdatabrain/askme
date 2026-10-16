@@ -14,7 +14,7 @@ class ViewerRepository {
       limit,
       offset,
       order,
-      attributes: ['id', 'name', 'email', 'role', 'created_at', 'updated_at'],
+      attributes: ['id', 'name', 'email', 'phone', 'role', 'created_at', 'updated_at'],
       include: [
         {
           model: Donation,
@@ -35,7 +35,7 @@ class ViewerRepository {
 
   async findById(id) {
     const user = await User.findByPk(id, {
-      attributes: ['id', 'name', 'email', 'role', 'created_at', 'updated_at'],
+      attributes: ['id', 'name', 'email', 'phone', 'role', 'created_at', 'updated_at'],
     });
 
     if (!user) return null;
@@ -95,6 +95,16 @@ class ViewerRepository {
       userWhere.role = { [Op.in]: ['user', 'viewer'] };
     }
     return await User.count({ where: userWhere });
+  }
+
+  async findRawById(id) {
+    return await User.findByPk(id);
+  }
+
+  async deleteById(id) {
+    // Nullify viewer_id on donations to maintain financial records consistency
+    await Donation.update({ viewer_id: null }, { where: { viewer_id: id } }).catch(() => {});
+    return await User.destroy({ where: { id } });
   }
 }
 

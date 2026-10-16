@@ -11,6 +11,11 @@ const {
   verifyEmailOtpViewer,
   truecallerAuthViewer,
   getViewerProfile,
+  updateViewerProfile,
+  uploadViewerAvatar,
+  removeViewerAvatar,
+  checkUsernameAvailability,
+  changeViewerPassword,
   deleteViewerAccount,
   getPublicLiveFeed,
   getCreatorPublicProfile,
@@ -30,6 +35,7 @@ const {
   getPublicVipPlans,
 } = require('../../controllers/vipController');
 const { protect } = require('../../middlewares/authMiddleware');
+const avatarUpload = require('../../middlewares/avatarUploadMiddleware');
 
 /**
  * @route   POST /api/viewers/register
@@ -97,12 +103,53 @@ router.post('/truecaller-auth', truecallerAuthViewer);
 router.get('/profile', getViewerProfile);
 
 /**
+ * @route   PATCH /api/viewers/profile
+ * @desc    Update Viewer Profile (Full name, username, bio, country, avatar, social links, email/mobile with OTP)
+ * @access  Private
+ */
+router.patch('/profile', protect, updateViewerProfile);
+router.put('/profile', protect, updateViewerProfile);
+
+/**
+ * @route   POST /api/viewers/profile/avatar
+ * @desc    Upload Viewer Profile Picture (avatar)
+ * @access  Private
+ */
+router.post('/profile/avatar', protect, avatarUpload.single('avatar'), uploadViewerAvatar);
+router.post('/avatar', protect, avatarUpload.single('avatar'), uploadViewerAvatar);
+
+/**
+ * @route   DELETE /api/viewers/profile/avatar
+ * @desc    Remove Viewer Profile Picture
+ * @access  Private
+ */
+router.delete('/profile/avatar', protect, removeViewerAvatar);
+router.delete('/avatar', protect, removeViewerAvatar);
+
+/**
+ * @route   GET /api/viewers/check-username
+ * @desc    Check username availability
+ * @access  Public / Private
+ */
+router.get('/check-username', checkUsernameAvailability);
+router.post('/check-username', checkUsernameAvailability);
+
+/**
+ * @route   POST /api/viewers/change-password
+ * @desc    Change Viewer Password
+ * @access  Private
+ */
+router.post('/change-password', protect, changeViewerPassword);
+router.put('/change-password', protect, changeViewerPassword);
+router.post('/profile/change-password', protect, changeViewerPassword);
+
+/**
  * @route   DELETE /api/viewers/account
  * @desc    Delete Viewer Account
  * @access  Private
  */
 router.delete('/account', protect, deleteViewerAccount);
-router.delete('/profile', protect, deleteViewerAccount);
+router.delete('/profile/account', protect, deleteViewerAccount);
 
 /**
  * @route   GET /api/viewers/public/live-feed

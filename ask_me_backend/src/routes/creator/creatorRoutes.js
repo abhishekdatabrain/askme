@@ -59,6 +59,7 @@ const {
   verifyDigiLockerAadhaarOtpController,
   panToGstinLookupController,
   getPublicCommissionSettings,
+  completeTrialProfileCreator,
 } = require('../../creator/controllers/creatorController');
 
 /**
@@ -76,6 +77,7 @@ router.post('/whatsapp-otp/send', sendWhatsAppOtpCreator);
 router.post('/whatsapp-otp/verify', verifyWhatsAppOtpCreator);
 router.post('/sms-otp/send', sendSmsOtpCreator);
 router.post('/sms-otp/verify', verifyWhatsAppOtpCreator);
+router.post('/trial/complete-profile', completeTrialProfileCreator);
 router.post('/email-otp/send', sendEmailOtpCreator);
 router.post('/email-otp/verify', verifyEmailOtpCreator);
 router.post('/truecaller-auth', truecallerAuthCreator);

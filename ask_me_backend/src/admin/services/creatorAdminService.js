@@ -140,6 +140,17 @@ class CreatorAdminService {
         title: 'Account Activated ✅',
         message: 'Your creator account status has been activated by the admin.',
       });
+
+      // Send account activated email to creator using official activation template
+      try {
+        const { sendAccountActivatedEmailAsync } = require('../../services/emailService');
+        sendAccountActivatedEmailAsync({
+          email: creator.email,
+          name: creator.full_name || creator.name || 'Creator',
+        });
+      } catch (mailErr) {
+        console.warn('Approve creator activation email notice:', mailErr.message);
+      }
     } catch (e) {
       console.warn('Account activation notification notice:', e.message);
     }
@@ -169,6 +180,27 @@ class CreatorAdminService {
           title: 'Account Status Blocked 🚫',
           message: 'Your creator account has been blocked by the admin. Please contact support if you believe this is an error.',
         });
+
+        // Send suspended account notification email to creator using official suspension template
+        try {
+          const { sendAccountSuspendedEmailAsync } = require('../../services/emailService');
+          const caseId = (req && req.body && req.body.caseId) || `CASE-${Date.now().toString(36).toUpperCase()}-${id}`;
+          const suspensionDate = (req && req.body && req.body.suspensionDate) || new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+          const policyName = (req && req.body && req.body.policy) || 'Terms of Service and Community Rules';
+          const suspensionReason = (req && req.body && req.body.reason) || 'Account activity does not meet our Terms of Service and Community Rules';
+
+          sendAccountSuspendedEmailAsync({
+            email: creator.email,
+            name: creator.full_name || creator.name || 'Creator',
+            caseId,
+            suspensionDate,
+            policyName,
+            suspensionReason,
+            appealResponseTime: (req && req.body && req.body.appealResponseTime) || '24-48 business hours',
+          });
+        } catch (mailErr) {
+          console.warn('Block creator suspension email notice:', mailErr.message);
+        }
       } else if (newStatus === CREATOR_ACCOUNT_STATUS.ACTIVE) {
         await notificationService.createNotification({
           creatorId: id,
@@ -176,6 +208,17 @@ class CreatorAdminService {
           title: 'Account Status Active ✅',
           message: 'Your creator account has been unblocked by the admin.',
         });
+
+        // Send account activated email to creator using official activation template
+        try {
+          const { sendAccountActivatedEmailAsync } = require('../../services/emailService');
+          sendAccountActivatedEmailAsync({
+            email: creator.email,
+            name: creator.full_name || creator.name || 'Creator',
+          });
+        } catch (mailErr) {
+          console.warn('Unblock creator activation email notice:', mailErr.message);
+        }
       }
     } catch (e) {
       console.warn('Block/Unblock creator notification notice:', e.message);

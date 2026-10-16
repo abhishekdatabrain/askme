@@ -46,6 +46,7 @@ const {
   getViewers,
   getViewerById,
   toggleBlockViewer,
+  deleteViewer,
   processWithdrawal,
   completeWithdrawal,
   settleMonth,
@@ -83,6 +84,7 @@ router.get('/viewers', getViewers);
 router.get('/viewers/:id', getViewerById);
 router.put('/viewers/:id/toggle-block', toggleBlockViewer);
 router.put('/viewers/:id/block', toggleBlockViewer);
+router.delete('/viewers/:id', deleteViewer);
 
 // 3. KYC Queue Management
 router.get('/kyc', getKycList);

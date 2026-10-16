@@ -7,6 +7,8 @@ import {
   Search,
   Eye,
   Ban,
+  Trash2,
+  Phone,
   X,
   MessageSquare,
   DollarSign,
@@ -130,6 +132,35 @@ export default function ViewerManagement() {
     }
   };
 
+  const handleDeleteViewer = async (id, name) => {
+    if (!window.confirm(`Are you sure you want to permanently delete viewer "${name || 'this viewer'}"?`)) {
+      return;
+    }
+    const token = getAdminToken();
+    try {
+      const res = await fetch(`${API_ENDPOINTS.ADMIN.VIEWERS}/${id}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const data = await res.json();
+      if (res.ok && data.status === 'success') {
+        toast.error(`Viewer account (${name || id}) deleted from database.`, 'Viewer Deleted');
+        setViewers((prev) => prev.filter((v) => v.id !== id));
+        setTotalCount((prev) => Math.max(0, prev - 1));
+        if (selectedViewerId === id) {
+          setSelectedViewerId(null);
+          setViewerDetail(null);
+        }
+      } else {
+        toast.error(data?.message || 'Failed to delete viewer.', 'Delete Error');
+      }
+    } catch (err) {
+      toast.error('Network error while deleting viewer.', 'Delete Error');
+    }
+  };
+
   return (
     <div className="rounded-2xl bg-[#13131A] border border-[#1C1C26] p-5 shadow-xl space-y-5 animate-fade-in">
       {/* Header & Title */}
@@ -166,7 +197,7 @@ export default function ViewerManagement() {
         <Search className="absolute left-3.5 top-2.5 h-4 w-4 text-[#EB1000]" />
         <input
           type="text"
-          placeholder="Search viewer by name or email address..."
+          placeholder="Search viewer by name, email, or phone..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           className="w-full pl-10 pr-4 py-2.5 bg-[#0A0A0F] border border-[#1C1C26] rounded-xl text-xs text-white placeholder-[#8B8B96] focus:outline-none focus:border-[#EB1000] transition"
@@ -180,6 +211,7 @@ export default function ViewerManagement() {
             <tr className="border-b border-[#1C1C26] text-[#8B8B96] font-bold">
               <th className="pb-3 px-3">VIEWER</th>
               <th className="pb-3 px-3">EMAIL</th>
+              <th className="pb-3 px-3">PHONE</th>
               <th className="pb-3 px-3">REGISTRATION DATE</th>
               <th className="pb-3 px-3">TOTAL SPENT</th>
               <th className="pb-3 px-3">QUESTIONS ASKED</th>
@@ -190,13 +222,13 @@ export default function ViewerManagement() {
           <tbody className="divide-y divide-[#1C1C26]">
             {loading ? (
               <tr>
-                <td colSpan="7" className="py-8 text-center text-[#8B8B96]">
+                <td colSpan="8" className="py-8 text-center text-[#8B8B96]">
                   Loading viewers data...
                 </td>
               </tr>
             ) : viewers.length === 0 ? (
               <tr>
-                <td colSpan="7" className="py-8 text-center text-[#8B8B96]">
+                <td colSpan="8" className="py-8 text-center text-[#8B8B96]">
                   No viewers found matching your criteria.
                 </td>
               </tr>
@@ -212,6 +244,12 @@ export default function ViewerManagement() {
                     <div className="flex items-center gap-1.5">
                       <Mail className="h-3.5 w-3.5 text-[#8B8B96]" />
                       <span>{v.email}</span>
+                    </div>
+                  </td>
+                  <td className="py-3.5 px-3 text-[#8B8B96]">
+                    <div className="flex items-center gap-1.5">
+                      <Phone className="h-3.5 w-3.5 text-[#8B8B96]" />
+                      <span>{v.phone || 'N/A'}</span>
                     </div>
                   </td>
                   <td className="py-3.5 px-3 text-[#8B8B96]">
@@ -251,12 +289,21 @@ export default function ViewerManagement() {
                       <button
                         onClick={() => handleToggleBlock(v.id, v.status)}
                         title={v.status === 'Blocked' ? 'Unblock Viewer' : 'Block Viewer'}
-                        className={`p-1.5 rounded-lg transition ${v.status === 'Blocked'
+                        className={`p-1.5 rounded-lg transition cursor-pointer ${v.status === 'Blocked'
                           ? 'bg-[#FFD60A]/10 text-[#FFD60A]'
                           : 'bg-[#1C1C26] text-[#8B8B96] hover:text-[#FF3D71] hover:bg-[#FF3D71]/10'
                           }`}
                       >
                         <Ban className="h-3.5 w-3.5" />
+                      </button>
+
+                      {/* Delete Viewer Icon */}
+                      <button
+                        onClick={() => handleDeleteViewer(v.id, v.name)}
+                        title="Delete Viewer"
+                        className="p-1.5 rounded-lg bg-[#1C1C26] text-[#8B8B96] hover:text-[#FF3D71] hover:bg-[#FF3D71]/10 transition cursor-pointer"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
                       </button>
                     </div>
                   </td>
@@ -314,7 +361,18 @@ export default function ViewerManagement() {
                     {viewerDetail?.status || 'Active'}
                   </span>
                 </h3>
-                <p className="text-xs text-[#8B8B96]">{viewerDetail?.email}</p>
+                <div className="flex items-center gap-3 text-xs text-[#8B8B96] mt-0.5">
+                  <span className="flex items-center gap-1">
+                    <Mail className="h-3 w-3" />
+                    {viewerDetail?.email}
+                  </span>
+                  {viewerDetail?.phone && viewerDetail?.phone !== 'N/A' && (
+                    <span className="flex items-center gap-1">
+                      <Phone className="h-3 w-3" />
+                      {viewerDetail.phone}
+                    </span>
+                  )}
+                </div>
               </div>
               <button
                 onClick={() => {

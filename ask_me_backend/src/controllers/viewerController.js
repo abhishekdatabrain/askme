@@ -16,8 +16,13 @@ const { generateAndStoreEmailOtp, verifyStoredEmailOtp } = require('../utils/ema
 const { verifyTruecallerToken } = require('../services/truecallerService');
 const { sendWelcomeEmailAsync, sendEmailOtp } = require('../services/emailService');
 const { Op } = require('sequelize');
+const jwt = require('jsonwebtoken');
+const { sequelize } = require('../config/db');
 
 const { OAuth2Client } = require('google-auth-library');
+const crypto = require('crypto');
+
+
 
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 /**
@@ -272,13 +277,154 @@ const googleAuthViewer = async (req, res, next) => {
 };
 
 /**
+ * Reserved usernames that viewers cannot claim
+ */
+const RESERVED_USERNAMES = new Set([
+  'admin', 'administrator', 'superadmin', 'askme', 'support', 'help', 'root',
+  'api', 'creator', 'creators', 'viewer', 'viewers', 'moderator', 'official',
+  'staff', 'system', 'security', 'billing', 'terms', 'privacy', 'auth',
+  'login', 'register', 'dashboard', 'settings', 'profile', 'null', 'undefined',
+  'live', 'stream', 'sessions', 'membership', 'vip', 'wallet', 'donations',
+  'explore', 'search', 'contact', 'about', 'pay', 'faq'
+]);
+
+/**
+ * Validate username format, length, characters, and reserved status
+ */
+const validateUsername = (rawUsername) => {
+  if (!rawUsername) return { valid: false, message: 'Username cannot be empty.' };
+  const username = String(rawUsername).trim().replace(/^@+/, '').toLowerCase();
+
+  if (username.length < 3 || username.length > 30) {
+    return { valid: false, message: 'Username must be between 3 and 30 characters.' };
+  }
+
+  // Must only contain letters, numbers, underscores, and periods
+  // Cannot start or end with a period or underscore
+  // Cannot have consecutive periods or underscores
+  const pattern = /^[a-z0-9][a-z0-9_.]{1,28}[a-z0-9]$/;
+  if (!pattern.test(username) || username.includes('..') || username.includes('__') || username.includes('._') || username.includes('_.')) {
+    return { valid: false, message: 'Username can only contain letters, numbers, underscores, and periods, and cannot start or end with special characters.' };
+  }
+
+  if (RESERVED_USERNAMES.has(username)) {
+    return { valid: false, message: `The username '${username}' is reserved. Please pick another one.` };
+  }
+
+  return { valid: true, username };
+};
+
+/**
+ * Normalize and clean social media profile links
+ */
+const normalizeSocialLinks = (input) => {
+  if (!input || typeof input !== 'object') return {};
+  const validPlatforms = ['instagram', 'youtube', 'facebook', 'twitch', 'twitter'];
+  const result = {};
+
+  for (const platform of validPlatforms) {
+    let val = input[platform] || (platform === 'twitter' ? (input['x'] || input['twitter']) : null);
+    if (typeof val === 'string' && val.trim()) {
+      val = val.trim();
+      if (!val.startsWith('http://') && !val.startsWith('https://')) {
+        const cleanHandle = val.replace(/^@+/, '');
+        switch (platform) {
+          case 'instagram':
+            val = `https://instagram.com/${cleanHandle}`;
+            break;
+          case 'youtube':
+            val = cleanHandle.startsWith('channel/') || cleanHandle.startsWith('@')
+              ? `https://youtube.com/${cleanHandle}`
+              : `https://youtube.com/@${cleanHandle}`;
+            break;
+          case 'facebook':
+            val = `https://facebook.com/${cleanHandle}`;
+            break;
+          case 'twitch':
+            val = `https://twitch.tv/${cleanHandle}`;
+            break;
+          case 'twitter':
+            val = `https://x.com/${cleanHandle}`;
+            break;
+        }
+      }
+      result[platform] = val;
+    } else {
+      result[platform] = '';
+    }
+  }
+
+  return result;
+};
+
+/**
+ * Standardize public viewer profile response
+ */
+const formatViewerProfileResponse = (user) => {
+  const publicData = user.toPublicJSON ? user.toPublicJSON() : (user.toJSON ? user.toJSON() : { ...user });
+  delete publicData.password;
+
+  return {
+    id: user.id,
+    name: user.name,
+    fullName: user.name,
+    username: user.username || null,
+    email: user.email,
+    phone: user.phone || null,
+    mobile: user.phone || null,
+    avatar: user.avatar || null,
+    profileImage: user.avatar || null,
+    bio: user.bio || '',
+    country: user.country || 'India',
+    socialLinks: user.social_links || {},
+    emailVerifiedAt: user.email_verified_at || null,
+    mobileVerifiedAt: user.mobile_verified_at || null,
+    role: user.role || 'viewer',
+    createdAt: user.created_at,
+    updatedAt: user.updated_at,
+  };
+};
+
+/**
  * @desc    Get Viewer Profile
- * @route   GET /api/viewers/profile
+ * @route   GET /api/viewers/profile or GET /viewer/profile
  * @access  Public / Private
  */
 const getViewerProfile = async (req, res, next) => {
   try {
-    const userId = req.user?.id || req.query.userId || 1;
+    let userId = req.user?.id || req.user?.userId;
+
+    // Fallback extraction from token if protect middleware was not used
+    if (!userId && req.headers.authorization && req.headers.authorization.startsWith('Bearer ')) {
+      const token = req.headers.authorization.split(' ')[1];
+      const secrets = [
+        process.env.JWT_SECRET,
+        process.env.JWT_ACCESS_SECRET,
+        'ask_me_super_secret_jwt_key_2026',
+        'ask_me_default_jwt_secret',
+      ].filter(Boolean);
+
+      for (const secret of secrets) {
+        try {
+          const decoded = jwt.verify(token, secret);
+          if (decoded && (decoded.id || decoded.userId || decoded.user_id)) {
+            userId = decoded.id || decoded.userId || decoded.user_id;
+            break;
+          }
+        } catch (e) { }
+      }
+    }
+
+    if (!userId && req.query.userId) {
+      userId = req.query.userId;
+    }
+
+    if (!userId) {
+      return res.status(401).json({
+        status: 'fail',
+        message: 'Authentication required to view profile.',
+      });
+    }
 
     const user = await User.findByPk(userId);
     if (!user) {
@@ -288,14 +434,430 @@ const getViewerProfile = async (req, res, next) => {
       });
     }
 
+   
+
     return res.status(200).json({
       status: 'success',
       data: {
-        user: user.toPublicJSON ? user.toPublicJSON() : { id: user.id, name: user.name, email: user.email },
+        user: formatViewerProfileResponse(user),
       },
     });
   } catch (error) {
     console.error('GET VIEWER PROFILE ERROR:', error);
+    next(error);
+  }
+};
+
+/**
+ * @desc    Update Viewer Profile
+ * @route   PATCH /api/viewers/profile or PATCH /viewer/profile
+ * @access  Private (JWT Protected)
+ */
+const updateViewerProfile = async (req, res, next) => {
+  try {
+    const userId = req.user?.id || req.user?.userId;
+    if (!userId) {
+      return res.status(401).json({
+        status: 'fail',
+        message: 'Unauthorized. Please log in to update your profile.',
+      });
+    }
+
+    const user = await User.findByPk(userId);
+    if (!user) {
+      return res.status(404).json({
+        status: 'fail',
+        message: 'Viewer profile not found.',
+      });
+    }
+
+    const {
+      name,
+      fullName,
+      username,
+      bio,
+      country,
+      avatar,
+      socialLinks,
+      social_links,
+      email,
+      emailOtp,
+      mobile,
+      phone,
+      mobileOtp,
+      phoneOtp,
+    } = req.body;
+
+    // 1. Full Name
+    const newName = name !== undefined ? name : fullName;
+    if (newName !== undefined) {
+      const cleanName = String(newName || '').trim();
+      if (!cleanName || cleanName.length < 2) {
+        return res.status(400).json({
+          status: 'fail',
+          message: 'Full name must be at least 2 characters.',
+        });
+      }
+      if (cleanName.length > 100) {
+        return res.status(400).json({
+          status: 'fail',
+          message: 'Full name cannot exceed 100 characters.',
+        });
+      }
+      user.name = cleanName;
+    }
+
+    // 2. Username
+    if (username !== undefined && username !== null && username !== '') {
+      const vResult = validateUsername(username);
+      if (!vResult.valid) {
+        return res.status(400).json({
+          status: 'fail',
+          message: vResult.message,
+        });
+      }
+
+      const targetUsername = vResult.username;
+
+      // Check if current username is unchanged
+      if (!user.username || user.username.toLowerCase() !== targetUsername) {
+        // Check uniqueness across viewers
+        const existingUser = await User.findOne({
+          where: {
+            [Op.and]: [
+              sequelize.where(sequelize.fn('LOWER', sequelize.col('username')), targetUsername),
+              { id: { [Op.ne]: user.id } },
+            ],
+          },
+        });
+
+        if (existingUser) {
+          return res.status(400).json({
+            status: 'fail',
+            message: `Username '@${targetUsername}' is already taken. Please choose another.`,
+          });
+        }
+
+        // Check uniqueness across creators
+        const existingCreator = await CreatorsModel.findOne({
+          where: sequelize.where(sequelize.fn('LOWER', sequelize.col('username')), targetUsername),
+        });
+
+        if (existingCreator) {
+          return res.status(400).json({
+            status: 'fail',
+            message: `Username '@${targetUsername}' is already taken by a creator. Please choose another.`,
+          });
+        }
+
+        user.username = targetUsername;
+      }
+    }
+
+    // 3. Bio
+    if (bio !== undefined) {
+      const cleanBio = String(bio || '').trim();
+      if (cleanBio.length > 500) {
+        return res.status(400).json({
+          status: 'fail',
+          message: 'Bio cannot exceed 500 characters.',
+        });
+      }
+      user.bio = cleanBio || null;
+    }
+
+    // 4. Country
+    if (country !== undefined) {
+      user.country = String(country || 'India').trim().slice(0, 100) || 'India';
+    }
+
+    // 5. Avatar / Profile Picture
+    if (avatar !== undefined) {
+      user.avatar = avatar ? String(avatar).trim() : null;
+    }
+
+    // 6. Social Links (Instagram, YouTube, Facebook, Twitch, X/Twitter)
+    const rawSocials = socialLinks !== undefined ? socialLinks : social_links;
+    if (rawSocials !== undefined) {
+      user.social_links = normalizeSocialLinks(rawSocials);
+    }
+
+    // 7. Secure Email Change Verification Flow
+    if (email !== undefined) {
+      const cleanEmail = String(email || '').trim().toLowerCase();
+      if (cleanEmail && cleanEmail !== (user.email || '').toLowerCase()) {
+        if (!cleanEmail.includes('@') || !cleanEmail.includes('.')) {
+          return res.status(400).json({
+            status: 'fail',
+            message: 'Please provide a valid email address.',
+          });
+        }
+
+        const otpCode = emailOtp || req.body.otp;
+        if (!otpCode) {
+          return res.status(400).json({
+            status: 'fail',
+            code: 'OTP_REQUIRED',
+            message: 'Verification code (OTP) is required to change your email address. Please click "Send OTP" first.',
+          });
+        }
+
+        const verification = verifyStoredEmailOtp(cleanEmail, otpCode);
+        if (!verification.valid) {
+          return res.status(400).json({
+            status: 'fail',
+            code: 'INVALID_OTP',
+            message: verification.message || 'Invalid or expired email OTP code.',
+          });
+        }
+
+        // Check if email is already taken
+        const emailTaken = await User.findOne({
+          where: {
+            email: cleanEmail,
+            id: { [Op.ne]: user.id },
+          },
+        });
+        if (emailTaken) {
+          return res.status(400).json({
+            status: 'fail',
+            message: 'This email address is already registered to another account.',
+          });
+        }
+
+        user.email = cleanEmail;
+        user.email_verified_at = new Date();
+      }
+    }
+
+    // 8. Secure Mobile Change Verification Flow
+    const targetPhone = mobile !== undefined ? mobile : phone;
+    if (targetPhone !== undefined) {
+      const cleanPhone = String(targetPhone || '').replace(/[^0-9]/g, '');
+      const currentCleanPhone = String(user.phone || '').replace(/[^0-9]/g, '');
+
+      if (cleanPhone && cleanPhone !== currentCleanPhone) {
+        if (cleanPhone.length < 10) {
+          return res.status(400).json({
+            status: 'fail',
+            message: 'Please enter a valid 10-digit mobile number.',
+          });
+        }
+
+        const otpCode = mobileOtp || phoneOtp || req.body.otp;
+        if (!otpCode) {
+          return res.status(400).json({
+            status: 'fail',
+            code: 'OTP_REQUIRED',
+            message: 'Verification code (OTP) is required to change your mobile number. Please click "Send OTP" first.',
+          });
+        }
+
+        const verification = verifyStoredOtp(cleanPhone, otpCode);
+        if (!verification.valid) {
+          return res.status(400).json({
+            status: 'fail',
+            code: 'INVALID_OTP',
+            message: verification.message || 'Invalid or expired mobile OTP code.',
+          });
+        }
+
+        // Check if phone is already taken
+        const phoneTaken = await User.findOne({
+          where: {
+            phone: cleanPhone,
+            id: { [Op.ne]: user.id },
+          },
+        });
+        if (phoneTaken) {
+          return res.status(400).json({
+            status: 'fail',
+            message: 'This mobile number is already in use by another account.',
+          });
+        }
+
+        user.phone = cleanPhone;
+        user.mobile_verified_at = new Date();
+      }
+    }
+
+    await user.save();
+
+    return res.status(200).json({
+      status: 'success',
+      message: 'Profile updated successfully!',
+      data: {
+        user: formatViewerProfileResponse(user),
+      },
+    });
+  } catch (error) {
+    console.error('UPDATE VIEWER PROFILE ERROR:', error);
+    next(error);
+  }
+};
+
+/**
+ * @desc    Upload Viewer Profile Picture
+ * @route   POST /api/viewers/profile/avatar or POST /viewer/profile/avatar
+ * @access  Private (JWT Protected)
+ */
+const uploadViewerAvatar = async (req, res, next) => {
+  try {
+    const userId = req.user?.id || req.user?.userId;
+    if (!userId) {
+      return res.status(401).json({
+        status: 'fail',
+        message: 'Unauthorized. User ID not found.',
+      });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({
+        status: 'fail',
+        message: 'No image file was uploaded.',
+      });
+    }
+
+    const user = await User.findByPk(userId);
+    if (!user) {
+      return res.status(404).json({
+        status: 'fail',
+        message: 'Viewer not found.',
+      });
+    }
+
+    const relativePath = `/uploads/profiles/${req.file.filename}`;
+    const host = req.get('host') || 'localhost:5000';
+    const protocol = req.protocol || 'http';
+    const fullUrl = `${protocol}://${host}${relativePath}`;
+
+    user.avatar = relativePath;
+    await user.save();
+
+    return res.status(200).json({
+      status: 'success',
+      message: 'Profile picture uploaded successfully!',
+      data: {
+        avatar: relativePath,
+        url: fullUrl,
+        filename: req.file.filename,
+        user: formatViewerProfileResponse(user),
+      },
+    });
+  } catch (error) {
+    console.error('UPLOAD VIEWER AVATAR ERROR:', error);
+    next(error);
+  }
+};
+
+/**
+ * @desc    Remove Viewer Profile Picture
+ * @route   DELETE /api/viewers/profile/avatar or DELETE /viewer/profile/avatar
+ * @access  Private (JWT Protected)
+ */
+const removeViewerAvatar = async (req, res, next) => {
+  try {
+    const userId = req.user?.id || req.user?.userId;
+    if (!userId) {
+      return res.status(401).json({
+        status: 'fail',
+        message: 'Unauthorized. User ID not found.',
+      });
+    }
+
+    const user = await User.findByPk(userId);
+    if (!user) {
+      return res.status(404).json({
+        status: 'fail',
+        message: 'Viewer not found.',
+      });
+    }
+
+    user.avatar = null;
+    await user.save();
+
+    return res.status(200).json({
+      status: 'success',
+      message: 'Profile picture removed successfully.',
+      data: {
+        avatar: null,
+        user: formatViewerProfileResponse(user),
+      },
+    });
+  } catch (error) {
+    console.error('REMOVE VIEWER AVATAR ERROR:', error);
+    next(error);
+  }
+};
+
+/**
+ * @desc    Check Username Availability
+ * @route   GET /api/viewers/check-username or POST /api/viewers/check-username
+ * @access  Public / Private
+ */
+const checkUsernameAvailability = async (req, res, next) => {
+  try {
+    const rawUsername = req.query.username || req.body.username;
+    if (!rawUsername) {
+      return res.status(400).json({
+        status: 'fail',
+        available: false,
+        message: 'Username parameter is required.',
+      });
+    }
+
+    const vResult = validateUsername(rawUsername);
+    if (!vResult.valid) {
+      return res.status(200).json({
+        status: 'fail',
+        available: false,
+        message: vResult.message,
+      });
+    }
+
+    const targetUsername = vResult.username;
+    const currentUserId = req.user?.id || req.query.userId || null;
+
+    // Check in users table
+    const whereConditions = [
+      sequelize.where(sequelize.fn('LOWER', sequelize.col('username')), targetUsername),
+    ];
+    if (currentUserId) {
+      whereConditions.push({ id: { [Op.ne]: currentUserId } });
+    }
+
+    const existingUser = await User.findOne({
+      where: { [Op.and]: whereConditions },
+    });
+
+    if (existingUser) {
+      return res.status(200).json({
+        status: 'success',
+        available: false,
+        message: `@${targetUsername} is already taken.`,
+      });
+    }
+
+    // Check in creators table
+    const existingCreator = await CreatorsModel.findOne({
+      where: sequelize.where(sequelize.fn('LOWER', sequelize.col('username')), targetUsername),
+    });
+
+    if (existingCreator) {
+      return res.status(200).json({
+        status: 'success',
+        available: false,
+        message: `@${targetUsername} is already taken by a creator.`,
+      });
+    }
+
+    return res.status(200).json({
+      status: 'success',
+      available: true,
+      message: `@${targetUsername} is available!`,
+    });
+  } catch (error) {
+    console.error('CHECK USERNAME AVAILABILITY ERROR:', error);
     next(error);
   }
 };
@@ -1277,26 +1839,6 @@ const sendSmsOtpViewer = async (req, res, next) => {
 
     const isRegistrationFlow = type === 'register' || isRegister === true || type !== 'login';
 
-    // if (!isRegistrationFlow) {
-    //   const fullPhone = `91${tenDigit}`;
-    //   const user = await User.findOne({
-    //     where: {
-    //       [Op.or]: [
-    //         { phone: fullPhone },
-    //         { phone: tenDigit },
-    //         { phone: `+91${tenDigit}` },
-    //       ],
-    //     },
-    //   }).catch(() => null);
-
-    //   if (!user) {
-    //     return res.status(400).json({
-    //       status: 'fail',
-    //       message: 'This mobile number is not registered. Please use a registered number.',
-    //     });
-    //   }
-    // }
-
     const { cleanPhone: targetPhoneOtp, otp } = generateAndStoreOtp(tenDigit);
 
     await sendBhashSms({
@@ -1373,7 +1915,7 @@ const verifyWhatsAppOtpViewer = async (req, res, next) => {
       },
     }).catch(() => null);
 
-   
+
 
     if (!user) {
       return res.status(400).json({
@@ -1473,6 +2015,91 @@ const verifyEmailOtpViewer = async (req, res, next) => {
 };
 
 const { truecallerAuthViewer } = require('./truecaller.controller');
+
+/**
+ * @desc    Change Viewer Password
+ * @route   POST /api/viewers/change-password or POST /viewer/change-password
+ * @access  Private (JWT Protected)
+ */
+const changeViewerPassword = async (req, res, next) => {
+  try {
+    const userId = req.user?.id || req.user?.userId;
+    if (!userId) {
+      return res.status(401).json({
+        status: 'fail',
+        message: 'Unauthorized. Please log in to change your password.',
+      });
+    }
+
+    const { currentPassword, newPassword, confirmPassword } = req.body;
+
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({
+        status: 'fail',
+        message: 'Both current password and new password are required.',
+      });
+    }
+
+    const user = await User.findByPk(userId);
+    if (!user) {
+      return res.status(404).json({
+        status: 'fail',
+        message: 'Viewer account not found.',
+      });
+    }
+
+    // Verify current password
+    const isCurrentMatch = await user.validPassword(currentPassword);
+    if (!isCurrentMatch) {
+      return res.status(400).json({
+        status: 'fail',
+        message: 'Current password is incorrect. Please enter your correct current password.',
+      });
+    }
+
+    // Check if new password is same as current password
+    if (currentPassword === newPassword) {
+      return res.status(400).json({
+        status: 'fail',
+        message: 'New password cannot be the same as your current password.',
+      });
+    }
+
+    // Check confirm password if provided
+    if (confirmPassword && newPassword !== confirmPassword) {
+      return res.status(400).json({
+        status: 'fail',
+        message: 'New password and confirm password do not match.',
+      });
+    }
+
+    // Validate new password strength
+    const hasLength = newPassword.length >= 8;
+    const hasUpper = /[A-Z]/.test(newPassword);
+    const hasLower = /[a-z]/.test(newPassword);
+    const hasNumber = /[0-9]/.test(newPassword);
+    const hasSpecial = /[@$!%*?&#^()_+\-=\[\]{};':"\\|,.<>\/?]/.test(newPassword);
+
+    if (!hasLength || !hasUpper || !hasLower || !hasNumber || !hasSpecial) {
+      return res.status(400).json({
+        status: 'fail',
+        message: 'New password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one number, and one special character.',
+      });
+    }
+
+    // Update password (userModel beforeUpdate hook will automatically hash with bcrypt)
+    user.password = newPassword;
+    await user.save();
+
+    return res.status(200).json({
+      status: 'success',
+      message: 'Password changed successfully! Please use your new password next time you log in.',
+    });
+  } catch (error) {
+    console.error('CHANGE VIEWER PASSWORD ERROR:', error);
+    next(error);
+  }
+};
 
 /**
  * @desc    Delete Viewer Account
@@ -1642,6 +2269,11 @@ module.exports = {
   verifyEmailOtpViewer,
   truecallerAuthViewer,
   getViewerProfile,
+  updateViewerProfile,
+  uploadViewerAvatar,
+  removeViewerAvatar,
+  checkUsernameAvailability,
+  changeViewerPassword,
   deleteViewerAccount,
   getPublicLiveFeed,
   getCreatorPublicProfile,

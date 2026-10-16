@@ -32,11 +32,14 @@ import TruecallerAuthButton from './TruecallerAuthButton';
 import GoogleAuthProvider from './GoogleAuthProvider';
 import { useGoogleLogin } from '@react-oauth/google';
 import { useToast } from '@/context/ToastContext';
+import TrialRegistrationModal from './TrialRegistrationModal';
 
 function InnerAuthModal({ isOpen, onClose, initialRole = 'viewer', initialMode = 'login', onSuccess }) {
   const { toast } = useToast();
   const [role, setRole] = useState(initialRole); // 'viewer' | 'creator'
   const [mode, setMode] = useState(initialMode); // 'login' | 'register'
+  const [showTrialModal, setShowTrialModal] = useState(false);
+  const [trialModalData, setTrialModalData] = useState(null);
 
   // Common Form fields
   const [name, setName] = useState('');
@@ -241,7 +244,7 @@ function InnerAuthModal({ isOpen, onClose, initialRole = 'viewer', initialMode =
         setSuccessMsg(msg);
         toast?.success(msg, 'WhatsApp OTP Sent');
         setLoginOtpStep('otp_sent');
-        if (cleanPhone === '9999999999') {
+        if (role === 'creator' && cleanPhone === '9999999999') {
           setLoginOtp('123456');
         }
       } else {
@@ -290,7 +293,7 @@ function InnerAuthModal({ isOpen, onClose, initialRole = 'viewer', initialMode =
         setSuccessMsg(msg);
         toast?.success(msg, 'SMS OTP Sent');
         setLoginOtpStep('otp_sent');
-        if (cleanPhone === '9999999999') {
+        if (role === 'creator' && cleanPhone === '9999999999') {
           setLoginOtp('123456');
         }
       } else {
@@ -326,14 +329,38 @@ function InnerAuthModal({ isOpen, onClose, initialRole = 'viewer', initialMode =
         ? (loginOtpChannel === 'sms' ? (API_ENDPOINTS.VIEWERS.SMS_VERIFY_OTP || API_ENDPOINTS.VIEWERS.WHATSAPP_VERIFY_OTP) : API_ENDPOINTS.VIEWERS.WHATSAPP_VERIFY_OTP)
         : (loginOtpChannel === 'sms' ? (API_ENDPOINTS.CREATORS.SMS_VERIFY_OTP || API_ENDPOINTS.CREATORS.WHATSAPP_VERIFY_OTP) : API_ENDPOINTS.CREATORS.WHATSAPP_VERIFY_OTP);
 
+      const trialSessionId = role === 'creator' && typeof window !== 'undefined'
+        ? localStorage.getItem('askme_trial_creator_session_id')
+        : null;
+
       const res = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone: cleanPhone, mobile: cleanPhone, otp: loginOtp, type: 'login' }),
+        body: JSON.stringify({
+          phone: cleanPhone,
+          mobile: cleanPhone,
+          otp: loginOtp,
+          type: 'login',
+          ...(role === 'creator' && trialSessionId ? { trialSessionId } : {}),
+        }),
       });
 
       const data = await res.json();
       if (res.ok && data.status === 'success') {
+        // Handle trial registration / flow (Creators ONLY)
+        if (role === 'creator' && data.isTrial && data.profileCompleted === false) {
+          if (data.trialSessionId && typeof window !== 'undefined') {
+            localStorage.setItem('askme_trial_creator_session_id', data.trialSessionId);
+          }
+          setTrialModalData({
+            trialSessionId: data.trialSessionId || data.data?.trialSessionId,
+            trialTempToken: data.trialTempToken || data.data?.trialTempToken,
+            role: 'creator',
+          });
+          setShowTrialModal(true);
+          return;
+        }
+
         const msg = `${loginOtpChannel === 'sms' ? 'SMS' : 'WhatsApp'} Mobile Verified! Logged in successfully.`;
         setSuccessMsg(msg);
         toast?.success(msg, 'Login Successful');
@@ -362,6 +389,9 @@ function InnerAuthModal({ isOpen, onClose, initialRole = 'viewer', initialMode =
           }
           if (token && creator) {
             setCreatorSession(token, creator);
+            if (typeof window !== 'undefined' && (data.data?.trialSessionId || data.trialSessionId)) {
+              localStorage.setItem('askme_trial_creator_session_id', data.data?.trialSessionId || data.trialSessionId);
+            }
           }
           setTimeout(() => {
             if (onSuccess) onSuccess(data);
@@ -1190,14 +1220,38 @@ function InnerAuthModal({ isOpen, onClose, initialRole = 'viewer', initialMode =
         ? API_ENDPOINTS.VIEWERS.WHATSAPP_VERIFY_OTP
         : API_ENDPOINTS.CREATORS.WHATSAPP_VERIFY_OTP;
 
+      const trialSessionId = role === 'creator' && typeof window !== 'undefined'
+        ? localStorage.getItem('askme_trial_creator_session_id')
+        : null;
+
       const res = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone: cleanPhone, mobile: cleanPhone, otp: waOtp, type: 'login' }),
+        body: JSON.stringify({
+          phone: cleanPhone,
+          mobile: cleanPhone,
+          otp: waOtp,
+          type: 'login',
+          ...(role === 'creator' && trialSessionId ? { trialSessionId } : {}),
+        }),
       });
 
       const data = await res.json();
       if (res.ok && data.status === 'success') {
+        if (role === 'creator' && data.isTrial && data.profileCompleted === false) {
+          if (data.trialSessionId && typeof window !== 'undefined') {
+            localStorage.setItem('askme_trial_creator_session_id', data.trialSessionId);
+          }
+          setShowWaModal(false);
+          setTrialModalData({
+            trialSessionId: data.trialSessionId || data.data?.trialSessionId,
+            trialTempToken: data.trialTempToken || data.data?.trialTempToken,
+            role: 'creator',
+          });
+          setShowTrialModal(true);
+          return;
+        }
+
         const succMsg = 'WhatsApp Login Verified!';
         setWaSuccess(succMsg);
         toast?.success(succMsg, 'Login Successful');
@@ -1223,6 +1277,9 @@ function InnerAuthModal({ isOpen, onClose, initialRole = 'viewer', initialMode =
           const creator = data.data?.creator || data.user;
           if (token && creator) {
             setCreatorSession(token, creator);
+            if (typeof window !== 'undefined' && (data.data?.trialSessionId || data.trialSessionId)) {
+              localStorage.setItem('askme_trial_creator_session_id', data.data?.trialSessionId || data.trialSessionId);
+            }
           }
           setTimeout(() => {
             setShowWaModal(false);
@@ -2544,6 +2601,18 @@ function InnerAuthModal({ isOpen, onClose, initialRole = 'viewer', initialMode =
           </div>
         </div>
       )}
+
+      {/* Mandatory Trial Registration Profile Completion Modal */}
+      <TrialRegistrationModal
+        isOpen={showTrialModal}
+        trialData={trialModalData}
+        role="creator"
+        onClose={() => setShowTrialModal(false)}
+        onSuccess={() => {
+          setShowTrialModal(false);
+          onClose();
+        }}
+      />
     </div>
   );
 }

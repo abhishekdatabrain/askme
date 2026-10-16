@@ -702,11 +702,431 @@ const sendGoLiveEmailToFollowersAsync = ({ followers, creatorName, sessionTitle,
   });
 };
 
+/**
+ * Generate Responsive HTML Email Template for Creator Account Suspension
+ */
+const buildAccountSuspendedEmailHtml = ({
+  caseId,
+  suspensionDate,
+  policyName,
+  suspensionReason,
+  appealResponseTime = '24-48 business hours',
+  frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000',
+}) => {
+  const appealUrl = `${frontendUrl}/contact?reason=appeal&caseId=${encodeURIComponent(caseId || '')}`;
+  const logoCid = 'askmelogo';
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Your account has been suspended</title>
+  <style>
+    body { margin: 0; padding: 0; background-color: #0A0A0F; color: #F5F5F7; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; }
+    table { border-collapse: collapse; }
+    img { border: 0; display: block; }
+    a { color: inherit; text-decoration: none; }
+    @media only screen and (max-width: 600px) {
+      .container { width: 100% !important; padding: 16px 12px !important; }
+      .card-body { padding: 28px 20px !important; }
+      .btn-cta { width: 100% !important; box-sizing: border-box !important; }
+    }
+  </style>
+</head>
+<body style="margin: 0; padding: 0; background-color: #0A0A0F; color: #F5F5F7; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+
+  <!-- Top red accent line -->
+  <div style="height: 3px; background-color: #EB1000; width: 100%;"></div>
+
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #0A0A0F; padding: 40px 16px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" class="container" width="560" cellpadding="0" cellspacing="0" style="max-width: 560px; width: 100%; margin: 0 auto;">
+
+          <!-- Brand Header -->
+          <tr>
+            <td align="center" style="padding-bottom: 28px;">
+              <a href="${frontendUrl}" style="text-decoration: none; display: inline-flex; align-items: center;">
+                <table role="presentation" cellpadding="0" cellspacing="0">
+                  <tr>
+                    <td valign="middle" style="padding-right: 8px;">
+                      <img src="cid:${logoCid}" width="32" height="32" alt="AskMe" style="width: 32px; height: 32px; border: 0;" />
+                    </td>
+                    <td valign="middle">
+                      <span style="font-size: 22px; font-weight: 900; color: #FFFFFF; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; letter-spacing: -0.5px;">
+                        AskMe<span style="color: #EB1000;">.live</span>
+                      </span>
+                    </td>
+                  </tr>
+                </table>
+              </a>
+            </td>
+          </tr>
+
+          <!-- Main Card -->
+          <tr>
+            <td class="card-body" style="background-color: #12121A; border: 1px solid #1C1C28; border-radius: 20px; padding: 36px 32px; box-shadow: 0 20px 50px rgba(0,0,0,0.6);">
+
+              <!-- Title -->
+              <h1 style="margin: 0 0 12px 0; font-size: 26px; font-weight: 800; color: #FFFFFF; letter-spacing: -0.5px; line-height: 1.25;">
+                Your account has been suspended
+              </h1>
+
+              <!-- Suspended Badge -->
+              <div style="margin-bottom: 20px;">
+                <span style="display: inline-block; background-color: rgba(235, 16, 0, 0.15); border: 1px solid rgba(235, 16, 0, 0.4); color: #FF3B30; font-size: 11px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; padding: 4px 12px; border-radius: 6px;">
+                  SUSPENDED
+                </span>
+              </div>
+
+              <!-- Message Body -->
+              <p style="margin: 0 0 24px 0; font-size: 14px; line-height: 1.6; color: #D1D5DB;">
+                We&rsquo;ve suspended your AskMe account because activity on it doesn&rsquo;t meet our Terms of Service and Community Rules.
+              </p>
+
+              <!-- Details Table -->
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="width: 100%; border-collapse: collapse; margin-bottom: 28px;">
+                <tr style="border-bottom: 1px solid #1F1F2E;">
+                  <td style="padding: 12px 0; font-size: 13px; color: #9CA3AF;">Case ID</td>
+                  <td style="padding: 12px 0; font-size: 13px; font-weight: 700; color: #FFFFFF; text-align: right;">${caseId}</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #1F1F2E;">
+                  <td style="padding: 12px 0; font-size: 13px; color: #9CA3AF;">Suspended on</td>
+                  <td style="padding: 12px 0; font-size: 13px; font-weight: 700; color: #FFFFFF; text-align: right;">${suspensionDate}</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #1F1F2E;">
+                  <td style="padding: 12px 0; font-size: 13px; color: #9CA3AF;">Policy</td>
+                  <td style="padding: 12px 0; font-size: 13px; font-weight: 700; color: #FFFFFF; text-align: right;">${policyName}</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #1F1F2E;">
+                  <td style="padding: 12px 0; font-size: 13px; color: #9CA3AF;">Reason</td>
+                  <td style="padding: 12px 0; font-size: 13px; font-weight: 700; color: #FFFFFF; text-align: right;">${suspensionReason}</td>
+                </tr>
+              </table>
+
+              <!-- What this means -->
+              <div style="margin-bottom: 24px;">
+                <h3 style="margin: 0 0 10px 0; font-size: 15px; font-weight: 700; color: #FFFFFF;">What this means</h3>
+                <ul style="margin: 0; padding-left: 18px; color: #9CA3AF; font-size: 13px; line-height: 1.6;">
+                  <li style="margin-bottom: 8px;">You can&rsquo;t sign in, ask questions, or go live while your account is suspended.</li>
+                  <li>Pending payments or withdrawals may be affected during our review. See our <a href="${frontendUrl}/payment-policy" style="color: #FFFFFF; text-decoration: underline;">Payment Policy</a> for details.</li>
+                </ul>
+              </div>
+
+              <!-- If you think this is a mistake -->
+              <div style="margin-bottom: 24px;">
+                <h3 style="margin: 0 0 8px 0; font-size: 15px; font-weight: 700; color: #FFFFFF;">If you think this is a mistake</h3>
+                <p style="margin: 0 0 20px 0; color: #9CA3AF; font-size: 13px; line-height: 1.6;">
+                  You can appeal this decision. Include your Case ID and anything that helps us review it. We&rsquo;ll reply within ${appealResponseTime}.
+                </p>
+                <div>
+                  <a href="${appealUrl}" class="btn-cta" style="display: inline-block; background-color: #EB1000; color: #FFFFFF !important; font-weight: 700; font-size: 14px; padding: 12px 28px; border-radius: 8px; text-decoration: none; text-align: center; box-shadow: 0 4px 15px rgba(235, 16, 0, 0.35);">
+                    Submit an Appeal
+                  </a>
+                </div>
+              </div>
+
+              <!-- Card Divider & Note -->
+              <div style="border-top: 1px solid #1F1F2E; padding-top: 18px; margin-top: 24px;">
+                <p style="margin: 0; color: #9CA3AF; font-size: 12px; line-height: 1.5;">
+                  You can also write to <a href="mailto:legal@ask-me.live?subject=Appeal%20Suspension%20${encodeURIComponent(caseId)}" style="color: #D1D5DB; text-decoration: underline;">legal@ask-me.live</a> with your Case ID.
+                </p>
+              </div>
+
+            </td>
+          </tr>
+
+          <!-- Outer Footer -->
+          <tr>
+            <td align="center" style="padding-top: 28px; font-size: 12px; color: #64748B; line-height: 1.7;">
+              <div>
+                Need help? <a href="mailto:legal@ask-me.live" style="color: #94A3B8; text-decoration: underline;">legal@ask-me.live</a>
+              </div>
+              <div style="margin-top: 8px;">
+                <a href="${frontendUrl}/privacy-policy" style="color: #64748B; text-decoration: none;">Privacy Policy</a> &bull;
+                <a href="${frontendUrl}/creator-terms" style="color: #64748B; text-decoration: none;">Terms of Service</a> &bull;
+                <a href="${frontendUrl}/payment-policy" style="color: #64748B; text-decoration: none;">Payment Policy</a>
+              </div>
+              <div style="margin-top: 8px;">
+                AskMe by FuturePast &bull; &copy; 2026 FuturePast Ventures LLP
+              </div>
+              <div style="margin-top: 4px; font-size: 11px; color: #475569;">
+                This is a transactional email sent about your AskMe account.
+              </div>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+
+</body>
+</html>`;
+};
+
+/**
+ * ASYNCHRONOUS FIRE-AND-FORGET ACCOUNT SUSPENDED EMAIL SENDER
+ */
+const sendAccountSuspendedEmailAsync = ({
+  email,
+  name,
+  caseId,
+  suspensionDate,
+  policyName,
+  suspensionReason,
+  appealResponseTime,
+}) => {
+  if (!email || !String(email).includes('@')) return;
+
+  setImmediate(async () => {
+    try {
+      const transporter = getTransporter();
+      const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+      const fromEmail = process.env.SMTP_FROM || process.env.MAIL_FROM || 'AskMe Compliance <noreply@askme.live>';
+
+      const finalCaseId = caseId || `CASE-${Date.now().toString(36).toUpperCase()}-${Math.floor(1000 + Math.random() * 9000)}`;
+      const finalDate = suspensionDate || new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+      const finalPolicy = policyName || 'Terms of Service and Community Rules';
+      const finalReason = suspensionReason || 'Account activity does not meet our Terms of Service and Community Rules';
+      const finalResponseTime = appealResponseTime || '24-48 business hours';
+
+      const subject = `Your AskMe account has been suspended [Case: ${finalCaseId}]`;
+      const html = buildAccountSuspendedEmailHtml({
+        caseId: finalCaseId,
+        suspensionDate: finalDate,
+        policyName: finalPolicy,
+        suspensionReason: finalReason,
+        appealResponseTime: finalResponseTime,
+        frontendUrl,
+      });
+
+      const logoAtt = getLogoAttachment();
+      const attachments = logoAtt ? [logoAtt] : [];
+
+      if (transporter) {
+        await transporter.sendMail({
+          from: fromEmail,
+          to: email,
+          subject,
+          html,
+          attachments,
+        });
+        console.log(`[EMAIL SERVICE] Account Suspended email successfully sent to ${email} (Case: ${finalCaseId})`);
+      } else {
+        console.log(`[EMAIL SERVICE NOTICE] SMTP credentials not set. Simulated Account Suspended email dispatch to ${email} (Case: ${finalCaseId})`);
+      }
+    } catch (err) {
+      console.warn(`[EMAIL SERVICE NOTICE] Asynchronous suspension email dispatch failed for ${email}:`, err.message);
+    }
+  });
+};
+
+/**
+ * Generate Responsive HTML Email Template for Creator Account Activation
+ */
+const buildAccountActivatedEmailHtml = ({
+  name,
+  frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000',
+}) => {
+  const creatorStudioUrl = `${frontendUrl}/creators/dashboard`;
+  const logoCid = 'askmelogo';
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Your account is activated</title>
+  <style>
+    body { margin: 0; padding: 0; background-color: #0A0A0F; color: #F5F5F7; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; }
+    table { border-collapse: collapse; }
+    img { border: 0; display: block; }
+    a { color: inherit; text-decoration: none; }
+    @media only screen and (max-width: 600px) {
+      .container { width: 100% !important; padding: 16px 12px !important; }
+      .card-body { padding: 28px 20px !important; }
+      .btn-cta { width: 100% !important; box-sizing: border-box !important; }
+    }
+  </style>
+</head>
+<body style="margin: 0; padding: 0; background-color: #0A0A0F; color: #F5F5F7; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+
+  <!-- Top red accent line -->
+  <div style="height: 3px; background-color: #EB1000; width: 100%;"></div>
+
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #0A0A0F; padding: 40px 16px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" class="container" width="560" cellpadding="0" cellspacing="0" style="max-width: 560px; width: 100%; margin: 0 auto;">
+
+          <!-- Brand Header -->
+          <tr>
+            <td align="center" style="padding-bottom: 28px;">
+              <a href="${frontendUrl}" style="text-decoration: none; display: inline-flex; align-items: center;">
+                <table role="presentation" cellpadding="0" cellspacing="0">
+                  <tr>
+                    <td valign="middle" style="padding-right: 8px;">
+                      <img src="cid:${logoCid}" width="32" height="32" alt="AskMe" style="width: 32px; height: 32px; border: 0;" />
+                    </td>
+                    <td valign="middle">
+                      <span style="font-size: 22px; font-weight: 900; color: #FFFFFF; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; letter-spacing: -0.5px;">
+                        AskMe<span style="color: #EB1000;">.live</span>
+                      </span>
+                    </td>
+                  </tr>
+                </table>
+              </a>
+            </td>
+          </tr>
+
+          <!-- Main Card -->
+          <tr>
+            <td class="card-body" style="background-color: #12121A; border: 1px solid #1C1C28; border-radius: 20px; padding: 38px 34px; box-shadow: 0 20px 50px rgba(0,0,0,0.6);">
+
+              <!-- Title -->
+              <h1 style="margin: 0 0 12px 0; font-size: 26px; font-weight: 800; color: #FFFFFF; letter-spacing: -0.5px; line-height: 1.25;">
+                Your account is activated
+              </h1>
+
+              <!-- Activated Badge -->
+              <div style="margin-bottom: 22px;">
+                <span style="display: inline-block; background-color: rgba(0, 230, 118, 0.12); border: 1px solid rgba(0, 230, 118, 0.35); color: #00E676; font-size: 11px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; padding: 4px 14px; border-radius: 9999px;">
+                  ACTIVATED
+                </span>
+              </div>
+
+              <!-- Message Body -->
+              <p style="margin: 0 0 28px 0; font-size: 14.5px; line-height: 1.6; color: #E2E8F0; font-weight: 400;">
+                KYC verification is complete. You can now go live and start earning through your live sessions.
+              </p>
+
+              <!-- Steps List -->
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="width: 100%; border-collapse: collapse; margin-bottom: 26px;">
+                <tr>
+                  <td valign="top" width="42" style="padding-bottom: 22px;">
+                    <div style="background-color: rgba(235, 16, 0, 0.12); color: #FF3B30; border: 1px solid rgba(235, 16, 0, 0.35); font-weight: 900; font-size: 12px; width: 28px; height: 28px; border-radius: 50%; text-align: center; line-height: 28px;">
+                      1
+                    </div>
+                  </td>
+                  <td valign="top" style="padding-bottom: 22px;">
+                    <div style="font-size: 15px; font-weight: 700; color: #FFFFFF; margin-bottom: 3px;">
+                      Share your AskMe link or QR
+                    </div>
+                    <div style="font-size: 13.5px; color: #94A3B8; line-height: 1.5;">
+                      Drop it in your stream description, pinned chat, or bio.
+                    </div>
+                  </td>
+                </tr>
+                <tr>
+                  <td valign="top" width="42" style="padding-bottom: 8px;">
+                    <div style="background-color: rgba(235, 16, 0, 0.12); color: #FF3B30; border: 1px solid rgba(235, 16, 0, 0.35); font-weight: 900; font-size: 12px; width: 28px; height: 28px; border-radius: 50%; text-align: center; line-height: 28px;">
+                      2
+                    </div>
+                  </td>
+                  <td valign="top" style="padding-bottom: 8px;">
+                    <div style="font-size: 15px; font-weight: 700; color: #FFFFFF; margin-bottom: 3px;">
+                      Go live and start earning
+                    </div>
+                    <div style="font-size: 13.5px; color: #94A3B8; line-height: 1.5;">
+                      Every question lands in one queue, and payouts are now enabled.
+                    </div>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- CTA Button -->
+              <div style="margin-top: 10px; margin-bottom: 4px;">
+                <a href="${creatorStudioUrl}" class="btn-cta" style="display: inline-block; background-color: #EB1000; color: #FFFFFF !important; font-weight: 700; font-size: 14px; padding: 13px 30px; border-radius: 10px; text-decoration: none; text-align: center; box-shadow: 0 4px 15px rgba(235, 16, 0, 0.35);">
+                  Go to Creator Studio
+                </a>
+              </div>
+
+            </td>
+          </tr>
+
+          <!-- Outer Footer -->
+          <tr>
+            <td align="center" style="padding-top: 28px; font-size: 12px; color: #64748B; line-height: 1.7;">
+              <div>
+                Need help? <a href="mailto:legal@ask-me.live" style="color: #94A3B8; text-decoration: underline;">legal@ask-me.live</a>
+              </div>
+              <div style="margin-top: 8px;">
+                <a href="${frontendUrl}/privacy-policy" style="color: #64748B; text-decoration: none;">Privacy Policy</a> &bull;
+                <a href="${frontendUrl}/creator-terms" style="color: #64748B; text-decoration: none;">Terms of Service</a> &bull;
+                <a href="${frontendUrl}/payment-policy" style="color: #64748B; text-decoration: none;">Payment Policy</a>
+              </div>
+              <div style="margin-top: 8px;">
+                AskMe by FuturePast &bull; &copy; 2026 FuturePast Ventures LLP
+              </div>
+              <div style="margin-top: 4px; font-size: 11px; color: #475569;">
+                This is a transactional email sent about your AskMe account.
+              </div>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+
+</body>
+</html>`;
+};
+
+/**
+ * ASYNCHRONOUS FIRE-AND-FORGET ACCOUNT ACTIVATED EMAIL SENDER
+ */
+const sendAccountActivatedEmailAsync = ({
+  email,
+  name,
+}) => {
+  if (!email || !String(email).includes('@')) return;
+
+  setImmediate(async () => {
+    try {
+      const transporter = getTransporter();
+      const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+      const fromEmail = process.env.SMTP_FROM || process.env.MAIL_FROM || 'AskMe Support <noreply@askme.live>';
+
+      const subject = `Your AskMe account is activated`;
+      const html = buildAccountActivatedEmailHtml({
+        name,
+        frontendUrl,
+      });
+
+      const logoAtt = getLogoAttachment();
+      const attachments = logoAtt ? [logoAtt] : [];
+
+      if (transporter) {
+        await transporter.sendMail({
+          from: fromEmail,
+          to: email,
+          subject,
+          html,
+          attachments,
+        });
+        console.log(`[EMAIL SERVICE] Account Activated email successfully sent to ${email}`);
+      } else {
+        console.log(`[EMAIL SERVICE NOTICE] SMTP credentials not set. Simulated Account Activated email dispatch to ${email}`);
+      }
+    } catch (err) {
+      console.warn(`[EMAIL SERVICE NOTICE] Asynchronous activation email dispatch failed for ${email}:`, err.message);
+    }
+  });
+};
+
 module.exports = {
   sendWelcomeEmailAsync,
   sendEmailOtp,
   sendKycUnderReviewEmailAsync,
   sendGoLiveEmailToFollowersAsync,
+  sendAccountSuspendedEmailAsync,
+  buildAccountSuspendedEmailHtml,
+  sendAccountActivatedEmailAsync,
+  buildAccountActivatedEmailHtml,
 };
+
 
 

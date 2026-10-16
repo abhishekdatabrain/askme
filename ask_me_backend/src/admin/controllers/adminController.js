@@ -385,6 +385,19 @@ const toggleBlockViewer = async (req, res, next) => {
   }
 };
 
+const deleteViewer = async (req, res, next) => {
+  try {
+    const adminId = req.user?.id;
+    await viewerAdminService.deleteViewer(req.params.id, adminId);
+    return res.status(200).json({
+      status: 'success',
+      message: 'Viewer deleted successfully.',
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 const processWithdrawal = async (req, res, next) => {
   req.body.status = 'processing';
   return updateWithdrawalStatus(req, res, next);
@@ -501,6 +514,7 @@ module.exports = {
   getViewers,
   getViewerById,
   toggleBlockViewer,
+  deleteViewer,
   settleMonth,
   saveNotificationToken,
   testAdminNotification,

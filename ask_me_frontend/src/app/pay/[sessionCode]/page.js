@@ -443,15 +443,17 @@ function ViewerPaymentContent() {
         body: JSON.stringify({ phone: waPayPhone, otp: waPayOtp }),
       });
       const data = await res.json();
-      if (res.ok && data.status === 'success' && data.data) {
-        setAuthSuccess('WhatsApp Login Verified!');
-        setViewerSession(data.data.token, data.data.user);
-        setViewerUser(data.data.user);
-        if (data.data.user?.name) setViewerName(data.data.user.name);
-        setTimeout(() => {
-          setShowAuthModal(false);
-          setAuthSuccess('');
-        }, 600);
+      if (res.ok && data.status === 'success') {
+        if (data.data?.token && data.data?.user) {
+          setAuthSuccess('WhatsApp Login Verified!');
+          setViewerSession(data.data.token, data.data.user);
+          setViewerUser(data.data.user);
+          if (data.data.user?.name) setViewerName(data.data.user.name);
+          setTimeout(() => {
+            setShowAuthModal(false);
+            setAuthSuccess('');
+          }, 600);
+        }
       } else {
         setAuthError(data.message || 'Invalid or expired OTP code.');
       }

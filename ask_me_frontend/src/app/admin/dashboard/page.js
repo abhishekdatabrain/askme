@@ -134,55 +134,17 @@ export default function AdminDashboardPage() {
                 />
             </section>
 
-            {/* Footer Section */}
-            <footer className="border-t border-[#1C1C26] pt-8 pb-12 text-xs text-[#8B8B96] space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                    <div className="space-y-3">
-                        <div className="flex items-center gap-2">
-                            <div className="h-7 w-7 rounded-lg bg-brand-gradient flex items-center justify-center text-white font-bold text-sm">
-                                a
-                            </div>
-                            <span className="font-heading font-bold text-base text-white">AskMe</span>
-                        </div>
-                        <p className="text-xs text-[#8B8B96] leading-relaxed">
-                            The Creator Discovery & Audience Engagement Platform. Sustainable Q&A infrastructure for creators across live streams, digital content, and asynchronous communication.
-                        </p>
-                        <div className="p-2 rounded-lg bg-[#13131A] border border-[#1C1C26] text-[10px]">
-                            <span className="font-bold text-white block">AskMe Platform</span>
-                            <span>Lake View City, Lohegaon, Pune 411047, MH, India</span>
-                        </div>
+            {/* Simple Admin Footer */}
+            <footer className="border-t border-[#1C1C26] pt-6 pb-6 text-xs text-[#8B8B96] flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div className="flex items-center gap-2">
+                    <div className="h-6 w-6 rounded-lg bg-brand-gradient flex items-center justify-center text-white font-bold text-xs shadow-sm">
+                        a
                     </div>
-
-                    <div>
-                        <h5 className="font-bold text-white uppercase text-[11px] tracking-wider mb-3">Explore Categories</h5>
-                        <ul className="space-y-2 text-xs">
-                            <li><a href="#" className="hover:text-[#00F5D4] transition-colors">Technology & AI</a></li>
-                            <li><a href="#" className="hover:text-[#00F5D4] transition-colors">Finance & Stocks</a></li>
-                            <li><a href="#" className="hover:text-[#00F5D4] transition-colors">Software Engineering</a></li>
-                            <li><a href="#" className="hover:text-[#00F5D4] transition-colors">Gaming & Esports</a></li>
-                        </ul>
-                    </div>
-
-                    <div>
-                        <h5 className="font-bold text-white uppercase text-[11px] tracking-wider mb-3">Creator Services</h5>
-                        <ul className="space-y-2 text-xs">
-                            <li><a href="#" className="hover:text-[#00F5D4] transition-colors">Keep 80.3% Net Revenue Share</a></li>
-                            <li><a href="#" className="hover:text-[#00F5D4] transition-colors">OBS Live Stream Overlay</a></li>
-                            <li><a href="#" className="hover:text-[#00F5D4] transition-colors">Instant KYC Payout Settlement</a></li>
-                            <li><a href="#" className="hover:text-[#00F5D4] transition-colors">Payment Protection</a></li>
-                        </ul>
-                    </div>
-
-                    <div>
-                        <h5 className="font-bold text-white uppercase text-[11px] tracking-wider mb-3">Legal & Policies</h5>
-                        <ul className="space-y-2 text-xs">
-                            <li><a href="#" className="hover:text-[#00F5D4] transition-colors">Terms of Service</a></li>
-                            <li><a href="#" className="hover:text-[#00F5D4] transition-colors">Privacy Policy (DPDP Act)</a></li>
-                            <li><a href="#" className="hover:text-[#00F5D4] transition-colors">Payment & Refund Policy</a></li>
-                            <li><a href="#" className="hover:text-[#00F5D4] transition-colors">Community Rules</a></li>
-                        </ul>
-                    </div>
+                    <span className="font-bold text-white">AskMe Admin</span>
+                    <span className="text-[#8B8B96]/40">•</span>
+                    <span>© {new Date().getFullYear()} AskMe. All rights reserved.</span>
                 </div>
+               
             </footer>
         </div>
     );

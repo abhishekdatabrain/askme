@@ -22,7 +22,8 @@ import {
   PlayCircle,
   History,
   BarChart3,
-  Settings
+  Settings,
+  Clock,
 } from 'lucide-react';
 import { API_ENDPOINTS } from '@/config/api';
 import { getCreatorToken, getCreatorUser, setCookie, clearCreatorSession } from '@/utils/cookies';
@@ -114,6 +115,9 @@ function CreatorSidebarContent({ theme: propTheme, onToggleTheme, onNavigate, is
 
   const handleLogout = () => {
     clearCreatorSession();
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('askme_trial_creator_session_id');
+    }
     window.location.href = '/';
   };
 
@@ -207,6 +211,30 @@ function CreatorSidebarContent({ theme: propTheme, onToggleTheme, onNavigate, is
             <p className={`text-[10px] truncate ${theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'
               }`}>{creatorUser.username || '@creator'}</p>
           </div>
+        </div>
+      )}
+
+      {/* Trial Account Expiration Banner */}
+      {creatorUser && (creatorUser.is_trial || creatorUser.account_type === 'trial') && (
+        <div className={`mx-4 mt-3 p-3 rounded-2xl border transition-all ${
+          creatorUser.trial_expires_at && Math.max(0, Math.ceil((new Date(creatorUser.trial_expires_at) - new Date()) / (1000 * 60 * 60 * 24))) <= 2
+            ? 'bg-[#FF3D71]/10 border-[#FF3D71]/30 text-[#FF3D71]'
+            : 'bg-[#EB1000]/10 border-[#EB1000]/30 text-[#EB1000]'
+        }`}>
+          <div className="flex items-center gap-2 mb-1">
+            <Clock className="w-3.5 h-3.5 shrink-0 animate-pulse" />
+            <span className="text-[10px] font-black uppercase tracking-wider">
+              {(() => {
+                if (!creatorUser.trial_expires_at) return 'Trial Creator Active';
+                const days = Math.max(0, Math.ceil((new Date(creatorUser.trial_expires_at) - new Date()) / (1000 * 60 * 60 * 24)));
+                if (days === 0) return 'Trial Expires Today';
+                return `Trial: ${days} Days Left`;
+              })()}
+            </span>
+          </div>
+          <p className="text-[10px] opacity-80 leading-tight">
+            Active 7-day Creator Studio trial access.
+          </p>
         </div>
       )}
 

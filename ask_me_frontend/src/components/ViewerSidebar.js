@@ -23,8 +23,8 @@ import {
   MessageSquare,
   History
 } from 'lucide-react';
-import { API_ENDPOINTS } from '@/config/api';
-import { getViewerToken, getViewerUser, clearViewerSession, removeCookie } from '@/utils/cookies';
+import { API_ENDPOINTS, getMediaUrl } from '@/config/api';
+import { getViewerToken, getViewerUser, setViewerSession, clearViewerSession, removeCookie } from '@/utils/cookies';
 import Logo from '@/components/Logo';
 import { getSocket } from '@/config/socket';
 import { useToast } from '@/context/ToastContext';
@@ -48,6 +48,42 @@ function ViewerSidebarContent({ theme: propTheme, onToggleTheme, activeTab: curr
         setViewerUser(user);
       }
     } catch (e) { }
+
+    // Fetch latest profile from backend to ensure all fields are synchronized
+    const token = getViewerToken();
+    if (token) {
+      fetch(API_ENDPOINTS.VIEWERS.PROFILE, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+        .then(res => res.json())
+        .then(data => {
+          if (data.status === 'success' && data.data?.user) {
+            setViewerUser(data.data.user);
+            setViewerSession(token, data.data.user);
+          }
+        })
+        .catch(() => { });
+    }
+
+    const handleProfileUpdate = (e) => {
+      if (e && e.detail) {
+        setViewerUser(e.detail);
+      } else {
+        const fresh = getViewerUser();
+        if (fresh) setViewerUser(fresh);
+      }
+    };
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('viewer-profile-updated', handleProfileUpdate);
+      window.addEventListener('storage', handleProfileUpdate);
+    }
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('viewer-profile-updated', handleProfileUpdate);
+        window.removeEventListener('storage', handleProfileUpdate);
+      }
+    };
   }, []);
 
   const handleLogout = () => {
@@ -101,7 +137,7 @@ function ViewerSidebarContent({ theme: propTheme, onToggleTheme, activeTab: curr
         .catch(() => { });
 
       if (u.id) {
-        requestViewerFcmToken(token, u.id).catch(() => {});
+        requestViewerFcmToken(token, u.id).catch(() => { });
 
         const socket = getSocket();
         if (socket) {
@@ -125,7 +161,7 @@ function ViewerSidebarContent({ theme: propTheme, onToggleTheme, activeTab: curr
                     router.push(`/pay/${data.sessionCode}`);
                   }
                 };
-              } catch (e) {}
+              } catch (e) { }
             }
           };
 
@@ -205,6 +241,14 @@ function ViewerSidebarContent({ theme: propTheme, onToggleTheme, activeTab: curr
       href: '/viewers/past-streams',
     },
     {
+      id: 'profile',
+      label: 'My Profile',
+      icon: User,
+      badge: null,
+      iconColor: 'text-[#EB1000]',
+      href: '/viewers/profile',
+    },
+    {
       id: 'notifications',
       label: 'Notifications',
       icon: Bell,
@@ -215,19 +259,24 @@ function ViewerSidebarContent({ theme: propTheme, onToggleTheme, activeTab: curr
   ];
 
   const activeTab = currentTab || (
-    pathname.includes('/viewers/past-streams') ? 'past-streams' :
-      pathname.includes('/viewers/my-questions') ? 'my-questions' :
-        pathname.includes('/viewers/live-sessions') ? 'live-sessions' :
-          pathname.includes('/viewers/following') ? 'following' :
-            pathname.includes('/viewers/memberships') ? 'memberships' :
-              pathname.includes('/viewers/notifications') ? 'notifications' :
-                (typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('tab') : null) || 'home'
+    pathname.includes('/viewers/profile') ? 'profile' :
+      pathname.includes('/viewers/past-streams') ? 'past-streams' :
+        pathname.includes('/viewers/my-questions') ? 'my-questions' :
+          pathname.includes('/viewers/live-sessions') ? 'live-sessions' :
+            pathname.includes('/viewers/following') ? 'following' :
+              pathname.includes('/viewers/memberships') ? 'memberships' :
+                pathname.includes('/viewers/notifications') ? 'notifications' :
+                  (typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('tab') : null) || 'home'
   );
 
   const handleNavClick = (item) => {
     if (onNavigate) onNavigate();
     setMobileOpen(false);
 
+    if (item.id === 'profile') {
+      router.push('/viewers/profile');
+      return;
+    }
     if (item.id === 'past-streams') {
       router.push('/viewers/past-streams');
       return;
@@ -289,37 +338,59 @@ function ViewerSidebarContent({ theme: propTheme, onToggleTheme, activeTab: curr
           </div>
         )}
 
-        {/* VIEWER USER PROFILE SUMMARY PILL */}
+        {/* VIEWER USER PROFILE SUMMARY PILL (CLICKABLE TO MY PROFILE) */}
         {viewerUser && (
-          <div className={`p-3 rounded-2xl border flex items-center gap-3 transition-colors ${
-            theme === 'light' ? 'bg-[#F8FAFC] border-[#E2E8F0]' : 'bg-[#0D0D14] border-[#1F1F30]'
-          }`}>
-            <div className={`h-9 w-9 rounded-xl border overflow-hidden shrink-0 flex items-center justify-center font-bold text-sm ${
-              theme === 'light' ? 'bg-[#FEF2F2] border-[#EB1000]/20 text-[#EB1000]' : 'bg-[#1C1C28] border-[#EB1000]/30 text-[#EB1000]'
-            }`}>
+          <button
+            type="button"
+            onClick={() => {
+              if (onNavigate) onNavigate();
+              setMobileOpen(false);
+              router.push('/viewers/profile');
+            }}
+            title="Click to view and edit My Profile"
+            className={`w-full text-left p-3 rounded-2xl border flex items-center gap-3 transition-all duration-150 cursor-pointer group ${pathname === '/viewers/profile'
+                ? theme === 'light'
+                  ? 'bg-[#FEF2F2] border-[#EB1000] ring-1 ring-[#EB1000]/20 shadow-sm'
+                  : 'bg-[#EB1000]/10 border-[#EB1000] ring-1 ring-[#EB1000]/30 shadow-sm'
+                : theme === 'light'
+                  ? 'bg-[#F8FAFC] border-[#E2E8F0] hover:bg-[#F1F5F9] hover:border-[#CBD5E1]'
+                  : 'bg-[#0D0D14] border-[#1F1F30] hover:bg-[#141420] hover:border-[#2D2D45]'
+              }`}
+          >
+            <div className={`h-9 w-9 rounded-xl border overflow-hidden shrink-0 flex items-center justify-center font-bold text-sm transition-transform duration-150 group-hover:scale-105 ${theme === 'light' ? 'bg-[#FEF2F2] border-[#EB1000]/20 text-[#EB1000]' : 'bg-[#1C1C28] border-[#EB1000]/30 text-[#EB1000]'
+              }`}>
               {viewerUser.avatar || viewerUser.profileImage ? (
-                <img src={viewerUser.avatar || viewerUser.profileImage} alt={viewerUser.fullName || viewerUser.name || 'Viewer'} className="h-full w-full object-cover" />
+                <img
+                  src={getMediaUrl(viewerUser.avatar || viewerUser.profileImage)}
+                  alt={viewerUser.fullName || viewerUser.name || 'Viewer'}
+                  className="h-full w-full object-cover"
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none';
+                  }}
+                />
               ) : (
                 (viewerUser.fullName || viewerUser.name || viewerUser.email || 'Viewer').charAt(0).toUpperCase()
               )}
             </div>
             <div className="min-w-0 flex-1">
-              <h4 className={`font-bold text-xs truncate ${theme === 'light' ? 'text-[#0F172A]' : 'text-white'}`}>
-                {viewerUser.fullName || viewerUser.name || 'Viewer'}
-              </h4>
+              <div className="flex items-center justify-between gap-1">
+                <h4 className={`font-bold text-xs truncate group-hover:text-[#EB1000] transition-colors ${theme === 'light' ? 'text-[#0F172A]' : 'text-white'}`}>
+                  {viewerUser.fullName || viewerUser.name || 'Viewer'}
+                </h4>
+                <ChevronRight className="h-3.5 w-3.5 text-[#8B8B96] group-hover:translate-x-0.5 group-hover:text-[#EB1000] transition-all shrink-0" />
+              </div>
               <p className={`text-[10px] truncate ${theme === 'light' ? 'text-[#64748B]' : 'text-[#94A3B8]'}`}>
-                {viewerUser.email || viewerUser.username || 'Logged in'}
+                {viewerUser.username ? `@${viewerUser.username.replace(/^@+/, '')}` : (viewerUser.email || 'View My Profile')}
               </p>
             </div>
-          </div>
+          </button>
         )}
 
         {/* BROADCAST LIVE STATUS CARD */}
-        <div className={`p-3.5 rounded-2xl border flex items-center justify-between gap-3 transition-colors ${
-          liveCount > 0
+        <div className={`p-3.5 rounded-2xl border flex items-center justify-between gap-3 transition-colors ${liveCount > 0
             ? theme === 'light' ? 'bg-[#FEF2F2] border-[#EB1000]/30' : 'bg-[#EB1000]/10 border-[#EB1000]/30'
             : theme === 'light' ? 'bg-[#F8FAFC] border-[#E2E8F0]' : 'bg-[#0D0D14] border-[#1F1F30]'
-        }`}>
+          }`}>
           <div className="flex items-center gap-2.5">
             <div className={`p-2 rounded-xl shrink-0 ${liveCount > 0 ? 'bg-[#EB1000] text-white animate-bounce' : 'bg-[#1C1C28] text-[#94A3B8]'}`}>
               <Radio className="h-4 w-4" />

@@ -73,6 +73,31 @@ const User = sequelize.define(
         last_login_at: {
             type: DataTypes.DATE,
         },
+
+        is_trial: {
+            type: DataTypes.BOOLEAN,
+            defaultValue: false,
+        },
+
+        account_type: {
+            type: DataTypes.STRING(50),
+            defaultValue: "regular",
+        },
+
+        trial_session_id: {
+            type: DataTypes.STRING(150),
+            allowNull: true,
+        },
+
+        trial_expires_at: {
+            type: DataTypes.DATE,
+            allowNull: true,
+        },
+
+        trial_completed: {
+            type: DataTypes.BOOLEAN,
+            defaultValue: false,
+        },
     },
     {
         tableName: "creators",

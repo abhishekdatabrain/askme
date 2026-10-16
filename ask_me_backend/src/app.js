@@ -78,6 +78,8 @@ app.use('/api/adminauth', authRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/creators', creatorRoutes);
 app.use('/api/viewers', viewerRoutes);
+app.use('/api/viewer', viewerRoutes);
+app.use('/viewer', viewerRoutes);
 
 // Error Handling Middlewares
 app.use(notFound);

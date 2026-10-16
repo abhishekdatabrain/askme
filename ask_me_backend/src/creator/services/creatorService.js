@@ -18,6 +18,24 @@ const { generateAndStoreOtp, verifyStoredOtp } = require("../../utils/whatsappOt
 const { verifyTruecallerToken } = require("../../services/truecallerService");
 const { sendWelcomeEmailAsync } = require("../../services/emailService");
 const { Op } = require("sequelize");
+const crypto = require("crypto");
+const jwt = require("jsonwebtoken");
+
+// In-memory sliding rate limiter for trial creator demo authentication
+const trialCreatorRateLimiter = new Map();
+const isTrialCreatorRateLimited = (key) => {
+  const now = Date.now();
+  const windowMs = 5 * 60 * 1000; // 5 minute window
+  const maxAttempts = 15;
+  const attempts = trialCreatorRateLimiter.get(key) || [];
+  const validAttempts = attempts.filter((t) => now - t < windowMs);
+  if (validAttempts.length >= maxAttempts) {
+    return true;
+  }
+  validAttempts.push(now);
+  trialCreatorRateLimiter.set(key, validAttempts);
+  return false;
+};
 
 /**
  * Register a new Creator with atomic transaction
@@ -852,12 +870,23 @@ const sendWhatsAppOtpCreatorService = async (data) => {
 
   // Instant Trial Creator Bypass (9999999999)
   if (tenDigit === '9999999999') {
-    generateAndStoreOtp(tenDigit);
+    if (process.env.ENABLE_TRIAL_LOGIN === 'false') {
+      const err = new Error("Trial creator login is currently disabled in this environment.");
+      err.statusCode = 403;
+      throw err;
+    }
+    const clientIp = data.clientIp || 'trial_creator_client';
+    if (isTrialCreatorRateLimited(`send_${clientIp}`)) {
+      const err = new Error("Too many trial demo requests. Please wait a few minutes before trying again.");
+      err.statusCode = 429;
+      throw err;
+    }
     return {
       message: "Trial Demo OTP sent! Use code 123456",
       expiresMinutes: 10,
       phone: `91${tenDigit}`,
       debugOtp: "123456",
+      isTrial: true,
     };
   }
 
@@ -950,12 +979,23 @@ const sendSmsOtpCreatorService = async (data) => {
 
   // Instant Trial Creator Bypass (9999999999)
   if (tenDigit === '9999999999') {
-    generateAndStoreOtp(tenDigit);
+    if (process.env.ENABLE_TRIAL_LOGIN === 'false') {
+      const err = new Error("Trial creator login is currently disabled in this environment.");
+      err.statusCode = 403;
+      throw err;
+    }
+    const clientIp = data.clientIp || 'trial_creator_client';
+    if (isTrialCreatorRateLimited(`send_${clientIp}`)) {
+      const err = new Error("Too many trial demo requests. Please wait a few minutes before trying again.");
+      err.statusCode = 429;
+      throw err;
+    }
     return {
       message: "Trial Demo OTP sent! Use code 123456",
       expiresMinutes: 10,
       phone: `91${tenDigit}`,
       debugOtp: "123456",
+      isTrial: true,
     };
   }
 
@@ -981,7 +1021,7 @@ const sendSmsOtpCreatorService = async (data) => {
  * Verify WhatsApp OTP and Login / Register Creator
  */
 const verifyWhatsAppOtpCreatorService = async (data) => {
-  const { mobile, phone, otp, type, isRegister } = data || {};
+  const { mobile, phone, otp, type, isRegister, trialSessionId, clientIp } = data || {};
   const rawPhone = mobile || phone;
   const cleanPhone = String(rawPhone || "").replace(/[^0-9]/g, "");
 
@@ -990,6 +1030,104 @@ const verifyWhatsAppOtpCreatorService = async (data) => {
     err.statusCode = 400;
     throw err;
   }
+
+  let targetPhone = cleanPhone;
+  if (targetPhone.length === 12 && targetPhone.startsWith("91")) {
+    targetPhone = targetPhone.slice(2);
+  }
+  const tenDigit = targetPhone.slice(-10);
+
+  // --- TRIAL CREATOR DEMO FLOW (9999999999) ---
+  if (tenDigit === '9999999999') {
+    if (process.env.ENABLE_TRIAL_LOGIN === 'false') {
+      const err = new Error("Trial creator login is currently disabled in this environment.");
+      err.statusCode = 403;
+      throw err;
+    }
+
+    const ip = clientIp || 'trial_creator_client';
+    if (isTrialCreatorRateLimited(`verify_${ip}`)) {
+      const err = new Error("Too many trial authentication attempts. Please wait a few minutes before trying again.");
+      err.statusCode = 429;
+      throw err;
+    }
+
+    // Strict validation of demo OTP 123456
+    if (String(otp).trim() !== '123456') {
+      isTrialCreatorRateLimited(`verify_fail_${ip}`);
+      const err = new Error("Invalid trial demo OTP. Please enter 123456 to continue.");
+      err.statusCode = 400;
+      throw err;
+    }
+
+    // Check whether current trial identity already has a completed profile
+    const clientTrialSessionId = trialSessionId || null;
+    let existingTrialCreator = null;
+
+    if (clientTrialSessionId) {
+      existingTrialCreator = await CreatorsModel.findOne({
+        where: {
+          trial_session_id: clientTrialSessionId,
+          is_trial: true,
+        },
+      });
+    }
+
+    if (existingTrialCreator) {
+      // Check trial account expiration support
+      if (existingTrialCreator.trial_expires_at && new Date(existingTrialCreator.trial_expires_at) < new Date()) {
+        const err = new Error("Your trial creator account has expired. Please register a regular account or contact support.");
+        err.statusCode = 403;
+        err.code = "TRIAL_EXPIRED";
+        throw err;
+      }
+
+      // 6. If the same trial identity logs in again, skip the modal and return session
+      if (existingTrialCreator.trial_completed && existingTrialCreator.full_name && existingTrialCreator.email) {
+        const token = generateToken(existingTrialCreator.id, "creator");
+        const profile = await CreatorProfile.findOne({ where: { creator_id: existingTrialCreator.id } });
+        return {
+          isTrial: true,
+          profileCompleted: true,
+          token,
+          creator: {
+            id: existingTrialCreator.id,
+            role: "creator",
+            fullName: existingTrialCreator.full_name,
+            full_name: existingTrialCreator.full_name,
+            username: existingTrialCreator.username,
+            cleanUsername: existingTrialCreator.username,
+            email: existingTrialCreator.email,
+            mobile: existingTrialCreator.mobile,
+            kycStatus: profile?.kyc_status || "approved",
+            status: existingTrialCreator.status || "active",
+            is_trial: true,
+            account_type: "trial",
+            trial_expires_at: existingTrialCreator.trial_expires_at,
+            trial_completed: true,
+          },
+          trialSessionId: existingTrialCreator.trial_session_id,
+        };
+      }
+    }
+
+    // Incomplete profile or new trial creator: Generate unique trial session ID & temporary token
+    const newTrialSessionId = clientTrialSessionId || ('trial_creator_sess_' + crypto.randomBytes(16).toString('hex'));
+    const trialTempToken = jwt.sign(
+      { trialSessionId: newTrialSessionId, isTrial: true, role: 'creator', purpose: 'trial_creator_profile_completion' },
+      process.env.JWT_SECRET || 'ask_me_super_secret_jwt_key_2026',
+      { expiresIn: '2h' }
+    );
+
+    return {
+      message: "Trial demo OTP verified. Mandatory profile completion required.",
+      isTrial: true,
+      profileCompleted: false,
+      trialSessionId: newTrialSessionId,
+      trialTempToken,
+    };
+  }
+  // --- END TRIAL CREATOR DEMO FLOW (Normal flow below remains 100% UNCHANGED) ---
 
   const verification = verifyStoredOtp(cleanPhone, otp);
   if (!verification.valid) {
@@ -1006,11 +1144,6 @@ const verifyWhatsAppOtpCreatorService = async (data) => {
     };
   }
 
-  let targetPhone = cleanPhone;
-  if (targetPhone.length === 12 && targetPhone.startsWith("91")) {
-    targetPhone = targetPhone.slice(2);
-  }
-  const tenDigit = targetPhone.slice(-10);
   const fullPhone = `91${tenDigit}`;
 
   let creator = await CreatorsModel.findOne({
@@ -1023,26 +1156,6 @@ const verifyWhatsAppOtpCreatorService = async (data) => {
     },
   });
 
-  if (!creator && tenDigit === '9999999999') {
-    creator = await CreatorsModel.create({
-      role: 'creator',
-      full_name: 'Demo Creator',
-      username: 'democreator',
-      email: 'democreator@askme.com',
-      mobile: '9999999999',
-      password: 'DemoPassword123',
-      country: 'India',
-      status: 'active',
-    });
-    await CreatorProfile.create({
-      creator_id: creator.id,
-      bio: 'Demo Creator for platform trials',
-      display_name: 'Demo Creator',
-      kyc_status: 'approved',
-      is_payment_enabled: true,
-    });
-  }
-
   if (!creator) {
     const err = new Error("This mobile number is not registered. Please use a registered number.");
     err.statusCode = 400;
@@ -1052,12 +1165,8 @@ const verifyWhatsAppOtpCreatorService = async (data) => {
   const token = generateToken(creator.id, "creator");
   const profile = await CreatorProfile.findOne({ where: { creator_id: creator.id } });
 
-  const kycStatus = (creator.mobile === '9999999999' || tenDigit === '9999999999')
-    ? 'approved'
-    : (profile?.kyc_status || "pending");
-  const status = (creator.mobile === '9999999999' || tenDigit === '9999999999')
-    ? 'active'
-    : creator.status;
+  const kycStatus = profile?.kyc_status || "pending";
+  const status = creator.status;
 
   return {
     token,
@@ -1073,6 +1182,231 @@ const verifyWhatsAppOtpCreatorService = async (data) => {
       kycStatus,
       status,
     },
+  };
+};
+
+/**
+ * Complete Trial Creator Profile Registration
+ */
+const completeTrialProfileCreatorService = async (data, clientIp = 'trial_creator_client') => {
+  const { fullName, email, phone, trialSessionId, trialTempToken } = data || {};
+
+  if (process.env.ENABLE_TRIAL_LOGIN === 'false') {
+    const err = new Error("Trial creator registration is currently disabled in this environment.");
+    err.statusCode = 403;
+    throw err;
+  }
+
+  if (isTrialCreatorRateLimited(`complete_${clientIp}`)) {
+    const err = new Error("Too many trial profile attempts. Please wait a few minutes before trying again.");
+    err.statusCode = 429;
+    throw err;
+  }
+
+  // 1. Validate all required fields
+  const cleanName = String(fullName || "").trim();
+  const cleanEmail = String(email || "").trim().toLowerCase();
+  const rawPhone = String(phone || "").replace(/[^0-9]/g, "");
+
+  if (!cleanName || cleanName.length < 2) {
+    const err = new Error("Full Name is required and must be at least 2 characters.");
+    err.statusCode = 400;
+    throw err;
+  }
+
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!cleanEmail || !emailRegex.test(cleanEmail)) {
+    const err = new Error("Please provide a valid Email Address.");
+    err.statusCode = 400;
+    throw err;
+  }
+
+  const tenDigitPhone = rawPhone.slice(-10);
+  if (!tenDigitPhone || tenDigitPhone.length !== 10) {
+    const err = new Error("Please provide a valid 10-digit mobile phone number.");
+    err.statusCode = 400;
+    throw err;
+  }
+
+  // Requirement 4: never use the shared trial phone number as the unique identity
+  if (tenDigitPhone === '9999999999') {
+    const err = new Error("Please provide your personal phone number, not the shared trial demo number.");
+    err.statusCode = 400;
+    throw err;
+  }
+
+  // Verify trialTempToken if provided
+  let effectiveSessionId = trialSessionId;
+  if (trialTempToken) {
+    try {
+      const decoded = jwt.verify(
+        trialTempToken,
+        process.env.JWT_SECRET || 'ask_me_super_secret_jwt_key_2026'
+      );
+      if (decoded.trialSessionId) {
+        effectiveSessionId = decoded.trialSessionId;
+      }
+    } catch (tokenErr) {
+      const err = new Error("Invalid or expired trial temporary token. Please verify OTP again.");
+      err.statusCode = 401;
+      throw err;
+    }
+  }
+
+  if (!effectiveSessionId) {
+    const err = new Error("Missing trial session identity. Please restart trial verification.");
+    err.statusCode = 400;
+    throw err;
+  }
+
+  // Check if a real creator account already exists with this email or phone
+  const existingRealCreator = await CreatorsModel.findOne({
+    where: {
+      [Op.or]: [
+        { email: cleanEmail },
+        { mobile: tenDigitPhone },
+        { mobile: `91${tenDigitPhone}` },
+        { mobile: `+91${tenDigitPhone}` },
+      ],
+      is_trial: false,
+    },
+  });
+
+  if (existingRealCreator) {
+    const err = new Error("An active registered creator account already exists with this email or phone number. Please log in normally.");
+    err.statusCode = 409;
+    throw err;
+  }
+
+  // Find if a trial creator already exists for this session or email
+  let trialCreator = await CreatorsModel.findOne({
+    where: {
+      [Op.or]: [
+        { trial_session_id: effectiveSessionId },
+        { email: cleanEmail, is_trial: true },
+      ],
+    },
+  });
+
+  if (trialCreator) {
+    // Check if expired
+    if (trialCreator.trial_expires_at && new Date(trialCreator.trial_expires_at) < new Date()) {
+      const err = new Error("Your trial creator account has expired. Please register a regular account or contact support.");
+      err.statusCode = 403;
+      err.code = "TRIAL_EXPIRED";
+      throw err;
+    }
+
+    trialCreator.full_name = cleanName;
+    trialCreator.email = cleanEmail;
+    trialCreator.mobile = tenDigitPhone;
+    trialCreator.is_trial = true;
+    trialCreator.account_type = "trial";
+    trialCreator.trial_session_id = effectiveSessionId;
+    trialCreator.trial_completed = true;
+    if (!trialCreator.trial_expires_at) {
+      trialCreator.trial_expires_at = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+    }
+    await trialCreator.save();
+
+    // Ensure CreatorProfile exists
+    let profile = await CreatorProfile.findOne({ where: { creator_id: trialCreator.id } });
+    if (!profile) {
+      profile = await CreatorProfile.create({
+        creator_id: trialCreator.id,
+        bio: 'Trial Creator Account',
+        display_name: cleanName,
+        kyc_status: 'approved',
+        is_payment_enabled: true,
+      });
+    } else {
+      await profile.update({ display_name: cleanName, kyc_status: 'approved' });
+    }
+
+    // Ensure Wallet exists
+    let wallet = await Wallet.findOne({ where: { creator_id: trialCreator.id } });
+    if (!wallet) {
+      await Wallet.create({
+        creator_id: trialCreator.id,
+        balance: 0.0,
+        currency: 'INR',
+      });
+    }
+  } else {
+    // Create new trial creator
+    const uniqueUsername = `trial_cr_${Math.random().toString(36).substring(2, 7)}_${Date.now().toString(36)}`;
+    const randomPassword = 'TrialPass_' + crypto.randomBytes(8).toString('hex');
+    const hashedPassword = await bcrypt.hash(randomPassword, 10);
+
+    const transaction = await sequelize.transaction();
+    try {
+      trialCreator = await CreatorsModel.create(
+        {
+          role: "creator",
+          full_name: cleanName,
+          username: uniqueUsername,
+          email: cleanEmail,
+          mobile: tenDigitPhone,
+          password: hashedPassword,
+          country: "India",
+          status: "active",
+          is_trial: true,
+          account_type: "trial",
+          trial_session_id: effectiveSessionId,
+          trial_completed: true,
+          trial_expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+        },
+        { transaction }
+      );
+
+      await CreatorProfile.create(
+        {
+          creator_id: trialCreator.id,
+          bio: 'Trial Creator Account',
+          display_name: cleanName,
+          kyc_status: 'approved',
+          is_payment_enabled: true,
+        },
+        { transaction }
+      );
+
+      await Wallet.create(
+        {
+          creator_id: trialCreator.id,
+          balance: 0.0,
+          currency: 'INR',
+        },
+        { transaction }
+      );
+
+      await transaction.commit();
+    } catch (createErr) {
+      await transaction.rollback();
+      throw createErr;
+    }
+  }
+
+  const token = generateToken(trialCreator.id, "creator");
+
+  return {
+    token,
+    creator: {
+      id: trialCreator.id,
+      role: "creator",
+      fullName: trialCreator.full_name,
+      full_name: trialCreator.full_name,
+      username: trialCreator.username,
+      cleanUsername: trialCreator.username,
+      email: trialCreator.email,
+      mobile: trialCreator.mobile,
+      kycStatus: "approved",
+      status: trialCreator.status || "active",
+      is_trial: true,
+      account_type: "trial",
+      trial_expires_at: trialCreator.trial_expires_at,
+      trial_completed: true,
+    },
+    trialSessionId: trialCreator.trial_session_id,
   };
 };
 
@@ -1203,6 +1537,7 @@ module.exports = {
   saveCreatorBankAccountService,
   verifyCreatorUpiService,
   deleteCreatorAccountService,
+  completeTrialProfileCreatorService,
 };
 
 

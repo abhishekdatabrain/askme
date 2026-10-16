@@ -21,6 +21,7 @@ const {
   saveCreatorBankAccountService,
   verifyCreatorUpiService,
   deleteCreatorAccountService,
+  completeTrialProfileCreatorService,
 } = require("../services/creatorService");
 const {
   submitKycService,
@@ -1055,10 +1056,12 @@ const verifyDigiLockerAadhaarOtpController = async (req, res, next) => {
  */
 const sendWhatsAppOtpCreator = async (req, res, next) => {
   try {
-    const result = await sendWhatsAppOtpCreatorService(req.body);
+    const clientIp = req.ip || req.headers['x-forwarded-for'] || 'trial_creator_client';
+    const result = await sendWhatsAppOtpCreatorService({ ...req.body, clientIp });
     return res.status(200).json({
       status: "success",
       message: result.message || "OTP sent via WhatsApp!",
+      isTrial: !!result.isTrial,
       data: result,
     });
   } catch (error) {
@@ -1074,10 +1077,12 @@ const sendWhatsAppOtpCreator = async (req, res, next) => {
  */
 const sendSmsOtpCreator = async (req, res, next) => {
   try {
-    const result = await sendSmsOtpCreatorService(req.body);
+    const clientIp = req.ip || req.headers['x-forwarded-for'] || 'trial_creator_client';
+    const result = await sendSmsOtpCreatorService({ ...req.body, clientIp });
     return res.status(200).json({
       status: "success",
       message: result.message || "OTP sent via SMS!",
+      isTrial: !!result.isTrial,
       data: result,
     });
   } catch (error) {
@@ -1094,7 +1099,21 @@ const sendSmsOtpCreator = async (req, res, next) => {
 const verifyWhatsAppOtpCreator = async (req, res, next) => {
   try {
     const creatorId = getAuthenticatedCreatorId(req) || req.body.creatorId || req.body.creator_id;
-    const result = await verifyWhatsAppOtpCreatorService({ ...req.body, creatorId });
+    const clientIp = req.ip || req.headers['x-forwarded-for'] || 'trial_creator_client';
+    const result = await verifyWhatsAppOtpCreatorService({ ...req.body, creatorId, clientIp });
+
+    if (result.isTrial) {
+      return res.status(200).json({
+        status: "success",
+        message: result.message || (result.profileCompleted ? "Trial creator authentication successful!" : "Trial demo OTP verified. Mandatory profile completion required."),
+        isTrial: true,
+        profileCompleted: !!result.profileCompleted,
+        trialSessionId: result.trialSessionId,
+        trialTempToken: result.trialTempToken,
+        data: result,
+      });
+    }
+
     return res.status(200).json({
       status: "success",
       message: "Mobile number verified and updated successfully!",
@@ -1102,7 +1121,35 @@ const verifyWhatsAppOtpCreator = async (req, res, next) => {
     });
   } catch (error) {
     if (error.statusCode) {
-      return res.status(error.statusCode).json({ status: "fail", message: error.message });
+      return res.status(error.statusCode).json({
+        status: "fail",
+        code: error.code || undefined,
+        message: error.message,
+      });
+    }
+    next(error);
+  }
+};
+
+/**
+ * Complete Trial Creator Profile
+ */
+const completeTrialProfileCreator = async (req, res, next) => {
+  try {
+    const clientIp = req.ip || req.headers['x-forwarded-for'] || 'trial_creator_client';
+    const result = await completeTrialProfileCreatorService(req.body, clientIp);
+    return res.status(200).json({
+      status: "success",
+      message: "Trial creator profile activated successfully!",
+      data: result,
+    });
+  } catch (error) {
+    if (error.statusCode) {
+      return res.status(error.statusCode).json({
+        status: "fail",
+        code: error.code || undefined,
+        message: error.message,
+      });
     }
     next(error);
   }
@@ -1285,4 +1332,5 @@ module.exports = {
   verifyDigiLockerAadhaarOtpController,
   panToGstinLookupController,
   getPublicCommissionSettings,
+  completeTrialProfileCreator,
 };

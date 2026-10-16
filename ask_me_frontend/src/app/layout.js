@@ -18,8 +18,8 @@ const inter = Inter({
 });
 
 export const metadata = {
-  title: "AskMe Live Stream & Q&A Platform",
-  description: "Live Signal Broadcast & Creator Discovery Control Room",
+  title: "Ask-Me.Live | Discover | Grow | Engage | Monetize",
+  description: "Creator Discovery Control Room",
   icons: {
     icon: [
       { url: "/icon.png", type: "image/png" },

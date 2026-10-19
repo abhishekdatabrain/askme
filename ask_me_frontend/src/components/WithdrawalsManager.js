@@ -168,7 +168,7 @@ export default function WithdrawalsManager({ activeSubTab }) {
           <div>
             <h3 className="font-heading font-bold text-base text-white">Withdrawal & Payout Management </h3>
             <p className="text-xs text-[#8B8B96] mt-0.5">
-              Review requests, verify creator bank details, approve, set processing, mark completed, or reject with balance refund.
+              Review requests, verify creator bank details, approve, set processing, mark completed, or reject with balance payment adjustment.
             </p>
           </div>
         </div>
@@ -428,7 +428,7 @@ export default function WithdrawalsManager({ activeSubTab }) {
                   <AlertTriangle className="h-5 w-5" /> Reject Withdrawal Request
                 </h3>
                 <p className="text-xs text-[#8B8B96] mt-0.5">
-                  Reserved funds ({rejectModalItem.payoutAmount}) will be refunded back to creator's available balance.
+                  Reserved funds ({rejectModalItem.payoutAmount}) will be payment adjustment back to creator's available balance.
                 </p>
               </div>
               <button

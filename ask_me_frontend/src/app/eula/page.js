@@ -41,7 +41,7 @@ export default function EulaPage() {
     {
       num: '3',
       title: 'Definitions',
-      content: 'For purposes of this Agreement:\n• "AskMe" means the technology platform operated by FuturePast Ventures LLP.\n• "Creator" means a person or eligible entity approved to use AskMe\'s Creator functionality to establish a profile, conduct sessions, receive questions or otherwise interact with Viewers.\n• "Viewer" means a person using AskMe to discover or interact with a Creator.\n• "User" means any person accessing or using AskMe, including a Viewer and Creator.\n• "Paid Question" means a question or message submitted through a paid interaction feature for which the Viewer completes the applicable payment transaction.\n• "Platform Fee" means the fee charged by AskMe for providing its applicable platform services.\n• "Payment Service Provider" means a bank, payment gateway, payment aggregator, payment processor, acquiring institution, card network, foreign exchange provider or other authorised service provider used by AskMe or its transaction partners.\n• "Creator Gross Share" means the portion of an eligible transaction attributable to the Creator after deduction of the applicable AskMe Platform Fee but before applicable taxes, processing charges, withholding, refunds, reversals, chargebacks and other permitted deductions.\n• "Creator Net Earnings" means the amount remaining from the Creator Gross Share after applicable deductions.'
+      content: 'For purposes of this Agreement:\n• "AskMe" means the technology platform operated by FuturePast Ventures LLP.\n• "Creator" means a person or eligible entity approved to use AskMe\'s Creator functionality to establish a profile, conduct sessions, receive questions or otherwise interact with Viewers.\n• "Viewer" means a person using AskMe to discover or interact with a Creator.\n• "User" means any person accessing or using AskMe, including a Viewer and Creator.\n• "Paid Question" means a question or message submitted through a paid interaction feature for which the Viewer completes the applicable payment transaction.\n• "Platform Fee" means the fee charged by AskMe for providing its applicable platform services.\n• "Payment Service Provider" means a bank, payment gateway, payment aggregator, payment processor, acquiring institution, card network, foreign exchange provider or other authorised service provider used by AskMe or its transaction partners.\n• "Creator Gross Share" means the portion of an eligible transaction attributable to the Creator after deduction of the applicable AskMe Platform Fee but before applicable taxes, processing charges, withholding, payment adjustments, chargebacks and other permitted deductions.\n• "Creator Net Earnings" means the amount remaining from the Creator Gross Share after applicable deductions.'
     },
     {
       num: '4',
@@ -111,7 +111,7 @@ export default function EulaPage() {
     {
       num: '17',
       title: 'Payment Service Providers',
-      content: 'AskMe may use one or more Payment Service Providers to facilitate transactions including payment authentication, transaction processing, fraud screening, settlement, refunds, reversals, chargebacks, currency conversion and related functions. FuturePast may change or replace Payment Service Providers for operational, commercial, technical, regulatory, compliance or risk management reasons.'
+      content: 'AskMe may use one or more Payment Service Providers to facilitate transactions including payment authentication, transaction processing, fraud screening, settlement, payment adjustment, reversals, chargebacks, currency conversion and related functions. FuturePast may change or replace Payment Service Providers for operational, commercial, technical, regulatory, compliance or risk management reasons.'
     },
     {
       num: '18',
@@ -146,7 +146,7 @@ export default function EulaPage() {
     {
       num: '24',
       title: 'Creator Earnings Calculation',
-      content: 'Standard Calculation:\n• Transaction Amount: 100%\n• Less AskMe Platform Fee: ordinarily 15%\n• Creator Gross Share: ordinarily 80.3%\n• Less Applicable Deductions\n• Creator Net Earnings: remaining amount\n\n  The applicable deductions may include taxes, payment processing charges, foreign exchange charges, statutory withholding, refunds, reversals, chargebacks, fraud adjustments, Payment Service Provider adjustments and other legally required or contractually applicable deductions.\n Example:Viewer pays \$10, AskMe Platform Fee is \$1.50, Creator Gross Share is \$8.50. If applicable deductions total \$0.70, Creator Net Earnings would be \$7.80. This is an illustration only.'
+      content: 'Standard Calculation:\n• Transaction Amount: 100%\n• Less AskMe Platform Fee: ordinarily 15%\n• Creator Gross Share: ordinarily 80.3%\n• Less Applicable Deductions\n• Creator Net Earnings: remaining amount\n\n  The applicable deductions may include taxes, payment processing charges, foreign exchange charges, statutory withholding, payment adjustment, chargebacks, fraud adjustments, Payment Service Provider adjustments and other legally required or contractually applicable deductions.\n Example:Viewer pays \$10, AskMe Platform Fee is \$1.50, Creator Gross Share is \$8.50. If applicable deductions total \$0.70, Creator Net Earnings would be \$7.80. This is an illustration only.'
     },
     {
       num: '25',
@@ -195,13 +195,13 @@ export default function EulaPage() {
     },
     {
       num: '34',
-      title: 'Refunds',
-      content: 'Paid Questions are voluntary audience interaction payments. Viewers do not automatically qualify for refunds because they changed their mind, disliked a response, asked the wrong question, or expected faster answers. Refunds may be considered where transactions were unauthorised, duplicated due to technical error, debited without a corresponding transaction, or where required by law.'
+      title: 'Payment Adjustment',
+      content: 'Paid Questions are voluntary audience interaction payments. Viewers do not automatically qualify for payment adjustment because they changed their mind, disliked a response, asked the wrong question, or expected faster answers. payment adjustment may be considered where transactions were unauthorised, duplicated due to technical error, debited without a corresponding transaction, or where required by law.'
     },
     {
       num: '35',
-      title: 'Refund Effect on Creator Earnings',
-      content: 'Where a transaction is refunded, reversed or cancelled, corresponding Creator earnings may be adjusted. If the amount has already been credited, AskMe may recover or offset the amount against future Creator earnings.'
+      title: 'Payment Adjustment Effect on Creator Earnings',
+      content: 'Where a transaction is No payment adjustment, reversed or cancelled, corresponding Creator earnings may be adjusted. If the amount has already been credited, AskMe may recover or offset the amount against future Creator earnings.'
     },
     {
       num: '36',
@@ -211,7 +211,7 @@ export default function EulaPage() {
     {
       num: '37',
       title: 'Creator Payouts',
-      content: 'Creator earnings become eligible for payout after settlement, KYC, fraud, refund, chargeback and compliance requirements are satisfied. Pending earnings balances do not constitute an unconditional payout entitlement.'
+      content: 'Creator earnings become eligible for payout after settlement, KYC, fraud, payment adjustment, chargeback and compliance requirements are satisfied. Pending earnings balances do not constitute an unconditional payout entitlement.'
     },
     {
       num: '38',
@@ -254,7 +254,7 @@ export default function EulaPage() {
     {
       num: '88-96',
       title: 'Creator Financials & Payouts (Clauses 88 to 96)',
-      content: '• Gross Revenue Share (Clause 88): Standard model is 15% Platform Fee and 80.3% Creator Gross Share.\n• Variable & Promotional Fees (Clauses 89-91): Platform Fees may adjust for campaigns, referrals, or risk assessments.\n• Net Earnings (Clause 92): Final payout is calculated after deducting taxes, processing charges, withholding, refunds, and chargebacks.\n• Payment Provider Requirements & Holds (Clauses 93-96): Payouts subject to settlement, KYC, and chargeback recovery.'
+      content: '• Gross Revenue Share (Clause 88): Standard model is 15% Platform Fee and 80.3% Creator Gross Share.\n• Variable & Promotional Fees (Clauses 89-91): Platform Fees may adjust for campaigns, referrals, or risk assessments.\n• Net Earnings (Clause 92): Final payout is calculated after deducting taxes, processing charges, withholding, payment adjustment, and chargebacks.\n• Payment Provider Requirements & Holds (Clauses 93-96): Payouts subject to settlement, KYC, and chargeback recovery.'
     },
     {
       num: '97-104',
@@ -450,7 +450,7 @@ export default function EulaPage() {
                 • <strong>Creator Gross Share:</strong> 80.3% of the applicable transaction amount.
               </p>
               <p>
-                • <strong>Applicable Deductions from Gross Share:</strong> Taxes (GST), payment processing charges, statutory withholding, refunds, reversals, chargebacks and other legally applicable adjustments.
+                • <strong>Applicable Deductions from Gross Share:</strong> Taxes (GST), payment processing charges, statutory withholding, payment adjustment, reversals, chargebacks and other legally applicable adjustments.
               </p>
               <p className="p-4 rounded-2xl bg-[#141422] border border-[#222234] text-xs text-[#8E8E9F]">
                 💡 <strong>Important Note:</strong> AskMe may increase or reduce the 15% Platform Fee for promotional campaigns, referral programs, special arrangements, channel risk, transaction risk, payment provider requirements or compliance considerations. The Creator&apos;s 80.3% is a gross share, not a guaranteed net payout.

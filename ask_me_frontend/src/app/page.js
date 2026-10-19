@@ -594,9 +594,9 @@ export default function Home() {
     {
       id: 'r7',
       category: 'Revenue & Payouts',
-      askme: 'If a creator does not respond to your question, this alone does not qualify you for a refund',
-      yt: 'No automatic refund policy',
-      twitch: 'Non-refundable digital tokens',
+      askme: 'If a creator does not respond to your question, this alone does not qualify for compensation or any payment adjustment.',
+      yt: 'No automatic payment adjustment policy',
+      twitch: 'Non payment adjustment digital tokens',
     },
     {
       id: 'r8',
@@ -653,7 +653,7 @@ export default function Home() {
       categoryTag: 'FOR VIEWERS',
       question: 'What happens if the stream ends before my question is answered?',
       answer:
-        'If a creator ends their broadcast without answering your queued question, our automated system immediately triggers a no refund back to your original payment method.',
+        'If a creator ends their broadcast without answering your queued question, our automated system immediately triggers a no payment adjustment back to your original payment method.',
     },
     {
       id: 'q5',
@@ -3086,7 +3086,7 @@ export default function Home() {
 
                     <div className="pt-2 border-t border-[#1C1C2A] flex items-center gap-2 text-[11px] text-[#8E8E9F] font-normal">
                       <span className="h-1.5 w-1.5 rounded-full bg-[#EB1000] shrink-0"></span>
-                      <span>Direct Stripe payouts</span>
+                      <span>Direct payouts</span>
                     </div>
                   </div>
 
@@ -3105,14 +3105,14 @@ export default function Home() {
                       <div className="space-y-1">
                         <h3 className="text-sm font-bold text-white tracking-tight">For Viewers</h3>
                         <p className="text-xs text-[#9E9EB2] font-normal leading-relaxed">
-                          A genuine opportunity to be heard when supporting admired creators.
+                          Support your favorite creators directly and get priority placement in their live Q&A queue.
                         </p>
                       </div>
                     </div>
 
                     <div className="pt-2 border-t border-[#1C1C2A] flex items-center gap-2 text-[11px] text-[#8E8E9F] font-normal">
                       <span className="h-1.5 w-1.5 rounded-full bg-[#10B981] shrink-0"></span>
-                      <span>No refund if unanswered</span>
+                      <span>All payments are voluntary and non-refundable.</span>
                     </div>
                   </div>
 
@@ -3443,7 +3443,7 @@ export default function Home() {
               </div>
             ) : !testimonialsLoading && (
               <div className="p-8 text-center text-[#8B8B9E] text-xs font-mono border border-dashed border-[#202032] rounded-2xl">
-                No active creator testimonials to display at the moment.
+                Hide this section in code until real creator testimonials are added
               </div>
             )}
 
@@ -3648,13 +3648,13 @@ export default function Home() {
                   Designed for Viewers
                 </h3>
                 <p className="text-xs text-[#8E8E9F] font-medium leading-relaxed">
-                  Recognition, queue tracking, priority support .
+                  Recognition, live queue tracking, priority studio placement, and direct voluntary support for your favorite creators.
                 </p>
               </div>
 
               <div className="pt-3 border-t border-[#1C1C2A] flex items-center gap-1.5 text-[11px] text-[#06B6D4] font-medium">
                 <span className="h-1.5 w-1.5 rounded-full bg-[#06B6D4]"></span>
-                <span>Instant tracking</span>
+                <span>Instant queue delivery.</span>
               </div>
             </div>
           </div>

@@ -559,7 +559,7 @@ export default function AllCreatorsPage() {
               {/* Notice */}
               <div className="p-3 rounded-xl bg-[#180A0C] border border-[#EB1000]/30 text-[11px] text-[#EB1000] flex items-center gap-2">
                 <ShieldCheck className="h-4 w-4 shrink-0" />
-                <span>100% Protection: Full refund if creator misses your question.</span>
+                <span>No payment adjustment if creator misses your question.</span>
               </div>
 
               {/* Submit Buttons */}

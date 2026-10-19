@@ -250,7 +250,7 @@ export default function LandingNavbar() {
               <Logo size="sm" />
               <div className="flex flex-col leading-none">
                 <span className="font-heading font-black text-white text-[15px] tracking-tight">
-                  Ask-Me.Live
+                  Ask-Me<span className="text-[#EB1000]">.Live</span>
                 </span>
                 <span className="text-[8px] font-bold text-[#6E6E80] tracking-wider uppercase mt-0.5">
                   Discover | Grow | Engage | Monetize

@@ -75,9 +75,9 @@ export default function LandingFooter() {
             {/* Registered Office Entity Card directly under Social Icons */}
             <div className="pt-2 max-w-sm">
               <div className="p-3.5 rounded-2xl bg-[#0F0F18] border border-[#222234] text-xs space-y-1 shadow-md">
-                <p className="font-bold text-white text-[12.5px] tracking-tight">Futurepast ventures LLP</p>
+                <p className="font-bold text-white text-[12.5px] tracking-tight">FuturePast Ventures LLP.</p>
                 <p className="text-[11.5px] text-[#8E8E9F] leading-snug">
-                  Lake View City, Lohegaon, Pune 411047, MH, India
+                  Lake View City, Lohegaon, Pune 411047, Maharashtra, India
                 </p>
               </div>
             </div>
@@ -207,6 +207,11 @@ export default function LandingFooter() {
                 <li>
                   <Link href="/grievance-policy" className="hover:text-white transition-colors">
                     Grievance Policy
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/terms-and-conditions" className="hover:text-white transition-colors">
+                    Terms and Conditions Policy
                   </Link>
                 </li>
               </ul>

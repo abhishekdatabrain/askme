@@ -2372,7 +2372,7 @@ export default function CreatorKycPage() {
                                             <li><strong>Viewer pays:</strong> 100%</li>
                                             <li><strong>AskMe standard Platform Fee:</strong> 15%</li>
                                             <li><strong>Creator Gross Share:</strong> 80.3%</li>
-                                            <li><strong>Applicable deductions from Creator Gross Share:</strong> Taxes, payment processing charges, statutory withholding, refunds, reversals, chargebacks and other legally or contractually applicable adjustments.</li>
+                                            <li><strong>Applicable deductions from Creator Gross Share:</strong> Taxes, payment processing charges, statutory withholding, payment adjustment, reversals, chargebacks and other legally or contractually applicable adjustments.</li>
                                             <li><strong>Creator Net Earnings:</strong> The amount remaining after applicable deductions.</li>
                                         </ul>
                                     </div>
@@ -2400,7 +2400,7 @@ export default function CreatorKycPage() {
                                             <p><strong>20–26. Commercial Terms & Platform Fees:</strong> Standard 15% Platform Fee, 80.3% Creator Gross Share before applicable taxes, processing, and statutory deductions.</p>
                                             <p><strong>27–29. Taxes & Invoicing:</strong> GST invoicing and statutory deductions applied in accordance with Indian tax regulations.</p>
                                             <p><strong>30–33. International Payments & Sanctions:</strong> Restricted international jurisdictions include Pakistan, Bangladesh, Democratic People&apos;s Republic of Korea (North Korea), Palestine, and Türkiye.</p>
-                                            <p><strong>34–39. Refunds, Chargebacks & Payout Timing:</strong> Subject to settlement, KYC verification, and anti-fraud screening.</p>
+                                            <p><strong>34–39. payment adjustment, Chargebacks & Payout Timing:</strong> Subject to settlement, KYC verification, and anti-fraud screening.</p>
                                             <p><strong>40–51. Safety, Harassment & Prohibited Content:</strong> Zero tolerance for CSAM, unlawful content, harassment, doxxing, impersonation, or financial crime.</p>
                                             <p><strong>52–55. Intellectual Property & AI Moderation:</strong> FuturePast retains platform IP rights. Automated systems and AI assist moderation.</p>
                                             <p><strong>56–65. Account Suspension, Termination & SLA:</strong> Right reserved to suspend or terminate accounts for material breaches or risk considerations.</p>

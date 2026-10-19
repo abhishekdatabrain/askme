@@ -98,7 +98,7 @@ export default function PaymentManagement({ activeSubTab }) {
             Payment Management & Gateway Audit Logs
           </h2>
           <p className="text-xs text-[#8B8B96] mt-0.5">
-            Audit live payment transactions, successful charges, gateway failures, and automatic refunds.
+            Audit live payment transactions, successful charges, gateway failures, and automatic payment adjustments.
           </p>
         </div>
       </div>

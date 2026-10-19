@@ -1038,7 +1038,7 @@ function ViewerPaymentContent() {
 
                   {/* Preset Chips */}
                   <div className="grid grid-cols-5 gap-2 mb-3">
-                    {['40','50', '100', '250', '500'].map(val => (
+                    {['40', '50', '100', '250', '500'].map(val => (
                       <button
                         key={val}
                         type="button"
@@ -1259,19 +1259,10 @@ function ViewerPaymentContent() {
                   <label htmlFor="payConsentCheck" className="text-xs text-[#8B8B96] cursor-pointer select-none leading-relaxed">
                     I agree to the <span className="font-semibold text-white">Contact Consent Disclaimer</span>
                     <p className="mt-1 text-[11px] leading-relaxed">
-                      By providing your mobile number, email address, or other contact details to{' '}
-                      <Link href="https://ask-me.live" target="_blank" rel="noopener noreferrer" className="text-[#EB1000] hover:underline font-medium">
-                        Ask-me.live
-                      </Link>
-                      , you acknowledge and agree that{' '}
-                      <Link href="https://ask-me.live" target="_blank" rel="noopener noreferrer" className="text-[#EB1000] hover:underline font-medium">
-                        Ask-me.live
-                      </Link>{' '}
-                      and its authorized representatives may contact you through calls, SMS, WhatsApp, email, or other communication channels for service related, transactional, account, support, marketplace, promotional, and other legitimate business purposes.
+                      By proceeding with this payment, you acknowledge that this is a voluntary, non-refundable fan support contribution (similar to a Super Chat) that places your question in the Creator's priority queue. Answering is strictly on the Creator's own will, and neither AskMe.live nor FuturePast Ventures LLP guarantees a response or provides refunds for unanswered questions.
+
                     </p>
-                    <p className="mt-1 text-[11px] leading-relaxed">
-                      You may opt out of promotional communications at any time. Service and transactional communications may still be sent where necessary to provide or administer our services.
-                    </p>
+
                   </label>
                 </div>
               </form>

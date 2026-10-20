@@ -1,8 +1,10 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import ViewerSidebar from '@/components/ViewerSidebar';
+import Logo from '@/components/Logo';
 import { getViewerToken, getViewerUser } from '@/utils/cookies';
 
 export default function ViewerLayout({ children }) {
@@ -78,19 +80,17 @@ export default function ViewerLayout({ children }) {
       <div className={`md:hidden flex items-center justify-between px-4 py-3 border-b z-40 shrink-0 ${
         theme === 'light' ? 'bg-white border-[#E2E8F0]' : 'bg-[#0D0D14] border-[#1F1F30]'
       }`}>
-        <div className="flex items-center gap-2.5">
-          <div className="h-7 w-7 rounded-lg bg-[#EB1000] flex items-center justify-center text-white font-black text-xs shadow-sm">
-            a
-          </div>
+        <Link href="/viewers/dashboard" className="flex items-center gap-2.5 group">
+          <Logo size="sm" />
           <div>
             <span className={`font-heading font-black text-sm block leading-none ${theme === 'light' ? 'text-[#0F172A]' : 'text-white'}`}>
-              AskMe
+              AskMe <span className="text-[#EB1000]">VIEWER</span>
             </span>
             <span className="text-[9px] font-bold uppercase tracking-wider block text-[#EB1000] mt-0.5">
               Viewer Hub
             </span>
           </div>
-        </div>
+        </Link>
         <button
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           className={`p-2 rounded-xl border cursor-pointer ${
@@ -121,7 +121,12 @@ export default function ViewerLayout({ children }) {
             <div className={`p-3.5 border-b flex items-center justify-between shrink-0 ${
               theme === 'light' ? 'bg-[#F8FAFC] border-[#E2E8F0]' : 'bg-[#0A0A0F] border-[#1F1F30]'
             }`}>
-              <span className="font-heading font-black text-xs uppercase tracking-wider text-[#EB1000]">Viewer Navigation</span>
+              <div className="flex items-center gap-2">
+                <Logo size="xs" />
+                <span className={`font-heading font-black text-xs uppercase tracking-wider ${theme === 'light' ? 'text-[#0F172A]' : 'text-white'}`}>
+                  AskMe <span className="text-[#EB1000]">VIEWER</span>
+                </span>
+              </div>
               <button
                 onClick={() => setMobileMenuOpen(false)}
                 className={`p-1.5 rounded-lg border cursor-pointer ${

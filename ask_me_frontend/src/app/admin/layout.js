@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import AdminNavbar from '@/components/AdminNavbar';
 import AdminSidebar from '@/components/AdminSidebar';
+import Logo from '@/components/Logo';
 import CreatorRegisterForm from '@/components/CreatorRegisterForm';
 import { getAdminToken, getAdminUser, clearAdminSession, isTokenExpired, handleAdminTokenExpiration } from '@/utils/cookies';
 import { ShieldCheck } from 'lucide-react';
@@ -107,9 +108,7 @@ export default function AdminLayout({ children }) {
   if (loading || !isAuthorized) {
     return (
       <div className="min-h-screen bg-[#0A0A0F] text-[#F5F5F7] flex flex-col items-center justify-center space-y-4">
-        <div className="h-12 w-12 rounded-2xl bg-[#EB1000] flex items-center justify-center text-white font-black text-2xl animate-pulse shadow-lg shadow-[#EB1000]/30">
-          a
-        </div>
+        <Logo size="xl" className="animate-pulse shadow-lg shadow-[#EB1000]/30" />
         <div className="flex items-center gap-2 text-sm font-semibold text-[#8B8B96]">
           <ShieldCheck className="h-4 w-4 text-[#EB1000] animate-spin" />
           <span>Verifying Admin Control Room Access...</span>

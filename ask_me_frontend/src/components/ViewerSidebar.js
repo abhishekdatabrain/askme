@@ -482,6 +482,14 @@ function ViewerSidebarContent({ theme: propTheme, onToggleTheme, activeTab: curr
     </div>
   );
 
+  if (isMobileDrawer) {
+    return (
+      <div className="h-full w-full overflow-y-auto">
+        {renderSidebarContent()}
+      </div>
+    );
+  }
+
   return (
     <>
       {/* Mobile Sticky Header (< md) */}
@@ -497,9 +505,7 @@ function ViewerSidebarContent({ theme: propTheme, onToggleTheme, activeTab: curr
           </button>
 
           <Link href="/" className="flex items-center gap-2">
-            <div className="h-7 w-7 rounded-lg bg-[#EB1000] flex items-center justify-center text-white font-black text-sm shadow-sm">
-              a
-            </div>
+            <Logo size="sm" />
             <span className="font-heading font-black text-sm">
               AskMe <span className="text-[#EB1000]">VIEWER</span>
             </span>

@@ -3,6 +3,7 @@
 import React, { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import ViewerSidebar from '@/components/ViewerSidebar';
+import Logo from '@/components/Logo';
 import SplashLoader from '@/components/SplashLoader';
 import { API_ENDPOINTS, getMediaUrl } from '@/config/api';
 import {
@@ -322,44 +323,6 @@ function LiveSessionsContent() {
     <>
       {/* 2. MAIN CONTENT CONTAINER */}
       <div className="flex-1 flex flex-col min-w-0">
-        {/* MOBILE HEADER */}
-        <header className={`md:hidden sticky top-0 z-40 border-b px-4 py-3 flex items-center justify-between shadow-lg ${theme === 'light' ? 'bg-white border-[#E2E8F0]' : 'bg-[#0A0A0F] border-[#1F1F30]'
-          }`}>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className={`p-2 rounded-xl border ${theme === 'light' ? 'bg-[#F1F5F9] border-[#E2E8F0] text-[#0F172A]' : 'bg-[#14141F] border-[#1F1F30] text-white'}`}
-            >
-              {mobileMenuOpen ? <X className="h-5 w-5 text-[#EB1000]" /> : <Menu className="h-5 w-5 text-[#EB1000]" />}
-            </button>
-            <div className="h-8 w-8 rounded-xl bg-[#EB1000] flex items-center justify-center text-white font-black text-lg shadow-sm">
-              a
-            </div>
-            <span className="font-heading font-black text-sm text-white">
-              AskMe <span className="text-[#EB1000]">LIVE</span>
-            </span>
-          </div>
-
-          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#EB1000] text-white text-[10px] font-black uppercase shadow-sm">
-            <span className="h-1.5 w-1.5 rounded-full bg-white animate-ping"></span>
-            {liveCreators.length} LIVE
-          </div>
-        </header>
-
-        {/* MOBILE DRAWER */}
-        {mobileMenuOpen && (
-          <div className="md:hidden fixed inset-0 z-50 bg-[#0A0A0F]/90 backdrop-blur-md flex">
-            <div className="w-64 max-w-[80vw] h-full">
-              <ViewerSidebar
-                theme={theme}
-                onToggleTheme={(t) => setTheme(t)}
-                activeTab="live-sessions"
-              />
-            </div>
-            <div className="flex-1" onClick={() => setMobileMenuOpen(false)}></div>
-          </div>
-        )}
-
         {/* TOP HEADER TITLE & LIVE STATS */}
         <header className={`border-b px-4 sm:px-6 py-4 flex flex-col md:flex-row md:items-center justify-between gap-4 sticky top-0 z-30 shrink-0 backdrop-blur-md shadow-sm transition-colors ${theme === 'light' ? 'bg-white/95 border-[#E2E8F0]' : 'bg-[#0A0A0F]/95 border-[#1F1F30]'
           }`}>

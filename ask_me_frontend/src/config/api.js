@@ -135,18 +135,67 @@ export const API_ENDPOINTS = {
   },
 };
 
+export const DEFAULT_AVATAR = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80';
+export const DEFAULT_BANNER = 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80';
+
 /**
  * Get accessible media URL for images/documents stored in backend or external URLs
  * @param {string} path - Upload path (e.g. /uploads/profiles/123.png) or external URL
  * @returns {string} Complete image/file URL for preview
  */
 export const getMediaUrl = (path) => {
-  if (!path) return '';
-  if (path.startsWith('http://') || path.startsWith('https://') || path.startsWith('data:')) {
-    return path;
+  if (!path || typeof path !== 'string') return '';
+  const trimmed = path.trim();
+  if (!trimmed) return '';
+
+  if (trimmed.startsWith('data:') || trimmed.startsWith('blob:')) {
+    return trimmed;
   }
-  const backendBase = SOCKET_URL || 'http://localhost:5000';
-  const cleanPath = path.startsWith('/') ? path : `/${path}`;
-  return `${backendBase}${cleanPath}`;
+
+  // Normalize windows backslashes
+  let cleanPath = trimmed.replace(/\\/g, '/');
+
+  // If path contains hardcoded localhost:5000 or 127.0.0.1:5000 from past uploads
+  if (cleanPath.includes('localhost:5000') || cleanPath.includes('127.0.0.1:5000')) {
+    cleanPath = cleanPath.replace(/^https?:\/\/(localhost|127\.0\.0\.1):5000/, '');
+  }
+
+  // If it's an external URL (e.g. unsplash, cdn, youtube)
+  if (cleanPath.startsWith('http://') || cleanPath.startsWith('https://')) {
+    // If the frontend is HTTPS, upgrade http to https for same-domain or compatible URLs
+    if (typeof window !== 'undefined' && window.location.protocol === 'https:' && cleanPath.startsWith('http://')) {
+      if (cleanPath.includes(window.location.hostname)) {
+        cleanPath = cleanPath.replace('http://', 'https://');
+      }
+    }
+    return cleanPath;
+  }
+
+  // Ensure clean leading slash for relative paths
+  if (!cleanPath.startsWith('/')) {
+    cleanPath = `/${cleanPath}`;
+  }
+
+  // Determine backend base URL for resolving uploaded media
+  let backendBase = SOCKET_URL || '';
+  if (!backendBase && API_BASE_URL) {
+    backendBase = API_BASE_URL.replace(/\/api\/?$/, '');
+  }
+  if (!backendBase) {
+    backendBase = 'http://localhost:5000';
+  }
+
+  // If running in browser and accessed from a LAN IP or remote server (e.g. 192.168.x.x, domain)
+  // while backendBase is still pointing to localhost/127.0.0.1, adapt it to the current hostname
+  if (typeof window !== 'undefined') {
+    const hostname = window.location.hostname;
+    const isRemoteClient = hostname !== 'localhost' && hostname !== '127.0.0.1';
+    if (isRemoteClient && (backendBase.includes('localhost') || backendBase.includes('127.0.0.1'))) {
+      backendBase = `${window.location.protocol}//${hostname}:5000`;
+    }
+  }
+
+  return `${backendBase.replace(/\/+$/, '')}${cleanPath}`;
 };
+
 

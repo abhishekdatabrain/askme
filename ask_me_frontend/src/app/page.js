@@ -9,7 +9,7 @@ import CreatorCard from '@/components/CreatorCard';
 import Logo from '../components/Logo';
 import VipMembershipModal from '@/components/VipMembershipModal';
 import StreamPlayerModal from '@/components/StreamPlayerModal';
-import { API_ENDPOINTS, getMediaUrl } from '@/config/api';
+import { API_ENDPOINTS, getMediaUrl, DEFAULT_AVATAR, DEFAULT_BANNER } from '@/config/api';
 import { getViewerToken, getCookie, getViewerUser } from '@/utils/cookies';
 import { useToast } from '@/context/ToastContext';
 import AuthModal from '@/components/AuthModal';
@@ -272,7 +272,7 @@ export default function Home() {
               username: item.username || `@${item.cleanUsername || 'creator'}`,
               category: (item.session?.category || item.category || 'LIVE BROADCAST').toUpperCase(),
               subscribers: `${item.followersCount} Followers`,
-              avatar: item.session?.thumbnail || item.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=800&q=80',
+              avatar: getMediaUrl(item.session?.thumbnail || item.avatar) || DEFAULT_AVATAR,
               title: item.session?.title ? `${item.fullName || item.username} - ${item.session.title}` : `${item.fullName || item.username} is Live`,
               streamTitle: item.session?.description ? `"${item.session.description}"` : `"${item.bio || 'Live Q&A & Audience SuperChat Session'}"`,
               broadcastingTo: item.session?.platform || item.platform || 'YouTube & Twitch',
@@ -305,8 +305,8 @@ export default function Home() {
               name: item.fullName || item.name || item.username || 'Creator',
               handle: `@${cleanUser}`,
               cleanUsername: cleanUser,
-              avatar: item.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80',
-              banner: item.session?.thumbnail || item.banner || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80',
+              avatar: getMediaUrl(item.avatar) || DEFAULT_AVATAR,
+              banner: getMediaUrl(item.session?.thumbnail || item.banner) || DEFAULT_BANNER,
               category: item.category || item.session?.category || 'Technology',
               platform: item.session?.platform?.toLowerCase() || item.platform || 'youtube',
               minFee: item.minFee || item.session?.minDonationAmount || 100,

@@ -57,9 +57,18 @@ const path = require('path');
 const truecallerRoutes = require('./routes/truecallerRoutes');
 const uploadRoutes = require('./routes/uploadRoutes');
 
+const fs = require('fs');
+['uploads', 'uploads/profiles', 'uploads/documents', 'uploads/general'].forEach(dir => {
+  const fullPath = path.join(__dirname, '..', dir);
+  if (!fs.existsSync(fullPath)) {
+    fs.mkdirSync(fullPath, { recursive: true });
+  }
+});
+
 // Serve static uploaded files (/uploads/profiles/..., /uploads/documents/..., /uploads/testimonials/...)
 app.use('/uploads/testimonials', express.static(path.join(__dirname, '../uploads/profiles')));
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+app.use('/api/uploads', express.static(path.join(__dirname, '../uploads')));
 
 const { getPublicTestimonials } = require('./controllers/creatorTestimonialController');
 

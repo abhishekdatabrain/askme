@@ -254,7 +254,16 @@ export default function LandingFooter() {
             <p>© 2026 AskMe (Futurepast ventures LLP). All rights reserved.</p>
             <p className="text-[11px] text-[#717182]">Creators keep 80.3% of eligible revenue, subject to applicable terms, fees, eligibility and payment conditions.</p>
           </div>
-          <p className="shrink-0 text-center sm:text-right">Developed by Databrain Technology Pvt. Ltd.</p>
+          <p className="shrink-0 text-center sm:text-right">
+            <a
+              href="https://databrainit.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-white transition-colors"
+            >
+              Developed by Databrain Technology Pvt. Ltd.
+            </a>
+          </p>
         </div>
       </div>
     </footer>

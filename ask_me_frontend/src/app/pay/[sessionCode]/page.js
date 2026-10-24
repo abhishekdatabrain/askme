@@ -29,7 +29,7 @@ import {
   UserPlus,
   ArrowLeft
 } from 'lucide-react';
-import { API_ENDPOINTS, getMediaUrl } from '@/config/api';
+import { API_ENDPOINTS, getMediaUrl, DEFAULT_AVATAR } from '@/config/api';
 import { getViewerToken, getViewerUser, setViewerSession, clearViewerSession, removeCookie } from '@/utils/cookies';
 import Logo from '@/components/Logo';
 import GoogleAuthProvider from '@/components/GoogleAuthProvider';
@@ -972,9 +972,13 @@ function ViewerPaymentContent() {
             <div className="flex items-center gap-4 border-b border-[#1C1C26] pb-5">
               {creatorData?.profileImage ? (
                 <img
-                  src={getMediaUrl(creatorData.profileImage)}
+                  src={getMediaUrl(creatorData.profileImage) || DEFAULT_AVATAR}
                   alt={creatorData.fullName}
                   className="h-16 w-16 rounded-2xl object-cover border-2 border-[#00F5D4]/40 shadow-md shrink-0"
+                  onError={(e) => {
+                    e.currentTarget.onerror = null;
+                    e.currentTarget.src = DEFAULT_AVATAR;
+                  }}
                 />
               ) : (
                 <Logo size="xl" className="rounded-2xl shrink-0" />

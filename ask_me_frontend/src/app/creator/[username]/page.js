@@ -5,7 +5,7 @@ import Link from 'next/link';
 import SplashLoader from '@/components/SplashLoader';
 import LandingNavbar from '@/components/LandingNavbar';
 import LandingFooter from '@/components/LandingFooter';
-import { API_ENDPOINTS, getMediaUrl } from '@/config/api';
+import { API_ENDPOINTS, getMediaUrl, DEFAULT_AVATAR } from '@/config/api';
 import {
   User,
   Radio,
@@ -234,9 +234,13 @@ export default function CreatorPublicProfilePage({ params: paramsPromise }) {
             {/* Creator Avatar & Identity Info */}
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5">
               <img
-                src={getMediaUrl(creator.avatar)}
+                src={getMediaUrl(creator.avatar) || DEFAULT_AVATAR}
                 alt={creator.fullName}
                 className="h-24 w-24 sm:h-28 sm:w-28 rounded-2xl object-cover border-2 border-[#EB1000]/40 shadow-xl shadow-red-950/20 bg-[#0A0A0F] shrink-0"
+                onError={(e) => {
+                  e.currentTarget.onerror = null;
+                  e.currentTarget.src = DEFAULT_AVATAR;
+                }}
               />
 
               <div className="space-y-1.5">

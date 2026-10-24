@@ -1,5 +1,6 @@
 import React from 'react';
 import { Star, MessageSquare, ArrowUpRight, Crown, Video, Users, Clock, Flame } from 'lucide-react';
+import { getMediaUrl, DEFAULT_AVATAR, DEFAULT_BANNER } from '@/config/api';
 
 export default function CreatorCard({
   creator,
@@ -55,9 +56,13 @@ export default function CreatorCard({
         <div className="relative h-36 w-full rounded-2xl overflow-hidden bg-[#161622] bg-gradient-to-r from-purple-950/80 via-indigo-950/80 to-black">
           {banner ? (
             <img
-              src={banner}
+              src={getMediaUrl(banner)}
               alt=""
               className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-90"
+              onError={(e) => {
+                e.currentTarget.onerror = null;
+                e.currentTarget.src = DEFAULT_BANNER;
+              }}
             />
           ) : (
             <div className="h-full w-full bg-gradient-to-br from-[#1C0A0D] via-[#161622] to-[#0A0A10]"></div>
@@ -92,9 +97,13 @@ export default function CreatorCard({
           {/* Avatar with Checkmark */}
           <div className="relative shrink-0 z-10">
             <img
-              src={avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80'}
+              src={getMediaUrl(avatar) || DEFAULT_AVATAR}
               alt={name || 'Creator Avatar'}
               className="h-16 w-16 rounded-2xl object-cover border-2 border-[#10B981] shadow-xl bg-[#0D0D14]"
+              onError={(e) => {
+                e.currentTarget.onerror = null;
+                e.currentTarget.src = DEFAULT_AVATAR;
+              }}
             />
             <div className="absolute -bottom-1 -right-1 h-5 w-5 rounded-full bg-[#EB1000] text-white font-black flex items-center justify-center text-[10px] border-2 border-[#0D0D14] shadow-md">
               ✓

@@ -72,7 +72,7 @@ export default function LandingNavbar() {
               setCurrentUser(prev => prev ? ({ ...prev, kycStatus: liveKyc, kyc_status: liveKyc }) : prev);
             }
           })
-          .catch(() => {});
+          .catch(() => { });
       }
       return;
     }
@@ -135,7 +135,7 @@ export default function LandingNavbar() {
       const viewerToken = getViewerToken() || getCookie('askme_viewer_token');
       // 1. Register FCM Web Push token for this viewer device
       if (viewerToken) {
-        requestViewerFcmToken(viewerToken, currentUser.id).catch(() => {});
+        requestViewerFcmToken(viewerToken, currentUser.id).catch(() => { });
       }
 
       // 2. Connect Socket and join viewer private room
@@ -162,7 +162,7 @@ export default function LandingNavbar() {
                   window.location.href = `/pay/${data.sessionCode}`;
                 }
               };
-            } catch (e) {}
+            } catch (e) { }
           }
         };
 
@@ -301,11 +301,10 @@ export default function LandingNavbar() {
                   onClick={() => setUserDropdownOpen(!userDropdownOpen)}
                   className="flex items-center gap-2.5 py-1.5 pl-2 pr-3.5 rounded-full bg-[#161622] hover:bg-[#1E1E2E] border border-[#26263A] transition-all cursor-pointer shadow-md group"
                 >
-                  <div className={`h-7 w-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0 text-white shadow-sm overflow-hidden ${
-                    userRole === 'creator'
+                  <div className={`h-7 w-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0 text-white shadow-sm overflow-hidden ${userRole === 'creator'
                       ? 'bg-gradient-to-tr from-[#EB1000] to-[#FF4633]'
                       : 'bg-gradient-to-tr from-emerald-600 to-teal-500'
-                  }`}>
+                    }`}>
                     {userAvatar ? (
                       <img src={userAvatar} alt={displayName} className="h-full w-full object-cover" />
                     ) : (
@@ -316,15 +315,13 @@ export default function LandingNavbar() {
                     <span className="text-xs font-bold text-white truncate">
                       {displayName}
                     </span>
-                    <span className={`text-[9px] font-black uppercase tracking-wider ${
-                      userRole === 'creator' ? 'text-[#FF5A43]' : 'text-emerald-400'
-                    }`}>
+                    <span className={`text-[9px] font-black uppercase tracking-wider ${userRole === 'creator' ? 'text-[#FF5A43]' : 'text-emerald-400'
+                      }`}>
                       {userRole === 'creator' ? 'Creator' : 'Viewer'}
                     </span>
                   </div>
-                  <ChevronDown className={`h-3.5 w-3.5 text-gray-400 transition-transform duration-200 ${
-                    userDropdownOpen ? 'rotate-180 text-white' : ''
-                  }`} />
+                  <ChevronDown className={`h-3.5 w-3.5 text-gray-400 transition-transform duration-200 ${userDropdownOpen ? 'rotate-180 text-white' : ''
+                    }`} />
                 </button>
 
                 {/* Dropdown Menu */}
@@ -333,11 +330,10 @@ export default function LandingNavbar() {
                     {/* User Header */}
                     <div className="p-3 rounded-xl bg-[#161624] border border-[#222234] mb-1.5">
                       <div className="flex items-center gap-2.5">
-                        <div className={`h-9 w-9 rounded-full flex items-center justify-center text-sm font-bold shrink-0 text-white shadow-sm overflow-hidden ${
-                          userRole === 'creator'
+                        <div className={`h-9 w-9 rounded-full flex items-center justify-center text-sm font-bold shrink-0 text-white shadow-sm overflow-hidden ${userRole === 'creator'
                             ? 'bg-gradient-to-tr from-[#EB1000] to-[#FF4633]'
                             : 'bg-gradient-to-tr from-emerald-600 to-teal-500'
-                        }`}>
+                          }`}>
                           {userAvatar ? (
                             <img src={userAvatar} alt={displayName} className="h-full w-full object-cover" />
                           ) : (
@@ -351,11 +347,10 @@ export default function LandingNavbar() {
                       </div>
                       <div className="mt-2.5 pt-2 border-t border-white/5 flex items-center justify-between">
                         <span className="text-[10px] text-gray-400 font-medium">Account Role</span>
-                        <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full border ${
-                          userRole === 'creator'
+                        <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full border ${userRole === 'creator'
                             ? 'bg-[#EB1000]/15 text-[#FF5A43] border-[#EB1000]/30'
                             : 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'
-                        }`}>
+                          }`}>
                           {userRole === 'creator' ? 'Creator' : 'Viewer / Fan'}
                         </span>
                       </div>
@@ -501,11 +496,10 @@ export default function LandingNavbar() {
                 <div className="pt-2 border-t border-[#222234] space-y-2">
                   <div className="p-2.5 rounded-xl bg-[#161622] border border-[#262638] flex items-center justify-between">
                     <div className="flex items-center gap-2.5 min-w-0">
-                      <div className={`h-8 w-8 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0 overflow-hidden ${
-                        userRole === 'creator'
+                      <div className={`h-8 w-8 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0 overflow-hidden ${userRole === 'creator'
                           ? 'bg-gradient-to-tr from-[#EB1000] to-[#FF4633]'
                           : 'bg-gradient-to-tr from-emerald-600 to-teal-500'
-                      }`}>
+                        }`}>
                         {userAvatar ? (
                           <img src={userAvatar} alt={displayName} className="h-full w-full object-cover" />
                         ) : (
@@ -514,9 +508,8 @@ export default function LandingNavbar() {
                       </div>
                       <div className="min-w-0">
                         <span className="text-xs font-bold text-white block truncate">{displayName}</span>
-                        <span className={`text-[10px] font-black uppercase ${
-                          userRole === 'creator' ? 'text-[#FF5A43]' : 'text-emerald-400'
-                        }`}>
+                        <span className={`text-[10px] font-black uppercase ${userRole === 'creator' ? 'text-[#FF5A43]' : 'text-emerald-400'
+                          }`}>
                           {userRole === 'creator' ? 'Creator Pro' : 'Viewer'}
                         </span>
                       </div>

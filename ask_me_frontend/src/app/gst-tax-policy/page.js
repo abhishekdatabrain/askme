@@ -18,8 +18,10 @@ import {
   Lock,
   AlertTriangle
 } from 'lucide-react';
+import { usePayoutCalculator } from '@/utils/payoutCalculator';
 
 export default function GstTaxPolicyPage() {
+  const { formattedPercentage, platformCommissionPercent } = usePayoutCalculator();
   const sections = [
     {
       id: 'overview-and-scope',
@@ -70,7 +72,7 @@ export default function GstTaxPolicyPage() {
               <span>Net Creator Payout Calculation</span>
             </h3>
             <p className="text-sm text-[#A0A0B2] leading-relaxed">
-              After deducting the 15% Platform Service Fee, 18% GST on the Platform Fee (2.7%), and standard 2% payment gateway charges, eligible Creators receive a net base share of 80.3% of the gross transaction value, subject to applicable statutory withholding taxes (TDS/TCS) detailed in Section 4.
+              After deducting the {platformCommissionPercent}% Platform Service Fee, 18% GST on the Platform Fee ({(platformCommissionPercent * 0.18).toFixed(1)}%), and standard 2% payment gateway charges, eligible Creators receive a net base share of {formattedPercentage} of the gross transaction value, subject to applicable statutory withholding taxes (TDS/TCS) detailed in Section 4.
             </p>
 
             {/* Visual Breakdown Grid */}
@@ -88,15 +90,15 @@ export default function GstTaxPolicyPage() {
                   <span className="text-[11px] font-bold text-[#8E8E9F] uppercase tracking-wider block">AskMe Platform Fee</span>
                   <span className="text-xs text-[#A0A0B2]">Technology & facilitation fee</span>
                 </div>
-                <span className="text-lg font-heading font-black text-[#EB1000] shrink-0">15.0%</span>
+                <span className="text-lg font-heading font-black text-[#EB1000] shrink-0">{platformCommissionPercent.toFixed(1)}%</span>
               </div>
 
               <div className="p-4 rounded-2xl bg-[#141422] border border-[#222234] flex items-center justify-between">
                 <div>
                   <span className="text-[11px] font-bold text-[#8E8E9F] uppercase tracking-wider block">GST on Platform Fee</span>
-                  <span className="text-xs text-[#A0A0B2]">18% GST on 15% fee</span>
+                  <span className="text-xs text-[#A0A0B2]">18% GST on {platformCommissionPercent}% fee</span>
                 </div>
-                <span className="text-lg font-heading font-black text-[#FFB300] shrink-0">2.7%</span>
+                <span className="text-lg font-heading font-black text-[#FFB300] shrink-0">{(platformCommissionPercent * 0.18).toFixed(1)}%</span>
               </div>
 
               <div className="p-4 rounded-2xl bg-[#141422] border border-[#222234] flex items-center justify-between">
@@ -118,7 +120,7 @@ export default function GstTaxPolicyPage() {
                 </span>
               </div>
               <span className="text-2xl sm:text-3xl font-heading font-black text-[#00E676] shrink-0">
-                80.3%
+                {formattedPercentage}
               </span>
             </div>
           </div>

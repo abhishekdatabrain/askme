@@ -40,8 +40,10 @@ import {
 import { API_ENDPOINTS } from '@/config/api';
 import { getAdminToken } from '@/utils/cookies';
 import { getSocket } from '@/config/socket';
+import { usePayoutCalculator } from '@/utils/payoutCalculator';
 
 export default function AdminSidebar({ activeTab: propsActiveTab, setActiveTab, activeSubTab: propsActiveSubTab, setActiveSubTab, theme = 'dark', onToggleTheme }) {
+  const { formattedPercentage, platformCommissionPercent, payoutPercentage } = usePayoutCalculator();
   const pathname = usePathname();
   const router = useRouter();
   const [unreadCount, setUnreadCount] = useState(0);
@@ -399,13 +401,13 @@ export default function AdminSidebar({ activeTab: propsActiveTab, setActiveTab, 
               <Sparkles className="h-3.5 w-3.5 text-[#EB1000]" />
               Platform Cut
             </span>
-            <span className="text-xs font-extrabold text-[#FFD60A]">15% Net</span>
+            <span className="text-xs font-extrabold text-[#FFD60A]">{platformCommissionPercent}% Net</span>
           </div>
           <p className={`text-[11px] leading-relaxed ${theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'}`}>
-            Creators keep <span className="text-[#00E676] font-bold">80.3%</span> of guaranteed paid questions and askMail interactions.
+            Creators keep <span className="text-[#00E676] font-bold">{formattedPercentage}</span> of guaranteed paid questions and askMail interactions.
           </p>
           <div className={`w-full h-1.5 rounded-full overflow-hidden ${theme === 'light' ? 'bg-[#E9ECEF]' : 'bg-[#1C1C26]'}`}>
-            <div className="bg-[#EB1000] h-full w-[80.3%] rounded-full"></div>
+            <div className="bg-[#EB1000] h-full rounded-full" style={{ width: `${payoutPercentage || 94.5}%` }}></div>
           </div>
         </div>
       </div>

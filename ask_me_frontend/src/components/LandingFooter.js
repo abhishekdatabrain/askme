@@ -3,8 +3,25 @@
 import React from 'react';
 import Link from 'next/link';
 import Logo from './Logo';
+import { usePayoutCalculator } from '@/utils/payoutCalculator';
 
-export default function LandingFooter() {
+export default function LandingFooter({ onOpenAuthModal }) {
+  const { formattedPercentage } = usePayoutCalculator();
+
+  const handleForCreatorsClick = (e) => {
+    e.preventDefault();
+    if (typeof onOpenAuthModal === 'function') {
+      onOpenAuthModal('creator', 'login');
+      return;
+    }
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(
+        new CustomEvent('open_askme_auth_modal', {
+          detail: { role: 'creator', mode: 'login' },
+        })
+      );
+    }
+  };
   return (
     <footer className="bg-[#07070C] border-t border-[#1C1C28] pt-10 pb-10 text-[#8B8B9E]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
@@ -92,9 +109,9 @@ export default function LandingFooter() {
               </h4>
               <ul className="space-y-2.5 text-xs sm:text-sm text-[#9E9EB2] font-medium">
                 <li>
-                  <a href="#origin" className="hover:text-white transition-colors">
+                  <Link href="/about" className="hover:text-white transition-colors">
                     About
-                  </a>
+                  </Link>
                 </li>
                 <li>
                   <a href="#how-it-works" className="hover:text-white transition-colors">
@@ -102,9 +119,13 @@ export default function LandingFooter() {
                   </a>
                 </li>
                 <li>
-                  <Link href="/creators/register" className="hover:text-white transition-colors">
+                  <button
+                    type="button"
+                    onClick={handleForCreatorsClick}
+                    className="hover:text-white transition-colors cursor-pointer text-left"
+                  >
                     For Creators
-                  </Link>
+                  </button>
                 </li>
                 <li>
                   <Link href="/contact" className="hover:text-white transition-colors">
@@ -252,7 +273,7 @@ export default function LandingFooter() {
         <div className="pt-8 border-t border-[#1C1C2A] flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-[#8E8E9F] font-medium">
           <div className="space-y-1 text-center sm:text-left">
             <p>© 2026 AskMe (Futurepast ventures LLP). All rights reserved.</p>
-            <p className="text-[11px] text-[#717182]">Creators keep 80.3% of eligible revenue, subject to applicable terms, fees, eligibility and payment conditions.</p>
+            <p className="text-[11px] text-[#717182]">Creators keep {formattedPercentage} of eligible revenue, subject to applicable terms, fees, eligibility and payment conditions.</p>
           </div>
           <p className="shrink-0 text-center sm:text-right">
             <a

@@ -1,7 +1,9 @@
 import React from 'react';
 import { FileText, ShieldCheck, CheckCircle2, Lock, ArrowRight, Scale, AlertTriangle, ScrollText } from 'lucide-react';
+import { usePayoutCalculator } from '@/utils/payoutCalculator';
 
 export default function UserAgreement({ activeSubTab }) {
+  const { formattedPercentage, platformCommissionPercent } = usePayoutCalculator();
   return (
     <div className="rounded-3xl bg-[#13131A] border border-[#1C1C26] p-6 lg:p-8 shadow-2xl space-y-6 mt-2 animate-fade-in">
       {/* Header */}
@@ -15,7 +17,7 @@ export default function UserAgreement({ activeSubTab }) {
               Platform User Agreement & Legal Terms
             </h1>
             <p className="text-xs text-[#8B8B96] mt-0.5">
-              Master legal compliance agreement governing Creator broadcasting, 80.3% revenue split, payout rules & KYC guidelines.
+              Master legal compliance agreement governing Creator broadcasting, {formattedPercentage} revenue split, payout rules & KYC guidelines.
             </p>
           </div>
         </div>
@@ -35,10 +37,10 @@ export default function UserAgreement({ activeSubTab }) {
             <span>1. Revenue Share Split & Dynamic Platform Fee</span>
           </div>
           <p>
-            Creators onboarding on the AskMe PRO live streaming platform retain a guaranteed <strong className="text-[#00E676]">80.3% net revenue share</strong> on all viewer donations, askMail messages, and paid live stream Q&A interactions.
+            Creators onboarding on the AskMe PRO live streaming platform retain a guaranteed <strong className="text-[#00E676]">{formattedPercentage} net revenue share</strong> on all viewer donations, askMail messages, and paid live stream Q&A interactions.
           </p>
           <p>
-            The platform automatically deducts a <strong>15% platform commission cut</strong> (or active VIP tier rate) to cover high-speed streaming infrastructure, OBS browser overlay relay servers, and payment gateway processing fees.
+            The platform automatically deducts a <strong>{platformCommissionPercent}% platform commission cut</strong> (or active VIP tier rate) to cover high-speed streaming infrastructure, OBS browser overlay relay servers, and payment gateway processing fees.
           </p>
         </div>
 

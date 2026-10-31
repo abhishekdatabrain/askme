@@ -14,6 +14,7 @@ import { getViewerToken, getCookie, getViewerUser } from '@/utils/cookies';
 import { useToast } from '@/context/ToastContext';
 import AuthModal from '@/components/AuthModal';
 import OriginalScannerImage from '@/components/OriginalScannerImage';
+import { usePayoutCalculator } from '@/utils/payoutCalculator';
 
 import {
   Sparkles,
@@ -182,8 +183,20 @@ export default function Home() {
     // IF LOGGED IN AS VIEWER -> OPEN VIP MEMBERSHIP MODAL
     setVipModalCreator(creator);
   };
-  const [calcAmount, setCalcAmount] = useState(250000); // Default ₹2,50,000
-  const [platformCommissionPercent, setPlatformCommissionPercent] = useState(15); // Dynamic from database commission_settings
+
+  // Dynamic Payout Calculator Hook - Single Source of Truth
+  const {
+    calcAmount,
+    setCalcAmount,
+    platformCommissionPercent,
+    askmeFee,
+    gstFee,
+    pgCharge,
+    totalDeductions,
+    netEarnings,
+    formattedPercentage: dynamicPayoutPercentage,
+  } = usePayoutCalculator(250000);
+
   const [copiedObsUrl, setCopiedObsUrl] = useState(false);
   const [howItWorksTab, setHowItWorksTab] = useState('viewer');
   const [selectedFaqTab, setSelectedFaqTab] = useState('All Questions');
@@ -217,27 +230,6 @@ export default function Home() {
   const [followedCreators, setFollowedCreators] = useState({});
   const [isAutoRotating, setIsAutoRotating] = useState(true);
   const [streamModalCreator, setStreamModalCreator] = useState(null);
-
-  // Fetch dynamic commission settings from database for the calculator
-  useEffect(() => {
-    const fetchCommission = async () => {
-      try {
-        const res = await fetch(API_ENDPOINTS.CREATORS.COMMISSION_SETTINGS);
-        if (res.ok) {
-          const data = await res.json();
-          const percent = data.data?.platformCommissionPercent !== undefined
-            ? data.data.platformCommissionPercent
-            : data.data?.commission_percentage;
-          if (percent !== undefined && percent !== null && !isNaN(Number(percent))) {
-            setPlatformCommissionPercent(Number(percent));
-          }
-        }
-      } catch (err) {
-        console.warn('Using default commission for calculator:', err);
-      }
-    };
-    fetchCommission();
-  }, []);
 
   // Fetch live streams from Backend API dynamically with 4s real-time polling (Server-Side Filtering)
   useEffect(() => {
@@ -534,8 +526,6 @@ export default function Home() {
   );
 
   // Dynamic fee calculation for creator earnings estimator (Dynamic percentage from database)
-  const askmeFee = Math.round(calcAmount * (platformCommissionPercent / 100));
-  const netEarnings = Math.max(0, calcAmount - askmeFee);
   const netPercentage = ((netEarnings / (calcAmount || 1)) * 100).toFixed(1);
   const extraVsOthers = Math.round(calcAmount * 0.28);
 
@@ -547,7 +537,7 @@ export default function Home() {
       id: 'r1',
       category: 'Revenue & Payouts',
       feature: 'Creator Net Take–Home Share',
-      askme: '80.3% Net Take-Home',
+      askme: `${dynamicPayoutPercentage} Net Take-Home`,
       yt: '70% (30% Platform Cut)',
       twitch: '50% (50% Platform Cut)',
     },
@@ -587,7 +577,7 @@ export default function Home() {
       id: 'r6',
       category: 'Revenue & Payouts',
       feature: 'Payout Settlement Timeline',
-      askme: 'Instant / T+3 Direct KYC Bank Deposit',
+      askme: 'T+3 Direct KYC Bank Deposit',
       yt: 'Net 30–60 Days Monthly Hold',
       twitch: 'Net 15–45 Days with $50 Threshold',
     },
@@ -661,9 +651,9 @@ export default function Home() {
       categoryTag: 'FOR CREATORS',
       question: 'How much do creators earn and how does the 0% Apple Tax work?',
       answer:
-        'Creators keep an industry-leading 80.3% of all tips and super-chats. Unlike mobile apps where Apple and Google deduct an exorbitant 30% cut before creators see a single penny, AskMe uses direct web checkout gateways (UPI, cards, netbanking), completely bypassing app-store commissions so more money goes directly to you.',
+        `Creators keep an industry-leading ${dynamicPayoutPercentage} of all tips and super-chats. Unlike mobile apps where Apple and Google deduct an exorbitant 30% cut before creators see a single penny, AskMe uses direct web checkout gateways (UPI, cards, netbanking), completely bypassing app-store commissions so more money goes directly to you.`,
       highlights: [
-        '80.3% creator payout vs. 50-70% on legacy platforms',
+        `${dynamicPayoutPercentage} creator payout vs. 50-70% on legacy platforms`,
         '0% Apple & Google App Store commission',
         'Transparent ledger with automatic GST and TDS compliance breakdowns',
       ],
@@ -2288,7 +2278,7 @@ export default function Home() {
               <span className="text-[#EB1000]">Audience</span> Supports.
             </h2>
             <p className="text-[16px] sm:text-[18px] text-[#8B8B9E] max-w-2xl mx-auto font-medium">
-              With AskMe, creators keep up to 80.3% of audience support with direct Web & QR payments. No 30% Apple tax, no middlemen.
+              With AskMe, creators keep up to {dynamicPayoutPercentage} of audience support with direct Web & QR payments. No 30% Apple tax, no middlemen.
             </p>
 
             {/* FEATURE BADGES ROW (3 PILL BADGES) */}
@@ -2299,7 +2289,7 @@ export default function Home() {
                 </div>
                 <div>
                   <strong className="text-white font-extrabold text-xs">
-                    80.3% <span className="text-[10px] text-[#8E8E9F] font-normal">(Up to)</span>
+                    {dynamicPayoutPercentage} <span className="text-[10px] text-[#8E8E9F] font-normal">(Up to)</span>
                   </strong>
                   <div className="text-[10px] text-[#8E8E9F]">Creator Share</div>
                 </div>
@@ -2584,7 +2574,7 @@ export default function Home() {
                   <div className="grid grid-cols-12 p-3 border-b border-[#1E1E2C] items-center font-medium">
                     <div className="col-span-4 text-white font-bold">Creator Share</div>
                     <div className="col-span-4 text-center font-extrabold text-[#EB1000] text-sm">
-                      Up to 80.3%
+                      Up to {dynamicPayoutPercentage}
                     </div>
                     <div className="col-span-4 text-right text-[#7A7A8E]">~35–70%</div>
                   </div>
@@ -2820,7 +2810,7 @@ export default function Home() {
             </h2>
 
             <p className="text-[15px] sm:text-[17px] text-[#8B8B9E] max-w-2xl mx-auto font-medium leading-relaxed">
-              Compare how Askme protects creator earnings with an <span className="text-white font-bold">80.3% net take-home</span> and gives fans a zero–interruption live stream experience.
+              Compare how Askme protects creator earnings with an <span className="text-white font-bold">{dynamicPayoutPercentage} net take-home</span> and gives fans a zero–interruption live stream experience.
             </p>
 
             {/* FILTER PILLS ROW */}
@@ -2844,7 +2834,7 @@ export default function Home() {
             </div>
           </div>
 
-          {/* TWO-COLUMN GRID: COMPARISON TABLE + FEATURED 80.3% CARD */}
+          {/* TWO-COLUMN GRID: COMPARISON TABLE + FEATURED KEEP CARD */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start pt-2">
             {/* LEFT COLUMN: COMPARISON TABLE */}
             <div className="lg:col-span-8 rounded-3xl bg-[#08080E] border border-[#1C1C2A] p-4 sm:p-6 shadow-2xl overflow-hidden relative text-left">
@@ -2901,7 +2891,7 @@ export default function Home() {
                   </div>
                   <span className="font-medium text-white/90">
                     {selectedComparisonTab === 'All Highlights' && 'Transparent fee architecture with automated GST & TDS compliance.'}
-                    {selectedComparisonTab === 'Revenue & Payouts' && '80.3% net creator take-home share with instant T+3 direct bank payouts.'}
+                    {selectedComparisonTab === 'Revenue & Payouts' && `${dynamicPayoutPercentage} net creator take-home share with instant T+3 direct bank payouts.`}
                     {selectedComparisonTab === 'Viewer Experience' && 'Zero stream interruption with automated WhatsApp & push notifications when answered.'}
                     {selectedComparisonTab === 'Distribution & OBS' && '1 Universal QR & Link supporting YouTube, Twitch, Kick and Instagram Live.'}
                   </span>
@@ -2910,7 +2900,7 @@ export default function Home() {
               </div>
             </div>
 
-            {/* RIGHT COLUMN: FEATURED 80.3% KEEP CARD */}
+            {/* RIGHT COLUMN: FEATURED KEEP CARD */}
             <div className="lg:col-span-4 p-6 rounded-3xl bg-[#09080E] border border-[#EB1000]/50 shadow-[0_0_50px_rgba(235,16,0,0.18)] space-y-6 text-left relative overflow-hidden group hover:border-[#EB1000] transition-all">
               {/* Top Badge & Verified status */}
               <div className="flex items-center justify-between">
@@ -2934,13 +2924,13 @@ export default function Home() {
 
               <div className="border-t border-[#1F1C2B]"></div>
 
-              {/* Hero 80.3% KEEP Display */}
+              {/* Hero KEEP Display */}
               <div className="space-y-2">
                 <div className="text-5xl font-black text-white tracking-tight flex items-baseline gap-2">
-                  80.3% <span className="text-[#EB1000] text-3xl font-black tracking-widest uppercase">KEEP</span>
+                  {dynamicPayoutPercentage} <span className="text-[#EB1000] text-3xl font-black tracking-widest uppercase">KEEP</span>
                 </div>
                 <p className="text-xs text-[#8E8E9F] font-medium leading-relaxed">
-                  Creators keep 80.3% net revenue on every paid question, sponsorship, and subscription.
+                  Creators keep {dynamicPayoutPercentage} net revenue on every paid question, sponsorship, and subscription.
                 </p>
               </div>
 
@@ -3072,14 +3062,14 @@ export default function Home() {
                           <ShieldCheck className="h-4 w-4" />
                         </div>
                         <span className="px-2.5 py-0.5 rounded-full bg-[#181824] border border-[#2B2B3D] text-[#D0D0E0] text-[10px] font-bold font-mono tracking-wider uppercase">
-                          80.3% TAKE-HOME
+                          {dynamicPayoutPercentage} TAKE-HOME
                         </span>
                       </div>
 
                       <div className="space-y-1">
                         <h3 className="text-sm font-bold text-white tracking-tight">For Creators</h3>
                         <p className="text-xs text-[#9E9EB2] font-normal leading-relaxed">
-                          Sustainable monetization keeping 80.3% revenue instead of losing half.
+                          Sustainable monetization keeping {dynamicPayoutPercentage} revenue instead of losing half.
                         </p>
                       </div>
                     </div>
@@ -3450,7 +3440,7 @@ export default function Home() {
             {/* BOTTOM 4-STAT METRICS FOOTER BAR */}
             <div className="p-4 sm:p-5 rounded-2xl bg-[#0B0B12] border border-[#1C1C2A] grid grid-cols-2 md:grid-cols-4 gap-4 text-center divide-y md:divide-y-0 md:divide-x divide-[#1C1C2A] relative z-10">
               <div className="pt-2 md:pt-0">
-                <div className="text-2xl sm:text-3xl font-black text-white tracking-tight">80.3%</div>
+                <div className="text-2xl sm:text-3xl font-black text-white tracking-tight">{dynamicPayoutPercentage}</div>
                 <div className="text-[10px] font-mono text-[#7A7A8E] font-bold uppercase tracking-wider mt-1">
                   CREATOR PAYOUT SHARE
                 </div>
@@ -3588,7 +3578,7 @@ export default function Home() {
                     <Zap className="h-5 w-5" />
                   </div>
                   <span className="px-3 py-1 rounded-lg bg-[#241014] border border-[#EB1000]/40 text-[#EB1000] text-[10px] font-bold">
-                    80.3% Creator Cut
+                    {dynamicPayoutPercentage} Creator Cut
                   </span>
                 </div>
 
@@ -3596,7 +3586,7 @@ export default function Home() {
                   Direct Monetization
                 </h3>
                 <p className="text-xs text-[#8E8E9F] font-medium leading-relaxed">
-                  Transparent 15% platform fee with creators retaining 80.3% of net revenues, backed by secure automated payouts.
+                  Transparent {platformCommissionPercent}% platform fee with creators retaining {dynamicPayoutPercentage} of net revenues, backed by secure automated payouts.
                 </p>
               </div>
 
@@ -3793,7 +3783,7 @@ export default function Home() {
       </main>
 
       {/* Landing Footer */}
-      <LandingFooter />
+      <LandingFooter onOpenAuthModal={(role, mode) => openAuthModal(role, mode)} />
 
       {/* Dynamic VIP Membership Modal */}
       <VipMembershipModal

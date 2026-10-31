@@ -14,8 +14,10 @@ import {
   Moon
 } from 'lucide-react';
 import { API_ENDPOINTS } from '@/config/api';
+import { usePayoutCalculator } from '@/utils/payoutCalculator';
 
 export default function AnalyticsPage() {
+  const { formattedPercentage, platformCommissionPercent } = usePayoutCalculator();
   const [creator, setCreator] = useState(null);
   const [walletMetrics, setWalletMetrics] = useState({
     totalEarnings: 0,
@@ -112,7 +114,7 @@ export default function AnalyticsPage() {
               </div>
 
               <div className={`p-5 rounded-2xl border space-y-2 ${theme === 'light' ? 'bg-[#F8F9FA] border-[#E9ECEF]' : 'bg-[#0A0A0F] border-[#1C1C26]'}`}>
-                <span className="text-xs text-[#8B8B96] font-bold block">Platform Infrastructure (15%)</span>
+                <span className="text-xs text-[#8B8B96] font-bold block">Platform Infrastructure ({platformCommissionPercent}%)</span>
                 <div className="font-heading font-extrabold text-2xl text-[#FF3D71]">
                   ₹{platformCut.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </div>
@@ -120,7 +122,7 @@ export default function AnalyticsPage() {
               </div>
 
               <div className={`p-5 rounded-2xl border space-y-2 ${theme === 'light' ? 'bg-[#F8F9FA] border-[#E9ECEF]' : 'bg-[#0A0A0F] border-[#1C1C26]'}`}>
-                <span className="text-xs text-[#8B8B96] font-bold block">Creator Net Earnings (80.3%)</span>
+                <span className="text-xs text-[#8B8B96] font-bold block">Creator Net Earnings ({formattedPercentage})</span>
                 <div className="font-heading font-extrabold text-2xl text-[#00E676]">
                   ₹{walletMetrics.totalEarnings.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </div>

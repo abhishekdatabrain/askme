@@ -7,7 +7,7 @@ import { getAdminToken } from '@/utils/cookies';
 export default function CommissionSettings({ activeSubTab }) {
   const { toast } = useToast();
   const [activeTabState, setActiveTabState] = useState('settings');
-  const [globalCut, setGlobalCut] = useState(15);
+  const [globalCut, setGlobalCut] = useState(1);
   const [vipCut, setVipCut] = useState(10);
   const [minWithdrawalLimit, setMinWithdrawalLimit] = useState(500);
   const [savedSuccess, setSavedSuccess] = useState(false);
@@ -141,7 +141,7 @@ export default function CommissionSettings({ activeSubTab }) {
 
             <input
               type="range"
-              min="5"
+              min="0"
               max="30"
               value={globalCut}
               onChange={(e) => setGlobalCut(Number(e.target.value))}

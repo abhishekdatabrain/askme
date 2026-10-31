@@ -1357,7 +1357,7 @@ function InnerAuthModal({ isOpen, onClose, initialRole = 'viewer', initialMode =
                 <DollarSign className="h-4 w-4" />
               </div>
               <div className="min-w-0">
-                <span className="font-bold text-xs text-gray-900 block truncate">Keep 80.3%</span>
+                <span className="font-bold text-xs text-gray-900 block truncate">Keep Max Share</span>
                 <span className="text-[10px] text-gray-500 block truncate">Creator share</span>
               </div>
             </div>

@@ -1,7 +1,7 @@
 // Global Dynamic Commission & Payout Configuration
 
 let commissionSettings = {
-  platformCommissionPercent: 15, // Default 15% platform cut
+  platformCommissionPercent: 1, // Default 1% platform cut
   vipCommissionPercent: 15,      // Default 10% VIP creator cut
   minWithdrawalLimit: 500,        // Default ₹500 minimum payout threshold
   autoPayoutEnabled: true,

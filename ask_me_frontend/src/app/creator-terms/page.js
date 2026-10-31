@@ -18,8 +18,10 @@ import {
   Lock,
   UserCheck
 } from 'lucide-react';
+import { usePayoutCalculator } from '@/utils/payoutCalculator';
 
 export default function CreatorTermsPage() {
+  const { formattedPercentage, platformCommissionPercent } = usePayoutCalculator();
   const sections = [
     {
       id: 'scope-and-relationship',
@@ -111,10 +113,10 @@ export default function CreatorTermsPage() {
           <div className="space-y-2">
             <h3 className="text-sm sm:text-base font-bold text-white flex items-center gap-2">
               <span className="text-[#EB1000] font-black">4.1</span>
-              <span>80.3% Net Creator Payout</span>
+              <span>{formattedPercentage} Net Creator Payout</span>
             </h3>
             <p className="text-sm text-[#A0A0B2] leading-relaxed">
-              For every eligible voluntary payment received from a Viewer, AskMe deducts a 15.0% Platform Service Fee, 18% GST on the Platform Service Fee (2.7% of gross), and standard ~2.0% payment gateway charges, resulting in a net base payout to you of 80.3% of the gross transaction value, subject to applicable statutory withholding taxes (TDS/TCS) as detailed in our{' '}
+              For every eligible voluntary payment received from a Viewer, AskMe deducts a {platformCommissionPercent.toFixed(1)}% Platform Service Fee, 18% GST on the Platform Service Fee ({(platformCommissionPercent * 0.18).toFixed(1)}% of gross), and standard ~2.0% payment gateway charges, resulting in a net base payout to you of {formattedPercentage} of the gross transaction value, subject to applicable statutory withholding taxes (TDS/TCS) as detailed in our{' '}
               <Link href="/gst-tax-policy" className="text-[#EB1000] underline hover:text-white transition">
                 GST and Tax Policy
               </Link>.

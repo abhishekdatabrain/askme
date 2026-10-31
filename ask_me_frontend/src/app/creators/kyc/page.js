@@ -39,8 +39,10 @@ import {
 import { API_ENDPOINTS, getMediaUrl } from '@/config/api';
 import { uploadFile } from '@/utils/fileUpload';
 import { getCreatorToken, getCreatorUser, clearCreatorSession } from '@/utils/cookies';
+import { usePayoutCalculator } from '@/utils/payoutCalculator';
 
 export default function CreatorKycPage() {
+    const { formattedPercentage, platformCommissionPercent } = usePayoutCalculator();
     const { toast } = useToast();
     const router = useRouter();
 
@@ -2370,8 +2372,8 @@ export default function CreatorKycPage() {
                                         <h5 className="font-black text-xs uppercase tracking-wider text-[#FF3B30]">CREATOR COMMERCIAL MODEL AT A GLANCE</h5>
                                         <ul className="list-disc pl-5 space-y-1 text-[11px]">
                                             <li><strong>Viewer pays:</strong> 100%</li>
-                                            <li><strong>AskMe standard Platform Fee:</strong> 15%</li>
-                                            <li><strong>Creator Gross Share:</strong> 80.3%</li>
+                                            <li><strong>AskMe standard Platform Fee:</strong> {platformCommissionPercent}%</li>
+                                            <li><strong>Creator Gross Share:</strong> {formattedPercentage}</li>
                                             <li><strong>Applicable deductions from Creator Gross Share:</strong> Taxes, payment processing charges, statutory withholding, payment adjustment, reversals, chargebacks and other legally or contractually applicable adjustments.</li>
                                             <li><strong>Creator Net Earnings:</strong> The amount remaining after applicable deductions.</li>
                                         </ul>
@@ -2397,7 +2399,7 @@ export default function CreatorKycPage() {
                                             <p><strong>11–12. Third Party Platforms & Livestreams:</strong> Creators may use AskMe alongside YouTube, Instagram, Twitch, TikTok, etc. Third party platforms host the underlying stream; AskMe controls platform interactions.</p>
                                             <p><strong>13–16. Paid Questions & Responses:</strong> Paid Questions are voluntary audience interactions. Specific response or outcome is governed by Creator moderation and policy terms.</p>
                                             <p><strong>17–19. Payment Service Providers & Security:</strong> Payments processed securely via Cashfree and regulated Payment Service Providers.</p>
-                                            <p><strong>20–26. Commercial Terms & Platform Fees:</strong> Standard 15% Platform Fee, 80.3% Creator Gross Share before applicable taxes, processing, and statutory deductions.</p>
+                                            <p><strong>20–26. Commercial Terms & Platform Fees:</strong> Standard {platformCommissionPercent}% Platform Fee, {formattedPercentage} Creator Gross Share before applicable taxes, processing, and statutory deductions.</p>
                                             <p><strong>27–29. Taxes & Invoicing:</strong> GST invoicing and statutory deductions applied in accordance with Indian tax regulations.</p>
                                             <p><strong>30–33. International Payments & Sanctions:</strong> Restricted international jurisdictions include Pakistan, Bangladesh, Democratic People&apos;s Republic of Korea (North Korea), Palestine, and Türkiye.</p>
                                             <p><strong>34–39. payment adjustment, Chargebacks & Payout Timing:</strong> Subject to settlement, KYC verification, and anti-fraud screening.</p>
@@ -2416,11 +2418,11 @@ export default function CreatorKycPage() {
 
                                         <div className="space-y-2.5 text-xs text-gray-300">
                                             <p><strong>81–87. Creator Status & Dashboard:</strong> Creators operate as independent users. Creator dashboard displays provisional and settled earnings.</p>
-                                            <p><strong>88–92. Revenue Share & Risk Based Fees:</strong> 15% Platform Fee, 80.3% Gross Share minus processing/tax deductions. Risk-based commercial adjustments may apply.</p>
+                                            <p><strong>88–92. Revenue Share & Risk Based Fees:</strong> {platformCommissionPercent}% Platform Fee, {formattedPercentage} Gross Share minus processing/tax deductions. Risk-based commercial adjustments may apply.</p>
                                             <p><strong>93–97. Payout Eligibility & Tax Compliance:</strong> Payouts require completed KYC, bank penny drop verification, and compliance checks.</p>
                                             <p><strong>98–103. Content Rights & Referral Programs:</strong> Creators retain ownership of lawful content and grant AskMe operational display permissions.</p>
                                             <p><strong>104–107. Creator Risk Management & Suspension:</strong> Suspensions or payout holds may be applied for fraud, abuse, or chargebacks.</p>
-                                            <p><strong>108–112. Creator Acknowledgement:</strong> Creator confirms understanding of the 15% fee, 80.3% gross share structure, and deduction policy.</p>
+                                            <p><strong>108–112. Creator Acknowledgement:</strong> Creator confirms understanding of the {platformCommissionPercent}% fee, {formattedPercentage} gross share structure, and deduction policy.</p>
                                             <p><strong>113–116. Corporate Information & Final Acceptance:</strong> FuturePast Ventures LLP (LLPIN: ACQ-4984), Pune, Maharashtra, India. Grievance Officer: Mr. T.S. Sandhu (Grievance@ask-me.live).</p>
                                         </div>
                                     </div>

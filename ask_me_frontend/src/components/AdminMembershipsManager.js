@@ -29,8 +29,10 @@ import {
   UserCheck,
   Loader2
 } from 'lucide-react';
+import { usePayoutCalculator } from '@/utils/payoutCalculator';
 
 export default function AdminMembershipsManager({ activeSubTab = 'overview', theme = 'dark' }) {
+  const { formattedPercentage, platformCommissionPercent } = usePayoutCalculator();
   // Extract tab key from activeSubTab (e.g. 'memberships_plans' -> 'plans')
   const getTabFromSubTab = (subTab) => {
     if (!subTab) return 'overview';
@@ -976,9 +978,9 @@ export default function AdminMembershipsManager({ activeSubTab = 'overview', the
             <div className="p-4 rounded-2xl bg-[#181820] border border-[#2A2A3A] flex items-center justify-between">
               <div>
                 <span className="font-bold text-white block">Platform Cut vs Creator Payout</span>
-                <span className="text-[#8B8B96]">Fixed 15% platform commission / 80.3% creator payout share.</span>
+                <span className="text-[#8B8B96]">Dynamic {platformCommissionPercent}% platform commission / {formattedPercentage} creator payout share.</span>
               </div>
-              <span className="font-heading font-black text-lg text-[#FFD60A]">15% / 80.3%</span>
+              <span className="font-heading font-black text-lg text-[#FFD60A]">{platformCommissionPercent}% / {formattedPercentage}</span>
             </div>
 
             <button

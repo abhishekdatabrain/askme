@@ -18,8 +18,10 @@ import {
   ShieldAlert,
   Mail
 } from 'lucide-react';
+import { usePayoutCalculator } from '@/utils/payoutCalculator';
 
 export default function PaymentPolicyPage() {
+  const { formattedPercentage, platformCommissionPercent } = usePayoutCalculator();
   const sections = [
     {
       id: 'introduction-and-scope',
@@ -123,7 +125,7 @@ export default function PaymentPolicyPage() {
     {
       id: 'fee-structure',
       num: '4',
-      title: 'Fee Structure & Creator Revenue Share (80.3% Net Payout)',
+      title: `Fee Structure & Creator Revenue Share (${formattedPercentage} Net Payout)`,
       icon: Percent,
       content: (
         <div className="space-y-5">
@@ -151,7 +153,7 @@ export default function PaymentPolicyPage() {
                 </span>
                 <span className="text-xs text-[#A0A0B2]">Technology & software fee</span>
               </div>
-              <span className="text-lg font-heading font-black text-[#EB1000] shrink-0">15.0%</span>
+              <span className="text-lg font-heading font-black text-[#EB1000] shrink-0">{platformCommissionPercent.toFixed(1)}%</span>
             </div>
 
             {/* GST on Platform Fee */}
@@ -160,9 +162,9 @@ export default function PaymentPolicyPage() {
                 <span className="text-[11px] font-bold text-[#8E8E9F] uppercase tracking-wider block">
                   GST on Platform Service Fee
                 </span>
-                <span className="text-xs text-[#A0A0B2]">18% GST on the 15% Platform Fee</span>
+                <span className="text-xs text-[#A0A0B2]">18% GST on the {platformCommissionPercent}% Platform Fee</span>
               </div>
-              <span className="text-lg font-heading font-black text-[#FFB300] shrink-0">2.7%</span>
+              <span className="text-lg font-heading font-black text-[#FFB300] shrink-0">{(platformCommissionPercent * 0.18).toFixed(1)}%</span>
             </div>
 
             {/* Gateway Processing Charges */}
@@ -192,7 +194,7 @@ export default function PaymentPolicyPage() {
             </div>
             <div className="text-left sm:text-right shrink-0">
               <span className="text-2xl sm:text-3xl font-heading font-black text-[#00E676] block">
-                80.3%
+                {formattedPercentage}
               </span>
               <span className="text-[10px] font-bold text-[#8E8E9F] uppercase tracking-wider">
                 of Gross Payment

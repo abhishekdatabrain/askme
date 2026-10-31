@@ -2,8 +2,11 @@ import React from 'react';
 import AskMePayBadge from './AskMePayBadge';
 import PlatformIcon from './PlatformIcon';
 import { DollarSign, ArrowUpRight, CheckCircle2, Clock, Lock, Sparkles, Download } from 'lucide-react';
+import { usePayoutCalculator } from '@/utils/payoutCalculator';
 
 export default function AskMePayTable() {
+  const { formattedPercentage, platformCommissionPercent, calculateFor } = usePayoutCalculator();
+
   const transactions = [
     {
       id: 'PAY-8801',
@@ -11,8 +14,8 @@ export default function AskMePayTable() {
       creator: 'Prince Live',
       viewer: 'Rahul_M',
       grossAmount: '₹500',
-      creatorShare: '₹425 (80.3%)',
-      platformCut: '₹75 (15%)',
+      creatorShare: `₹${calculateFor(500).netEarnings.toLocaleString('en-IN')} (${formattedPercentage})`,
+      platformCut: `₹${calculateFor(500).askmeFee.toLocaleString('en-IN')} (${platformCommissionPercent}%)`,
       status: 'Released',
       platform: 'youtube',
       timestamp: '10 mins ago',
@@ -23,8 +26,8 @@ export default function AskMePayTable() {
       creator: 'FinCal Strategy',
       viewer: 'Suresh_K',
       grossAmount: '₹1,000',
-      creatorShare: '₹850 (80.3%)',
-      platformCut: '₹150 (15%)',
+      creatorShare: `₹${calculateFor(1000).netEarnings.toLocaleString('en-IN')} (${formattedPercentage})`,
+      platformCut: `₹${calculateFor(1000).askmeFee.toLocaleString('en-IN')} (${platformCommissionPercent}%)`,
       status: 'Released',
       platform: 'youtube',
       timestamp: '25 mins ago',
@@ -35,8 +38,8 @@ export default function AskMePayTable() {
       creator: 'GamerX Xtreme',
       viewer: 'ProGamer_99',
       grossAmount: '₹299',
-      creatorShare: '₹254.15 (80.3%)',
-      platformCut: '₹44.85 (15%)',
+      creatorShare: `₹${calculateFor(299).netEarnings.toLocaleString('en-IN')} (${formattedPercentage})`,
+      platformCut: `₹${calculateFor(299).askmeFee.toLocaleString('en-IN')} (${platformCommissionPercent}%)`,
       status: 'Recurring Active',
       platform: 'twitch',
       timestamp: '1 hour ago',
@@ -47,13 +50,17 @@ export default function AskMePayTable() {
       creator: 'Startup Unfiltered',
       viewer: 'Venture_Partner',
       grossAmount: '₹2,500',
-      creatorShare: '₹2,125 (80.3%)',
-      platformCut: '₹375 (15%)',
+      creatorShare: `₹${calculateFor(2500).netEarnings.toLocaleString('en-IN')} (${formattedPercentage})`,
+      platformCut: `₹${calculateFor(2500).askmeFee.toLocaleString('en-IN')} (${platformCommissionPercent}%)`,
       status: 'In (24h Hold)',
       platform: 'linkedin',
       timestamp: '2 hours ago',
     },
   ];
+
+  const totalGross = 148500;
+  const creatorPayoutTotal = calculateFor(totalGross).netEarnings;
+  const askmeRevenueTotal = calculateFor(totalGross).askmeFee;
 
   return (
     <div className="rounded-2xl bg-[#13131A] border border-[#1C1C26] p-5 shadow-xl space-y-4">
@@ -67,7 +74,7 @@ export default function AskMePayTable() {
             <div className="flex items-center gap-2">
               <h3 className="font-heading font-bold text-base text-white">AskMe Pay Financial Ledger</h3>
               <span className="px-2 py-0.5 rounded-full bg-[#FFD60A]/10 text-[#FFD60A] text-xs font-bold border border-[#FFD60A]/30">
-                15% Net Platform Revenue
+                {platformCommissionPercent}% Net Platform Revenue
               </span>
             </div>
             {/* <p className="text-xs text-[#8B8B96] mt-0.5">
@@ -86,15 +93,15 @@ export default function AskMePayTable() {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-4 rounded-xl bg-[#0A0A0F] border border-[#1C1C26]">
         <div>
           <span className="text-[11px] text-[#8B8B96]">Total Gross Volume (24h)</span>
-          <span className="block font-heading font-black text-xl text-[#FFD60A] mt-0.5">₹1,48,500</span>
+          <span className="block font-heading font-black text-xl text-[#FFD60A] mt-0.5">₹{totalGross.toLocaleString('en-IN')}</span>
         </div>
         <div className="border-t sm:border-t-0 sm:border-x border-[#1C1C26] pt-2 sm:pt-0 sm:px-4">
-          <span className="text-[11px] text-[#8B8B96]">Creator 80.3% Payouts</span>
-          <span className="block font-heading font-black text-xl text-[#00E676] mt-0.5">₹1,26,225</span>
+          <span className="text-[11px] text-[#8B8B96]">Creator {formattedPercentage} Payouts</span>
+          <span className="block font-heading font-black text-xl text-[#00E676] mt-0.5">₹{creatorPayoutTotal.toLocaleString('en-IN')}</span>
         </div>
         <div className="pt-2 sm:pt-0 sm:pl-4">
-          <span className="text-[11px] text-[#8B8B96]">AskMe 15% Net Revenue</span>
-          <span className="block font-heading font-black text-xl text-[#00F5D4] mt-0.5">₹22,275</span>
+          <span className="text-[11px] text-[#8B8B96]">AskMe {platformCommissionPercent}% Net Revenue</span>
+          <span className="block font-heading font-black text-xl text-[#00F5D4] mt-0.5">₹{askmeRevenueTotal.toLocaleString('en-IN')}</span>
         </div>
       </div>
 
@@ -107,8 +114,8 @@ export default function AskMePayTable() {
               <th className="py-3 px-3">Type</th>
               <th className="py-3 px-3">Creator</th>
               <th className="py-3 px-3">Gross Amount</th>
-              <th className="py-3 px-3 text-[#00E676]">Creator (80.3%)</th>
-              <th className="py-3 px-3 text-[#00F5D4]">AskMe Cut (15%)</th>
+              <th className="py-3 px-3 text-[#00E676]">Creator ({formattedPercentage})</th>
+              <th className="py-3 px-3 text-[#00F5D4]">AskMe Cut ({platformCommissionPercent}%)</th>
               <th className="py-3 px-3">Status</th>
             </tr>
           </thead>

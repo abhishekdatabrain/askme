@@ -233,7 +233,7 @@ export default function AboutPage() {
       </main>
 
       {/* Landing Footer */}
-      <LandingFooter />
+      <LandingFooter onOpenAuthModal={(role, mode) => { setAuthRole(role || 'creator'); setAuthMode(mode || 'login'); setShowAuthModal(true); }} />
 
       {/* Auth Modal */}
       <AuthModal

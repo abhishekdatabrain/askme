@@ -11,8 +11,10 @@ import {
     Sparkles,
     CheckCircle2
 } from 'lucide-react';
+import { usePayoutCalculator } from '@/utils/payoutCalculator';
 
 export default function AdminDashboardPage() {
+    const { formattedPercentage } = usePayoutCalculator();
     const [dashboardStats, setDashboardStats] = useState({
         totalCreators: 0,
         registeredThisWeek: 0,
@@ -120,7 +122,7 @@ export default function AdminDashboardPage() {
                     title="Pending Withdrawals"
                     value={`${dashboardStats.pendingWithdrawals} Requests`}
                     change={`₹${dashboardStats.pendingWithdrawalsAmount.toLocaleString()} Queued`}
-                    subtitle="80.3% Net Payout Queue"
+                    subtitle={`${formattedPercentage} Net Payout Queue`}
                     icon={DollarSign}
                     accent="yellow"
                 />

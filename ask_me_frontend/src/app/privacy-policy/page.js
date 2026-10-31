@@ -19,8 +19,10 @@ import {
   AlertTriangle,
   CreditCard
 } from 'lucide-react';
+import { usePayoutCalculator } from '@/utils/payoutCalculator';
 
 export default function PrivacyPolicyPage() {
+  const { formattedPercentage, platformCommissionPercent } = usePayoutCalculator();
   const sections = [
     {
       id: 'introduction-and-scope',
@@ -108,7 +110,7 @@ export default function PrivacyPolicyPage() {
               },
               {
                 title: 'Payment Settlement & Creator Payouts:',
-                desc: 'To verify Viewer transactions, calculate AskMe\'s 15% Platform Service Fee (plus 18% GST thereon and ~2% gateway charges), and remit the net 80.3% base payout to verified Creators.'
+                desc: `To verify Viewer transactions, calculate AskMe's ${platformCommissionPercent}% Platform Service Fee (plus 18% GST thereon and ~2% gateway charges), and remit the net ${formattedPercentage} base payout to verified Creators.`
               },
               {
                 title: 'Statutory Tax & Regulatory Compliance:',

@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef, Suspense } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import { usePayoutCalculator } from '@/utils/payoutCalculator';
 import {
   ShieldCheck,
   DollarSign,
@@ -64,6 +65,7 @@ const getSuperAskCharLimit = (amt) => {
 };
 
 function ViewerPaymentContent() {
+  const { formattedPercentage } = usePayoutCalculator();
   const params = useParams();
   const searchParams = useSearchParams();
 
@@ -1820,7 +1822,7 @@ function ViewerPaymentContent() {
 
       <footer className="border-t border-[#1C1C26] py-4 text-center text-xs text-[#8B8B96] space-y-1">
         <p>&copy; 2026 AskMe (Futurepast ventures LLP). All rights reserved.</p>
-        <p className="text-[11px] text-[#717182]">Creators keep 80.3% of eligible revenue, subject to applicable terms, fees, eligibility and payment conditions.</p>
+        <p className="text-[11px] text-[#717182]">Creators keep {formattedPercentage} of eligible revenue, subject to applicable terms, fees, eligibility and payment conditions.</p>
       </footer>
     </div>
   );

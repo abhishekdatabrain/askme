@@ -71,8 +71,10 @@ export default function AnalyticsPage() {
     fetchWallet();
   }, []);
 
-  const grossVolume = walletMetrics.totalEarnings > 0 ? (walletMetrics.totalEarnings / 0.85) : 0;
-  const platformCut = walletMetrics.totalEarnings > 0 ? (grossVolume * 0.15) : 0;
+  const commFraction = (platformCommissionPercent !== undefined && platformCommissionPercent !== null ? Number(platformCommissionPercent) : 3) / 100;
+  const netFraction = Math.max(0.001, 1 - commFraction);
+  const grossVolume = walletMetrics.totalEarnings > 0 ? (walletMetrics.totalEarnings / netFraction) : 0;
+  const platformCut = walletMetrics.totalEarnings > 0 ? (grossVolume * commFraction) : 0;
 
   return (
     <>
@@ -101,7 +103,7 @@ export default function AnalyticsPage() {
             }`}>
             <div>
               <h3 className={`font-heading font-black text-xl ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'}`}>Revenue & Commission Breakdown</h3>
-              <p className="text-xs text-[#8B8B96] mt-0.5">83.3% creator share model with transparent settlement reporting.</p>
+              <p className="text-xs text-[#8B8B96] mt-0.5">{formattedPercentage} creator share model with transparent settlement reporting.</p>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">

@@ -1,6 +1,6 @@
 // AskMe Frontend Central API Configuration
-export const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000/api';
-export const SOCKET_URL = process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:5000';
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5003/api';
+export const SOCKET_URL = process.env.NEXT_PUBLIC_SOCKET_URL || (process.env.NEXT_PUBLIC_API_BASE_URL ? process.env.NEXT_PUBLIC_API_BASE_URL.replace(/\/api\/?$/, '') : 'http://localhost:5003');
 
 export const API_ENDPOINTS = {
   AUTH: {
@@ -120,6 +120,21 @@ export const API_ENDPOINTS = {
     PUBLIC: `${API_BASE_URL}/public/creator-testimonials`,
     ADMIN: `${API_BASE_URL}/admin/creator-testimonials`,
   },
+  POLICIES: {
+    PUBLIC_LIST: `${API_BASE_URL}/public/policies`,
+    PUBLIC_BY_SLUG: (slug) => `${API_BASE_URL}/public/policies/${slug}`,
+    RECORD_CONSENT: `${API_BASE_URL}/public/policies/consent`,
+    CHECK_CONSENT: (slug) => `${API_BASE_URL}/public/policies/consent/${slug}`,
+    ADMIN_LIST: `${API_BASE_URL}/admin/legal-policies`,
+    ADMIN_BY_ID: (id) => `${API_BASE_URL}/admin/legal-policies/${id}`,
+    ADMIN_CREATE: `${API_BASE_URL}/admin/legal-policies`,
+    ADMIN_UPDATE: (id) => `${API_BASE_URL}/admin/legal-policies/${id}`,
+    ADMIN_PUBLISH: (id) => `${API_BASE_URL}/admin/legal-policies/${id}/publish`,
+    ADMIN_UNPUBLISH: (id) => `${API_BASE_URL}/admin/legal-policies/${id}/unpublish`,
+    ADMIN_VERSIONS: (id) => `${API_BASE_URL}/admin/legal-policies/${id}/versions`,
+    ADMIN_DISCARD_DRAFT: (id) => `${API_BASE_URL}/admin/legal-policies/${id}/discard-draft`,
+    ADMIN_CONSENTS: `${API_BASE_URL}/admin/legal-policies/consents`,
+  },
   CONTACT: {
     SUBMIT: `${API_BASE_URL}/contact/submit`,
     MESSAGES: `${API_BASE_URL}/contact/messages`,
@@ -140,7 +155,7 @@ export const DEFAULT_BANNER = 'https://images.unsplash.com/photo-1618005182384-a
 
 /**
  * Get accessible media URL for images/documents stored in backend or external URLs
- * @param {string} path - Upload path (e.g. /uploads/profiles/123.png) or external URL
+ * @param {string} path - Upload path (e.g. /uploads/profiles/123.png, /uploads/testimonials/123.png) or external URL
  * @returns {string} Complete image/file URL for preview
  */
 export const getMediaUrl = (path) => {
@@ -155,10 +170,8 @@ export const getMediaUrl = (path) => {
   // Normalize windows backslashes
   let cleanPath = trimmed.replace(/\\/g, '/');
 
-  // If path contains hardcoded localhost:5000 or 127.0.0.1:5000 from past uploads
-  if (cleanPath.includes('localhost:5000') || cleanPath.includes('127.0.0.1:5000')) {
-    cleanPath = cleanPath.replace(/^https?:\/\/(localhost|127\.0\.0\.1):5000/, '');
-  }
+  // If path contains hardcoded localhost or 127.0.0.1 (any port, e.g. 5000, 5003) from past uploads or DB records
+  cleanPath = cleanPath.replace(/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?/, '');
 
   // If it's an external URL (e.g. unsplash, cdn, youtube)
   if (cleanPath.startsWith('http://') || cleanPath.startsWith('https://')) {
@@ -176,13 +189,22 @@ export const getMediaUrl = (path) => {
     cleanPath = `/${cleanPath}`;
   }
 
-  // Determine backend base URL for resolving uploaded media
-  let backendBase = SOCKET_URL || '';
-  if (!backendBase && API_BASE_URL) {
+  // Support /profiles/... and /testimonials/... by ensuring /uploads prefix
+  if (!cleanPath.startsWith('/uploads/') && !cleanPath.startsWith('/api/uploads/')) {
+    if (cleanPath.startsWith('/profiles/') || cleanPath.startsWith('/testimonials/') || cleanPath.startsWith('/documents/') || cleanPath.startsWith('/general/')) {
+      cleanPath = `/uploads${cleanPath}`;
+    }
+  }
+
+  // Determine backend base URL for resolving uploaded media (priority: API_BASE_URL -> SOCKET_URL -> default)
+  let backendBase = '';
+  if (API_BASE_URL) {
     backendBase = API_BASE_URL.replace(/\/api\/?$/, '');
+  } else if (SOCKET_URL) {
+    backendBase = SOCKET_URL;
   }
   if (!backendBase) {
-    backendBase = 'http://localhost:5000';
+    backendBase = 'http://localhost:5003';
   }
 
   // If running in browser and accessed from a LAN IP or remote server (e.g. 192.168.x.x, domain)
@@ -191,7 +213,9 @@ export const getMediaUrl = (path) => {
     const hostname = window.location.hostname;
     const isRemoteClient = hostname !== 'localhost' && hostname !== '127.0.0.1';
     if (isRemoteClient && (backendBase.includes('localhost') || backendBase.includes('127.0.0.1'))) {
-      backendBase = `${window.location.protocol}//${hostname}:5000`;
+      const portMatch = backendBase.match(/:(\d+)$/);
+      const port = portMatch ? `:${portMatch[1]}` : ':5003';
+      backendBase = `${window.location.protocol}//${hostname}${port}`;
     }
   }
 

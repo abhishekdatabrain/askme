@@ -37,8 +37,33 @@ export function calculatePayoutDetails(grossAmount = DEFAULT_CALC_AMOUNT, platfo
   };
 }
 
-export async function fetchCommissionSettings() {
+export function setCachedCommissionPercent(newPercent) {
+  const num = Number(newPercent);
+  if (!isNaN(num) && num >= 0) {
+    cachedCommissionPercent = num;
+    hasFetchedCommission = true;
+    listeners.forEach((listener) => {
+      try {
+        listener(cachedCommissionPercent);
+      } catch (err) {
+        console.error('Commission listener notification error:', err);
+      }
+    });
+    if (typeof window !== 'undefined') {
+      try {
+        window.dispatchEvent(new CustomEvent('commissionSettingsUpdated', { detail: { commissionPercent: num } }));
+      } catch (e) {}
+    }
+  }
+}
+
+export function getCachedCommissionPercent() {
+  return cachedCommissionPercent;
+}
+
+export async function fetchCommissionSettings(force = false) {
   if (isFetchingCommission) return;
+  if (!force && hasFetchedCommission) return;
   isFetchingCommission = true;
 
   try {
@@ -51,9 +76,7 @@ export async function fetchCommissionSettings() {
         : data.data?.commission_percentage;
 
       if (percent !== undefined && percent !== null && !isNaN(Number(percent))) {
-        cachedCommissionPercent = Number(percent);
-        hasFetchedCommission = true;
-        listeners.forEach((listener) => listener(cachedCommissionPercent));
+        setCachedCommissionPercent(Number(percent));
       }
     }
   } catch (err) {
@@ -74,12 +97,27 @@ export function usePayoutCalculator(initialAmount = DEFAULT_CALC_AMOUNT) {
 
     listeners.add(handleCommissionChange);
 
-    if (!hasFetchedCommission) {
-      fetchCommissionSettings();
+    if (commissionPercent !== cachedCommissionPercent) {
+      setCommissionPercent(cachedCommissionPercent);
+    }
+
+    // Always fetch latest saved commission percentage from backend on mount / page reload
+    fetchCommissionSettings(true);
+
+    const handleCustomEvent = (e) => {
+      if (e.detail?.commissionPercent !== undefined && !isNaN(Number(e.detail.commissionPercent))) {
+        setCommissionPercent(Number(e.detail.commissionPercent));
+      }
+    };
+    if (typeof window !== 'undefined') {
+      window.addEventListener('commissionSettingsUpdated', handleCustomEvent);
     }
 
     return () => {
       listeners.delete(handleCommissionChange);
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('commissionSettingsUpdated', handleCustomEvent);
+      }
     };
   }, []);
 

@@ -1,5 +1,5 @@
 const sequelize = require("../../config/database");
-const { Wallet, Donation, VipMembership, WalletSettlement } = require("../../models");
+const { Wallet, Donation, VipMembership, WalletSettlement, WalletTransaction } = require("../../models");
 const { parsePagination, buildPaginationMeta } = require("../../utils/pagination");
 const { getCreatorNetSharePercent } = require("../../config/commissionConfig");
 const { Op } = require("sequelize");
@@ -48,22 +48,46 @@ const getCreatorWalletDetailsService = async (creatorId, queryParams = {}) => {
 
   const { count, rows: donations } = await Donation.findAndCountAll({
     where: whereCondition,
+    include: [
+      {
+        model: WalletTransaction,
+        as: "walletTransaction",
+        required: false,
+        attributes: ["amount"],
+      },
+    ],
     order: [["id", "DESC"]],
     limit,
     offset,
   });
 
-  const netSharePercent = getCreatorNetSharePercent();
+  let activeCommPercent = null;
+  try {
+    const commissionService = require("../../admin/services/commissionService");
+    const commSettings = await commissionService.getCommissionSettings();
+    if (commSettings && commSettings.platformCommissionPercent !== undefined) {
+      activeCommPercent = parseFloat(commSettings.platformCommissionPercent);
+    }
+  } catch (e) { }
+
+  const netSharePercent = getCreatorNetSharePercent(false, activeCommPercent);
 
   const transactions = donations.map((d) => {
     const gross = parseFloat(d.amount || 0);
+    const historicalNet = d.walletTransaction && d.walletTransaction.amount !== null && d.walletTransaction.amount !== undefined
+      ? parseFloat(d.walletTransaction.amount)
+      : null;
+    const netAmount = (historicalNet !== null && d.payment_status === "success")
+      ? historicalNet
+      : gross * netSharePercent;
+
     return {
       id: d.id,
       donationUuid: d.donation_uuid || `TXN-${d.id}`,
       date: d.paid_at || d.createdAt,
       viewerName: d.anonymous ? "Anonymous Supporter" : d.viewer_name || "Anonymous Supporter",
       amount: gross,
-      netAmount: gross * netSharePercent,
+      netAmount,
       message: d.message || "",
       payment_status: d.payment_status === "success" ? "Successful" : d.payment_status === "pending" ? "Pending" : d.payment_status === "refunded" ? "Refunded" : "Failed",
     };

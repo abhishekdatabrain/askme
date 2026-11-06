@@ -19,7 +19,9 @@ const subtractMoney = (a, b) => {
 
 const calculateCommission = (grossAmount, commissionPercentage) => {
   const gross = normalizeMoney(grossAmount);
-  const percent = parseFloat(commissionPercentage || 15);
+  const percent = commissionPercentage !== undefined && commissionPercentage !== null && !isNaN(Number(commissionPercentage))
+    ? parseFloat(commissionPercentage)
+    : 15;
   return normalizeMoney(gross * (percent / 100));
 };
 

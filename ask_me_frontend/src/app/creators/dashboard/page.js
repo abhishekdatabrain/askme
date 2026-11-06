@@ -378,7 +378,8 @@ function CreatorDashboardContent() {
       const handleNewDonationAlert = (data) => {
         if (data && data.amount) {
           const amount = parseFloat(data.amount);
-          const netShare = amount * 0.85;
+          const commFraction = (platformCommissionPercent !== undefined && platformCommissionPercent !== null ? Number(platformCommissionPercent) : 3) / 100;
+          const netShare = amount * Math.max(0, 1 - commFraction);
           setWalletMetrics(prev => ({
             ...prev,
             totalEarnings: prev.totalEarnings + netShare,
@@ -1181,11 +1182,11 @@ function CreatorDashboardContent() {
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
                   <div className="p-4 rounded-2xl bg-[#0A0A0F] border border-[#1C1C26] space-y-1">
                     <span className="text-xs text-[#8B8B96] block">Gross Volume</span>
-                    <span className="text-2xl font-black text-white">₹{(walletMetrics.totalEarnings / 0.85 || 0).toLocaleString('en-IN', { maximumFractionDigits: 2 })}</span>
+                    <span className="text-2xl font-black text-white">₹{((walletMetrics.totalEarnings / Math.max(0.001, 1 - ((platformCommissionPercent || 3) / 100))) || 0).toLocaleString('en-IN', { maximumFractionDigits: 2 })}</span>
                   </div>
                   <div className="p-4 rounded-2xl bg-[#0A0A0F] border border-[#1C1C26] space-y-1">
                     <span className="text-xs text-[#8B8B96] block">Platform Fee ({platformCommissionPercent}%)</span>
-                    <span className="text-2xl font-black text-[#EF4444]">₹{(walletMetrics.totalEarnings / 0.85 * 0.15 || 0).toLocaleString('en-IN', { maximumFractionDigits: 2 })}</span>
+                    <span className="text-2xl font-black text-[#EF4444]">₹{(((walletMetrics.totalEarnings / Math.max(0.001, 1 - ((platformCommissionPercent || 3) / 100))) * ((platformCommissionPercent || 3) / 100)) || 0).toLocaleString('en-IN', { maximumFractionDigits: 2 })}</span>
                   </div>
                   <div className="p-4 rounded-2xl bg-[#0A0A0F] border border-[#1C1C26] space-y-1">
                     <span className="text-xs text-[#8B8B96] block">Creator Net Earnings ({formattedPercentage})</span>

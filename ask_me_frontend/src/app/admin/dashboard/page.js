@@ -14,7 +14,7 @@ import {
 import { usePayoutCalculator } from '@/utils/payoutCalculator';
 
 export default function AdminDashboardPage() {
-    const { formattedPercentage } = usePayoutCalculator();
+    const { formattedPercentage, platformCommissionPercent } = usePayoutCalculator();
     const [dashboardStats, setDashboardStats] = useState({
         totalCreators: 0,
         registeredThisWeek: 0,
@@ -25,7 +25,7 @@ export default function AdminDashboardPage() {
         pendingWithdrawals: 0,
         pendingWithdrawalsAmount: 0,
         pendingKyc: 0,
-        commissionRate: 15
+        commissionRate: platformCommissionPercent !== undefined ? platformCommissionPercent : 3
     });
 
     useEffect(() => {
@@ -50,7 +50,7 @@ export default function AdminDashboardPage() {
                         pendingWithdrawals: Number(d.pendingWithdrawals || 0),
                         pendingWithdrawalsAmount: Number(d.pendingWithdrawalsAmount || 0),
                         pendingKyc: Number(d.pendingKyc || 0),
-                        commissionRate: Number(d.commissionRate || 15)
+                        commissionRate: Number(d.commissionRate !== undefined && d.commissionRate !== null ? d.commissionRate : platformCommissionPercent)
                     });
                 }
             } catch (err) {

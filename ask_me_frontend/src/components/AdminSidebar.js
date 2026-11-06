@@ -34,7 +34,8 @@ import {
   Mail,
   Inbox,
   Ticket,
-  HelpCircle
+  HelpCircle,
+  Scale
 } from 'lucide-react';
 
 import { API_ENDPOINTS } from '@/config/api';
@@ -179,10 +180,10 @@ export default function AdminSidebar({ activeTab: propsActiveTab, setActiveTab, 
     {
       id: 'commissions',
       label: 'Commission',
-      subtitle: '15% Revenue Rules',
+      subtitle: `${platformCommissionPercent}% Revenue Rules`,
       icon: Sparkles,
       path: '/admin/commissions',
-      badge: '15%',
+      badge: `${platformCommissionPercent}%`,
       badgeColor: 'bg-[#FFD60A] text-white',
       children: [
         { id: 'commissions_settings', label: 'Commission Settings', path: '/admin/commissions' },
@@ -209,6 +210,16 @@ export default function AdminSidebar({ activeTab: propsActiveTab, setActiveTab, 
       path: '/admin/marketing/testimonials',
       children: [
         { id: 'marketing_testimonials', label: 'Creator Testimonials', path: '/admin/marketing/testimonials' },
+      ],
+    },
+    {
+      id: 'legal_policies',
+      label: 'Legal Policies',
+      subtitle: 'Manage 12 Policies & Versions',
+      icon: Scale,
+      path: '/admin/legal-policies',
+      children: [
+        { id: 'legal_policies_all', label: 'All 12 Policies', path: '/admin/legal-policies' },
       ],
     },
     {

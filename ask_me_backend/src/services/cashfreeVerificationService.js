@@ -314,20 +314,9 @@ const sendAadhaarOtp = async ({ aadhaarNumber }) => {
       };
     }
 
-    // Fallback for Sandbox / Test Key simulation
-    if (res.statusCode === 401 || (res.data && res.data.code === 'authentication_failed') || !process.env.CASHFREE_CLIENT_ID) {
-      console.warn('[Cashfree KYC Notice] Cashfree credentials returned authentication_error. Generating test Aadhaar OTP.');
-      return {
-        success: true,
-        refId: `CF-OKYC-TEST-${Date.now()}`,
-        maskedAadhaar: `XXXXXXXX${cleanAadhaar.slice(-4)}`,
-        message: 'OTP sent to Aadhaar-linked mobile number. (Use any 6-digit OTP in test mode).',
-      };
-    }
-
     return {
       success: false,
-      message: res.data?.message || res.data?.error || 'Failed to send Aadhaar OTP.',
+      message: res.data?.message || res.data?.error || res.data?.error_msg || 'Failed to send Aadhaar OTP.',
     };
   } catch (err) {
     console.error('[Cashfree KYC Error] Aadhaar OTP request error:', err.message);
@@ -396,28 +385,10 @@ const verifyAadhaarOtp = async ({ otp, refId, aadhaarNumber = '', name = '' }) =
       };
     }
 
-    // Fallback for Sandbox / Test Key simulation
-    if (res.statusCode === 401 || (res.data && res.data.code === 'authentication_failed') || String(refId).includes('TEST') || !process.env.CASHFREE_CLIENT_ID) {
-      const simulatedName = (name || 'ABHISHEK RAUSHAN').toUpperCase();
-      const maskedAadhaar = aadhaarNumber ? `XXXXXXXX${String(aadhaarNumber).slice(-4)}` : 'XXXXXXXX8839';
-      return {
-        success: true,
-        verified: true,
-        registeredName: simulatedName,
-        dob: '1998-05-15',
-        gender: 'M',
-        maskedAadhaar,
-        address: 'Verified Residential Address, India',
-        referenceId: refId || `CF-AADHAAR-TEST-${Date.now()}`,
-        timestamp: new Date().toISOString(),
-        message: 'Aadhaar OTP verified successfully in Test Mode.',
-      };
-    }
-
     return {
       success: false,
       verified: false,
-      message: res.data?.message || res.data?.error || 'Invalid Aadhaar OTP or verification failed.',
+      message: res.data?.message || res.data?.error || res.data?.error_msg || 'Invalid Aadhaar OTP or verification failed.',
     };
   } catch (err) {
     console.error('[Cashfree KYC Error] Aadhaar OTP verification error:', err.message);
@@ -822,22 +793,6 @@ const sendDigiLockerAadhaarOtp = async ({ aadhaarNumber }) => {
       };
     }
 
-    // Fallback for Sandbox / Test Mode / 404 / 401
-    if (
-      res.statusCode === 401 ||
-      res.statusCode === 404 ||
-      !process.env.CASHFREE_CLIENT_ID ||
-      (res.data && (res.data.code === 'authentication_failed' || res.data.error_msg === '404 Route Not Found' || String(res.data.error_msg).includes('404')))
-    ) {
-      console.warn('[Cashfree KYC Notice] Cashfree returned 404/401 or test environment. Providing test DigiLocker OTP session.');
-      return {
-        success: true,
-        refId: `CF-DIGI-OTP-TEST-${Date.now()}`,
-        maskedAadhaar: `XXXXXXXX${cleanAadhaar.slice(-4)}`,
-        message: 'DigiLocker OTP sent to Aadhaar-linked mobile number. (Use any 6-digit OTP in test mode).',
-      };
-    }
-
     return {
       success: false,
       message: res.data?.message || res.data?.error || res.data?.error_msg || 'Failed to send DigiLocker Aadhaar OTP.',
@@ -845,10 +800,8 @@ const sendDigiLockerAadhaarOtp = async ({ aadhaarNumber }) => {
   } catch (err) {
     console.error('[Cashfree KYC Error] DigiLocker OTP request error:', err.message);
     return {
-      success: true,
-      refId: `CF-DIGI-OTP-TEST-${Date.now()}`,
-      maskedAadhaar: `XXXXXXXX${cleanAadhaar.slice(-4)}`,
-      message: 'DigiLocker OTP sent to Aadhaar-linked mobile number.',
+      success: false,
+      message: err.message || 'Failed to initiate DigiLocker Aadhaar OTP.',
     };
   }
 };
@@ -878,10 +831,10 @@ const verifyDigiLockerAadhaarOtp = async ({ otp, securityPin = '', refId, aadhaa
 
     if (res.statusCode === 200 && res.data && (res.data.status === 'VALID' || res.data.status === 'SUCCESS')) {
       const aadhaarName = (res.data.name || res.data.registered_name || name || 'AADHAAR HOLDER').toUpperCase();
-      const dob = res.data.dob || res.data.date_of_birth || '1998-05-15';
+      const dob = res.data.dob || res.data.date_of_birth || '';
       const maskedAadhaar = res.data.aadhaar_number
         ? `XXXXXXXX${String(res.data.aadhaar_number).slice(-4)}`
-        : (aadhaarNumber ? `XXXXXXXX${String(aadhaarNumber).slice(-4)}` : 'XXXXXXXX8839');
+        : (aadhaarNumber ? `XXXXXXXX${String(aadhaarNumber).slice(-4)}` : 'XXXXXXXX••••');
 
       return {
         success: true,
@@ -890,36 +843,11 @@ const verifyDigiLockerAadhaarOtp = async ({ otp, securityPin = '', refId, aadhaa
         dob,
         gender: res.data.gender || 'M',
         maskedAadhaar,
-        address: res.data.address || 'Verified DigiLocker Address, India',
+        address: res.data.address || (typeof res.data.split_address === 'object' ? Object.values(res.data.split_address).filter(Boolean).join(', ') : ''),
         referenceId: String(res.data.reference_id || res.data.ref_id || refId),
         verificationMode: 'DigiLocker OTP',
         timestamp: new Date().toISOString(),
         message: 'Aadhaar e-KYC verified successfully via DigiLocker OTP.',
-      };
-    }
-
-    // Fallback for Sandbox / Test Mode / 404 / 401
-    if (
-      res.statusCode === 401 ||
-      res.statusCode === 404 ||
-      String(refId).includes('TEST') ||
-      !process.env.CASHFREE_CLIENT_ID ||
-      (res.data && (res.data.code === 'authentication_failed' || res.data.error_msg === '404 Route Not Found' || String(res.data.error_msg).includes('404')))
-    ) {
-      const simulatedName = (name || 'ABHISHEK RAUSHAN').toUpperCase();
-      const maskedAadhaar = aadhaarNumber ? `XXXXXXXX${String(aadhaarNumber).slice(-4)}` : 'XXXXXXXX8839';
-      return {
-        success: true,
-        verified: true,
-        registeredName: simulatedName,
-        dob: '1998-05-15',
-        gender: 'M',
-        maskedAadhaar,
-        address: 'Verified DigiLocker Residential Address, India',
-        referenceId: refId || `CF-DIGI-OTP-TEST-${Date.now()}`,
-        verificationMode: 'DigiLocker OTP (Sandbox)',
-        timestamp: new Date().toISOString(),
-        message: 'Aadhaar OTP verified successfully via DigiLocker (Test Mode).',
       };
     }
 
@@ -930,20 +858,10 @@ const verifyDigiLockerAadhaarOtp = async ({ otp, securityPin = '', refId, aadhaa
     };
   } catch (err) {
     console.error('[Cashfree KYC Error] DigiLocker OTP verify error:', err.message);
-    const simulatedName = (name || 'ABHISHEK RAUSHAN').toUpperCase();
-    const maskedAadhaar = aadhaarNumber ? `XXXXXXXX${String(aadhaarNumber).slice(-4)}` : 'XXXXXXXX8839';
     return {
-      success: true,
-      verified: true,
-      registeredName: simulatedName,
-      dob: '1998-05-15',
-      gender: 'M',
-      maskedAadhaar,
-      address: 'Verified DigiLocker Residential Address, India',
-      referenceId: refId || `CF-DIGI-OTP-TEST-${Date.now()}`,
-      verificationMode: 'DigiLocker OTP (Fallback)',
-      timestamp: new Date().toISOString(),
-      message: 'Aadhaar OTP verified successfully via DigiLocker.',
+      success: false,
+      verified: false,
+      message: err.message || 'DigiLocker Aadhaar OTP verification failed.',
     };
   }
 };

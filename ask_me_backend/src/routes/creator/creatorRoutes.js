@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { protect } = require('../../middlewares/authMiddleware');
+const upload = require('../../middlewares/uploadMiddleware');
 const {
   registerCreator,
   loginCreator,
@@ -77,7 +78,7 @@ router.post('/whatsapp-otp/send', sendWhatsAppOtpCreator);
 router.post('/whatsapp-otp/verify', verifyWhatsAppOtpCreator);
 router.post('/sms-otp/send', sendSmsOtpCreator);
 router.post('/sms-otp/verify', verifyWhatsAppOtpCreator);
-router.post('/trial/complete-profile', completeTrialProfileCreator);
+router.post('/trial/complete-profile', upload.single('profile_image'), completeTrialProfileCreator);
 router.post('/email-otp/send', sendEmailOtpCreator);
 router.post('/email-otp/verify', verifyEmailOtpCreator);
 router.post('/truecaller-auth', truecallerAuthCreator);

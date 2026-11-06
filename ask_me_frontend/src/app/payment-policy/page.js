@@ -4,6 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import LandingNavbar from '@/components/LandingNavbar';
 import LandingFooter from '@/components/LandingFooter';
+import DynamicPolicyRenderer from '@/components/DynamicPolicyRenderer';
 import {
   CreditCard,
   Building2,
@@ -309,9 +310,15 @@ export default function PaymentPolicyPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#07070C] text-[#F5F5F7] font-sans selection:bg-[#EB1000] selection:text-white flex flex-col">
-      {/* Landing Navbar Header */}
-      <LandingNavbar />
+    <DynamicPolicyRenderer
+      slug="payment-policy"
+      fallbackTitle="Payment Policy"
+      badgeIcon={CreditCard}
+      badgeLabel="Financial & Payment Terms"
+      fallbackNode={
+        <div className="min-h-screen bg-[#07070C] text-[#F5F5F7] font-sans selection:bg-[#EB1000] selection:text-white flex flex-col">
+          {/* Landing Navbar Header */}
+          <LandingNavbar />
 
       <main className="flex-1 pt-28 pb-20 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto w-full space-y-12">
         {/* HERO HEADER */}
@@ -376,5 +383,7 @@ export default function PaymentPolicyPage() {
       {/* Landing Footer */}
       <LandingFooter />
     </div>
+      }
+    />
   );
 }

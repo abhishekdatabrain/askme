@@ -4,6 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import LandingNavbar from '@/components/LandingNavbar';
 import LandingFooter from '@/components/LandingFooter';
+import DynamicPolicyRenderer from '@/components/DynamicPolicyRenderer';
 import {
   Receipt,
   Building2,
@@ -50,7 +51,7 @@ export default function GstTaxPolicyPage() {
               <span>AskMe Platform Service Fee</span>
             </h3>
             <p className="text-sm text-[#A0A0B2] leading-relaxed">
-              AskMe charges Creators a technology and platform facilitation fee of 15% on the gross value of voluntary Viewer payments processed through the platform, in addition to standard third-party payment gateway charges (~2%).
+              AskMe charges Creators a technology and platform facilitation fee of {platformCommissionPercent}% on the gross value of voluntary Viewer payments processed through the platform, in addition to standard third-party payment gateway charges (~2%).
             </p>
           </div>
 
@@ -61,7 +62,7 @@ export default function GstTaxPolicyPage() {
               <span>GST on Platform Fee</span>
             </h3>
             <p className="text-xs sm:text-sm text-[#A0A0B2] leading-relaxed">
-              In accordance with the Central Goods and Services Tax Act, 2017 (and applicable IGST/SGST statutes), Goods and Services Tax at the prevailing statutory rate of 18% is levied on AskMe&apos;s 15% Platform Service Fee (representing 2.7% of the gross transaction value).
+              In accordance with the Central Goods and Services Tax Act, 2017 (and applicable IGST/SGST statutes), Goods and Services Tax at the prevailing statutory rate of 18% is levied on AskMe&apos;s {platformCommissionPercent}% Platform Service Fee (representing {(platformCommissionPercent * 0.18).toFixed(1)}% of the gross transaction value).
             </p>
           </div>
 
@@ -269,9 +270,15 @@ export default function GstTaxPolicyPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#07070C] text-[#F5F5F7] font-sans selection:bg-[#EB1000] selection:text-white flex flex-col">
-      {/* Landing Navbar Header */}
-      <LandingNavbar />
+    <DynamicPolicyRenderer
+      slug="gst-tax-policy"
+      fallbackTitle="GST and Tax Policy"
+      badgeIcon={Receipt}
+      badgeLabel="Taxation Policy & Compliance"
+      fallbackNode={
+        <div className="min-h-screen bg-[#07070C] text-[#F5F5F7] font-sans selection:bg-[#EB1000] selection:text-white flex flex-col">
+          {/* Landing Navbar Header */}
+          <LandingNavbar />
 
       <main className="flex-1 pt-28 pb-20 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto w-full space-y-12">
         {/* HERO HEADER */}
@@ -336,5 +343,7 @@ export default function GstTaxPolicyPage() {
       {/* Landing Footer */}
       <LandingFooter />
     </div>
+      }
+    />
   );
 }

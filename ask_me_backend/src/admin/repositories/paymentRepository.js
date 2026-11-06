@@ -1,4 +1,4 @@
-const { Donation, PaymentTransaction, Creator } = require('../../models');
+const { Donation, PaymentTransaction, WalletTransaction, Creator } = require('../../models');
 
 class PaymentRepository {
   async findAndCountAllPayments({ where = {}, limit = 10, offset = 0, order = [['created_at', 'DESC']] }) {
@@ -12,6 +12,12 @@ class PaymentRepository {
           model: PaymentTransaction,
           as: 'paymentTransaction',
           required: false,
+        },
+        {
+          model: WalletTransaction,
+          as: 'walletTransaction',
+          required: false,
+          attributes: ['amount'],
         },
         {
           model: Creator,

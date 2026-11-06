@@ -1189,7 +1189,8 @@ const verifyWhatsAppOtpCreatorService = async (data) => {
  * Complete Trial Creator Profile Registration
  */
 const completeTrialProfileCreatorService = async (data, clientIp = 'trial_creator_client') => {
-  const { fullName, email, phone, trialSessionId, trialTempToken } = data || {};
+  const { fullName, email, phone, trialSessionId, trialTempToken, profileImage, profile_image } = data || {};
+  const avatarPath = String(profileImage || profile_image || '').trim();
 
   if (process.env.ENABLE_TRIAL_LOGIN === 'false') {
     const err = new Error("Trial creator registration is currently disabled in this environment.");
@@ -1304,6 +1305,9 @@ const completeTrialProfileCreatorService = async (data, clientIp = 'trial_creato
     trialCreator.account_type = "trial";
     trialCreator.trial_session_id = effectiveSessionId;
     trialCreator.trial_completed = true;
+    if (avatarPath && !avatarPath.startsWith('blob:') && !avatarPath.startsWith('data:')) {
+      trialCreator.profile_image = avatarPath;
+    }
     if (!trialCreator.trial_expires_at) {
       trialCreator.trial_expires_at = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
     }
@@ -1348,6 +1352,7 @@ const completeTrialProfileCreatorService = async (data, clientIp = 'trial_creato
           email: cleanEmail,
           mobile: tenDigitPhone,
           password: hashedPassword,
+          profile_image: (avatarPath && !avatarPath.startsWith('blob:') && !avatarPath.startsWith('data:')) ? avatarPath : null,
           country: "India",
           status: "active",
           is_trial: true,
@@ -1399,6 +1404,8 @@ const completeTrialProfileCreatorService = async (data, clientIp = 'trial_creato
       cleanUsername: trialCreator.username,
       email: trialCreator.email,
       mobile: trialCreator.mobile,
+      profileImage: trialCreator.profile_image || "",
+      profile_image: trialCreator.profile_image || "",
       kycStatus: "approved",
       status: trialCreator.status || "active",
       is_trial: true,

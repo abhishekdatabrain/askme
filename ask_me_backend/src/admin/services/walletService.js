@@ -47,7 +47,7 @@ class WalletService {
     });
 
     const commissionConfig = await commissionService.getCommissionSettings();
-    const commPercent = parseFloat(commissionConfig.platformCommissionPercent || 15);
+    const commPercent = parseFloat(commissionConfig.platformCommissionPercent !== undefined && commissionConfig.platformCommissionPercent !== null ? commissionConfig.platformCommissionPercent : 15);
 
     const wallets = await Promise.all(
       rows.map(async (w) => {
@@ -83,12 +83,13 @@ class WalletService {
           console.log(err, "error fetching earning count")
         }
 
-        // If no donation rows, infer gross raised from stored net earnings/pending (storedNet = gross * 0.85)
+        // If no donation rows, infer gross raised from stored net earnings/pending
         if (gross === 0) {
           const storedEarnings = parseFloat(w.total_earnings || 0);
           const refNet = storedEarnings > 0 ? storedEarnings : rawPending;
           if (refNet > 0) {
-            gross = Math.round((refNet / 0.85) * 100) / 100;
+            const netFraction = (100 - commPercent) / 100;
+            gross = netFraction > 0 ? Math.round((refNet / netFraction) * 100) / 100 : refNet;
           }
         }
 
@@ -144,13 +145,22 @@ class WalletService {
     });
 
     const commissionConfig = await commissionService.getCommissionSettings();
-    const commPercent = parseFloat(commissionConfig.platformCommissionPercent || 15);
+    const commPercent = parseFloat(commissionConfig.platformCommissionPercent !== undefined && commissionConfig.platformCommissionPercent !== null ? commissionConfig.platformCommissionPercent : 15);
 
     const ledger = rows.map((d) => {
       const creator = d.creator || {};
       const gross = parseFloat(d.amount || 0);
-      const platformCut = calculateCommission(gross, commPercent);
-      const creatorNet = calculateCreatorShare(gross, commPercent);
+
+      // Preserve historical amounts if recorded in WalletTransaction for completed transactions
+      let creatorNet;
+      let platformCut;
+      if (d.walletTransaction && d.walletTransaction.amount !== null && d.walletTransaction.amount !== undefined && d.payment_status === 'success') {
+        creatorNet = parseFloat(d.walletTransaction.amount);
+        platformCut = Math.max(0, normalizeMoney(gross - creatorNet));
+      } else {
+        platformCut = calculateCommission(gross, commPercent);
+        creatorNet = calculateCreatorShare(gross, commPercent);
+      }
 
       return {
         transactionId: d.donation_uuid || `TXN-${d.id}`,
@@ -159,7 +169,10 @@ class WalletService {
         viewerName: d.anonymous ? 'Anonymous Supporter' : (d.viewer_name || 'Anonymous Supporter'),
         amount: gross,
         platformCut15: platformCut,
+        platformCommission: platformCut,
         creatorNet85: creatorNet,
+        creatorNetAmount: creatorNet,
+        commissionPercent: commPercent,
         timestamp: d.paid_at || d.created_at,
         status: d.payment_status === 'success' ? 'Successful' : 'Successful',
       };

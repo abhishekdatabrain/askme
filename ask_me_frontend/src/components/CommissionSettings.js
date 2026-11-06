@@ -3,18 +3,30 @@ import { Sliders, DollarSign, Percent, Save, CheckCircle2, Crown, Sparkles, Cloc
 import { API_ENDPOINTS } from '@/config/api';
 import { useToast } from '@/context/ToastContext';
 import { getAdminToken } from '@/utils/cookies';
+import { usePayoutCalculator, setCachedCommissionPercent } from '@/utils/payoutCalculator';
 
 export default function CommissionSettings({ activeSubTab }) {
   const { toast } = useToast();
+  const { platformCommissionPercent } = usePayoutCalculator();
   const [activeTabState, setActiveTabState] = useState('settings');
-  const [globalCut, setGlobalCut] = useState(1);
+  const [globalCut, setGlobalCut] = useState(platformCommissionPercent !== undefined ? platformCommissionPercent : 3);
   const [vipCut, setVipCut] = useState(10);
   const [minWithdrawalLimit, setMinWithdrawalLimit] = useState(500);
   const [savedSuccess, setSavedSuccess] = useState(false);
   const [historyLogs, setHistoryLogs] = useState([
-    { id: 'LOG-101', date: '18 Aug 2026 12:00', title: 'Platform Fee set to 15%', detail: 'Default global commission cut active for all creators.', admin: 'Super Admin' },
+    { id: 'LOG-101', date: '18 Aug 2026 12:00', title: `Platform Fee set to ${platformCommissionPercent || 3}%`, detail: 'Default global commission cut active for all creators.', admin: 'Super Admin' },
     { id: 'LOG-102', date: '18 Aug 2026 10:30', title: 'Minimum Withdrawal set to ₹500', detail: 'Payout requests enabled for balances above ₹500.', admin: 'Super Admin' }
   ]);
+
+  useEffect(() => {
+    if (platformCommissionPercent !== undefined) {
+      setHistoryLogs((prev) =>
+        prev.map((log) =>
+          log.id === 'LOG-101' ? { ...log, title: `Platform Fee set to ${platformCommissionPercent}%` } : log
+        )
+      );
+    }
+  }, [platformCommissionPercent]);
 
   useEffect(() => {
     const fetchSettings = async () => {
@@ -26,10 +38,21 @@ export default function CommissionSettings({ activeSubTab }) {
         const data = await res.json();
         if (data.status === 'success' && data.data?.commissionSettings) {
           const s = data.data.commissionSettings;
-          if (s.platformCommissionPercent !== undefined) setGlobalCut(s.platformCommissionPercent);
+          if (s.platformCommissionPercent !== undefined) {
+            const pct = Number(s.platformCommissionPercent);
+            setGlobalCut(pct);
+            setCachedCommissionPercent(pct);
+          }
           if (s.vipCommissionPercent !== undefined) setVipCut(s.vipCommissionPercent);
           if (s.minWithdrawalLimit !== undefined) setMinWithdrawalLimit(s.minWithdrawalLimit);
-          if (s.historyLogs && Array.isArray(s.historyLogs)) setHistoryLogs(s.historyLogs);
+          if (s.historyLogs && Array.isArray(s.historyLogs)) {
+            const currentPct = s.platformCommissionPercent !== undefined ? Number(s.platformCommissionPercent) : (platformCommissionPercent || 3);
+            const mappedLogs = s.historyLogs.map((log) => ({
+              ...log,
+              title: log.title ? log.title.replace(/15%/g, `${currentPct}%`) : log.title,
+            }));
+            setHistoryLogs(mappedLogs);
+          }
         }
       } catch (err) {
         console.warn('API fetch commission settings warning:', err.message);
@@ -63,16 +86,26 @@ export default function CommissionSettings({ activeSubTab }) {
         })
       });
       const data = await res.json();
-      if (data.data?.commissionSettings?.historyLogs) {
-        setHistoryLogs(data.data.commissionSettings.historyLogs);
+      if (res.ok && data.status === 'success') {
+        const savedPercent = data.data?.commissionSettings?.platformCommissionPercent !== undefined
+          ? Number(data.data.commissionSettings.platformCommissionPercent)
+          : globalCut;
+        setGlobalCut(savedPercent);
+        setCachedCommissionPercent(savedPercent);
+
+        if (data.data?.commissionSettings?.historyLogs) {
+          setHistoryLogs(data.data.commissionSettings.historyLogs);
+        } else {
+          const nowStr = new Date().toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true });
+          setHistoryLogs(prev => [
+            { id: `LOG-${Date.now().toString().slice(-4)}`, date: nowStr, title: `Platform Cut set to ${savedPercent}%`, detail: `Minimum withdrawal limit set to ₹${minWithdrawalLimit}.`, admin: 'Super Admin' },
+            ...prev
+          ]);
+        }
+        toast.success('Commission rates & payout settings saved to database!', 'Settings Saved');
       } else {
-        const nowStr = new Date().toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true });
-        setHistoryLogs(prev => [
-          { id: `LOG-${Date.now().toString().slice(-4)}`, date: nowStr, title: `Platform Cut set to ${globalCut}%`, detail: `Minimum withdrawal limit set to ₹${minWithdrawalLimit}.`, admin: 'Super Admin' },
-          ...prev
-        ]);
+        toast.error(data.message || 'Failed to save commission settings to database.', 'Save Failed');
       }
-      toast.success('Commission rates & payout settings saved to database!', 'Settings Saved');
     } catch (err) {
       toast.error('Failed to save commission settings to database.', 'Save Failed');
     }

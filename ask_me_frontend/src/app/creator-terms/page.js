@@ -4,6 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import LandingNavbar from '@/components/LandingNavbar';
 import LandingFooter from '@/components/LandingFooter';
+import DynamicPolicyRenderer from '@/components/DynamicPolicyRenderer';
 import {
   Building2,
   FileText,
@@ -231,9 +232,15 @@ export default function CreatorTermsPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#07070C] text-[#F5F5F7] font-sans selection:bg-[#EB1000] selection:text-white flex flex-col">
-      {/* Navigation Header */}
-      <LandingNavbar />
+    <DynamicPolicyRenderer
+      slug="creator-terms"
+      fallbackTitle="Creator Terms and Conditions"
+      badgeIcon={UserCheck}
+      badgeLabel="Creator Partnership Terms"
+      fallbackNode={
+        <div className="min-h-screen bg-[#07070C] text-[#F5F5F7] font-sans selection:bg-[#EB1000] selection:text-white flex flex-col">
+          {/* Navigation Header */}
+          <LandingNavbar />
 
       <main className="flex-1 pt-28 pb-20 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto w-full space-y-12">
         {/* HERO HEADER */}
@@ -298,5 +305,7 @@ export default function CreatorTermsPage() {
       {/* Landing Footer */}
       <LandingFooter />
     </div>
+      }
+    />
   );
 }

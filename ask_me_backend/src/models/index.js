@@ -27,6 +27,9 @@ const WalletSettlement = require("./WalletSettlementModel");
 const CreatorTestimonial = require("./CreatorTestimonialModel");
 const ContactMessage = require("./ContactMessageModel");
 const SupportTicket = require("./SupportTicketModel");
+const LegalPolicy = require("./LegalPolicyModel");
+const LegalPolicyVersion = require("./LegalPolicyVersionModel");
+const UserPolicyConsent = require("./UserPolicyConsentModel");
 
 // Creator & Support Tickets
 Creator.hasMany(SupportTicket, { foreignKey: "creator_id", as: "supportTickets" });
@@ -94,6 +97,10 @@ Donation.belongsTo(DonationSession, { foreignKey: "session_id", as: "session" })
 Donation.hasOne(PaymentTransaction, { foreignKey: "donation_id", as: "paymentTransaction" });
 PaymentTransaction.belongsTo(Donation, { foreignKey: "donation_id", as: "donation" });
 
+// Donation & Wallet Transactions
+Donation.hasOne(WalletTransaction, { foreignKey: "donation_id", as: "walletTransaction" });
+WalletTransaction.belongsTo(Donation, { foreignKey: "donation_id", as: "donation" });
+
 // Creator & Withdrawal Requests
 Creator.hasMany(WithdrawalRequest, { foreignKey: "creator_id", as: "withdrawals" });
 WithdrawalRequest.belongsTo(Creator, { foreignKey: "creator_id", as: "creator" });
@@ -136,6 +143,16 @@ WalletSettlement.belongsTo(Wallet, { foreignKey: "wallet_id", as: "wallet" });
 WalletSettlement.hasMany(WithdrawalRequest, { foreignKey: "settlement_id", as: "withdrawals" });
 WithdrawalRequest.belongsTo(WalletSettlement, { foreignKey: "settlement_id", as: "settlement" });
 
+// Legal Policy Relationships
+LegalPolicy.hasMany(LegalPolicyVersion, { foreignKey: "policy_id", as: "versions" });
+LegalPolicyVersion.belongsTo(LegalPolicy, { foreignKey: "policy_id", as: "policy" });
+
+LegalPolicy.hasMany(UserPolicyConsent, { foreignKey: "policy_id", as: "consents" });
+UserPolicyConsent.belongsTo(LegalPolicy, { foreignKey: "policy_id", as: "policy" });
+
+UserPolicyConsent.belongsTo(LegalPolicyVersion, { foreignKey: "policy_version_id", as: "versionDetails" });
+LegalPolicyVersion.hasMany(UserPolicyConsent, { foreignKey: "policy_version_id", as: "consents" });
+
 module.exports = {
   Admin,
   AdminRefreshToken,
@@ -167,4 +184,7 @@ module.exports = {
   CreatorTestimonial,
   ContactMessage,
   SupportTicket,
+  LegalPolicy,
+  LegalPolicyVersion,
+  UserPolicyConsent,
 };

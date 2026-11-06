@@ -106,8 +106,9 @@ export default function WalletManagement({ activeSubTab }) {
 
   // Overall Earnings Report Totals
   const totalGrossRevenue = creatorWallets.reduce((acc, w) => acc + (w.grossEarnings || 0), 0);
-  const totalPlatformCut = Math.round(totalGrossRevenue * 0.15);
-  const totalCreatorNet = Math.round(totalGrossRevenue * 0.85);
+  const commRate = Number(platformCommissionPercent) >= 0 ? Number(platformCommissionPercent) : 3;
+  const totalPlatformCut = Math.round(totalGrossRevenue * (commRate / 100));
+  const totalCreatorNet = totalGrossRevenue - totalPlatformCut;
   const totalAvailableBalance = creatorWallets.reduce((acc, w) => acc + (w.availableBalance || 0), 0);
 
   // Handle Monthly Settlement API Call (Creator-wise or Bulk)
@@ -388,7 +389,7 @@ export default function WalletManagement({ activeSubTab }) {
                     <span className="font-heading font-black text-white text-sm">₹{(w.grossEarnings).toLocaleString('en-IN')}</span>
                   </div>
                   <div className="p-2.5 rounded-xl bg-[#13131A] border border-[#1C1C26]">
-                    <span className="text-[10px] text-[#8B8B96] block font-semibold">Fee (15%)</span>
+                    <span className="text-[10px] text-[#8B8B96] block font-semibold">Fee ({platformCommissionPercent}%)</span>
                     <span className="font-heading font-black text-[#FFD60A] text-sm">₹{(w.platformCommission || 0).toLocaleString('en-IN')}</span>
                   </div>
                   <div className="p-2.5 rounded-xl bg-[#13131A] border border-[#1C1C26]">

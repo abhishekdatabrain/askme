@@ -125,6 +125,7 @@ const getPublicTestimonials = async (req, res) => {
       metricLabel: item.metric_label,
       metricValue: item.metric_value,
       profileImage: item.profile_image || '',
+      profile_image: item.profile_image || '',
       platform: item.platform || 'YouTube',
       socialHandle: item.social_handle || item.username,
       profileLink: item.profile_link || '',

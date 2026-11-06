@@ -34,6 +34,7 @@ const walletAdjustmentSchema = Joi.object({
 const commissionSettingsSchema = Joi.object({
   platformCommissionPercent: Joi.number().min(0).max(100).optional(),
   commission_percentage: Joi.number().min(0).max(100).optional(),
+  vipCommissionPercent: Joi.number().min(0).max(100).optional(),
   minWithdrawalLimit: Joi.number().min(0).optional(),
   minimum_withdrawal_amount: Joi.number().min(0).optional(),
   currency: Joi.string().max(10).default('INR'),

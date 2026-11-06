@@ -58,7 +58,7 @@ const truecallerRoutes = require('./routes/truecallerRoutes');
 const uploadRoutes = require('./routes/uploadRoutes');
 
 const fs = require('fs');
-['uploads', 'uploads/profiles', 'uploads/documents', 'uploads/general'].forEach(dir => {
+['uploads', 'uploads/profiles', 'uploads/testimonials', 'uploads/documents', 'uploads/general'].forEach(dir => {
   const fullPath = path.join(__dirname, '..', dir);
   if (!fs.existsSync(fullPath)) {
     fs.mkdirSync(fullPath, { recursive: true });
@@ -66,8 +66,18 @@ const fs = require('fs');
 });
 
 // Serve static uploaded files (/uploads/profiles/..., /uploads/documents/..., /uploads/testimonials/...)
+// Mutually support both /uploads/testimonials and /uploads/profiles directories
+app.use('/uploads/testimonials', express.static(path.join(__dirname, '../uploads/testimonials')));
 app.use('/uploads/testimonials', express.static(path.join(__dirname, '../uploads/profiles')));
+app.use('/uploads/profiles', express.static(path.join(__dirname, '../uploads/profiles')));
+app.use('/uploads/profiles', express.static(path.join(__dirname, '../uploads/testimonials')));
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+
+// Also serve on /api/uploads for reverse proxies or frontend paths configured with /api
+app.use('/api/uploads/testimonials', express.static(path.join(__dirname, '../uploads/testimonials')));
+app.use('/api/uploads/testimonials', express.static(path.join(__dirname, '../uploads/profiles')));
+app.use('/api/uploads/profiles', express.static(path.join(__dirname, '../uploads/profiles')));
+app.use('/api/uploads/profiles', express.static(path.join(__dirname, '../uploads/testimonials')));
 app.use('/api/uploads', express.static(path.join(__dirname, '../uploads')));
 
 const { getPublicTestimonials } = require('./controllers/creatorTestimonialController');
@@ -77,8 +87,11 @@ app.get('/api/public/creator-testimonials', getPublicTestimonials);
 
 const contactRoutes = require('./routes/contactRoutes');
 const ticketRoutes = require('./routes/ticketRoutes');
+const policyRoutes = require('./routes/policyRoutes');
 
 // API Routes
+app.use('/api/public/policies', policyRoutes);
+app.use('/api/policies', policyRoutes);
 app.use('/api/tickets', ticketRoutes);
 app.use('/api/contact', contactRoutes);
 app.use('/api/upload', uploadRoutes);

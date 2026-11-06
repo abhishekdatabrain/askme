@@ -38,7 +38,9 @@ class AdminDashboardService {
     ]);
 
     const totalDonations = parseFloat(paymentDonationsSum || walletEarningsSum || 0);
-    const commRate = parseFloat(commissionSettings.platformCommissionPercent || 15);
+    const commRate = commissionSettings && commissionSettings.platformCommissionPercent !== undefined && commissionSettings.platformCommissionPercent !== null
+      ? parseFloat(commissionSettings.platformCommissionPercent)
+      : 15;
     const totalRevenue = calculateCommission(totalDonations, commRate);
 
     return {

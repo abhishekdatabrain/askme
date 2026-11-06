@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import LandingNavbar from '@/components/LandingNavbar';
 import LandingFooter from '@/components/LandingFooter';
+import DynamicPolicyRenderer from '@/components/DynamicPolicyRenderer';
 import {
   FileText,
   ShieldCheck,
@@ -128,7 +129,7 @@ export default function EulaPage() {
     {
       num: '20',
       title: 'Standard Platform Fee',
-      content: 'AskMe\'s standard Platform Fee is 15% of the applicable transaction amount, unless a different fee is expressly displayed, communicated or agreed. The Platform Fee represents the charge for AskMe\'s applicable platform services.'
+      content: `AskMe's standard Platform Fee is ${platformCommissionPercent}% of the applicable transaction amount, unless a different fee is expressly displayed, communicated or agreed. The Platform Fee represents the charge for AskMe's applicable platform services.`
     },
     {
       num: '21',
@@ -148,7 +149,7 @@ export default function EulaPage() {
     {
       num: '24',
       title: 'Creator Earnings Calculation',
-      content: `Standard Calculation:\n• Transaction Amount: 100%\n• Less AskMe Platform Fee: ordinarily ${platformCommissionPercent}%\n• Creator Gross Share: ordinarily ${formattedPercentage}\n• Less Applicable Deductions\n• Creator Net Earnings: remaining amount\n\n  The applicable deductions may include taxes, payment processing charges, foreign exchange charges, statutory withholding, payment adjustment, chargebacks, fraud adjustments, Payment Service Provider adjustments and other legally required or contractually applicable deductions.\n Example:Viewer pays \$10, AskMe Platform Fee is \$1.50, Creator Gross Share is \$8.50. If applicable deductions total \$0.70, Creator Net Earnings would be \$7.80. This is an illustration only.`
+      content: `Standard Calculation:\n• Transaction Amount: 100%\n• Less AskMe Platform Fee: ordinarily ${platformCommissionPercent}%\n• Creator Gross Share: ordinarily ${formattedPercentage}\n• Less Applicable Deductions\n• Creator Net Earnings: remaining amount\n\n  The applicable deductions may include taxes, payment processing charges, foreign exchange charges, statutory withholding, payment adjustment, chargebacks, fraud adjustments, Payment Service Provider adjustments and other legally required or contractually applicable deductions.\n Example:Viewer pays \$10, AskMe Platform Fee is \$${(10 * (platformCommissionPercent / 100)).toFixed(2)}, Creator Gross Share is \$${(10 * (1 - platformCommissionPercent / 100)).toFixed(2)}. If applicable deductions total \$0.70, Creator Net Earnings would be \$${Math.max(0, 10 * (1 - platformCommissionPercent / 100) - 0.70).toFixed(2)}. This is an illustration only.`
     },
     {
       num: '25',
@@ -158,7 +159,7 @@ export default function EulaPage() {
     {
       num: '26',
       title: 'Illustrative Transaction',
-      content: 'If a Viewer pays ₹1,000 for an eligible Paid Question and the standard 15% Platform Fee applies, the AskMe Platform Fee would be ₹150 and the Creator Gross Share would be ₹850. If taxes, payment processing charges and permitted deductions total ₹50, Creator Net Earnings would be ₹800. This example is illustrative only and does not establish a fixed tax rate, processing fee or payout amount.'
+      content: `If a Viewer pays ₹1,000 for an eligible Paid Question and the standard ${platformCommissionPercent}% Platform Fee applies, the AskMe Platform Fee would be ₹${Math.round(1000 * (platformCommissionPercent / 100))} and the Creator Gross Share would be ₹${1000 - Math.round(1000 * (platformCommissionPercent / 100))}. If taxes, payment processing charges and permitted deductions total ₹50, Creator Net Earnings would be ₹${1000 - Math.round(1000 * (platformCommissionPercent / 100)) - 50}. This example is illustrative only and does not establish a fixed tax rate, processing fee or payout amount.`
     },
     {
       num: '27',
@@ -271,11 +272,17 @@ export default function EulaPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#07070C] text-[#F5F5F7] font-sans selection:bg-[#EB1000] selection:text-white flex flex-col">
-      {/* Landing Navbar Header */}
-      <LandingNavbar />
+    <DynamicPolicyRenderer
+      slug="eula"
+      fallbackTitle="End User License Agreement (EULA)"
+      badgeIcon={Scale}
+      badgeLabel="Legal Framework"
+      fallbackNode={
+        <div className="min-h-screen bg-[#07070C] text-[#F5F5F7] font-sans selection:bg-[#EB1000] selection:text-white flex flex-col">
+          {/* Landing Navbar Header */}
+          <LandingNavbar />
 
-      <main className="flex-1 pt-28 pb-20 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto w-full space-y-10">
+          <main className="flex-1 pt-28 pb-20 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto w-full space-y-10">
 
         {/* HERO HEADER */}
         <section className="text-center space-y-4 pt-4 border-b border-[#1E1E2E] pb-10">
@@ -466,5 +473,7 @@ export default function EulaPage() {
       {/* Landing Footer */}
       <LandingFooter />
     </div>
+      }
+    />
   );
 }

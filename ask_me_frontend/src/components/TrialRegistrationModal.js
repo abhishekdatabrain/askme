@@ -13,9 +13,11 @@ import {
   Sparkles,
   X,
   Lock,
+  Camera,
 } from 'lucide-react';
-import { API_ENDPOINTS } from '@/config/api';
+import { API_ENDPOINTS, getMediaUrl } from '@/config/api';
 import { setCreatorSession } from '@/utils/cookies';
+import { uploadFile } from '@/utils/fileUpload';
 import Logo from './Logo';
 
 export default function TrialRegistrationModal({
@@ -28,11 +30,48 @@ export default function TrialRegistrationModal({
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
+  const [profileImage, setProfileImage] = useState('');
+  const [profileImagePreview, setProfileImagePreview] = useState('');
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [selectedFile, setSelectedFile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
 
   if (!isOpen) return null;
+
+  const handleFileChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
+    if (!validTypes.includes(file.type.toLowerCase())) {
+      setErrorMsg('Please select a valid image file (JPG, PNG, WEBP, GIF).');
+      return;
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      setErrorMsg('Image size must be less than 10MB.');
+      return;
+    }
+
+    setErrorMsg('');
+    setSelectedFile(file);
+    const localUrl = URL.createObjectURL(file);
+    setProfileImagePreview(localUrl);
+
+    try {
+      setUploadingImage(true);
+      const res = await uploadFile(file, 'profile');
+      if (res?.path) {
+        setProfileImage(res.path);
+      }
+    } catch (uploadErr) {
+      console.warn('Direct upload notice, will submit with form:', uploadErr);
+    } finally {
+      setUploadingImage(false);
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -70,6 +109,18 @@ export default function TrialRegistrationModal({
     setLoading(true);
 
     try {
+      let finalProfilePath = profileImage;
+      if (selectedFile && !finalProfilePath) {
+        try {
+          const uploadRes = await uploadFile(selectedFile, 'profile');
+          if (uploadRes?.path) {
+            finalProfilePath = uploadRes.path;
+          }
+        } catch (uploadErr) {
+          console.warn('Profile image upload notice:', uploadErr);
+        }
+      }
+
       const sessionKey = 'askme_trial_creator_session_id';
       const trialSessionId = trialData?.trialSessionId || (typeof window !== 'undefined' ? localStorage.getItem(sessionKey) : null);
       const trialTempToken = trialData?.trialTempToken;
@@ -85,6 +136,8 @@ export default function TrialRegistrationModal({
           fullName: cleanName,
           email: cleanEmail,
           phone: tenDigit,
+          profileImage: finalProfilePath || undefined,
+          profile_image: finalProfilePath || undefined,
           trialSessionId,
           trialTempToken,
         }),
@@ -197,6 +250,70 @@ export default function TrialRegistrationModal({
 
         {/* Mandatory Profile Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Profile Picture Upload Section */}
+          <div className="flex flex-col items-center justify-center space-y-2 pb-1">
+            <div className="relative group">
+              <div className="w-20 h-20 rounded-full overflow-hidden bg-[#151524] border-2 border-[#2A2A40] group-hover:border-[#EB1000] transition-all duration-300 shadow-xl shadow-black/50 flex items-center justify-center">
+                {profileImagePreview ? (
+                  <img
+                    src={profileImagePreview}
+                    alt="Profile Preview"
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="flex flex-col items-center justify-center text-gray-500 group-hover:text-gray-300 transition-colors">
+                    <User className="w-9 h-9 stroke-[1.5]" />
+                  </div>
+                )}
+
+                {/* Hover overlay with Camera Icon */}
+                <label
+                  htmlFor="trial-avatar-input"
+                  className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center rounded-full transition-opacity cursor-pointer text-white"
+                >
+                  <Camera className="w-5 h-5 text-white drop-shadow" />
+                  <span className="text-[9px] font-bold mt-0.5 tracking-tight">
+                    {uploadingImage ? 'Uploading...' : 'Change'}
+                  </span>
+                </label>
+              </div>
+
+              {/* Floating Camera Badge */}
+              <label
+                htmlFor="trial-avatar-input"
+                className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-gradient-to-r from-[#FF3B00] to-[#EB1000] text-white flex items-center justify-center border-2 border-[#10101A] shadow-md hover:scale-110 active:scale-95 transition-all cursor-pointer"
+                title="Upload Profile Picture"
+              >
+                {uploadingImage ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <Camera className="w-3.5 h-3.5" />
+                )}
+              </label>
+
+              <input
+                id="trial-avatar-input"
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/gif"
+                onChange={handleFileChange}
+                disabled={loading || uploadingImage}
+                className="hidden"
+              />
+            </div>
+
+            <div className="text-center">
+              <label
+                htmlFor="trial-avatar-input"
+                className="text-xs font-bold text-gray-200 hover:text-[#EB1000] cursor-pointer transition-colors inline-block"
+              >
+                Upload Profile Picture
+              </label>
+              <p className="text-[10px] text-gray-400">
+                Recommended square photo (JPG, PNG or WEBP)
+              </p>
+            </div>
+          </div>
+
           {/* Full Name Field */}
           <div className="space-y-1.5">
             <label className="text-xs font-bold text-gray-200 flex items-center justify-between">

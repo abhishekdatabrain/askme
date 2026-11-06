@@ -318,7 +318,7 @@ export default function AdminMembershipsManager({ activeSubTab = 'overview', the
             <span>💎</span> Memberships Module
           </h1>
           <p className="text-xs md:text-sm text-[#8B8B96] mt-1">
-            Manage creator membership plans, active subscriptions, revenue split (15% platform cut), benefits, and subscriber lifecycle.
+            Manage creator membership plans, active subscriptions, revenue split ({platformCommissionPercent}% platform cut), benefits, and subscriber lifecycle.
           </p>
         </div>
       </div>
@@ -382,7 +382,7 @@ export default function AdminMembershipsManager({ activeSubTab = 'overview', the
               <div>
                 <p className="text-[11px] text-[#8B8B96] font-semibold">Platform Commission</p>
                 <h3 className="font-heading font-black text-2xl text-white">₹ {(overviewStats.platformCommission || 71298).toLocaleString()}</h3>
-                <p className="text-[10px] text-[#666677]">vs last 30 days (15%)</p>
+                <p className="text-[10px] text-[#666677]">vs last 30 days ({platformCommissionPercent}%)</p>
               </div>
             </div>
 

@@ -159,4 +159,31 @@ router.delete('/creator-testimonials/:id', deleteTestimonial);
 router.patch('/creator-testimonials/:id/status', toggleTestimonialStatus);
 router.put('/creator-testimonials/:id/status', toggleTestimonialStatus);
 
+// 13. Legal Policy Management Module
+const {
+  getAdminPolicies,
+  getAdminPolicyById,
+  createPolicy,
+  updatePolicy,
+  publishPolicy,
+  unpublishPolicy,
+  getPolicyVersions,
+  discardDraft,
+  getPolicyConsents,
+} = require('../controllers/legalPolicyAdminController');
+
+router.get('/legal-policies', getAdminPolicies);
+router.post('/legal-policies', createPolicy);
+router.get('/legal-policies/consents', getPolicyConsents);
+router.get('/legal-policies/:id', getAdminPolicyById);
+router.put('/legal-policies/:id', updatePolicy);
+router.patch('/legal-policies/:id', updatePolicy);
+router.post('/legal-policies/:id/publish', publishPolicy);
+router.put('/legal-policies/:id/publish', publishPolicy);
+router.post('/legal-policies/:id/unpublish', unpublishPolicy);
+router.put('/legal-policies/:id/unpublish', unpublishPolicy);
+router.get('/legal-policies/:id/versions', getPolicyVersions);
+router.post('/legal-policies/:id/discard-draft', discardDraft);
+router.delete('/legal-policies/:id/draft', discardDraft);
+
 module.exports = router;

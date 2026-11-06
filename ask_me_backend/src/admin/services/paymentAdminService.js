@@ -110,7 +110,7 @@ class PaymentAdminService {
     const { page, limit, offset } = parsePagination(query);
 
     const commissionConfig = await commissionService.getCommissionSettings();
-    const commPercent = parseFloat(commissionConfig.platformCommissionPercent || 15);
+    const commPercent = parseFloat(commissionConfig.platformCommissionPercent !== undefined && commissionConfig.platformCommissionPercent !== null ? commissionConfig.platformCommissionPercent : 15);
 
     const now = new Date();
     const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);

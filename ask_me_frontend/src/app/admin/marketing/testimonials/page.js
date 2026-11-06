@@ -2,9 +2,20 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
-import { API_ENDPOINTS, getMediaUrl } from '@/config/api';
+import { API_ENDPOINTS, getMediaUrl, DEFAULT_AVATAR } from '@/config/api';
 import { getAdminToken } from '@/utils/cookies';
 import { useToast } from '@/context/ToastContext';
+
+const SVG_FALLBACK_AVATAR = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64' fill='%236B7280'%3E%3Ccircle cx='32' cy='32' r='32' fill='%231F2937'/%3E%3Ccircle cx='32' cy='24' r='12' fill='%239CA3AF'/%3E%3Cpath d='M16 52c0-8.837 7.163-16 16-16s16 7.163 16 16v2H16v-2z' fill='%239CA3AF'/%3E%3C/svg%3E";
+
+const handleImageError = (e) => {
+  if (e.currentTarget.src !== DEFAULT_AVATAR && !e.currentTarget.src.includes('images.unsplash.com')) {
+    e.currentTarget.src = DEFAULT_AVATAR;
+  } else {
+    e.currentTarget.onerror = null;
+    e.currentTarget.src = SVG_FALLBACK_AVATAR;
+  }
+};
 import {
   Plus,
   Search,
@@ -523,9 +534,10 @@ export default function AdminTestimonialsPage() {
                     <td className="py-4 px-4">
                       <div className="flex items-center gap-3">
                         <img
-                          src={item.profile_image ? getMediaUrl(item.profile_image) : 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=100&q=80'}
-                          alt={item.creator_name}
+                          src={item.profile_image ? getMediaUrl(item.profile_image) : DEFAULT_AVATAR}
+                          alt={item.creator_name || 'Creator'}
                           className="w-10 h-10 rounded-full object-cover border border-[#EB1000]/50 shrink-0 bg-[#0A0A0F]"
+                          onError={handleImageError}
                         />
                         <div className="space-y-0.5 min-w-0">
                           <div className="font-extrabold text-white text-xs flex items-center gap-1.5 truncate">
@@ -756,7 +768,12 @@ export default function AdminTestimonialsPage() {
                   <div className="flex items-center gap-4">
                     <div className="h-16 w-16 rounded-full overflow-hidden bg-[#0A0A0F] border border-[#222234] flex items-center justify-center shrink-0">
                       {imagePreview ? (
-                        <img src={imagePreview} alt="Preview" className="h-full w-full object-cover" />
+                        <img
+                          src={imagePreview}
+                          alt="Preview"
+                          className="h-full w-full object-cover"
+                          onError={handleImageError}
+                        />
                       ) : (
                         <ImageIcon className="h-6 w-6 text-[#6E6E80]" />
                       )}
@@ -1065,9 +1082,10 @@ export default function AdminTestimonialsPage() {
 
                 <div className="flex items-center gap-2.5 pt-1">
                   <img
-                    src={previewItem.profile_image ? getMediaUrl(previewItem.profile_image) : 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80'}
-                    alt={previewItem.creator_name}
-                    className="w-9 h-9 rounded-full object-cover border border-[#EB1000]/50 shrink-0"
+                    src={previewItem.profile_image ? getMediaUrl(previewItem.profile_image) : DEFAULT_AVATAR}
+                    alt={previewItem.creator_name || 'Creator'}
+                    className="w-9 h-9 rounded-full object-cover border border-[#EB1000]/50 shrink-0 bg-[#0A0A0F]"
+                    onError={handleImageError}
                   />
                   <div className="overflow-hidden">
                     <div className="font-extrabold text-white text-xs flex items-center gap-1 truncate">

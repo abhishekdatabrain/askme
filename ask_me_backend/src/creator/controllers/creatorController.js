@@ -1137,7 +1137,12 @@ const verifyWhatsAppOtpCreator = async (req, res, next) => {
 const completeTrialProfileCreator = async (req, res, next) => {
   try {
     const clientIp = req.ip || req.headers['x-forwarded-for'] || 'trial_creator_client';
-    const result = await completeTrialProfileCreatorService(req.body, clientIp);
+    const payload = { ...req.body };
+    if (req.file) {
+      payload.profile_image = `/uploads/profiles/${req.file.filename}`;
+      payload.profileImage = `/uploads/profiles/${req.file.filename}`;
+    }
+    const result = await completeTrialProfileCreatorService(payload, clientIp);
     return res.status(200).json({
       status: "success",
       message: "Trial creator profile activated successfully!",

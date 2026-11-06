@@ -696,7 +696,7 @@ export default function Home() {
       categoryTag: 'PAYMENTS & PAYOUTS',
       question: 'Are there any setup fees or monthly subscription charges to start as a creator?',
       answer:
-        'No! AskMe is ₹0 setup fee and 100% free to join. There are no monthly subscription fees. We only take a transparent 15% platform fee when fans submit paid questions.',
+        `No! AskMe is ₹0 setup fee and 100% free to join. There are no monthly subscription fees. We only take a transparent ${platformCommissionPercent}% platform fee when fans submit paid questions.`,
     },
   ];
 
@@ -3410,9 +3410,10 @@ export default function Home() {
                         {/* Creator Info */}
                         <div className="flex items-center gap-2.5 pt-1">
                           <img
-                            src={item.profileImage ? getMediaUrl(item.profileImage) : 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80'}
-                            alt={item.creatorName}
+                            src={item.profileImage ? getMediaUrl(item.profileImage) : (item.profile_image ? getMediaUrl(item.profile_image) : DEFAULT_AVATAR)}
+                            alt={item.creatorName || item.creator_name || 'Creator'}
                             className="w-10 h-10 rounded-full object-cover border border-[#EB1000]/50 shrink-0 bg-[#0A0A0F]"
+                            onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = DEFAULT_AVATAR; }}
                           />
                           <div className="overflow-hidden min-w-0">
                             <div className="font-extrabold text-white text-xs flex items-center gap-1 truncate">

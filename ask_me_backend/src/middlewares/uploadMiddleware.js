@@ -3,7 +3,7 @@ const path = require('path');
 const fs = require('fs');
 
 // Ensure upload directories exist
-const uploadDirs = ['uploads/profiles', 'uploads/documents', 'uploads/general'];
+const uploadDirs = ['uploads/profiles', 'uploads/testimonials', 'uploads/documents', 'uploads/general'];
 uploadDirs.forEach(dir => {
   const fullPath = path.join(process.cwd(), dir);
   if (!fs.existsSync(fullPath)) {

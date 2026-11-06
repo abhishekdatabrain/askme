@@ -246,7 +246,18 @@ const processViewerDonationService = async (data, authenticatedUser = null) => {
     }
 
     // 4. Update Wallet Balance with ROW LOCKING (FOR UPDATE)
-    const netSharePercent = getCreatorNetSharePercent(isVipMember);
+    let activeCommPercent = null;
+    try {
+      const commissionService = require("../../admin/services/commissionService");
+      const commSettings = await commissionService.getCommissionSettings();
+      if (commSettings && commSettings.platformCommissionPercent !== undefined) {
+        activeCommPercent = parseFloat(commSettings.platformCommissionPercent);
+      }
+    } catch (e) {
+      console.warn("Could not fetch active commission settings for donation:", e.message);
+    }
+
+    const netSharePercent = getCreatorNetSharePercent(isVipMember, activeCommPercent);
     const creatorEarnings = normalizeMoney(parsedAmount * netSharePercent);
     const platformFee = subtractMoney(parsedAmount, creatorEarnings);
 
@@ -514,7 +525,18 @@ const handlePaymentWebhookService = async (body, headers = {}) => {
         );
       }
 
-      const netSharePercent = getCreatorNetSharePercent();
+      let activeCommPercent = null;
+      try {
+        const commissionService = require("../../admin/services/commissionService");
+        const commSettings = await commissionService.getCommissionSettings();
+        if (commSettings && commSettings.platformCommissionPercent !== undefined) {
+          activeCommPercent = parseFloat(commSettings.platformCommissionPercent);
+        }
+      } catch (e) {
+        console.warn("Could not fetch active commission settings for webhook:", e.message);
+      }
+
+      const netSharePercent = getCreatorNetSharePercent(false, activeCommPercent);
       const creatorEarnings = normalizeMoney(parsedAmount * netSharePercent);
 
       const [walletRec] = await Wallet.findOrCreate({

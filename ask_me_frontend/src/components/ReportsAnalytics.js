@@ -20,8 +20,10 @@ import {
 import PlatformIcon from './PlatformIcon';
 import { API_ENDPOINTS } from '@/config/api';
 import { getAdminToken } from '@/utils/cookies';
+import { usePayoutCalculator } from '@/utils/payoutCalculator';
 
 export default function ReportsAnalytics({ activeSubTab }) {
+  const { platformCommissionPercent } = usePayoutCalculator();
   const [reportTimeframe, setReportTimeframe] = useState('Monthly');
   const [activeReportSection, setActiveReportSection] = useState('revenue');
   const [loading, setLoading] = useState(true);
@@ -100,7 +102,9 @@ export default function ReportsAnalytics({ activeSubTab }) {
     growth: 14.2
   };
 
-  const commRate = reportData?.commissionRate || 15;
+  const commRate = reportData?.commissionRate !== undefined && reportData?.commissionRate !== null
+    ? Number(reportData.commissionRate)
+    : (platformCommissionPercent !== undefined ? Number(platformCommissionPercent) : 15);
   const creatorPercent = 100 - commRate;
 
   const topCreators = reportData?.topCreators || [];

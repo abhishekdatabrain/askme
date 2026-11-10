@@ -200,7 +200,7 @@ function ViewerPaymentContent() {
             sessionCode: sessionCodeParam,
             title: 'Gaming Live Broadcast #25',
             category: 'Gaming & Esports',
-            description: 'Support the broadcast! Ask questions & send instant UPI shoutouts live on stream.',
+            description: 'Appreciate the broadcast! Ask questions & send instant UPI shoutouts live on stream.',
             thumbnailUrl: 'https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=600&q=80',
           });
           setCreatorData({
@@ -330,7 +330,7 @@ function ViewerPaymentContent() {
     onError: () => {
       handleGoogleAuthBackend({
         email: 'viewer.google@gmail.com',
-        name: 'Google Supporter',
+        name: 'Google',
         googleId: 'google_demo_102030',
       });
     },
@@ -562,7 +562,7 @@ function ViewerPaymentContent() {
         sessionId: sessionData?.id || querySessionId,
         creatorId: creatorData?.id || queryCreatorId,
         amount: String(amount),
-        viewerName: isAnonymous ? 'Anonymous Supporter' : (viewerName || currentUser?.name || 'Supporter'),
+        viewerName: isAnonymous ? 'Anonymous' : (viewerName || currentUser?.name || ''),
         viewerEmail,
         viewerPhone,
         message,
@@ -653,11 +653,11 @@ function ViewerPaymentContent() {
 
     const numericAmount = parseFloat(amount);
     if (!numericAmount || numericAmount < 40) {
-      alert('Minimum donation amount is ₹40.');
+      alert('Minimum amount is ₹40.');
       return;
     }
     if (numericAmount > 99999) {
-      alert('Maximum donation amount is ₹99,999.');
+      alert('Maximum amount is ₹99,999.');
       return;
     }
 
@@ -718,7 +718,7 @@ function ViewerPaymentContent() {
         gatewayPaymentId: rzpPaymentId || `pay_rzp_${Date.now()}`,
         gatewayOrderId: `order_rzp_${Date.now()}`,
         gatewaySignature: `sig_${Math.random().toString(36).substring(2, 12)}`,
-        viewerName: isAnonymous ? 'Anonymous Supporter' : (viewerName || currentUser?.name || 'Supporter'),
+        viewerName: isAnonymous ? 'Anonymous' : (viewerName || currentUser?.name || ''),
         message: message || '',
         anonymous: isAnonymous,
         isVip: isVipMember,
@@ -772,7 +772,7 @@ function ViewerPaymentContent() {
       description: `Live Stream Question for ${creatorData?.fullName || 'Creator'}`,
       image: creatorData?.profileImage || undefined,
       prefill: {
-        name: isAnonymous ? 'Anonymous Supporter' : (viewerName || currentUser?.name || 'Supporter'),
+        name: isAnonymous ? 'Anonymous' : (viewerName || currentUser?.name || ''),
         email: viewerEmail || currentUser?.email || 'supporter@askme.live',
         contact: viewerPhone || currentUser?.mobile || currentUser?.phone || '9876543210',
       },
@@ -885,7 +885,7 @@ function ViewerPaymentContent() {
                 <span className="font-mono text-white font-bold tracking-tight">{paymentSuccess.donationUuid}</span>
               </div>
               <div className="flex justify-between items-center border-b border-[#1C1C26] pb-2">
-                <span className="text-slate-400 font-medium">Supporter Name</span>
+                <span className="text-slate-400 font-medium">Viewers Name</span>
                 <span className="text-white font-bold">{paymentSuccess.viewerName}</span>
               </div>
               <div className="flex justify-between items-center border-b border-[#1C1C26] pb-2">
@@ -952,7 +952,7 @@ function ViewerPaymentContent() {
               }}
               className="w-full py-3.5 rounded-xl bg-brand-gradient hover:bg-brand-primary text-white font-bold text-xs shadow-md glow-brand hover:opacity-95 transition cursor-pointer"
             >
-              Send Another Question / Support
+              Send Another Question
             </button>
           </div>
         ) : (
@@ -1006,7 +1006,7 @@ function ViewerPaymentContent() {
                 <p className="font-heading font-black text-sm uppercase flex items-center justify-center gap-1.5">
                   <AlertCircle className="h-4 w-4" /> LIVE SESSION CLOSED
                 </p>
-                <p className="text-[11px] text-[#8B8B96]">The creator has ended this live broadcast. New donations are closed. Existing questions & messages remain available.</p>
+                <p className="text-[11px] text-[#8B8B96]">The creator has ended this live broadcast. New Earnings are closed. Existing questions & messages remain available.</p>
               </div>
             ) : (sessionData?.isQrExpired || sessionData?.qrStatus === 'expired') ? (
               <div className="p-4 rounded-2xl bg-[#FF9500]/10 border-2 border-[#FF9500]/40 text-[#FF9500] text-xs font-bold text-center space-y-1">
@@ -1265,7 +1265,7 @@ function ViewerPaymentContent() {
                   <label htmlFor="payConsentCheck" className="text-xs text-[#8B8B96] cursor-pointer select-none leading-relaxed">
                     I agree to the <span className="font-semibold text-white">Contact Consent Disclaimer</span>
                     <p className="mt-1 text-[11px] leading-relaxed">
-                      By proceeding with this payment, you acknowledge that this is a voluntary, non-refundable fan support contribution (similar to a Super Chat) that places your question in the Creator's priority queue. Answering is strictly on the Creator's own will, and neither AskMe.live nor FuturePast Ventures LLP guarantees a response or provides refunds for unanswered questions.
+                      By proceeding with this payment, you acknowledge that this is a voluntary, non-refundable fan contribution (similar to a Super Chat) that places your question in the Creator's priority queue. Answering is strictly on the Creator's own will, and neither AskMe.live nor FuturePast Ventures LLP guarantees a response or provides refunds for unanswered questions.
 
                     </p>
 
@@ -1356,7 +1356,7 @@ function ViewerPaymentContent() {
                 } catch (e) {
                   handleGoogleAuthBackend({
                     email: 'viewer.google@gmail.com',
-                    name: 'Google Supporter'
+                    name: 'Google'
                   });
                 }
               }}

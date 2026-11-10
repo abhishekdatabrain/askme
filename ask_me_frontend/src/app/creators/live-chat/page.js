@@ -264,7 +264,7 @@ export default function CreatorLiveChatModulePage() {
                     }`}>
                     <div>
                       <span className={`text-[10px] block font-bold ${theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'
-                        }`}>TOTAL DONATIONS</span>
+                        }`}>TOTAL APPRECIATION</span>
                       <span className={`font-heading font-black text-sm ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'
                         }`}>
                         {selectedSession.totalDonations || 0}

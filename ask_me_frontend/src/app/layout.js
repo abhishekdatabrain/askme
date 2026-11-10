@@ -2,6 +2,13 @@ import { Plus_Jakarta_Sans, Inter } from "next/font/google";
 import "./globals.css";
 import { ToastProvider } from "@/context/ToastContext";
 import Script from 'next/script';
+import {
+  SITE_URL,
+  SITE_NAME,
+  DEFAULT_TITLE,
+  DEFAULT_DESCRIPTION,
+  buildSocialMetadata,
+} from "@/config/seo";
 
 const plusJakartaSans = Plus_Jakarta_Sans({
   subsets: ["latin"],
@@ -18,8 +25,31 @@ const inter = Inter({
 });
 
 export const metadata = {
-  title: "Ask-Me.Live | Discover | Grow | Engage | Monetize",
-  description: "Creator Discovery Control Room",
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default: DEFAULT_TITLE,
+    template: `%s | ${SITE_NAME}`,
+  },
+  description: DEFAULT_DESCRIPTION,
+  applicationName: SITE_NAME,
+  authors: [{ name: "FuturePast Ventures LLP", url: SITE_URL }],
+  creator: "FuturePast",
+  publisher: "FuturePast",
+  keywords: [
+    "Ask-Me.Live",
+    "AskMe",
+    "ask-me.live",
+    "FuturePast",
+    "live stream questions",
+    "creator discovery",
+    "super ask",
+    "YouTube Live",
+    "Instagram Live",
+    "Twitch",
+    "Kick",
+    "LinkedIn Live",
+  ],
+  ...buildSocialMetadata(),
   icons: {
     icon: [
       { url: "/icon.png", type: "image/png" },

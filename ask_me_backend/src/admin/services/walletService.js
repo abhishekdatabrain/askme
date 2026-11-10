@@ -166,7 +166,7 @@ class WalletService {
         transactionId: d.donation_uuid || `TXN-${d.id}`,
         rawId: d.id,
         creator: creator.full_name || creator.email || `Creator #${d.creator_id}`,
-        viewerName: d.anonymous ? 'Anonymous Supporter' : (d.viewer_name || 'Anonymous Supporter'),
+        viewerName: d.anonymous ? 'Anonymous' : (d.viewer_name || 'Anonymous'),
         amount: gross,
         platformCut15: platformCut,
         platformCommission: platformCut,

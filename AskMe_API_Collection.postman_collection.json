@@ -1,0 +1,2503 @@
+{
+  "info": {
+    "name": "AskMe.Live Complete API Collection (Mobile & Web)",
+    "description": "Complete API collection for Ask-Me.Live mobile app developers (Viewer App & Creator App), Web clients, and Third-party integrations.\n\nIncludes detailed parameter tables showing **Required** and **Optional** fields, validation rules, token auto-saving scripts, and example responses.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:5000",
+      "type": "string"
+    },
+    {
+      "key": "viewer_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "creator_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "admin_token",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "01. Viewer App - Auth & Account",
+      "item": [
+        {
+          "name": "Viewer WhatsApp OTP - Send",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone\": \"9876543210\",\n  \"type\": \"login\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/viewers/whatsapp-otp/send",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "viewers",
+                "whatsapp-otp",
+                "send"
+              ]
+            },
+            "description": "### 📌 Viewer WhatsApp OTP Send\nSends a 6-digit verification code to the viewer's WhatsApp number via Fonada WABA service.\n\n#### Request Body Fields:\n| Field | Type | Requirement | Description |\n| :--- | :--- | :--- | :--- |\n| `phone` | String | **Required** | 10-digit Indian mobile number (e.g. `9876543210`) or with `91` prefix. |\n| `type` | String | **Optional** | Auth intent: `login` (default) or `register`. |\n\n#### Notes:\n- Cooldown: 30 seconds before another OTP can be requested.\n- Rate limit: 5 requests per 15 minutes.\n- In non-production environments, response includes `debugOtp` for mock/local testing."
+          },
+          "id": "80cd9ebf-adaf-4508-8b3d-e4719ac95798"
+        },
+        {
+          "name": "Viewer WhatsApp OTP - Verify & Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.token) {",
+                  "    pm.environment.set('viewer_token', jsonData.token);",
+                  "    pm.collectionVariables.set('viewer_token', jsonData.token);",
+                  "    console.log('Saved viewer_token:', jsonData.token);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone\": \"9876543210\",\n  \"otp\": \"123456\",\n  \"type\": \"login\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/viewers/whatsapp-otp/verify",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "viewers",
+                "whatsapp-otp",
+                "verify"
+              ]
+            },
+            "description": "### 📌 Viewer WhatsApp OTP Verify\nVerifies the 6-digit WhatsApp OTP code and issues a JWT Bearer token.\n\n#### Request Body Fields:\n| Field | Type | Requirement | Description |\n| :--- | :--- | :--- | :--- |\n| `phone` | String | **Required** | 10-digit mobile number that received the OTP. |\n| `otp` | String | **Required** | 6-digit numeric OTP code. |\n| `type` | String | **Optional** | `login` (returns JWT + user profile) or `register` (returns verified: true). |\n\n#### Auto Postman Action:\n- Upon 200 OK, the test script automatically saves `token` into `{{viewer_token}}` variable."
+          },
+          "id": "ee29d313-0df2-4d89-be27-4c89ea64752b"
+        },
+        {
+          "name": "Viewer Register (Email & Password)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.data && jsonData.data.token) {",
+                  "    pm.environment.set('viewer_token', jsonData.data.token);",
+                  "    pm.collectionVariables.set('viewer_token', jsonData.data.token);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"Rohit Sharma\",\n  \"email\": \"rohit.viewer@example.com\",\n  \"password\": \"SecurePassword@123\",\n  \"mobile\": \"9876543210\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/viewers/register",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "viewers",
+                "register"
+              ]
+            },
+            "description": "### 📌 Viewer Registration\nRegisters a new viewer account with name, email, password, and mobile number.\n\n#### Request Body Fields:\n| Field | Type | Requirement | Description |\n| :--- | :--- | :--- | :--- |\n| `fullName` / `name` | String | **Required** | Full display name (min 2 chars). |\n| `email` | String | **Required** | Unique email address. |\n| `password` | String | **Required** | Strong password (min 8 chars, 1 uppercase, 1 lowercase, 1 number, 1 special char). |\n| `mobile` / `phone` | String | **Optional** | 10-digit contact mobile number. |"
+          },
+          "id": "80868336-f3e0-4f79-9f0a-8634193d2cae"
+        },
+        {
+          "name": "Viewer Login (Email & Password)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.data && jsonData.data.token) {",
+                  "    pm.environment.set('viewer_token', jsonData.data.token);",
+                  "    pm.collectionVariables.set('viewer_token', jsonData.data.token);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"rohit.viewer@example.com\",\n  \"password\": \"SecurePassword@123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/viewers/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "viewers",
+                "login"
+              ]
+            },
+            "description": "### 📌 Viewer Login\nAuthenticates existing viewer using email and password.\n\n#### Request Body Fields:\n| Field | Type | Requirement | Description |\n| :--- | :--- | :--- | :--- |\n| `email` | String | **Required** | Registered email address. |\n| `password` | String | **Required** | Account password. |"
+          },
+          "id": "44db5382-623c-4d40-b8d9-76a4b12cbdb3"
+        },
+        {
+          "name": "Viewer Google OAuth Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.data && jsonData.data.token) {",
+                  "    pm.environment.set('viewer_token', jsonData.data.token);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"credential\": \"GOOGLE_ID_TOKEN_OR_ACCESS_TOKEN\",\n  \"email\": \"user@gmail.com\",\n  \"name\": \"Rohit Sharma\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/viewers/google-auth",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "viewers",
+                "google-auth"
+              ]
+            },
+            "description": "### 📌 Viewer Google OAuth Login / Register\nAllows 1-Tap Google Sign-in on mobile apps using Google Identity Services token or access token.\n\n#### Request Body Fields:\n| Field | Type | Requirement | Description |\n| :--- | :--- | :--- | :--- |\n| `credential` | String | **Required** | Google ID Token (JWT) or OAuth2 Access Token. |\n| `email` | String | **Optional** | Fallback email if already decoded on client. |\n| `name` | String | **Optional** | User's full name from Google Profile. |"
+          },
+          "id": "432a4a30-a0ca-44b3-adda-972a771b39a4"
+        },
+        {
+          "name": "Viewer Truecaller 1-Tap Auth",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"payload\": \"TRUECALLER_SDK_PAYLOAD\",\n  \"signature\": \"TRUECALLER_SIGNATURE\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/viewers/truecaller-auth",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "viewers",
+                "truecaller-auth"
+              ]
+            },
+            "description": "### 📌 Viewer Truecaller 1-Tap Auth\nAuthenticates Android/iOS viewers via the Truecaller Mobile SDK.\n\n#### Request Body Fields:\n| Field | Type | Requirement | Description |\n| :--- | :--- | :--- | :--- |\n| `payload` | String | **Required** | Encrypted profile payload returned by Truecaller SDK. |\n| `signature` | String | **Required** | RSA digital signature provided by Truecaller. |"
+          },
+          "id": "9394c83b-4e62-4a87-aab7-4933bffde273"
+        },
+        {
+          "name": "Viewer Email OTP - Send",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"rohit.viewer@example.com\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/viewers/email-otp/send",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "viewers",
+                "email-otp",
+                "send"
+              ]
+            },
+            "description": "### 📌 Send Email OTP\nDispatches a 6-digit verification code to the viewer's email address.\n\n#### Request Body Fields:\n| Field | Type | Requirement | Description |\n| :--- | :--- | :--- | :--- |\n| `email` | String | **Required** | Valid email address. |"
+          },
+          "id": "8bc1519a-aff2-41ca-b775-7a206a587076"
+        },
+        {
+          "name": "Viewer Email OTP - Verify",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"rohit.viewer@example.com\",\n  \"otp\": \"123456\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/viewers/email-otp/verify",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "viewers",
+                "email-otp",
+                "verify"
+              ]
+            },
+            "description": "### 📌 Verify Email OTP\nConfirms the 6-digit email OTP.\n\n#### Request Body Fields:\n| Field | Type | Requirement | Description |\n| :--- | :--- | :--- | :--- |\n| `email` | String | **Required** | Target email address. |\n| `otp` | String | **Required** | 6-digit code received via email. |"
+          },
+          "id": "112819a2-3028-46cf-b321-25d7d257b859"
+        },
+        {
+          "name": "Get Viewer Profile",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{viewer_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/viewers/profile",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "viewers",
+                "profile"
+              ]
+            },
+            "description": "### 📌 Get Current Viewer Profile\nRetrieves full account details for the authenticated viewer.\n\n#### Headers:\n- `Authorization`: `Bearer {{viewer_token}}` (**Required**)"
+          },
+          "id": "fdc8beeb-0f5c-46c7-b68e-a30a34de9450"
+        },
+        {
+          "name": "Update Viewer Profile",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{viewer_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Rohit Sharma Updated\",\n  \"username\": \"rohit_sharma\",\n  \"bio\": \"Tech enthusiast and live stream supporter.\",\n  \"country\": \"India\",\n  \"avatar\": \"https://ask-me.live/uploads/profiles/avatar-sample.jpg\",\n  \"socialLinks\": {\n    \"twitter\": \"https://twitter.com/rohit\",\n    \"instagram\": \"https://instagram.com/rohit\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/viewers/profile",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "viewers",
+                "profile"
+              ]
+            },
+            "description": "### 📌 Update Viewer Profile\nUpdates personal information, bio, username, and social links.\n\n#### Headers:\n- `Authorization`: `Bearer {{viewer_token}}` (**Required**)\n\n#### Request Body Fields:\n| Field | Type | Requirement | Description |\n| :--- | :--- | :--- | :--- |\n| `name` / `fullName` | String | **Optional** | Display name (2 to 100 characters). |\n| `username` | String | **Optional** | Unique handle (3 to 30 chars, alphanumeric + dots/underscores). |\n| `bio` | String | **Optional** | Short bio (max 500 characters). |\n| `country` | String | **Optional** | Country name (e.g. `India`). |\n| `avatar` | String | **Optional** | Image URL or relative path returned by `/api/upload/profile`. |\n| `socialLinks` | Object | **Optional** | Key-value pairs for `instagram`, `twitter`, `youtube`, `facebook`, `linkedin`. |\n| `mobile` + `mobileOtp` | String | **Optional** | In case updating mobile number with verified OTP. |\n| `email` + `emailOtp` | String | **Optional** | In case updating email address with verified OTP. |"
+          },
+          "id": "3ef8e340-2538-4647-9b21-a5f1c76b5c7c"
+        },
+        {
+          "name": "Upload Viewer Avatar",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{viewer_token}}"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "avatar",
+                  "type": "file",
+                  "src": "",
+                  "description": "Image file (JPEG, PNG, WebP, max 10MB)"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/api/viewers/profile/avatar",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "viewers",
+                "profile",
+                "avatar"
+              ]
+            },
+            "description": "### 📌 Upload Viewer Avatar\nUploads avatar profile image via multipart/form-data.\n\n#### Headers:\n- `Authorization`: `Bearer {{viewer_token}}` (**Required**)\n\n#### Form Data Fields:\n| Key | Type | Requirement | Description |\n| :--- | :--- | :--- | :--- |\n| `avatar` | File | **Required** | Image file binary. |"
+          },
+          "id": "37cd00bf-c96d-4b7f-88fc-1e03f425803f"
+        },
+        {
+          "name": "Check Username Availability",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/viewers/check-username?username=rohit_sharma",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "viewers",
+                "check-username"
+              ],
+              "query": [
+                {
+                  "key": "username",
+                  "value": "rohit_sharma",
+                  "description": "Username to check availability for"
+                }
+              ]
+            },
+            "description": "### 📌 Check Username Availability\nChecks if a given handle is available across viewers and creators.\n\n#### Query Parameters:\n| Param | Type | Requirement | Description |\n| :--- | :--- | :--- | :--- |\n| `username` | String | **Required** | Desired handle (3-30 chars). |"
+          },
+          "id": "5cb1001f-741b-4db0-9722-e33adcf44e70"
+        },
+        {
+          "name": "Change Viewer Password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{viewer_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"oldPassword\": \"SecurePassword@123\",\n  \"newPassword\": \"NewSecurePassword@999\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/viewers/change-password",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "viewers",
+                "change-password"
+              ]
+            },
+            "description": "### 📌 Change Viewer Password\nUpdates viewer password given the valid previous password.\n\n#### Headers:\n- `Authorization`: `Bearer {{viewer_token}}` (**Required**)\n\n#### Request Body Fields:\n| Field | Type | Requirement | Description |\n| :--- | :--- | :--- | :--- |\n| `oldPassword` | String | **Required** | Current active password. |\n| `newPassword` | String | **Required** | New password (min 8 chars, uppercase, lowercase, number, special char). |"
+          },
+          "id": "b31b3725-4d49-496f-a82e-41f5930ac809"
+        },
+        {
+          "name": "Delete Viewer Account",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{viewer_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"password\": \"SecurePassword@123\",\n  \"reason\": \"Not using the platform anymore\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/viewers/account",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "viewers",
+                "account"
+              ]
+            },
+            "description": "### 📌 Delete Viewer Account\nPermanently deletes or deactivates the viewer profile.\n\n#### Headers:\n- `Authorization`: `Bearer {{viewer_token}}` (**Required**)\n\n#### Request Body Fields:\n| Field | Type | Requirement | Description |\n| :--- | :--- | :--- | :--- |\n| `password` | String | **Optional** | Required if account has password auth. |\n| `reason` | String | **Optional** | Reason for account closure. |"
+          },
+          "id": "162df007-e910-45c2-9dce-7ef2b05d97ca"
+        }
+      ],
+      "id": "6ed09d18-c3f9-4423-afdb-0a773c2e97d0"
+    },
+    {
+      "name": "02. Viewer App - Feeds, Explore & VIP",
+      "item": [
+        {
+          "name": "Get Public Live Feed & Featured Creators",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/viewers/public/live-feed?limit=20&page=1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "viewers",
+                "public",
+                "live-feed"
+              ],
+              "query": [
+                {
+                  "key": "category",
+                  "value": "Gaming",
+                  "disabled": true,
+                  "description": "Filter by category name"
+                },
+                {
+                  "key": "limit",
+                  "value": "20",
+                  "description": "Items per page"
+                },
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Page number"
+                }
+              ]
+            },
+            "description": "### 📌 Public Live Feed\nReturns currently active live donation streams, trending creators, and featured broadcasts for home screens."
+          },
+          "id": "61a4d899-b235-443c-8716-f27336a3a575"
+        },
+        {
+          "name": "Get Dynamic Categories",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/viewers/public/categories",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "viewers",
+                "public",
+                "categories"
+              ]
+            },
+            "description": "### 📌 Dynamic Categories\nReturns active content categories (e.g. Gaming, Tech, Music, Education, Comedy) to display on discover pills and dropdowns."
+          },
+          "id": "a82eddc5-9da5-4d25-bbfd-fda5d0287ff9"
+        },
+        {
+          "name": "Get Creator Public Profile",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/viewers/public/creators/rahul_sharma",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "viewers",
+                "public",
+                "creators",
+                "rahul_sharma"
+              ]
+            },
+            "description": "### 📌 Creator Public Profile\nFetches creator bio, social links, follower counts, active streams, and membership tier plans by username.\n\n#### URL Path Variables:\n| Param | Type | Requirement | Description |\n| :--- | :--- | :--- | :--- |\n| `username` | String | **Required** | Creator handle (e.g. `rahul_sharma`). |"
+          },
+          "id": "5a1aae66-29ed-4379-8bcb-ac0d0e76359c"
+        },
+        {
+          "name": "Get Past Streams Archive",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/viewers/public/past-streams?limit=10&page=1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "viewers",
+                "public",
+                "past-streams"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "### 📌 Past Streams Archive\nReturns previously completed live streams and recordings with pagination."
+          },
+          "id": "5bdd46c5-e5bd-4123-a285-2f7f6038f7ef"
+        },
+        {
+          "name": "Follow / Unfollow Creator",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{viewer_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"creatorId\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/viewers/follow",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "viewers",
+                "follow"
+              ]
+            },
+            "description": "### 📌 Toggle Follow Creator\nToggles following status between the authenticated viewer and target creator.\n\n#### Headers:\n- `Authorization`: `Bearer {{viewer_token}}` (**Required**)\n\n#### Request Body Fields:\n| Field | Type | Requirement | Description |\n| :--- | :--- | :--- | :--- |\n| `creatorId` | Integer | **Required** | Unique ID of the creator to follow/unfollow. |"
+          },
+          "id": "7ea13d0a-4928-4dcc-9686-64e08d0144cd"
+        },
+        {
+          "name": "Get Following Creators List",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{viewer_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/viewers/following",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "viewers",
+                "following"
+              ]
+            },
+            "description": "### 📌 Get Followed Creators\nReturns all creators currently followed by this viewer."
+          },
+          "id": "901b3ae8-a2e9-4958-8ffe-8466fb641d0c"
+        },
+        {
+          "name": "Get My Questions / Asks History",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{viewer_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/viewers/my-questions?limit=20&page=1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "viewers",
+                "my-questions"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "20"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "### 📌 Viewer Questions / Super Asks History\nReturns all paid Super Asks, messages, status (Read, Not Read, Replied), and creator replies sent by this viewer."
+          },
+          "id": "e4d57d25-68fe-41f0-bc10-e201c8890d28"
+        },
+        {
+          "name": "Get Public VIP Plans",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/viewers/vip/plans",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "viewers",
+                "vip",
+                "plans"
+              ],
+              "query": [
+                {
+                  "key": "creatorId",
+                  "value": "1",
+                  "disabled": true,
+                  "description": "Filter by creatorId"
+                }
+              ]
+            },
+            "description": "### 📌 Public VIP Membership Plans\nLists active VIP tiers and channel subscription pricing."
+          },
+          "id": "c460f2d9-71c8-4490-b9fc-07006d21f909"
+        },
+        {
+          "name": "Subscribe to VIP Membership Plan",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{viewer_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"planId\": 1,\n  \"creatorId\": 1,\n  \"gatewayOrderId\": \"order_xyz123\",\n  \"paymentMethod\": \"UPI\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/viewers/vip/subscribe",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "viewers",
+                "vip",
+                "subscribe"
+              ]
+            },
+            "description": "### 📌 Subscribe to VIP Plan\nActivates VIP subscription badge and perks for a creator.\n\n#### Request Body Fields:\n| Field | Type | Requirement | Description |\n| :--- | :--- | :--- | :--- |\n| `planId` | Integer | **Required** | Target VIP Tier Plan ID. |\n| `creatorId` | Integer | **Required** | Creator ID. |\n| `gatewayOrderId` | String | **Optional** | Payment Gateway Order ID. |\n| `paymentMethod` | String | **Optional** | E.g. `UPI`, `Card`, `NetBanking`. |"
+          },
+          "id": "11a7cc59-ea39-4e94-b2f3-54cb7d54ba81"
+        },
+        {
+          "name": "Get Viewer Active VIP Memberships",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{viewer_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/viewers/vip/my-memberships",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "viewers",
+                "vip",
+                "my-memberships"
+              ]
+            },
+            "description": "### 📌 My Active VIP Memberships\nLists all creators where this viewer has an active VIP badge."
+          },
+          "id": "5d71fad8-2ec1-433b-9fc5-f6fb67ba7f26"
+        },
+        {
+          "name": "Save Viewer FCM Push Token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{viewer_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"fcm_device_registration_token_here\",\n  \"deviceType\": \"android\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/viewers/notification-token",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "viewers",
+                "notification-token"
+              ]
+            },
+            "description": "### 📌 Register FCM Device Push Token\nRegisters Firebase Cloud Messaging token for push alerts (when a followed creator goes live, super ask reply received, etc.).\n\n#### Request Body Fields:\n| Field | Type | Requirement | Description |\n| :--- | :--- | :--- | :--- |\n| `token` | String | **Required** | Device FCM push token string. |\n| `deviceType` | String | **Optional** | `android` or `ios` or `web`. |"
+          },
+          "id": "2109224b-d3f9-47e5-ae34-2d9396aef3bf"
+        },
+        {
+          "name": "Get Viewer Notifications",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{viewer_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/viewers/notifications?limit=20&page=1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "viewers",
+                "notifications"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "20"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "### 📌 Get Viewer In-App Notifications\nReturns notification list for the current viewer."
+          },
+          "id": "ff119dd5-4a2d-48cd-9781-a0359f5686d7"
+        },
+        {
+          "name": "Mark Viewer Notifications as Read",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{viewer_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/viewers/notifications/mark-read",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "viewers",
+                "notifications",
+                "mark-read"
+              ]
+            },
+            "description": "### 📌 Mark Notifications Read\nMarks all unread in-app alerts as read for the current viewer."
+          },
+          "id": "01ffda1b-bc1b-4bff-a501-87793335421d"
+        }
+      ],
+      "id": "3c61da04-190f-4764-9f94-81adb0aefc2c"
+    },
+    {
+      "name": "03. Creator App - Auth & KYC",
+      "item": [
+        {
+          "name": "Creator WhatsApp OTP - Send",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone\": \"9876543210\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/creators/whatsapp-otp/send",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "creators",
+                "whatsapp-otp",
+                "send"
+              ]
+            },
+            "description": "### 📌 Creator WhatsApp OTP Send\nSends login / onboarding OTP to Creator's WhatsApp via Fonada WABA.\n\n#### Request Body Fields:\n| Field | Type | Requirement | Description |\n| :--- | :--- | :--- | :--- |\n| `phone` | String | **Required** | 10-digit Indian mobile number. |\n\n#### Demo Sandbox:\n- Phone number `9999999999` has static OTP `123456` for demo testing."
+          },
+          "id": "cf66a9c0-8b0b-4f21-9cc6-943ea3a1956c"
+        },
+        {
+          "name": "Creator WhatsApp OTP - Verify & Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.token) {",
+                  "    pm.environment.set('creator_token', jsonData.token);",
+                  "    pm.collectionVariables.set('creator_token', jsonData.token);",
+                  "    console.log('Saved creator_token:', jsonData.token);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone\": \"9876543210\",\n  \"otp\": \"123456\",\n  \"isRegister\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/creators/whatsapp-otp/verify",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "creators",
+                "whatsapp-otp",
+                "verify"
+              ]
+            },
+            "description": "### 📌 Creator WhatsApp OTP Verify\nVerifies OTP and returns Creator JWT Bearer Token.\n\n#### Request Body Fields:\n| Field | Type | Requirement | Description |\n| :--- | :--- | :--- | :--- |\n| `phone` | String | **Required** | Mobile number. |\n| `otp` | String | **Required** | 6-digit OTP. |\n| `isRegister` | Boolean | **Optional** | Set to `true` when completing first-time registration."
+          },
+          "id": "c6e1ba67-61d4-448b-9618-642d341141e9"
+        },
+        {
+          "name": "Creator Register (Email & Password)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.data && jsonData.data.token) {",
+                  "    pm.environment.set('creator_token', jsonData.data.token);",
+                  "    pm.collectionVariables.set('creator_token', jsonData.data.token);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"Pooja Sharma\",\n  \"username\": \"poojasharma_live\",\n  \"email\": \"pooja.creator@example.com\",\n  \"mobileNumber\": \"9876543210\",\n  \"password\": \"CreatorPassword@123\",\n  \"category\": \"Gaming\",\n  \"country\": \"India\",\n  \"bio\": \"Official Gaming streamer on YouTube and AskMe.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/creators/register",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "creators",
+                "register"
+              ]
+            },
+            "description": "### 📌 Creator Registration\nCreates a new Creator broadcaster account with automatic wallet creation.\n\n#### Request Body Fields:\n| Field | Type | Requirement | Description |\n| :--- | :--- | :--- | :--- |\n| `fullName` | String | **Required** | Full name. |\n| `username` | String | **Required** | Handle (unique). |\n| `email` | String | **Required** | Valid email. |\n| `password` | String | **Required** | Min 8 chars with uppercase, lowercase, number, special char. |\n| `mobileNumber` | String | **Optional** | 10-digit mobile number. |\n| `category` | String | **Optional** | E.g. `Gaming`, `Tech`, `Music`. |\n| `bio` | String | **Optional** | Broadcaster bio. |\n| `country` | String | **Optional** | Defaults to `India`. |"
+          },
+          "id": "50c76f1c-0a04-4a1a-94d1-0a3ec37f5c11"
+        },
+        {
+          "name": "Creator Login (Email & Password)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.data && jsonData.data.token) {",
+                  "    pm.environment.set('creator_token', jsonData.data.token);",
+                  "    pm.collectionVariables.set('creator_token', jsonData.data.token);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"pooja.creator@example.com\",\n  \"password\": \"CreatorPassword@123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/creators/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "creators",
+                "login"
+              ]
+            },
+            "description": "### 📌 Creator Login\nAuthenticates creator with email and password."
+          },
+          "id": "d5da7854-3893-4f8d-9007-a8c57f6393d5"
+        },
+        {
+          "name": "Creator Complete Trial Profile (Multipart with Image)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "fullName",
+                  "value": "Rahul Sharma",
+                  "type": "text"
+                },
+                {
+                  "key": "email",
+                  "value": "rahul.trial@example.com",
+                  "type": "text"
+                },
+                {
+                  "key": "phone",
+                  "value": "9876543210",
+                  "type": "text"
+                },
+                {
+                  "key": "profile_image",
+                  "type": "file",
+                  "src": "",
+                  "description": "Creator avatar image file"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/api/creators/trial/complete-profile",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "creators",
+                "trial",
+                "complete-profile"
+              ]
+            },
+            "description": "### 📌 Complete Creator Trial Profile\nActivates 7-day full access for creators verified with Demo OTP.\n\n#### Form Data Fields:\n| Key | Type | Requirement | Description |\n| :--- | :--- | :--- | :--- |\n| `fullName` | Text | **Required** | Broadcaster name (min 2 chars). |\n| `email` | Text | **Required** | Email address. |\n| `phone` | Text | **Required** | Real personal mobile number (shared demo 9999999999 not allowed). |\n| `profile_image` | File | **Optional** | Profile image binary. |"
+          },
+          "id": "2145f93c-0928-4a36-9f35-3a517125ecd2"
+        },
+        {
+          "name": "KYC - Verify PAN Card (Cashfree)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"panNumber\": \"ABCDE1234F\",\n  \"name\": \"Rahul Sharma\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/creators/kyc/verify-pan",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "creators",
+                "kyc",
+                "verify-pan"
+              ]
+            },
+            "description": "### 📌 KYC Step 1: Instant PAN Verification\nVerifies PAN number with NSDL/ITD via Cashfree Verification Suite.\n\n#### Request Body Fields:\n| Field | Type | Requirement | Description |\n| :--- | :--- | :--- | :--- |\n| `panNumber` | String | **Required** | 10-character PAN number (e.g. `ABCDE1234F`). |\n| `name` | String | **Optional** | Expected name on card for fuzzy name matching. |"
+          },
+          "id": "04fdfc3d-32f7-402e-ae7a-7326e1a3a188"
+        },
+        {
+          "name": "KYC - Send Aadhaar OKYC OTP",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"aadhaarNumber\": \"123456789012\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/creators/kyc/verify-aadhaar/send-otp",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "creators",
+                "kyc",
+                "verify-aadhaar",
+                "send-otp"
+              ]
+            },
+            "description": "### 📌 KYC Step 2: Send Aadhaar OTP\nTriggers UIDAI OTP via Cashfree Aadhaar Verification Suite.\n\n#### Request Body Fields:\n| Field | Type | Requirement | Description |\n| :--- | :--- | :--- | :--- |\n| `aadhaarNumber` | String | **Required** | 12-digit Aadhaar number. |\n\n#### Response Note:\nReturns `refId` which must be passed to the verify OTP endpoint."
+          },
+          "id": "cebd3958-a5e7-4ed0-bef8-815236befa60"
+        },
+        {
+          "name": "KYC - Verify Aadhaar OKYC OTP",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refId\": \"cf_aadhaar_ref_12345\",\n  \"otp\": \"123456\",\n  \"aadhaarNumber\": \"123456789012\",\n  \"name\": \"Rahul Sharma\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/creators/kyc/verify-aadhaar/verify-otp",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "creators",
+                "kyc",
+                "verify-aadhaar",
+                "verify-otp"
+              ]
+            },
+            "description": "### 📌 KYC Step 3: Verify Aadhaar OTP\nVerifies the UIDAI OTP code.\n\n#### Request Body Fields:\n| Field | Type | Requirement | Description |\n| :--- | :--- | :--- | :--- |\n| `refId` | String | **Required** | Reference ID returned from `send-otp`. |\n| `otp` | String | **Required** | 6-digit OTP code sent by UIDAI. |\n| `aadhaarNumber` | String | **Optional** | 12-digit Aadhaar number. |\n| `name` | String | **Optional** | Expected name for fuzzy matching. |"
+          },
+          "id": "94affa1a-9af7-4b1d-9bad-4f6eded928b0"
+        },
+        {
+          "name": "KYC - Match Identity (PAN vs Aadhaar)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"panName\": \"RAHUL SHARMA\",\n  \"aadhaarName\": \"Rahul Sharma\",\n  \"panDob\": \"1995-05-12\",\n  \"aadhaarDob\": \"1995-05-12\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/creators/kyc/match-identity",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "creators",
+                "kyc",
+                "match-identity"
+              ]
+            },
+            "description": "### 📌 KYC Step 4: Match PAN & Aadhaar Identity\nCalculates name match score and DOB validation between verified PAN and verified Aadhaar.\n\n#### Request Body Fields:\n| Field | Type | Requirement | Description |\n| :--- | :--- | :--- | :--- |\n| `panName` | String | **Required** | Name on PAN card. |\n| `aadhaarName` | String | **Required** | Name on Aadhaar. |\n| `panDob` | String | **Optional** | Date of Birth (YYYY-MM-DD). |\n| `aadhaarDob` | String | **Optional** | Date of Birth (YYYY-MM-DD). |"
+          },
+          "id": "9c02b9e4-6afd-4a4c-b799-5a300abd3725"
+        },
+        {
+          "name": "KYC - Verify Bank Account Penny Drop",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"accountNumber\": \"123456789012\",\n  \"ifscCode\": \"HDFC0001234\",\n  \"name\": \"Rahul Sharma\",\n  \"phone\": \"9876543210\",\n  \"verifiedIdentityName\": \"Rahul Sharma\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/creators/kyc/verify-bank",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "creators/kyc/verify-bank"
+              ]
+            },
+            "description": "### 📌 KYC Step 5: Instant Penny Drop Bank Verification\nPerforms a ₹1 penny drop through NPCI/IMPS to verify creator account holder name directly from bank records.\n\n#### Request Body Fields:\n| Field | Type | Requirement | Description |\n| :--- | :--- | :--- | :--- |\n| `accountNumber` | String | **Required** | Bank account number. |\n| `ifscCode` | String | **Required** | Valid 11-digit IFSC code. |\n| `name` | String | **Optional** | Account holder name. |\n| `phone` | String | **Optional** | Phone number. |\n| `verifiedIdentityName` | String | **Optional** | KYC Name to compare with bank registered name. |"
+          },
+          "id": "e0f6616c-8073-44ec-90f5-fee0657fc8be"
+        },
+        {
+          "name": "KYC - Submit Final KYC Record",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{creator_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"Rahul Sharma\",\n  \"mobileNumber\": \"9876543210\",\n  \"category\": \"Gaming\",\n  \"panNumber\": \"ABCDE1234F\",\n  \"panHolderName\": \"Rahul Sharma\",\n  \"panStatus\": \"verified\",\n  \"documentType\": \"aadhaar\",\n  \"documentNumber\": \"123456789012\",\n  \"address\": \"Flat 402, Sunshine Heights\",\n  \"city\": \"Mumbai\",\n  \"state\": \"Maharashtra\",\n  \"pincode\": \"400001\",\n  \"country\": \"India\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/creators/kyc",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "creators",
+                "kyc"
+              ]
+            },
+            "description": "### 📌 Submit Final KYC Application\nSaves full verified KYC dossier to creator profile in PostgreSQL."
+          },
+          "id": "b2ecf451-a4ac-4f10-89de-f524f453ba9d"
+        },
+        {
+          "name": "KYC - Get Current KYC Status",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{creator_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/creators/kyc/status",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "creators",
+                "kyc",
+                "status"
+              ]
+            },
+            "description": "### 📌 Get Creator KYC Status\nReturns verification status: `pending`, `verified`, `rejected`, or `not_submitted`."
+          },
+          "id": "a24696f7-f9fb-46b2-b2d5-e5bac9a1c1a6"
+        }
+      ],
+      "id": "0d117965-119e-48ea-aa0e-68b8d9cc69f4"
+    },
+    {
+      "name": "04. Creator App - Live Sessions, Overlay & Chat",
+      "item": [
+        {
+          "name": "Create Live Stream Donation Session",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{creator_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Live Sunday Q&A and Gaming Stream\",\n  \"category\": \"Gaming\",\n  \"durationHours\": 4,\n  \"thumbnailUrl\": \"https://ask-me.live/uploads/general/thumb-123.jpg\",\n  \"streamUrl\": \"https://youtube.com/live/sample_stream_key\",\n  \"streamingPlatform\": \"YouTube\",\n  \"description\": \"Ask your questions with Super Ask and get them answered live on stream!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/creators/live-sessions",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "creators",
+                "live-sessions"
+              ]
+            },
+            "description": "### 📌 Create Live Donation Session\nCreates a new broadcast session and generates the dynamic QR code and donation payment link.\n\n#### Request Body Fields:\n| Field | Type | Requirement | Description |\n| :--- | :--- | :--- | :--- |\n| `title` | String | **Required** | Stream title. |\n| `durationHours` | Number | **Optional** | Scheduled session duration (default: 4 hours). |\n| `category` | String | **Optional** | E.g. `Gaming`, `Tech`, `Music`. |\n| `streamUrl` | String | **Optional** | YouTube / Twitch broadcast URL. |\n| `streamingPlatform` | String | **Optional** | Platform name (`YouTube`, `Twitch`, `Facebook`). |\n| `thumbnailUrl` | String | **Optional** | Cover image URL. |\n| `description` | String | **Optional** | Stream description. |"
+          },
+          "id": "5c7f85aa-5a1f-4b2b-80f4-086af67182a4"
+        },
+        {
+          "name": "Get All Live Sessions for Creator",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{creator_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/creators/live-sessions?status=active",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "creators",
+                "live-sessions"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "active",
+                  "description": "Filter by status: active, closed, or all"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "### 📌 Get Creator Live Sessions\nLists all historical and currently active sessions with donation stats and payment URLs."
+          },
+          "id": "72fe6236-d015-4c88-938c-ea2c44178849"
+        },
+        {
+          "name": "Start Live Session By ID",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{creator_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/creators/live-sessions/1/start",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "creators",
+                "live-sessions",
+                "1",
+                "start"
+              ]
+            },
+            "description": "### 📌 Start Live Stream Session\nChanges session status to `active` and fires push notifications to all followers."
+          },
+          "id": "28e5f901-6906-4483-887d-11194af2cb6d"
+        },
+        {
+          "name": "Close Live Session By ID",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{creator_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/creators/live-sessions/1/close",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "creators",
+                "live-sessions",
+                "1",
+                "close"
+              ]
+            },
+            "description": "### 📌 Close Live Stream Session\nCloses the session, disables new donation payments, and archives statistics."
+          },
+          "id": "f8b230d6-e2c5-4a23-924a-1eb241a53e92"
+        },
+        {
+          "name": "Update QR Code Visibility Status",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{creator_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"qrStatus\": \"active\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/creators/live-sessions/1/qr-status",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "creators",
+                "live-sessions",
+                "1",
+                "qr-status"
+              ]
+            },
+            "description": "### 📌 Update QR Status\nToggles QR code display on live overlay between `active` and `paused`."
+          },
+          "id": "67a6a7bb-2746-4846-b944-f947eb3ee185"
+        },
+        {
+          "name": "Get Session Questions / Super Asks",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{creator_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/creators/live-sessions/1/questions?filter=unread",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "creators",
+                "live-sessions",
+                "1",
+                "questions"
+              ],
+              "query": [
+                {
+                  "key": "filter",
+                  "value": "unread",
+                  "description": "Filter: all, unread, read"
+                },
+                {
+                  "key": "limit",
+                  "value": "50"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "### 📌 Get Live Stream Questions (Super Asks)\nRetrieves list of paid Super Asks with viewer names, amounts, messages, and read status."
+          },
+          "id": "72920dc0-babc-4b0f-b541-ef20251b8226"
+        },
+        {
+          "name": "Reply to Viewer Super Ask",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{creator_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"donationId\": 1,\n  \"replyMessage\": \"Thanks for the question! Yes, we will definitely do a dedicated giveaway next week!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/creators/live-sessions/chat/reply",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "creators",
+                "live-sessions",
+                "chat",
+                "reply"
+              ]
+            },
+            "description": "### 📌 Reply to Super Ask\nSends creator reply to viewer message and dispatches WhatsApp notification to the viewer.\n\n#### Request Body Fields:\n| Field | Type | Requirement | Description |\n| :--- | :--- | :--- | :--- |\n| `donationId` | Integer | **Required** | Target Super Ask / Donation ID. |\n| `replyMessage` | String | **Required** | Response text. |"
+          },
+          "id": "59a12926-7629-4b2c-9496-5f686abf4a69"
+        },
+        {
+          "name": "Update Donation Status (Mark Read / Pin)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{creator_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"read\",\n  \"isPinned\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/creators/donations/1/status",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "creators",
+                "donations",
+                "1",
+                "status"
+              ]
+            },
+            "description": "### 📌 Update Donation Status\nMarks question as `read`, `not_read`, or pinned on screen."
+          },
+          "id": "a1a57a8f-ccf6-47d2-b301-111372a6c1d1"
+        },
+        {
+          "name": "Get Live Stream OBS Overlay Data (Public)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/creators/overlay/data/session-code-or-username",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "creators",
+                "overlay",
+                "data",
+                "session-code-or-username"
+              ]
+            },
+            "description": "### 📌 OBS Overlay Stream Data\nUsed by OBS Studio / Streamlabs browser source to render live questions, QR code, and broadcaster goal."
+          },
+          "id": "c187b98a-39a8-4bac-aa0e-6a4075ebc63a"
+        },
+        {
+          "name": "Get Live Stream OBS Overlay Audio Alerts (Public)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/creators/overlay/alerts/1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "creators",
+                "overlay",
+                "alerts",
+                "1"
+              ]
+            },
+            "description": "### 📌 OBS Audio Alerts\nPolls for instant incoming audio/visual popups when a donation is confirmed."
+          },
+          "id": "d6614413-16a0-47b8-93d7-41c3b94ad650"
+        }
+      ],
+      "id": "b3bdeba3-45fb-4560-84d1-393a156d287d"
+    },
+    {
+      "name": "05. Creator App - Wallet & Bank Payouts",
+      "item": [
+        {
+          "name": "Get Creator Wallet Details & Earnings",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{creator_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/creators/wallet/details",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "creators",
+                "wallet",
+                "details"
+              ]
+            },
+            "description": "### 📌 Get Wallet Details\nReturns `available_balance`, `pending_balance`, `total_earnings`, and `withdrawn_amount` in INR."
+          },
+          "id": "da935a1a-1785-4b85-a720-f4805631cf6c"
+        },
+        {
+          "name": "Get Saved Bank Account & UPI Details",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{creator_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/creators/bank-account",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "creators",
+                "bank-account"
+              ]
+            },
+            "description": "### 📌 Get Payout Account\nReturns currently registered masked Bank Account and UPI VPA."
+          },
+          "id": "eef189d6-fe8f-4f74-8fe0-a6df7338966e"
+        },
+        {
+          "name": "Save Creator Bank Account / UPI (One-time Setup)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{creator_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"accountHolderName\": \"Rahul Sharma\",\n  \"bankName\": \"HDFC Bank\",\n  \"accountNumber\": \"123456789012\",\n  \"ifscCode\": \"HDFC0001234\",\n  \"upiId\": \"rahul@okhdfcbank\",\n  \"accountType\": \"savings\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/creators/bank-account",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "creators",
+                "bank-account"
+              ]
+            },
+            "description": "### 📌 Save Payout Bank Account\nRegisters creator's payout details. Can be set once; future modifications require raising an admin support ticket.\n\n#### Request Body Fields:\n| Field | Type | Requirement | Description |\n| :--- | :--- | :--- | :--- |\n| `accountHolderName` | String | **Required** | Name matching bank records. |\n| `accountNumber` | String | **Required** (if no UPI) | Bank Account number. |\n| `ifscCode` | String | **Required** (with Account) | 11-digit IFSC code. |\n| `upiId` | String | **Optional** | Valid UPI VPA (e.g. `user@okhdfcbank`). |\n| `bankName` | String | **Optional** | E.g. `HDFC Bank`. |\n| `accountType` | String | **Optional** | `savings` or `current`. |"
+          },
+          "id": "0baae6ac-eafb-43c5-a2e7-e90b6e576571"
+        },
+        {
+          "name": "Verify Creator UPI ID",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"upiId\": \"rahul@upi\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/creators/verify-upi",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "creators",
+                "verify-upi"
+              ]
+            },
+            "description": "### 📌 Verify UPI ID Format\nValidates UPI VPA structure before submitting."
+          },
+          "id": "0858a456-15bb-4862-8ec8-88c47928d2c8"
+        },
+        {
+          "name": "Request Wallet Withdrawal (Payout)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{creator_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 1500\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/creators/wallet/withdraw",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "creators",
+                "wallet",
+                "withdraw"
+              ]
+            },
+            "description": "### 📌 Request Payout Withdrawal\nRequests withdrawal of earnings to registered bank/UPI account.\n\n#### Request Body Fields:\n| Field | Type | Requirement | Description |\n| :--- | :--- | :--- | :--- |\n| `amount` | Number | **Required** | Minimum withdrawal amount is ₹500.00. |"
+          },
+          "id": "a07e4b05-c325-4823-85c0-7e2a017f24e9"
+        },
+        {
+          "name": "Get Creator Withdrawal History",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{creator_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/creators/wallet/withdrawals?limit=20&page=1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "creators",
+                "wallet",
+                "withdrawals"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "20"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "### 📌 Withdrawal History\nLists past withdrawal requests and payout statuses (`pending`, `completed`, `rejected`, `utr_number`)."
+          },
+          "id": "f6b740ba-7539-4140-81f7-a48d6f5a9b86"
+        }
+      ],
+      "id": "acd26b0a-40bf-45e1-917d-d8c301462ca1"
+    },
+    {
+      "name": "06. Viewer Payments & Cashfree PG",
+      "item": [
+        {
+          "name": "Get Public Live Session Details for Payment",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/creators/pay/session/sunday-stream-abc12",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "creators",
+                "pay",
+                "session",
+                "sunday-stream-abc12"
+              ]
+            },
+            "description": "### 📌 Get Public Payment Session Details\nUsed on the mobile donation sheet to load stream title, creator details, active QR, and pricing rules."
+          },
+          "id": "545dd4c8-12cd-4f13-83bd-00046a63a74e"
+        },
+        {
+          "name": "Create Cashfree PG Payment Order",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sessionId\": 1,\n  \"creatorId\": 1,\n  \"amount\": 100,\n  \"viewerName\": \"Rohit Sharma\",\n  \"viewerEmail\": \"rohit@example.com\",\n  \"viewerPhone\": \"9876543210\",\n  \"message\": \"Great stream! What GPU are you currently running?\",\n  \"anonymous\": false,\n  \"agreedToConsent\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/creators/pay/cashfree/order",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "creators",
+                "pay",
+                "cashfree",
+                "order"
+              ]
+            },
+            "description": "### 📌 Create Cashfree Payment Order\nInitiates Cashfree checkout and returns `payment_session_id` to initialize the Cashfree Mobile SDK (Flutter/React Native/iOS/Android).\n\n#### Request Body Fields:\n| Field | Type | Requirement | Description |\n| :--- | :--- | :--- | :--- |\n| `amount` | Number | **Required** | Donation amount (₹40 to ₹99,999). |\n| `sessionId` / `sessionCode` | Any | **Required** | Active live session identifier. |\n| `creatorId` | Integer | **Required** | Creator ID. |\n| `viewerName` | String | **Required** | Donor name (or Anonymous Supporter). |\n| `viewerPhone` | String | **Required** | 10-digit mobile number for WhatsApp alerts. |\n| `viewerEmail` | String | **Optional** | Donor email for receipt. |\n| `message` | String | **Optional** | Super Ask message text (character limits automatically validated based on amount). |\n| `anonymous` | Boolean | **Optional** | Set to `true` to hide name on overlay. |\n| `agreedToConsent` | Boolean | **Required** | DPDP compliance acceptance flag. |"
+          },
+          "id": "2162c2a2-8fdc-4857-bf8b-95559be021f8"
+        },
+        {
+          "name": "Verify Cashfree PG Payment Order Status",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"orderId\": \"cf_order_1730000000_abc\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/creators/pay/cashfree/verify",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "creators",
+                "pay",
+                "cashfree",
+                "verify"
+              ]
+            },
+            "description": "### 📌 Verify Cashfree Payment Status\nCalled by mobile app right after Cashfree SDK returns payment completion.\n\n#### Request Body Fields:\n| Field | Type | Requirement | Description |\n| :--- | :--- | :--- | :--- |\n| `orderId` | String | **Required** | Cashfree orderId returned by `/pay/cashfree/order`. |"
+          },
+          "id": "087a1112-6fd4-4be8-90a1-bb348e6b486b"
+        },
+        {
+          "name": "Process Direct Viewer Donation (Mock/Custom Gateway)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sessionId\": 1,\n  \"creatorId\": 1,\n  \"amount\": 50,\n  \"viewerName\": \"Rohit\",\n  \"viewerMobile\": \"9876543210\",\n  \"message\": \"Keep up the great work!\",\n  \"paymentMethod\": \"UPI\",\n  \"gateway\": \"Cashfree\",\n  \"gatewayPaymentId\": \"pay_sample_123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/creators/pay/process",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "creators",
+                "pay",
+                "process"
+              ]
+            },
+            "description": "### 📌 Direct Viewer Donation Process\nDirect transaction confirmation API for custom payment gateways."
+          },
+          "id": "e4c13591-98de-4213-a604-31a4f787fa71"
+        }
+      ],
+      "id": "2c0f14bc-bbeb-445a-b193-69a06d61e0b4"
+    },
+    {
+      "name": "07. File Uploads (Multipart/Form-Data)",
+      "item": [
+        {
+          "name": "Upload Profile Image",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "profile_image",
+                  "type": "file",
+                  "src": "",
+                  "description": "Image file (JPEG, PNG, WebP)"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/api/upload/profile",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "upload",
+                "profile"
+              ]
+            },
+            "description": "### 📌 Upload Profile Picture\nUploads an image file to `/uploads/profiles/` and returns full and relative URLs.\n\n#### Form Data Fields:\n| Key | Type | Requirement | Description |\n| :--- | :--- | :--- | :--- |\n| `profile_image` / `file` | File | **Required** | Image file binary. |"
+          },
+          "id": "60845efe-8956-47c1-b4ff-fffed1d717f2"
+        },
+        {
+          "name": "Upload KYC Document",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "document",
+                  "type": "file",
+                  "src": "",
+                  "description": "Document file (PDF, JPEG, PNG)"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/api/upload/document",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "upload",
+                "document"
+              ]
+            },
+            "description": "### 📌 Upload Document\nUploads KYC document file (PAN / Aadhaar / Passbook copy) to `/uploads/documents/`.\n\n#### Form Data Fields:\n| Key | Type | Requirement | Description |\n| :--- | :--- | :--- | :--- |\n| `document` / `file` | File | **Required** | Document binary. |"
+          },
+          "id": "fa8b92b1-019b-4f26-a2c7-eda90c55b4f6"
+        },
+        {
+          "name": "Upload Multiple Files",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "files",
+                  "type": "file",
+                  "src": "",
+                  "description": "Array of files (max 5)"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/api/upload/multiple",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "upload",
+                "multiple"
+              ]
+            },
+            "description": "### 📌 Upload Multiple Files\nUploads up to 5 files simultaneously."
+          },
+          "id": "e1bb49fe-7c71-4336-8a6e-8a9322b8434f"
+        }
+      ],
+      "id": "97cba9d1-cb3c-464e-a9ad-ac2f3af4709e"
+    },
+    {
+      "name": "08. Legal Policies & DPDP Consent",
+      "item": [
+        {
+          "name": "Get All Public Legal Policies",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/public/policies",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "public",
+                "policies"
+              ]
+            },
+            "description": "### 📌 Get All 12 Legal Policies\nReturns metadata and links for all published policies (Privacy Policy, Terms, EULA, Refund Policy, Community Guidelines, etc.)."
+          },
+          "id": "d371ed8a-98ab-4bec-9b20-b0cbea9d1738"
+        },
+        {
+          "name": "Get Single Legal Policy By Slug",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/public/policies/privacy-policy",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "public",
+                "policies",
+                "privacy-policy"
+              ]
+            },
+            "description": "### 📌 Get Single Policy by Slug\nReturns rich HTML content, SEO metadata, effective date, and version for rendering in mobile WebViews."
+          },
+          "id": "cfefa8d0-9a88-4902-a10a-d2dd77f81f76"
+        },
+        {
+          "name": "Record User Consent (DPDP Compliance)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"policySlug\": \"privacy-policy\",\n  \"policyVersion\": \"1.0\",\n  \"consentType\": \"explicit_notice\",\n  \"purposes\": [\n    \"account_management\",\n    \"payment_processing\"\n  ],\n  \"identifier\": \"rohit@example.com\",\n  \"identifierType\": \"email\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/public/policies/consent",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "public",
+                "policies",
+                "consent"
+              ]
+            },
+            "description": "### 📌 Record Consent\nRecords user agreement to policy version for Digital Personal Data Protection (DPDP) compliance."
+          },
+          "id": "b27295e2-cc16-4a5b-bdeb-655f7cbb4fad"
+        },
+        {
+          "name": "Check User Consent Status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/public/policies/consent/privacy-policy?identifier=rohit@example.com",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "public",
+                "policies",
+                "consent",
+                "privacy-policy"
+              ],
+              "query": [
+                {
+                  "key": "identifier",
+                  "value": "rohit@example.com",
+                  "description": "Email or phone number"
+                }
+              ]
+            },
+            "description": "### 📌 Check Consent Status\nChecks whether this user has already consented to the latest policy version."
+          },
+          "id": "dd85897d-864f-407c-810c-a94b49f28362"
+        }
+      ],
+      "id": "b1555576-b053-4397-8a9b-e4ab6645fe6e"
+    },
+    {
+      "name": "09. Support Tickets & Contact",
+      "item": [
+        {
+          "name": "Submit Contact Form",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Rohit Sharma\",\n  \"email\": \"rohit@example.com\",\n  \"phone\": \"9876543210\",\n  \"subject\": \"Inquiry regarding Creator Partnerships\",\n  \"message\": \"Hello team, I would like to know more about the commission slabs for high-volume streams.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/contact/submit",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "contact",
+                "submit"
+              ]
+            },
+            "description": "### 📌 Submit Public Contact Message\nAllows users and prospective creators to send inquiry messages to support."
+          },
+          "id": "cf61cffa-cf11-4069-af08-faaa0e30e4b0"
+        },
+        {
+          "name": "Create Support Ticket",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{creator_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"subject\": \"Update Bank Account Information\",\n  \"category\": \"Payout\",\n  \"priority\": \"high\",\n  \"message\": \"I need to update my bank account IFSC code due to a bank merger.\",\n  \"requestedChanges\": {\n    \"newBankName\": \"HDFC Bank\",\n    \"newAccountNumber\": \"987654321000\",\n    \"newIfscCode\": \"HDFC0004321\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/tickets/create",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "tickets",
+                "create"
+              ]
+            },
+            "description": "### 📌 Create Support Ticket\nOpens a support ticket (e.g. for Payout Changes, Technical Issues, or Dispute)."
+          },
+          "id": "8a3ca43d-0685-4185-a549-4b2ec9414aff"
+        },
+        {
+          "name": "Get My Support Tickets",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{creator_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/tickets/my-tickets",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "tickets",
+                "my-tickets"
+              ]
+            },
+            "description": "### 📌 Get My Support Tickets\nLists all tickets submitted by this account."
+          },
+          "id": "49093f40-c6f8-4c39-8aa7-e588370411d9"
+        }
+      ],
+      "id": "f42e99ba-0be7-4d55-b941-69d4a9b483c7"
+    },
+    {
+      "name": "10. Platform Settings & Health",
+      "item": [
+        {
+          "name": "Health Check API",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/health",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "health"
+              ]
+            },
+            "description": "### 📌 Health Check\nChecks if backend server and database connections are operational."
+          },
+          "id": "08482946-89af-4705-a0d2-d73e1562452f"
+        },
+        {
+          "name": "Public Commission Settings (Calculator)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/creators/commission-settings",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "creators",
+                "commission-settings"
+              ]
+            },
+            "description": "### 📌 Dynamic Commission Slabs\nUsed by mobile apps to display platform commission vs creator net payout percentage calculator."
+          },
+          "id": "8e533382-49c8-483e-873c-c6c7ab5c42ea"
+        }
+      ],
+      "id": "ef86374a-4977-4760-b8a6-8ab2aac24401"
+    }
+  ]
+}

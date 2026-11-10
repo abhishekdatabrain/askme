@@ -95,10 +95,10 @@ export default function AboutPage() {
               AskMe is designed to simplify that interaction.
             </p>
             <p>
-              Creators can create an AskMe presence, connect their audience to an AskMe session through a link or QR code, and allow viewers to submit paid questions or messages. Viewers can discover Creators, participate in supported sessions and receive notifications relating to their questions and interactions.
+              Creators can create an AskMe presence, connect their audience to an AskMe session through a link or QR code, and allow viewers to submit paid questions or messages. Viewers can discover Creators, participate in paid sessions and receive notifications relating to their questions and interactions.
             </p>
             <div className="p-4 sm:p-5 rounded-2xl bg-[#141422] border border-[#222234] text-xs sm:text-sm text-[#8E8E9F] leading-relaxed">
-              💡 <strong className="text-white">Multi-Platform Compatibility:</strong> AskMe does not need to host the underlying livestream. A Creator may continue using platforms such as YouTube, Instagram, Twitch, TikTok, LinkedIn or other supported services while using AskMe as an interaction and audience engagement layer.
+              💡 <strong className="text-white">Multi-Platform Compatibility:</strong> AskMe does not need to host the underlying livestream. A Creator may continue using platforms such as YouTube, Instagram, Twitch, TikTok, LinkedIn or other paid services while using AskMe as an interaction and audience engagement layer.
             </div>
           </div>
         </section>
@@ -143,7 +143,7 @@ export default function AboutPage() {
                   AskMe gives viewers a structured way to participate in Creator interactions.
                 </p>
                 <p>
-                  Instead of relying entirely on ordinary chat messages, viewers can use an AskMe link or QR code to submit a question or message through the supported AskMe experience.
+                  Instead of relying entirely on ordinary chat messages, viewers can use an AskMe link or QR code to submit a question or message through the AskMe platform.
                 </p>
                 <p>
                   Depending on the Creator&apos;s settings and activity, viewers may receive updates about their question, including whether it has been answered or otherwise processed.
@@ -166,7 +166,7 @@ export default function AboutPage() {
                   AskMe is not intended to be merely a payment button.
                 </p>
                 <p>
-                  The platform is designed around the interaction between a Creator and a Viewer. Payment functionality is used to facilitate supported paid questions and interactions, while AskMe provides the surrounding technology for discovery, session participation, moderation, notifications and Creator management.
+                  The platform is designed around the interaction between a Creator and a Viewer. Payment functionality is used to facilitate paid questions and interactions, while AskMe provides the surrounding technology for discovery, session participation, moderation, notifications and Creator management.
                 </p>
                 <p className="text-xs text-[#8E8E9F] bg-[#141422] p-4 rounded-xl border border-[#222234]">
                   ⚠️ A payment does not guarantee that a Creator will answer a question. Creators retain control over which questions they answer and how they respond, subject to AskMe policies and applicable law.

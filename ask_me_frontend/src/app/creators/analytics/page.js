@@ -86,7 +86,7 @@ export default function AnalyticsPage() {
               <BarChart3 className="h-5 w-5 text-[#00F5D4]" /> Creator Financial Analytics
             </h1>
             <p className={`text-xs ${theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'}`}>
-              Revenue breakdown, platform settlements, and viewer donation volume stats.
+              Revenue breakdown, platform settlements, and viewer volume stats.
             </p>
           </div>
           <div className="flex items-center gap-3">
@@ -112,7 +112,7 @@ export default function AnalyticsPage() {
                 <div className={`font-heading font-extrabold text-2xl ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'}`}>
                   ₹{grossVolume.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </div>
-                <span className="text-[11px] text-[#8B8B96]">Total paid viewer donations</span>
+                <span className="text-[11px] text-[#8B8B96]">Total paid viewer</span>
               </div>
 
               <div className={`p-5 rounded-2xl border space-y-2 ${theme === 'light' ? 'bg-[#F8F9FA] border-[#E9ECEF]' : 'bg-[#0A0A0F] border-[#1C1C26]'}`}>

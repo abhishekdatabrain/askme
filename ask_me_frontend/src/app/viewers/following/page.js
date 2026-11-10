@@ -413,7 +413,7 @@ export default function ViewerFollowingPage() {
                 Followed Creators ({pagination.total ?? creators.length})
               </h2>
               <p className={`text-xs mt-0.5 ${theme === 'light' ? 'text-[#6C757D]' : 'text-[#8B8B96]'}`}>
-                Live broadcast notifications and quick support links for your favorite creators.
+                Live broadcast notifications and quick links for your favorite creators.
               </p>
             </div>
 

@@ -237,7 +237,7 @@ export default function VipMembershipModal({ isOpen, onClose, creator, onSuccess
                 Choose Membership Plan
               </h3>
               <p className="text-xs text-[#8B8B96]">
-                Support <span className="text-[#FFD60A] font-bold">{creatorName}</span> and unlock exclusive perks
+           Appreciate <span className="text-[#FFD60A] font-bold">{creatorName}</span> and unlock exclusive perks
               </p>
             </div>
 
@@ -439,7 +439,7 @@ export default function VipMembershipModal({ isOpen, onClose, creator, onSuccess
               <h3 className="font-heading font-black text-2xl text-white">
                 Payment Successful!
               </h3>
-              <p className="text-xs text-[#8B8B96]">Thank you for your support.</p>
+              <p className="text-xs text-[#8B8B96]">Thank you.</p>
             </div>
 
             <div className="p-4 rounded-2xl bg-[#181820] border border-[#22222E] space-y-2">
@@ -468,7 +468,7 @@ export default function VipMembershipModal({ isOpen, onClose, creator, onSuccess
                 You are now a VIP Member!
               </h3>
               <p className="text-xs text-[#8B8B96]">
-                Enjoy exclusive benefits and support <span className="text-white font-bold">{creatorName}</span>.
+                Enjoy exclusive benefits and Appreciate <span className="text-white font-bold">{creatorName}</span>.
               </p>
             </div>
 

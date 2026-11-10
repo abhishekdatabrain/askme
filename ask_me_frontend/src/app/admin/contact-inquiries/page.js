@@ -559,7 +559,7 @@ export default function AdminContactInquiriesPage() {
 
               <div className="flex items-center gap-2 w-full sm:w-auto">
                 <a
-                  href={`mailto:${selectedMessage.email}?subject=Re: ${encodeURIComponent(selectedMessage.subject || 'AskMe Support')}`}
+                  href={`mailto:${selectedMessage.email}?subject=Re: ${encodeURIComponent(selectedMessage.subject || 'AskMe')}`}
                   target="_blank"
                   rel="noreferrer"
                   onClick={() => handleUpdateStatus(selectedMessage.id, 'replied')}

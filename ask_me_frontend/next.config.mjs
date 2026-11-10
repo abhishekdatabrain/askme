@@ -9,12 +9,19 @@ const nextConfig = {
   ],
   reactCompiler: true,
   async rewrites() {
-    const backendBase = process.env.NEXT_PUBLIC_SOCKET_URL ||
-      (process.env.NEXT_PUBLIC_API_BASE_URL ? process.env.NEXT_PUBLIC_API_BASE_URL.replace(/\/api\/?$/, '') : 'http://localhost:5000');
+    const apiBase = (
+      process.env.NEXT_PUBLIC_API_BASE_URL ||
+      (process.env.NEXT_PUBLIC_SOCKET_URL
+        ? `${process.env.NEXT_PUBLIC_SOCKET_URL.replace(/\/+$/, '')}/api`
+        : 'http://localhost:5003/api')
+    ).replace(/\/+$/, '');
+    const uploadDest = apiBase.endsWith('/api')
+      ? `${apiBase}/uploads/:path*`
+      : `${apiBase}/api/uploads/:path*`;
     return [
       {
         source: '/uploads/:path*',
-        destination: `${backendBase}/uploads/:path*`,
+        destination: uploadDest,
       },
     ];
   },

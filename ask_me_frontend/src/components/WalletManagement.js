@@ -262,7 +262,7 @@ export default function WalletManagement({ activeSubTab }) {
               <Wallet className="h-6 w-6 text-[#EB1000]" /> System Earnings & Revenue Settlement Report
             </h2>
             <p className="text-xs text-[#8B8B96] mt-0.5">
-              Live tracking of viewer donations, {platformCommissionPercent}% platform cut, {formattedPercentage} creator payouts, & wallet balance settlements.
+              Live tracking of viewer, {platformCommissionPercent}% platform cut, {formattedPercentage} creator payouts, & wallet balance settlements.
             </p>
           </div>
         </div>

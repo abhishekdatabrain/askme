@@ -171,7 +171,7 @@ export default function ViewerManagement() {
             Viewer Management
           </h2>
           <p className="text-xs text-[#8B8B96] mt-0.5">
-            Manage platform viewers, monitor supporter contributions, view Paid Question history & VIP memberships.
+            Manage platform viewers, monitor contributions, view Paid Question history & VIP memberships.
           </p>
         </div>
 

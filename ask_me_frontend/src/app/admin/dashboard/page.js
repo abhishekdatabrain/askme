@@ -89,7 +89,7 @@ export default function AdminDashboardPage() {
                 <StatCard
                     title="Total Viewers"
                     value={dashboardStats.totalViewers.toLocaleString()}
-                    change="Registered Viewers & Supporters"
+                    change="Registered Viewers"
                     subtitle="Platform Active Audience"
                     icon={Users}
                     accent="teal"

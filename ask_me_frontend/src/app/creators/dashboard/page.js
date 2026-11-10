@@ -446,7 +446,7 @@ function CreatorDashboardContent() {
         setActiveSession(updatedSession);
         setCreatedSessionOutput(updatedSession);
         setSessions(prev => [updatedSession, ...prev.map(s => ({ ...s, status: 'closed' }))]);
-        toast.success('Live donation session started! Unique QR Code and Overlay URL generated.', 'Session Launched!');
+        toast.success('Live session started! Unique QR Code and Overlay URL generated.', 'Session Launched!');
         setWizardStep(3);
       } else {
         toast.error(data.message || 'Failed to start live session', 'Error');
@@ -821,9 +821,9 @@ function CreatorDashboardContent() {
               <div className={`p-6 rounded-3xl border shadow-xl ${theme === 'light' ? 'bg-white border-[#E9ECEF]' : 'bg-[#13131A] border-[#1C1C26]'}`}>
                 <div className="border-b pb-4 mb-6 border-[#1C1C26]">
                   <h3 className={`font-heading font-black text-xl flex items-center gap-2 ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'}`}>
-                    <Radio className="h-6 w-6 text-[#EB1000]" /> Launch New Live Donation Session
+                    <Radio className="h-6 w-6 text-[#EB1000]" /> Launch New Live Session
                   </h3>
-                  <p className="text-xs text-[#8B8B96] mt-1">Follow the 4-step workflow: Live Session → Donation Settings → Generate QR → Generate Overlay</p>
+                  <p className="text-xs text-[#8B8B96] mt-1">Follow the 4-step workflow: Live Session → Settings → Generate QR → Generate Overlay</p>
                 </div>
 
                 {/* Steps Visual Indicator */}
@@ -832,7 +832,7 @@ function CreatorDashboardContent() {
                     1. Session Info
                   </div>
                   <div className={`p-2.5 rounded-xl border ${wizardStep === 2 ? 'bg-gradient-to-r from-[#EB1000] to-[#CC0E00] text-white border-[#EB1000] font-black' : wizardStep > 2 ? 'border-[#EB1000] text-[#EB1000]' : 'border-[#1C1C26] text-[#8B8B96]'}`}>
-                    2. Donation Settings
+                    2. Settings
                   </div>
                   <div className={`p-2.5 rounded-xl border ${wizardStep === 3 ? 'bg-gradient-to-r from-[#EB1000] to-[#CC0E00] text-white border-[#EB1000] font-black' : wizardStep > 3 ? 'border-[#EB1000] text-[#EB1000]' : 'border-[#1C1C26] text-[#8B8B96]'}`}>
                     3. Generate QR
@@ -915,7 +915,7 @@ function CreatorDashboardContent() {
 
                     <div className="pt-4 flex justify-end">
                       <button onClick={() => setWizardStep(2)} disabled={!sessionForm.title.trim()} className="px-6 py-3 rounded-xl bg-gradient-to-r from-[#EB1000] to-[#CC0E00] text-white font-bold text-xs flex items-center gap-1.5 shadow-md shadow-[#EB1000]/30 hover:opacity-95 cursor-pointer">
-                        Next: Donation Settings <ArrowRight className="h-4 w-4" />
+                        Next: Settings <ArrowRight className="h-4 w-4" />
                       </button>
                     </div>
                   </div>
@@ -938,7 +938,7 @@ function CreatorDashboardContent() {
                       </div>
 
                       <div>
-                        <label className="block text-xs font-bold mb-1.5 text-[#8B8B96]">Minimum Donation Allowed (₹)</label>
+                        <label className="block text-xs font-bold mb-1.5 text-[#8B8B96]">Minimum Allowed (₹)</label>
                         <input
                           type="number"
                           min={1}
@@ -1124,7 +1124,7 @@ function CreatorDashboardContent() {
           {activeTab === 'session-history' && (
             <div className="space-y-4 animate-fade-in">
               <h3 className={`font-heading font-bold text-lg flex items-center gap-2 ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'}`}>
-                <History className="h-5 w-5 text-[#EB1000]" /> All Created Live Donation Sessions ({sessions.length})
+                <History className="h-5 w-5 text-[#EB1000]" /> All Created Live Sessions ({sessions.length})
               </h3>
 
               {sessions.length === 0 ? (
@@ -1175,7 +1175,7 @@ function CreatorDashboardContent() {
             <div className="space-y-6 animate-fade-in">
               <div className={`p-6 rounded-3xl border space-y-4 ${theme === 'light' ? 'bg-white border-[#E9ECEF]' : 'bg-[#13131A] border-[#1C1C26]'}`}>
                 <h3 className={`font-heading font-black text-xl flex items-center gap-2 ${theme === 'light' ? 'text-[#1A1D20]' : 'text-white'}`}>
-                  <BarChart3 className="h-6 w-6 text-[#EB1000]" /> Creator Revenue & Donation Analytics
+                  <BarChart3 className="h-6 w-6 text-[#EB1000]" /> Creator Revenue & Analytics
                 </h3>
                 <p className="text-xs text-[#8B8B96]">Track revenue performance, answered viewer Q&As, and settlement payouts.</p>
 

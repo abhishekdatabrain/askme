@@ -170,12 +170,38 @@ export const getMediaUrl = (path) => {
   // Normalize windows backslashes
   let cleanPath = trimmed.replace(/\\/g, '/');
 
-  // If path contains hardcoded localhost or 127.0.0.1 (any port, e.g. 5000, 5003) from past uploads or DB records
+  // Determine configured API base (keep /api suffix so reverse proxies like Nginx /api -> backend serve static uploads)
+  let apiBase = (
+    API_BASE_URL ||
+    (SOCKET_URL ? `${SOCKET_URL.replace(/\/+$/, '')}/api` : 'http://localhost:5003/api')
+  ).replace(/\/+$/, '');
+
+  // If running in browser from a remote domain/LAN IP while apiBase still points to localhost, adapt cleanly
+  if (typeof window !== 'undefined') {
+    const hostname = window.location.hostname;
+    const isRemoteClient = hostname !== 'localhost' && hostname !== '127.0.0.1';
+    if (isRemoteClient && (apiBase.includes('localhost') || apiBase.includes('127.0.0.1'))) {
+      if (window.location.protocol === 'https:') {
+        apiBase = `${window.location.origin}/api`;
+      } else {
+        const portMatch = apiBase.match(/:(\d+)/);
+        const port = portMatch ? `:${portMatch[1]}` : ':5003';
+        apiBase = `${window.location.protocol}//${hostname}${port}/api`;
+      }
+    }
+  }
+
+  // Strip hardcoded localhost / 127.0.0.1 origin from legacy DB records
   cleanPath = cleanPath.replace(/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?/, '');
 
-  // If it's an external URL (e.g. unsplash, cdn, youtube)
+  // If DB stored full URL on our own backend/site domain with /uploads/... (without /api), route it through /api/uploads/...
+  const apiOrigin = apiBase.replace(/\/api\/?$/, '');
+  if (apiOrigin && (cleanPath.startsWith(`${apiOrigin}/uploads/`) || cleanPath.startsWith(`${apiOrigin.replace(/^https:/, 'http:')}/uploads/`))) {
+    cleanPath = cleanPath.replace(/^https?:\/\/[^/]+/, '');
+  }
+
+  // If it's an external URL (e.g. unsplash, cdn, youtube, already-resolved /api/uploads URL)
   if (cleanPath.startsWith('http://') || cleanPath.startsWith('https://')) {
-    // If the frontend is HTTPS, upgrade http to https for same-domain or compatible URLs
     if (typeof window !== 'undefined' && window.location.protocol === 'https:' && cleanPath.startsWith('http://')) {
       if (cleanPath.includes(window.location.hostname)) {
         cleanPath = cleanPath.replace('http://', 'https://');
@@ -189,37 +215,26 @@ export const getMediaUrl = (path) => {
     cleanPath = `/${cleanPath}`;
   }
 
-  // Support /profiles/... and /testimonials/... by ensuring /uploads prefix
+  // Normalize /profiles/..., /testimonials/..., /documents/..., /general/... to /uploads/...
   if (!cleanPath.startsWith('/uploads/') && !cleanPath.startsWith('/api/uploads/')) {
-    if (cleanPath.startsWith('/profiles/') || cleanPath.startsWith('/testimonials/') || cleanPath.startsWith('/documents/') || cleanPath.startsWith('/general/')) {
+    if (
+      cleanPath.startsWith('/profiles/') ||
+      cleanPath.startsWith('/testimonials/') ||
+      cleanPath.startsWith('/documents/') ||
+      cleanPath.startsWith('/general/')
+    ) {
       cleanPath = `/uploads${cleanPath}`;
     }
   }
 
-  // Determine backend base URL for resolving uploaded media (priority: API_BASE_URL -> SOCKET_URL -> default)
-  let backendBase = '';
-  if (API_BASE_URL) {
-    backendBase = API_BASE_URL.replace(/\/api\/?$/, '');
-  } else if (SOCKET_URL) {
-    backendBase = SOCKET_URL;
-  }
-  if (!backendBase) {
-    backendBase = 'http://localhost:5003';
+  // Avoid double /api/api/uploads/... when appending to apiBase ending with /api
+  if (cleanPath.startsWith('/api/uploads/') && apiBase.endsWith('/api')) {
+    cleanPath = cleanPath.replace(/^\/api/, '');
+  } else if (cleanPath.startsWith('/uploads/') && !apiBase.endsWith('/api')) {
+    cleanPath = `/api${cleanPath}`;
   }
 
-  // If running in browser and accessed from a LAN IP or remote server (e.g. 192.168.x.x, domain)
-  // while backendBase is still pointing to localhost/127.0.0.1, adapt it to the current hostname
-  if (typeof window !== 'undefined') {
-    const hostname = window.location.hostname;
-    const isRemoteClient = hostname !== 'localhost' && hostname !== '127.0.0.1';
-    if (isRemoteClient && (backendBase.includes('localhost') || backendBase.includes('127.0.0.1'))) {
-      const portMatch = backendBase.match(/:(\d+)$/);
-      const port = portMatch ? `:${portMatch[1]}` : ':5003';
-      backendBase = `${window.location.protocol}//${hostname}${port}`;
-    }
-  }
-
-  return `${backendBase.replace(/\/+$/, '')}${cleanPath}`;
+  return `${apiBase}${cleanPath}`;
 };
 
 

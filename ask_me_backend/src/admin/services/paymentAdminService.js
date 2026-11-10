@@ -198,7 +198,7 @@ class PaymentAdminService {
 
     const highestDonations = tfHighestRows.map((d) => ({
       id: d.id,
-      viewerName: d.viewer_name || (d.anonymous ? 'Anonymous Viewer' : 'Supporter'),
+      viewerName: d.viewer_name || (d.anonymous ? 'Anonymous Viewer' : ''),
       creatorName: d.creator?.full_name || 'AskMe Creator',
       amount: parseFloat(d.amount || 0),
       message: d.message || 'Audience Question Donation',

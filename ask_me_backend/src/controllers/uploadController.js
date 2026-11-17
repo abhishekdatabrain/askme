@@ -2,7 +2,7 @@ const path = require('path');
 
 /**
  * Handle single file upload
- * POST /api/upload
+ * POST /api/upload, /api/upload/profile, /api/upload/document
  */
 const uploadSingleFile = (req, res) => {
   try {
@@ -10,35 +10,41 @@ const uploadSingleFile = (req, res) => {
       return res.status(400).json({
         status: 'error',
         code: 'NO_FILE_PROVIDED',
-        message: 'No file was uploaded.'
+        message: 'No file was uploaded. Please provide a file in multipart/form-data.'
       });
     }
 
-    // Determine subfolder based on file destination
-    const destinationPath = req.file.destination.replace(/\\/g, '/');
+    // Determine subfolder based on destination or uploadTarget
+    const destinationPath = (req.file.destination || '').replace(/\\/g, '/');
     let subfolder = 'general';
-    if (destinationPath.includes('uploads/profiles')) {
+    if (destinationPath.includes('uploads/profiles') || req.uploadTarget === 'profile') {
       subfolder = 'profiles';
-    } else if (destinationPath.includes('uploads/documents')) {
+    } else if (destinationPath.includes('uploads/documents') || req.uploadTarget === 'document') {
       subfolder = 'documents';
     }
 
     const relativePath = `/uploads/${subfolder}/${req.file.filename}`;
+    const apiRelativePath = `/api/uploads/${subfolder}/${req.file.filename}`;
+
+    const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'http';
     const host = req.get('host') || 'localhost:5000';
-    const protocol = req.protocol || 'http';
-    const fullUrl = `${protocol}://${host}${relativePath}`;
+    const fullUrl = `${protocol}://${host}${apiRelativePath}`;
+
+    const filePayload = {
+      filename: req.file.filename,
+      originalName: req.file.originalname,
+      mimeType: req.file.mimetype,
+      size: req.file.size,
+      path: relativePath,
+      apiPath: apiRelativePath,
+      url: fullUrl
+    };
 
     return res.status(200).json({
       status: 'success',
       message: 'File uploaded successfully',
-      file: {
-        filename: req.file.filename,
-        originalName: req.file.originalname,
-        mimeType: req.file.mimetype,
-        size: req.file.size,
-        path: relativePath,
-        url: fullUrl
-      }
+      data: filePayload,
+      file: filePayload
     });
   } catch (error) {
     return res.status(500).json({
@@ -59,24 +65,25 @@ const uploadMultipleFiles = (req, res) => {
       return res.status(400).json({
         status: 'error',
         code: 'NO_FILES_PROVIDED',
-        message: 'No files were uploaded.'
+        message: 'No files were uploaded. Please provide at least one file in multipart/form-data.'
       });
     }
 
+    const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'http';
     const host = req.get('host') || 'localhost:5000';
-    const protocol = req.protocol || 'http';
 
     const uploadedFiles = req.files.map(file => {
-      const destinationPath = file.destination.replace(/\\/g, '/');
+      const destinationPath = (file.destination || '').replace(/\\/g, '/');
       let subfolder = 'general';
-      if (destinationPath.includes('uploads/profiles')) {
+      if (destinationPath.includes('uploads/profiles') || req.uploadTarget === 'profile') {
         subfolder = 'profiles';
-      } else if (destinationPath.includes('uploads/documents')) {
+      } else if (destinationPath.includes('uploads/documents') || req.uploadTarget === 'document') {
         subfolder = 'documents';
       }
 
       const relativePath = `/uploads/${subfolder}/${file.filename}`;
-      const fullUrl = `${protocol}://${host}${relativePath}`;
+      const apiRelativePath = `/api/uploads/${subfolder}/${file.filename}`;
+      const fullUrl = `${protocol}://${host}${apiRelativePath}`;
 
       return {
         filename: file.filename,
@@ -84,6 +91,7 @@ const uploadMultipleFiles = (req, res) => {
         mimeType: file.mimetype,
         size: file.size,
         path: relativePath,
+        apiPath: apiRelativePath,
         url: fullUrl
       };
     });
@@ -91,6 +99,10 @@ const uploadMultipleFiles = (req, res) => {
     return res.status(200).json({
       status: 'success',
       message: 'Files uploaded successfully',
+      data: {
+        count: uploadedFiles.length,
+        files: uploadedFiles
+      },
       files: uploadedFiles
     });
   } catch (error) {

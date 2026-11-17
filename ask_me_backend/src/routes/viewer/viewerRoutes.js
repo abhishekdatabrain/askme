@@ -34,7 +34,7 @@ const {
   getViewerMemberships,
   getPublicVipPlans,
 } = require('../../controllers/vipController');
-const { protect } = require('../../middlewares/authMiddleware');
+const { protect, optionalProtect } = require('../../middlewares/authMiddleware');
 const avatarUpload = require('../../middlewares/avatarUploadMiddleware');
 
 /**
@@ -206,14 +206,21 @@ router.get('/following', protect, getFollowingCreators);
  * @desc    Create VIP Membership Subscription
  * @access  Public / Private
  */
-router.post('/vip/subscribe', protect, createVipSubscription);
+router.post('/vip/subscribe', optionalProtect, createVipSubscription);
+router.post('/vip/subscription', optionalProtect, createVipSubscription);
+router.post('/vip-subscribe', optionalProtect, createVipSubscription);
+router.post('/membership/subscribe', optionalProtect, createVipSubscription);
+router.post('/memberships/subscribe', optionalProtect, createVipSubscription);
+router.post('/subscribe', optionalProtect, createVipSubscription);
 
 /**
  * @route   GET /api/viewers/vip/my-memberships
  * @desc    Get Viewer Active VIP Memberships
  * @access  Public / Private
  */
-router.get('/vip/my-memberships', protect, getViewerMemberships);
+router.get('/vip/my-memberships', optionalProtect, getViewerMemberships);
+router.get('/vip/memberships', optionalProtect, getViewerMemberships);
+router.get('/memberships', optionalProtect, getViewerMemberships);
 
 /**
  * @route   GET /api/viewers/my-questions

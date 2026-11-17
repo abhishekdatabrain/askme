@@ -6,10 +6,10 @@ export const SITE_URL = (
   process.env.NEXT_PUBLIC_SITE_URL || 'https://ask-me.live'
 ).replace(/\/+$/, '');
 export const SITE_NAME = 'Ask-Me.Live';
-export const DEFAULT_TITLE = 'Ask-Me.Live — Your Question. Their Live. One Place.';
+export const DEFAULT_TITLE = 'Ask-Me.Live — Ask. Answer. Live.';
 export const DEFAULT_DESCRIPTION =
-  "See who's live across platforms, ask the creator directly, and get notified when they answer.";
-export const OG_IMAGE_URL = `${SITE_URL}/og-image.jpg`;
+  'The live layer where audiences and creators meet, across every major platform.';
+export const OG_IMAGE_URL = `${SITE_URL}/og-image.jpg?v=2`;
 
 export const DEFAULT_OG_IMAGE = {
   url: OG_IMAGE_URL,

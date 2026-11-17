@@ -95,6 +95,7 @@ app.use('/api/policies', policyRoutes);
 app.use('/api/tickets', ticketRoutes);
 app.use('/api/contact', contactRoutes);
 app.use('/api/upload', uploadRoutes);
+app.use('/api/uploads', uploadRoutes);
 app.use('/api/auth/truecaller', truecallerRoutes);
 app.use('/api/adminauth', authRoutes);
 app.use('/api/admin', adminRoutes);
@@ -102,6 +103,7 @@ app.use('/api/creators', creatorRoutes);
 app.use('/api/viewers', viewerRoutes);
 app.use('/api/viewer', viewerRoutes);
 app.use('/viewer', viewerRoutes);
+app.use('/api/vip', viewerRoutes);
 
 // Error Handling Middlewares
 app.use(notFound);

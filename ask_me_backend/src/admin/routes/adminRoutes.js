@@ -52,6 +52,8 @@ const {
   settleMonth,
   saveNotificationToken,
   testAdminNotification,
+  getDeactivatedAccounts,
+  reactivateAccount,
 } = require('../controllers/adminController');
 
 // All Admin Routes require Authentication & Admin Authorization (RBAC)
@@ -185,5 +187,9 @@ router.put('/legal-policies/:id/unpublish', unpublishPolicy);
 router.get('/legal-policies/:id/versions', getPolicyVersions);
 router.post('/legal-policies/:id/discard-draft', discardDraft);
 router.delete('/legal-policies/:id/draft', discardDraft);
+
+// 14. Deactivated Accounts Management & Reactivation
+router.get('/deactivated-accounts', getDeactivatedAccounts);
+router.post('/deactivated-accounts/reactivate', reactivateAccount);
 
 module.exports = router;

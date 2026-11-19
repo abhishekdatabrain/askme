@@ -115,6 +115,13 @@ export default function AdminSidebar({ activeTab: propsActiveTab, setActiveTab, 
       ],
     },
     {
+      id: 'deactivated',
+      label: 'Deactivated Accounts',
+      subtitle: 'Retention & Recovery',
+      icon: AlertOctagon,
+      path: '/admin/deactivated-accounts',
+    },
+    {
       id: 'kyc',
       label: 'KYC Management',
       subtitle: 'Identity & Bank Approvals',

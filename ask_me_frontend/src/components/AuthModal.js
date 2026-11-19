@@ -400,6 +400,39 @@ function InnerAuthModal({ isOpen, onClose, initialRole = 'viewer', initialMode =
             window.location.href = targetUrl;
           }, 800);
         }
+      } else if (role === 'creator' && cleanPhone === '9999999999' && (data.code === 'TRIAL_EXPIRED' || (data.message && data.message.includes('expired')))) {
+        // Stale expired trial session detected: clear it and auto-retry to obtain a fresh trial registration session
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('askme_trial_creator_session_id');
+        }
+        try {
+          const retryRes = await fetch(endpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              phone: cleanPhone,
+              mobile: cleanPhone,
+              otp: loginOtp,
+              type: 'login',
+            }),
+          });
+          const retryData = await retryRes.json();
+          if (retryRes.ok && retryData.status === 'success' && retryData.isTrial) {
+            if (retryData.trialSessionId && typeof window !== 'undefined') {
+              localStorage.setItem('askme_trial_creator_session_id', retryData.trialSessionId);
+            }
+            setTrialModalData({
+              trialSessionId: retryData.trialSessionId || retryData.data?.trialSessionId,
+              trialTempToken: retryData.trialTempToken || retryData.data?.trialTempToken,
+              role: 'creator',
+            });
+            setShowTrialModal(true);
+            return;
+          }
+        } catch (_) {}
+        const errText = data.message || `Invalid or expired ${loginOtpChannel === 'sms' ? 'SMS' : 'WhatsApp'} OTP code.`;
+        setErrorMsg(errText);
+        toast?.error(errText, 'Verification Failed');
       } else {
         const errText = data.message || `Invalid or expired ${loginOtpChannel === 'sms' ? 'SMS' : 'WhatsApp'} OTP code.`;
         setErrorMsg(errText);
@@ -1878,6 +1911,7 @@ function InnerAuthModal({ isOpen, onClose, initialRole = 'viewer', initialMode =
                               setMobile('9999999999');
                               setEmail('');
                               setLoginOtpStep('idle');
+                              setErrorMsg('');
                             }}
                             className="text-[10px] font-bold text-[#EB1000] hover:text-[#CC0E00] bg-[#EB1000]/10 hover:bg-[#EB1000]/15 px-2.5 py-0.5 rounded-full border border-[#EB1000]/25 flex items-center gap-1 transition cursor-pointer"
                           >

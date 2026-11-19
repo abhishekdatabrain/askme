@@ -17,6 +17,7 @@ const {
   checkUsernameAvailability,
   changeViewerPassword,
   deleteViewerAccount,
+  recoverViewerAccount,
   getPublicLiveFeed,
   getCreatorPublicProfile,
   toggleFollowCreator,
@@ -150,6 +151,15 @@ router.post('/profile/change-password', protect, changeViewerPassword);
  */
 router.delete('/account', protect, deleteViewerAccount);
 router.delete('/profile/account', protect, deleteViewerAccount);
+router.post('/account/delete', protect, deleteViewerAccount);
+
+/**
+ * @route   POST /api/viewers/recover-account
+ * @desc    Recover / Reactivate a deactivated Viewer Account
+ * @access  Public
+ */
+router.post('/recover-account', recoverViewerAccount);
+router.post('/account/recover', recoverViewerAccount);
 
 /**
  * @route   GET /api/viewers/public/live-feed

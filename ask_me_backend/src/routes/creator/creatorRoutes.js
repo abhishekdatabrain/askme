@@ -5,6 +5,7 @@ const upload = require('../../middlewares/uploadMiddleware');
 const {
   registerCreator,
   loginCreator,
+  recoverCreatorAccount,
   googleAuthCreator,
   sendWhatsAppOtpCreator,
   sendSmsOtpCreator,
@@ -82,6 +83,8 @@ router.post('/trial/complete-profile', upload.single('profile_image'), completeT
 router.post('/email-otp/send', sendEmailOtpCreator);
 router.post('/email-otp/verify', verifyEmailOtpCreator);
 router.post('/truecaller-auth', truecallerAuthCreator);
+router.post('/recover-account', recoverCreatorAccount);
+router.post('/account/recover', recoverCreatorAccount);
 
 /**
  * Public Viewer Payment & Overlay Routes

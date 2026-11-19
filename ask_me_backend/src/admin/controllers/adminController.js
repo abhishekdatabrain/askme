@@ -11,6 +11,7 @@ const platformSettingsService = require('../services/platformSettingsService');
 const adminSearchService = require('../services/adminSearchService');
 const viewerAdminService = require('../services/viewerAdminService');
 const monthlySettlementService = require('../services/monthlySettlementService');
+const deactivatedAccountsAdminService = require('../services/deactivatedAccountsAdminService');
 const AdminFcmToken = require('../../models/AdminFcmTokenModel');
 
 
@@ -478,6 +479,32 @@ const testAdminNotification = async (req, res, next) => {
   }
 };
 
+const getDeactivatedAccounts = async (req, res, next) => {
+  try {
+    const result = await deactivatedAccountsAdminService.getDeactivatedAccounts(req.query);
+    return res.status(200).json({
+      status: 'success',
+      data: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const reactivateAccount = async (req, res, next) => {
+  try {
+    const { role, id } = req.body;
+    const result = await deactivatedAccountsAdminService.reactivateAccount({ role, id });
+    return res.status(200).json({
+      status: 'success',
+      message: result.message,
+      data: result.account,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   getDashboardOverview,
   getCreators,
@@ -518,5 +545,7 @@ module.exports = {
   settleMonth,
   saveNotificationToken,
   testAdminNotification,
+  getDeactivatedAccounts,
+  reactivateAccount,
 };
 

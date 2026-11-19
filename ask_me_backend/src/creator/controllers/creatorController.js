@@ -21,6 +21,7 @@ const {
   saveCreatorBankAccountService,
   verifyCreatorUpiService,
   deleteCreatorAccountService,
+  recoverCreatorAccountService,
   completeTrialProfileCreatorService,
 } = require("../services/creatorService");
 const {
@@ -1260,20 +1261,76 @@ const verifyEmailOtpCreator = async (req, res, next) => {
 };
 
 /**
- * @desc    Delete Creator Account
+ * @desc    Deactivate Creator Account (Stage 1 Soft Delete)
  * @route   DELETE /api/creators/account
  * @access  Private (JWT Protected)
  */
 const deleteCreatorAccount = async (req, res, next) => {
   try {
     const creatorId = getAuthenticatedCreatorId(req);
+    if (!creatorId) {
+      return res.status(401).json({
+        status: "error",
+        message: "Authentication required. Please log in.",
+      });
+    }
+
+    if (!req.user || req.user.role !== "creator") {
+      return res.status(403).json({
+        status: "error",
+        message: "Forbidden. Only creator accounts can access this endpoint.",
+      });
+    }
+
+    if (String(req.user.id) !== String(creatorId)) {
+      return res.status(403).json({
+        status: "error",
+        message: "Forbidden. You cannot deactivate another creator's account.",
+      });
+    }
+
     const result = await deleteCreatorAccountService(creatorId);
+
+    // Clear all creator authentication cookies
+    res.clearCookie("askme_token", { path: "/" });
+    res.clearCookie("askme_user", { path: "/" });
+    res.clearCookie("askme_creator_token", { path: "/" });
+    res.clearCookie("askme_creator_user", { path: "/" });
+
     return res.status(200).json({
       status: "success",
-      message: result.message || "Creator account deleted successfully.",
+      message: result.message || "Your account has been deactivated successfully. Your data will be retained for 2 years before permanent deletion.",
     });
   } catch (error) {
-    console.error("DELETE CREATOR ACCOUNT ERROR:", error);
+    console.error("DEACTIVATE CREATOR ACCOUNT ERROR:", error);
+    next(error);
+  }
+};
+
+/**
+ * @desc    Recover / Reactivate a deactivated Creator Account
+ * @route   POST /api/creators/recover-account
+ * @access  Public
+ */
+const recoverCreatorAccount = async (req, res, next) => {
+  try {
+    const result = await recoverCreatorAccountService(req.body);
+
+    res.cookie("askme_creator_token", result.token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+    });
+
+    return res.status(200).json({
+      status: "success",
+      message: result.message,
+      data: {
+        token: result.token,
+        creator: result.creator,
+      },
+    });
+  } catch (error) {
+    console.error("RECOVER CREATOR ACCOUNT ERROR:", error);
     next(error);
   }
 };
@@ -1281,6 +1338,7 @@ const deleteCreatorAccount = async (req, res, next) => {
 module.exports = {
   registerCreator,
   loginCreator,
+  recoverCreatorAccount,
   googleAuthCreator,
   sendWhatsAppOtpCreator,
   sendSmsOtpCreator,

@@ -98,6 +98,22 @@ const User = sequelize.define(
             type: DataTypes.BOOLEAN,
             defaultValue: false,
         },
+
+        is_deleted: {
+            type: DataTypes.BOOLEAN,
+            allowNull: false,
+            defaultValue: false,
+        },
+
+        deleted_at: {
+            type: DataTypes.DATE,
+            allowNull: true,
+        },
+
+        scheduled_permanent_deletion_at: {
+            type: DataTypes.DATE,
+            allowNull: true,
+        },
     },
     {
         tableName: "creators",

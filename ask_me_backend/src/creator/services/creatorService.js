@@ -1,3 +1,5 @@
+const fs = require("fs");
+const path = require("path");
 const bcrypt = require("bcryptjs");
 const { OAuth2Client } = require("google-auth-library");
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
@@ -255,7 +257,7 @@ const registerCreatorService = async (data) => {
 /**
  * Creator Login Service
  */
-const loginCreatorService = async ({ email, username, password }) => {
+const loginCreatorService = async ({ email, username, password, recover_account = false }) => {
   const loginIdentifier = (email || username || "").trim().toLowerCase().replace(/^@/, "");
 
   if (!loginIdentifier || !password) {
@@ -290,6 +292,30 @@ const loginCreatorService = async ({ email, username, password }) => {
     const err = new Error("Invalid creator email/username or password.");
     err.statusCode = 401;
     throw err;
+  }
+
+  // Check if account has been soft-deleted / deactivated
+  if (creator.is_deleted) {
+    if (creator.scheduled_permanent_deletion_at && new Date(creator.scheduled_permanent_deletion_at) <= new Date()) {
+      const err = new Error("This creator account has expired and was scheduled for permanent deletion.");
+      err.statusCode = 410;
+      throw err;
+    }
+
+    if (recover_account) {
+      creator.is_deleted = false;
+      creator.deleted_at = null;
+      creator.scheduled_permanent_deletion_at = null;
+      creator.status = "active";
+      await creator.save();
+    } else {
+      const err = new Error("Your creator account is currently deactivated. You can recover your account during the 2-year retention period.");
+      err.statusCode = 403;
+      err.code = "ACCOUNT_DEACTIVATED";
+      err.canRecover = true;
+      err.scheduledDeletionAt = creator.scheduled_permanent_deletion_at;
+      throw err;
+    }
   }
 
   if (creator.status === "blocked") {
@@ -1074,16 +1100,15 @@ const verifyWhatsAppOtpCreatorService = async (data) => {
     }
 
     if (existingTrialCreator) {
-      // Check trial account expiration support
-      if (existingTrialCreator.trial_expires_at && new Date(existingTrialCreator.trial_expires_at) < new Date()) {
-        const err = new Error("Your trial creator account has expired. Please register a regular account or contact support.");
-        err.statusCode = 403;
-        err.code = "TRIAL_EXPIRED";
-        throw err;
-      }
+      const isExpired = existingTrialCreator.trial_expires_at && new Date(existingTrialCreator.trial_expires_at) < new Date();
+      const durationDays = parseInt(process.env.TRIAL_DURATION_DAYS, 10) || 7;
 
-      // 6. If the same trial identity logs in again, skip the modal and return session
+      // If the same trial identity logs in again, auto-renew if expired, skip the modal and return session
       if (existingTrialCreator.trial_completed && existingTrialCreator.full_name && existingTrialCreator.email) {
+        if (isExpired) {
+          existingTrialCreator.trial_expires_at = new Date(Date.now() + durationDays * 24 * 60 * 60 * 1000);
+          await existingTrialCreator.save();
+        }
         const token = generateToken(existingTrialCreator.id, "creator");
         const profile = await CreatorProfile.findOne({ where: { creator_id: existingTrialCreator.id } });
         return {
@@ -1108,6 +1133,10 @@ const verifyWhatsAppOtpCreatorService = async (data) => {
           },
           trialSessionId: existingTrialCreator.trial_session_id,
         };
+      } else if (isExpired) {
+        // If incomplete profile and trial expired, refresh expiration so user can complete registration
+        existingTrialCreator.trial_expires_at = new Date(Date.now() + durationDays * 24 * 60 * 60 * 1000);
+        await existingTrialCreator.save();
       }
     }
 
@@ -1290,13 +1319,9 @@ const completeTrialProfileCreatorService = async (data, clientIp = 'trial_creato
   });
 
   if (trialCreator) {
-    // Check if expired
-    if (trialCreator.trial_expires_at && new Date(trialCreator.trial_expires_at) < new Date()) {
-      const err = new Error("Your trial creator account has expired. Please register a regular account or contact support.");
-      err.statusCode = 403;
-      err.code = "TRIAL_EXPIRED";
-      throw err;
-    }
+    const durationDays = parseInt(process.env.TRIAL_DURATION_DAYS, 10) || 7;
+    // Auto-renew trial expiration on profile completion / account registration
+    trialCreator.trial_expires_at = new Date(Date.now() + durationDays * 24 * 60 * 60 * 1000);
 
     trialCreator.full_name = cleanName;
     trialCreator.email = cleanEmail;
@@ -1307,9 +1332,6 @@ const completeTrialProfileCreatorService = async (data, clientIp = 'trial_creato
     trialCreator.trial_completed = true;
     if (avatarPath && !avatarPath.startsWith('blob:') && !avatarPath.startsWith('data:')) {
       trialCreator.profile_image = avatarPath;
-    }
-    if (!trialCreator.trial_expires_at) {
-      trialCreator.trial_expires_at = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
     }
     await trialCreator.save();
 
@@ -1507,9 +1529,17 @@ const truecallerAuthCreatorService = async (data) => {
 };
 
 /**
- * Delete Creator Account Service
+ * Stage 1: Soft Delete Creator Account Service (Deactivation)
+ * Immediately sets is_deleted = true, deleted_at = NOW, scheduled_permanent_deletion_at = NOW + 2 years,
+ * closes active sessions, and preserves all financial, payout, wallet, and database records.
  */
 const deleteCreatorAccountService = async (creatorId) => {
+  if (!creatorId) {
+    const err = new Error("Authentication required. Creator ID is missing.");
+    err.statusCode = 401;
+    throw err;
+  }
+
   const creator = await CreatorsModel.findByPk(creatorId);
   if (!creator) {
     const err = new Error("Creator account not found.");
@@ -1517,16 +1547,124 @@ const deleteCreatorAccountService = async (creatorId) => {
     throw err;
   }
 
-  try {
-    await creator.update({ status: 'deleted' });
-  } catch (err) {
-    console.warn("Could not update creator status to deleted:", err.message);
+  if (creator.role !== "creator") {
+    const err = new Error("Forbidden. Only creator accounts can be deactivated through this endpoint.");
+    err.statusCode = 403;
+    throw err;
   }
 
-  await creator.destroy();
+  // 1. Close any currently active live streaming sessions
+  const DonationSessionModel = models.DonationSession;
+  if (DonationSessionModel) {
+    try {
+      await DonationSessionModel.update(
+        { status: "closed" },
+        { where: { creator_id: creator.id, status: "active" } }
+      );
+    } catch (sessionErr) {
+      console.warn("[deleteCreatorAccount] Error closing active sessions:", sessionErr.message);
+    }
+  }
+
+  // 2. Set soft-deletion timestamps (exactly 2 years retention)
+  const now = new Date();
+  const scheduledDeletion = new Date(now);
+  scheduledDeletion.setFullYear(scheduledDeletion.getFullYear() + 2);
+
+  await creator.update({
+    is_deleted: true,
+    deleted_at: now,
+    scheduled_permanent_deletion_at: scheduledDeletion,
+    status: "deleted",
+  });
+
+  console.log(`[Account Deactivation] Creator account #${creator.id} (${creator.email}) deactivated. Scheduled for permanent deletion at: ${scheduledDeletion.toISOString()}`);
 
   return {
-    message: "Creator account deleted successfully.",
+    message: "Your account has been deactivated successfully. Your data will be retained for 2 years before permanent deletion.",
+  };
+};
+
+/**
+ * Stage 2: Account Recovery for Creator
+ */
+const recoverCreatorAccountService = async ({ email, username, password }) => {
+  const loginIdentifier = (email || username || "").trim().toLowerCase().replace(/^@/, "");
+
+  if (!loginIdentifier || !password) {
+    const err = new Error("Please provide email/username and password.");
+    err.statusCode = 400;
+    throw err;
+  }
+
+  const cleanDigits = loginIdentifier.replace(/\D/g, "");
+  const creator = await CreatorsModel.findOne({
+    where: {
+      [sequelize.Sequelize.Op.or]: [
+        { email: loginIdentifier },
+        { username: loginIdentifier },
+        ...(cleanDigits.length >= 10 ? [
+          { mobile: cleanDigits },
+          { mobile: `91${cleanDigits.slice(-10)}` },
+          { mobile: `+91${cleanDigits.slice(-10)}` },
+        ] : []),
+      ],
+    },
+  });
+
+  if (!creator) {
+    const err = new Error("Creator account not found.");
+    err.statusCode = 404;
+    throw err;
+  }
+
+  if (!creator.is_deleted) {
+    const err = new Error("Account is already active. Please log in normally.");
+    err.statusCode = 400;
+    throw err;
+  }
+
+  const isMatch = await bcrypt.compare(password, creator.password);
+  if (!isMatch) {
+    const err = new Error("Invalid password.");
+    err.statusCode = 401;
+    throw err;
+  }
+
+  if (creator.scheduled_permanent_deletion_at && new Date(creator.scheduled_permanent_deletion_at) <= new Date()) {
+    const err = new Error("The 2-year retention and recovery window for this creator account has expired.");
+    err.statusCode = 410;
+    throw err;
+  }
+
+  // Reactivate
+  creator.is_deleted = false;
+  creator.deleted_at = null;
+  creator.scheduled_permanent_deletion_at = null;
+  creator.status = "active";
+  await creator.save();
+
+  const profile = await CreatorProfile.findOne({ where: { creator_id: creator.id } });
+  const rawStatus = (profile?.kyc_status || "not_submitted").toLowerCase();
+  const kycStatus = rawStatus === "approved" ? "approved" : rawStatus === "rejected" ? "rejected" : rawStatus === "pending" ? "pending" : "not_submitted";
+  const token = generateToken(creator.id, "creator");
+
+  console.log(`[Account Recovery] Creator account #${creator.id} (${creator.email}) recovered successfully.`);
+
+  return {
+    message: "Your Creator account has been recovered successfully! Welcome back.",
+    token,
+    creator: {
+      id: creator.id,
+      fullName: creator.full_name,
+      username: creator.username ? `@${creator.username}` : "@creator",
+      email: creator.email,
+      mobile: creator.mobile,
+      country: creator.country,
+      role: "creator",
+      status: creator.status,
+      kycStatus,
+    },
   };
 };
 
@@ -1544,6 +1682,7 @@ module.exports = {
   saveCreatorBankAccountService,
   verifyCreatorUpiService,
   deleteCreatorAccountService,
+  recoverCreatorAccountService,
   completeTrialProfileCreatorService,
 };
 

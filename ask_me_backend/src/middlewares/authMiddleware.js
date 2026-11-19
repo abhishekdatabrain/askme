@@ -92,6 +92,15 @@ const protect = async (req, res, next) => {
       });
     }
 
+    // Check if account has been soft-deleted / deactivated
+    if (user.is_deleted) {
+      return res.status(403).json({
+        status: "fail",
+        code: "ACCOUNT_DEACTIVATED",
+        message: "Your account is currently deactivated. Please recover your account to regain access.",
+      });
+    }
+
     // Attach authenticated user
     req.user = user;
 

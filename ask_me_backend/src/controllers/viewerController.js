@@ -10,6 +10,10 @@ const FollowModel = require('../models/FollowModel');
 const Donation = require('../models/DonationModel');
 const Notification = require('../models/NotificationModel');
 const UserFcmToken = require('../models/UserFcmTokenModel');
+const VipMembership = require('../models/VipMembershipModel');
+const UserPolicyConsent = require('../models/UserPolicyConsentModel');
+const SupportTicket = require('../models/SupportTicketModel');
+const ChatMessage = require('../models/ChatMessageModel');
 const { sendLoginOtpWhatsApp } = require('../services/whatsappService');
 const { generateAndStoreOtp, verifyStoredOtp } = require('../utils/whatsappOtpStore');
 const { generateAndStoreEmailOtp, verifyStoredEmailOtp } = require('../utils/emailOtpStore');
@@ -21,6 +25,8 @@ const { sequelize } = require('../config/db');
 
 const { OAuth2Client } = require('google-auth-library');
 const crypto = require('crypto');
+const path = require('path');
+const fs = require('fs');
 
 
 
@@ -143,6 +149,31 @@ const loginViewer = async (req, res, next) => {
         status: 'fail',
         message: 'Invalid email address or password.',
       });
+    }
+
+    // Check if account has been soft-deleted / deactivated
+    if (user.is_deleted) {
+      if (user.scheduled_permanent_deletion_at && new Date(user.scheduled_permanent_deletion_at) <= new Date()) {
+        return res.status(410).json({
+          status: 'fail',
+          message: 'This account has expired and was scheduled for permanent deletion.',
+        });
+      }
+
+      if (req.body && req.body.recover_account) {
+        // Recover account
+        user.is_deleted = false;
+        user.deleted_at = null;
+        user.scheduled_permanent_deletion_at = null;
+        await user.save();
+      } else {
+        return res.status(403).json({
+          status: 'deactivated',
+          can_recover: true,
+          message: 'Your account is currently deactivated. You can recover your account during the 2-year retention period.',
+          scheduled_permanent_deletion_at: user.scheduled_permanent_deletion_at,
+        });
+      }
     }
 
     const token = generateToken(user.id, user.role);
@@ -2102,37 +2133,155 @@ const changeViewerPassword = async (req, res, next) => {
 };
 
 /**
- * @desc    Delete Viewer Account
+ * @desc    Delete Viewer Account & Anonymize Associated Records
  * @route   DELETE /api/viewers/account
- * @access  Private (JWT Protected)
+ * @access  Private (JWT Protected - Viewer role only)
  */
 const deleteViewerAccount = async (req, res, next) => {
+  let transaction = null;
   try {
-    const userId = req.user?.id || req.user?.userId;
+    const authUserId = req.user?.id || req.user?.userId;
 
-    if (!userId) {
+    if (!authUserId) {
       return res.status(401).json({
         status: 'fail',
-        message: 'Unauthorized. User ID not found.',
+        message: 'Unauthorized. Authentication token required.',
       });
     }
 
+    // Ensure the authenticated user can only delete their own account
+    const requestedId = req.params?.id || req.body?.id || req.query?.id;
+    if (requestedId && String(requestedId) !== String(authUserId)) {
+      return res.status(403).json({
+        status: 'fail',
+        message: 'Forbidden. You can only delete your own account.',
+      });
+    }
+
+    const userId = authUserId;
+
+    // Fetch user and verify existence
     const user = await User.findByPk(userId);
     if (!user) {
       return res.status(404).json({
         status: 'fail',
-        message: 'Viewer profile not found.',
+        message: 'Viewer profile not found or already deleted.',
       });
     }
 
-    await user.destroy();
+    // Role check: Only viewers can deactivate accounts through this endpoint (strictly enforce role === 'viewer')
+    if (!user.role || String(user.role).trim().toLowerCase() !== 'viewer') {
+      return res.status(403).json({
+        status: 'fail',
+        message: 'Access denied. Only viewer accounts can be deactivated through this endpoint.',
+      });
+    }
+
+    // Stage 1: Soft Delete (Immediately)
+    const now = new Date();
+    const scheduledDeletion = new Date(now);
+    scheduledDeletion.setFullYear(scheduledDeletion.getFullYear() + 2);
+
+    await user.update({
+      is_deleted: true,
+      deleted_at: now,
+      scheduled_permanent_deletion_at: scheduledDeletion,
+    });
+
+    // Invalidate FCM device tokens
+    await UserFcmToken.destroy({ where: { user_id: userId } }).catch(() => {});
+
+    // Clear all authentication cookies
+    res.clearCookie('askme_viewer_token', { path: '/' });
+    res.clearCookie('askme_viewer_user', { path: '/' });
+    res.clearCookie('askme_token', { path: '/' });
+    res.clearCookie('askme_user', { path: '/' });
+
+    console.log(`[Account Deactivation] Viewer account #${userId} (${user.email || user.name}) deactivated. Scheduled for permanent deletion at: ${scheduledDeletion.toISOString()}`);
 
     return res.status(200).json({
       status: 'success',
-      message: 'Viewer account deleted successfully.',
+      message: 'Your account has been deactivated successfully. Your data will be retained for 2 years before permanent deletion.',
     });
   } catch (error) {
-    console.error('DELETE VIEWER ACCOUNT ERROR:', error);
+    console.error('DEACTIVATE VIEWER ACCOUNT ERROR:', error);
+    next(error);
+  }
+};
+
+/**
+ * @desc    Recover / Reactivate a deactivated Viewer Account
+ * @route   POST /api/viewers/recover-account
+ * @access  Public
+ */
+const recoverViewerAccount = async (req, res, next) => {
+  try {
+    const { email, password } = req.body;
+    const cleanEmail = (email || '').trim().toLowerCase();
+
+    if (!cleanEmail || !password) {
+      return res.status(400).json({
+        status: 'fail',
+        message: 'Please provide both email address and password.',
+      });
+    }
+
+    const user = await User.findOne({ where: { email: cleanEmail } });
+    if (!user) {
+      return res.status(404).json({
+        status: 'fail',
+        message: 'No viewer account found with this email address.',
+      });
+    }
+
+    if (!user.is_deleted) {
+      return res.status(400).json({
+        status: 'fail',
+        message: 'This account is already active. Please log in normally.',
+      });
+    }
+
+    const isMatch = await user.validPassword(password);
+    if (!isMatch) {
+      return res.status(401).json({
+        status: 'fail',
+        message: 'Invalid email address or password.',
+      });
+    }
+
+    // Check if 2-year retention has expired
+    if (user.scheduled_permanent_deletion_at && new Date(user.scheduled_permanent_deletion_at) <= new Date()) {
+      return res.status(410).json({
+        status: 'fail',
+        message: 'The 2-year retention and recovery window for this account has expired.',
+      });
+    }
+
+    // Recover account
+    user.is_deleted = false;
+    user.deleted_at = null;
+    user.scheduled_permanent_deletion_at = null;
+    await user.save();
+
+    const token = generateToken(user.id, user.role);
+
+    res.cookie('askme_viewer_token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+    });
+
+    console.log(`[Account Recovery] Viewer account #${user.id} (${user.email}) recovered successfully.`);
+
+    return res.status(200).json({
+      status: 'success',
+      message: 'Your account has been recovered successfully! Welcome back.',
+      data: {
+        token,
+        user: user.toPublicJSON(),
+      },
+    });
+  } catch (error) {
+    console.error('RECOVER VIEWER ACCOUNT ERROR:', error);
     next(error);
   }
 };
@@ -2275,6 +2424,7 @@ module.exports = {
   checkUsernameAvailability,
   changeViewerPassword,
   deleteViewerAccount,
+  recoverViewerAccount,
   getPublicLiveFeed,
   getCreatorPublicProfile,
   toggleFollowCreator,

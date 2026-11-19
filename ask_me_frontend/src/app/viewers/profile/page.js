@@ -33,7 +33,7 @@ import {
   Key
 } from 'lucide-react';
 import { API_ENDPOINTS, getMediaUrl } from '@/config/api';
-import { getViewerToken, getViewerUser, setViewerSession } from '@/utils/cookies';
+import { getViewerToken, getViewerUser, setViewerSession, clearViewerSession } from '@/utils/cookies';
 import { useToast } from '@/context/ToastContext';
 
 // Platform Icons
@@ -166,6 +166,12 @@ export default function ViewerProfilePage() {
     confirm: false,
   });
   const [isChangingPassword, setIsChangingPassword] = useState(false);
+
+  // Delete Account State
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
 
   // Initial Load - Fetch Profile
   useEffect(() => {
@@ -654,6 +660,71 @@ export default function ViewerProfilePage() {
       toast.error('Network error changing password. Please try again.');
     } finally {
       setIsChangingPassword(false);
+    }
+  };
+
+  // Deactivate Account Handler (Stage 1 Soft Delete)
+  const handleDeleteAccount = async () => {
+    try {
+      setIsDeletingAccount(true);
+      setDeleteError('');
+      const token = getViewerToken();
+
+      if (!token) {
+        toast.error('Session expired. Please log in again.');
+        router.push('/');
+        return;
+      }
+
+      const res = await fetch(API_ENDPOINTS.VIEWERS.DELETE_ACCOUNT, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const data = await res.json().catch(() => ({}));
+
+      if (res.ok && data.status === 'success') {
+        // Clear all viewer and user session cookies & localStorage
+        clearViewerSession();
+        if (typeof window !== 'undefined') {
+          try {
+            localStorage.removeItem('askme_viewer_token');
+            localStorage.removeItem('askme_viewer_user');
+            localStorage.removeItem('askme_token');
+            localStorage.removeItem('askme_user');
+            document.cookie = 'askme_viewer_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+            document.cookie = 'askme_viewer_user=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+            document.cookie = 'askme_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+          } catch (e) {
+            console.error('Storage clear error:', e);
+          }
+        }
+
+        setShowDeleteModal(false);
+        toast.success(
+          data.message || 'Your account has been deactivated successfully. Your data will be retained for 2 years before permanent deletion.',
+          'Account Deactivated'
+        );
+
+        // Redirect to home page
+        setTimeout(() => {
+          router.push('/');
+        }, 400);
+      } else {
+        const errorMsg = data.message || 'Failed to deactivate account. Please try again.';
+        setDeleteError(errorMsg);
+        toast.error(errorMsg, 'Deactivation Failed');
+      }
+    } catch (err) {
+      console.error('DEACTIVATE ACCOUNT ERROR:', err);
+      const networkMsg = 'A network error occurred while deactivating your account. Please try again.';
+      setDeleteError(networkMsg);
+      toast.error(networkMsg, 'Network Error');
+    } finally {
+      setIsDeletingAccount(false);
     }
   };
 
@@ -1246,6 +1317,41 @@ export default function ViewerProfilePage() {
                 </button>
               </div>
             </form>
+
+            {/* DANGER ZONE: DEACTIVATE ACCOUNT */}
+            <div className={`p-6 rounded-3xl border transition ${
+              isDark
+                ? 'bg-gradient-to-r from-red-950/25 via-[#0D0D14] to-[#0D0D14] border-red-900/35'
+                : 'bg-red-50/70 border-red-200 shadow-xs'
+            }`}>
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div className="flex items-start gap-3.5">
+                  <div className="p-2.5 rounded-2xl bg-red-500/10 text-red-500 border border-red-500/20 shrink-0 mt-0.5">
+                    <Trash2 className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <h3 className="font-heading font-black text-sm uppercase tracking-wider text-red-500">
+                      Deactivate Account
+                    </h3>
+                    <p className={`text-xs mt-1 leading-relaxed ${isDark ? 'text-[#8B8B96]' : 'text-slate-600'}`}>
+                      Your account will be deactivated immediately. Your profile will be hidden, and your account data will be retained for 2 years before permanent deletion.
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDeleteConfirmText('');
+                    setDeleteError('');
+                    setShowDeleteModal(true);
+                  }}
+                  className="w-full sm:w-auto px-5 py-2.5 rounded-xl font-bold text-xs bg-[#DC2626] hover:bg-[#B91C1C] text-white shadow-lg shadow-red-600/20 transition flex items-center justify-center gap-2 cursor-pointer shrink-0"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  <span>Deactivate Account</span>
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -1630,6 +1736,97 @@ export default function ViewerProfilePage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL 4: DEACTIVATE ACCOUNT CONFIRMATION */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-xs">
+          <div className={`w-full max-w-md p-6 rounded-3xl border shadow-2xl relative animate-in fade-in zoom-in-95 duration-150 ${
+            isDark ? 'bg-[#0D0D14] border-red-900/40 text-white' : 'bg-white border-red-200 text-[#0F172A]'
+          }`}>
+            <button
+              type="button"
+              disabled={isDeletingAccount}
+              onClick={() => {
+                if (!isDeletingAccount) {
+                  setShowDeleteModal(false);
+                  setDeleteConfirmText('');
+                  setDeleteError('');
+                }
+              }}
+              className="absolute top-5 right-5 p-1.5 rounded-xl text-[#8B8B96] hover:text-white disabled:opacity-40 cursor-pointer"
+            >
+              <X className="h-5 w-5" />
+            </button>
+
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-2.5 rounded-2xl bg-red-500/15 text-red-500 border border-red-500/25 shrink-0">
+                <ShieldAlert className="h-6 w-6" />
+              </div>
+              <div>
+                <h3 className="font-heading font-black text-base text-red-500">
+                  Deactivate Your Account?
+                </h3>
+                <p className="text-xs text-[#8B8B96]">
+                  2-year recovery window available
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              {/* Warning Message Box */}
+              <div className={`p-3.5 rounded-2xl border text-xs leading-relaxed ${
+                isDark ? 'bg-red-950/20 border-red-900/30 text-red-200/90' : 'bg-red-50 border-red-200 text-red-800'
+              }`}>
+                Your account will be deactivated immediately. Your profile will be hidden, and your account data will be retained for 2 years before permanent deletion. You may recover your account during this period.
+              </div>
+
+              {/* Error message if any */}
+              {deleteError && (
+                <div className="p-2.5 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs flex items-center gap-2">
+                  <AlertCircle className="h-4 w-4 shrink-0" />
+                  <span>{deleteError}</span>
+                </div>
+              )}
+
+              {/* Actions */}
+              <div className="flex gap-2 pt-2">
+                <button
+                  type="button"
+                  disabled={isDeletingAccount}
+                  onClick={() => {
+                    setShowDeleteModal(false);
+                    setDeleteConfirmText('');
+                    setDeleteError('');
+                  }}
+                  className={`flex-1 py-2.5 rounded-xl border text-xs font-bold transition cursor-pointer disabled:opacity-50 ${
+                    isDark ? 'border-[#1F1F30] hover:bg-[#1A1A26] text-[#8B8B96]' : 'border-[#E2E8F0] hover:bg-[#F1F5F9] text-[#64748B]'
+                  }`}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleDeleteAccount}
+                  disabled={isDeletingAccount}
+                  className="flex-1 py-2.5 rounded-xl text-xs font-bold bg-[#DC2626] hover:bg-[#B91C1C] text-white shadow-md shadow-red-600/30 disabled:opacity-40 disabled:cursor-not-allowed transition flex items-center justify-center gap-1.5 cursor-pointer"
+                >
+                  {isDeletingAccount ? (
+                    <>
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      <span>Deactivating...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Trash2 className="h-3.5 w-3.5" />
+                      <span>Deactivate My Account</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

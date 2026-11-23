@@ -18,7 +18,7 @@ const { getIO } = require("../../config/socket");
 const { sendLoginOtpWhatsApp } = require("../../services/whatsappService");
 const { generateAndStoreOtp, verifyStoredOtp } = require("../../utils/whatsappOtpStore");
 const { verifyTruecallerToken } = require("../../services/truecallerService");
-const { sendWelcomeEmailAsync } = require("../../services/emailService");
+const { sendWelcomeEmailAsync, sendCreatorAccountDeletionEmailAsync } = require("../../services/emailService");
 const { Op } = require("sequelize");
 const crypto = require("crypto");
 const jwt = require("jsonwebtoken");
@@ -1553,6 +1553,16 @@ const deleteCreatorAccountService = async (creatorId) => {
     throw err;
   }
 
+  // Prevent duplicate processing & duplicate email notifications
+  if (creator.is_deleted || creator.status === "deleted") {
+    return {
+      message: "Your creator account deletion request has already been processed. A confirmation email was sent to your registered address.",
+      status: "PENDING_DELETION",
+      deleted_at: creator.deleted_at,
+      scheduled_permanent_deletion_at: creator.scheduled_permanent_deletion_at,
+    };
+  }
+
   // 1. Close any currently active live streaming sessions
   const DonationSessionModel = models.DonationSession;
   if (DonationSessionModel) {
@@ -1578,10 +1588,32 @@ const deleteCreatorAccountService = async (creatorId) => {
     status: "deleted",
   });
 
-  console.log(`[Account Deactivation] Creator account #${creator.id} (${creator.email}) deactivated. Scheduled for permanent deletion at: ${scheduledDeletion.toISOString()}`);
+  const deletionDateStr = now.toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+  const scheduledDeletionDateStr = scheduledDeletion.toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+
+  // 3. Trigger confirmation email via shared email service (fire-and-forget, with retries)
+  sendCreatorAccountDeletionEmailAsync({
+    email: creator.email,
+    name: creator.full_name || creator.username,
+    deletionDate: deletionDateStr,
+    scheduledDeletionDate: scheduledDeletionDateStr,
+  });
+
+  console.log(`[Account Deactivation] Creator account #${creator.id} (${creator.email}) marked as PENDING_DELETION. Scheduled for permanent deletion at: ${scheduledDeletion.toISOString()}`);
 
   return {
-    message: "Your account has been deactivated successfully. Your data will be retained for 2 years before permanent deletion.",
+    message: "Your request to delete your AskMe Creator account has been successfully processed. A confirmation email has been sent to your registered email address.",
+    status: "PENDING_DELETION",
+    deleted_at: now,
+    scheduled_permanent_deletion_at: scheduledDeletion,
   };
 };
 

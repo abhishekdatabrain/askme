@@ -1042,7 +1042,7 @@ function InnerAuthModal({ isOpen, onClose, initialRole = 'viewer', initialMode =
   };
 
   const googleLoginHook = useGoogleLogin({
-    scope: 'email profile https://www.googleapis.com/auth/youtube.readonly',
+    scope: 'email profile',
     onSuccess: async (tokenResponse) => {
       try {
         let userEmail = '';
@@ -1059,35 +1059,11 @@ function InnerAuthModal({ isOpen, onClose, initialRole = 'viewer', initialMode =
             const userInfo = await userInfoRes.json();
             userEmail = userInfo.email || '';
             userName = userInfo.name || '';
-            phoneNumber = userInfo.phone
+            phoneNumber = userInfo.phone;
           }
 
-          if (role !== 'viewer') {
-            try {
-              const ytRes = await fetch('https://www.googleapis.com/youtube/v3/channels?part=snippet,id&mine=true', {
-                headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
-              });
-              if (ytRes.ok) {
-                const ytData = await ytRes.json();
-                if (ytData.items && ytData.items.length > 0) {
-                  const item = ytData.items[0];
-                  const customUrl = item.snippet?.customUrl;
-                  if (customUrl) {
-                    youtubeChannel = `@${customUrl.replace(/^@+/, '')}`;
-                  } else if (item.id) {
-                    youtubeChannel = `https://youtube.com/channel/${item.id}`;
-                  } else if (item.snippet?.title) {
-                    youtubeChannel = `@${item.snippet.title.replace(/[^a-zA-Z0-9_]/g, '').toLowerCase()}`;
-                  }
-                }
-              }
-            } catch (ytErr) {
-              console.warn('YouTube channel fetch error:', ytErr);
-            }
-
-            if (!youtubeChannel && userEmail) {
-              youtubeChannel = `@${userEmail.split('@')[0].replace(/[^a-zA-Z0-9_]/g, '').toLowerCase()}`;
-            }
+          if (role !== 'viewer' && userEmail) {
+            youtubeChannel = `@${userEmail.split('@')[0].replace(/[^a-zA-Z0-9_]/g, '').toLowerCase()}`;
           }
         }
 

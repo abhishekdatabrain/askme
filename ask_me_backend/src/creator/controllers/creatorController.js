@@ -1299,7 +1299,12 @@ const deleteCreatorAccount = async (req, res, next) => {
 
     return res.status(200).json({
       status: "success",
-      message: result.message || "Your account has been deactivated successfully. Your data will be retained for 2 years before permanent deletion.",
+      message: result.message || "Your request to delete your AskMe Creator account has been successfully processed. A confirmation email has been sent to your registered email address.",
+      data: {
+        status: result.status || "PENDING_DELETION",
+        deleted_at: result.deleted_at,
+        scheduled_permanent_deletion_at: result.scheduled_permanent_deletion_at,
+      },
     });
   } catch (error) {
     console.error("DEACTIVATE CREATOR ACCOUNT ERROR:", error);

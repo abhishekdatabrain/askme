@@ -615,13 +615,13 @@ export default function CreatorProfilePage() {
 
         setShowDeleteModal(false);
         toast.success(
-          data.message || 'Your account has been deactivated successfully. Your data will be retained for 2 years before permanent deletion.',
-          'Account Deactivated'
+          data.message || 'Your account deletion request has been processed. A confirmation email has been sent to your registered email address.',
+          'Account Deletion Request Processed'
         );
 
         setTimeout(() => {
           router.push('/');
-        }, 400);
+        }, 1200);
       } else {
         const errorMsg = data.message || 'Failed to deactivate creator account. Please try again.';
         setDeleteError(errorMsg);
@@ -1357,10 +1357,10 @@ export default function CreatorProfilePage() {
                 </div>
                 <div>
                   <h3 className="font-heading font-black text-sm uppercase tracking-wider text-red-500">
-                    Deactivate Creator Account
+                 Delete Account
                   </h3>
                   <p className={`text-xs mt-1 leading-relaxed ${theme === 'light' ? 'text-slate-600' : 'text-[#8B8B96]'}`}>
-                    Your account will be deactivated immediately. Your profile will be hidden, and your account data will be retained for 2 years before permanent deletion.
+                    Your account will be hidden immediately and scheduled for permanent deletion after a 2-year retention period, during which it remains recoverable. A confirmation email will be sent to your registered address.
                   </p>
                 </div>
               </div>
@@ -1374,7 +1374,7 @@ export default function CreatorProfilePage() {
                 className="px-5 py-2.5 rounded-xl text-xs font-bold bg-[#EB1000] hover:bg-[#CC0E00] text-white shadow-md shadow-red-600/30 transition flex items-center justify-center gap-2 cursor-pointer shrink-0 w-full sm:w-auto"
               >
                 <Trash2 className="h-4 w-4" />
-                <span>Deactivate Account</span>
+                <span>Delete Account</span>
               </button>
             </div>
           </div>
@@ -1490,10 +1490,10 @@ export default function CreatorProfilePage() {
               </div>
               <div>
                 <h3 className="font-heading font-black text-base text-red-500">
-                  Deactivate Your Account?
+                  Delete Your Account?
                 </h3>
                 <p className="text-xs text-[#8B8B96]">
-                  2-year recovery window available
+                  Scheduled deletion &bull; 2-year recovery window
                 </p>
               </div>
             </div>
@@ -1503,7 +1503,7 @@ export default function CreatorProfilePage() {
               <div className={`p-3.5 rounded-2xl border text-xs leading-relaxed ${
                 theme === 'light' ? 'bg-red-50 border-red-200 text-red-800' : 'bg-red-950/20 border-red-900/30 text-red-200/90'
               }`}>
-                Your account will be deactivated immediately. Your profile will be hidden, and your account data will be retained for 2 years before permanent deletion. You may recover your account during this period.
+                Your account deletion request will be processed immediately. Your profile will be hidden and account access disabled. Your account is scheduled for permanent deletion in 2 years, during which your data is securely retained and recoverable. A confirmation email will be sent to your registered email address.
               </div>
 
               {/* Error message if any */}
@@ -1544,7 +1544,7 @@ export default function CreatorProfilePage() {
                   ) : (
                     <>
                       <Trash2 className="h-3.5 w-3.5" />
-                      <span>Deactivate My Account</span>
+                      <span>Delete Account</span>
                     </>
                   )}
                 </button>

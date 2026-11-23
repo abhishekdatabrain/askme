@@ -56,6 +56,9 @@ export const metadata = {
     shortcut: "/icon.png",
     apple: "/icon.png",
   },
+  verification: {
+    google: "TAPZrzWIjrdcZcJBubXrZ-WiVqTzCeNbLksGHhiIkBg",
+  },
 };
 
 export const viewport = {

@@ -705,21 +705,21 @@ export default function ViewerProfilePage() {
 
         setShowDeleteModal(false);
         toast.success(
-          data.message || 'Your account has been deactivated successfully. Your data will be retained for 2 years before permanent deletion.',
-          'Account Deactivated'
+          data.message || 'Your account deletion request has been processed. A confirmation email has been sent to your registered email address.',
+          'Account Deletion Request Processed'
         );
 
         // Redirect to home page
         setTimeout(() => {
           router.push('/');
-        }, 400);
+        }, 1200);
       } else {
-        const errorMsg = data.message || 'Failed to deactivate account. Please try again.';
+        const errorMsg = data.message || 'Failed to delete account. Please try again.';
         setDeleteError(errorMsg);
-        toast.error(errorMsg, 'Deactivation Failed');
+        toast.error(errorMsg, 'Deletion Failed');
       }
     } catch (err) {
-      console.error('DEACTIVATE ACCOUNT ERROR:', err);
+      console.error('DELETE ACCOUNT ERROR:', err);
       const networkMsg = 'A network error occurred while deactivating your account. Please try again.';
       setDeleteError(networkMsg);
       toast.error(networkMsg, 'Network Error');
@@ -1331,10 +1331,10 @@ export default function ViewerProfilePage() {
                   </div>
                   <div>
                     <h3 className="font-heading font-black text-sm uppercase tracking-wider text-red-500">
-                      Deactivate Account
+                      Delete Account
                     </h3>
                     <p className={`text-xs mt-1 leading-relaxed ${isDark ? 'text-[#8B8B96]' : 'text-slate-600'}`}>
-                      Your account will be deactivated immediately. Your profile will be hidden, and your account data will be retained for 2 years before permanent deletion.
+                      Your account will be hidden immediately and scheduled for permanent deletion after a 2-year retention period, during which it remains recoverable. A confirmation email will be sent to your registered address.
                     </p>
                   </div>
                 </div>
@@ -1348,7 +1348,7 @@ export default function ViewerProfilePage() {
                   className="w-full sm:w-auto px-5 py-2.5 rounded-xl font-bold text-xs bg-[#DC2626] hover:bg-[#B91C1C] text-white shadow-lg shadow-red-600/20 transition flex items-center justify-center gap-2 cursor-pointer shrink-0"
                 >
                   <Trash2 className="h-4 w-4" />
-                  <span>Deactivate Account</span>
+                  <span>Delete Account</span>
                 </button>
               </div>
             </div>
@@ -1767,10 +1767,10 @@ export default function ViewerProfilePage() {
               </div>
               <div>
                 <h3 className="font-heading font-black text-base text-red-500">
-                  Deactivate Your Account?
+                  Delete Your Account?
                 </h3>
                 <p className="text-xs text-[#8B8B96]">
-                  2-year recovery window available
+                  Scheduled deletion &bull; 2-year recovery window
                 </p>
               </div>
             </div>
@@ -1780,7 +1780,7 @@ export default function ViewerProfilePage() {
               <div className={`p-3.5 rounded-2xl border text-xs leading-relaxed ${
                 isDark ? 'bg-red-950/20 border-red-900/30 text-red-200/90' : 'bg-red-50 border-red-200 text-red-800'
               }`}>
-                Your account will be deactivated immediately. Your profile will be hidden, and your account data will be retained for 2 years before permanent deletion. You may recover your account during this period.
+                Your account deletion request will be processed immediately. Your profile will be hidden and account access disabled. Your account is scheduled for permanent deletion in 2 years, during which your data is securely retained and recoverable. A confirmation email will be sent to your registered email address.
               </div>
 
               {/* Error message if any */}
@@ -1816,12 +1816,12 @@ export default function ViewerProfilePage() {
                   {isDeletingAccount ? (
                     <>
                       <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                      <span>Deactivating...</span>
+                      <span>Deleting...</span>
                     </>
                   ) : (
                     <>
                       <Trash2 className="h-3.5 w-3.5" />
-                      <span>Deactivate My Account</span>
+                      <span>Delete Account</span>
                     </>
                   )}
                 </button>

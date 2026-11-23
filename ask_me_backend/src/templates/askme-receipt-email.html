@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<!--
+  ASKME.LIVE RECEIPT / TAX INVOICE EMAIL (sent to the viewer after a successful payment)
+  SUBJECT:    Your AskMe.live receipt: Question to {{creator_name}} - Order {{order_no}}
+  FROM:       utility domain (see OTP template notes). Attach the PDF invoice generated from askme-invoice-pdf.html.
+  MERGE TAGS: {{buyer_name}} {{order_no}} {{invoice_no}} {{order_date}} {{creator_name}}
+              {{amount_total}} {{taxable_value}} {{gst_label}} {{gst_amount}} {{payment_method}} {{payment_ref}}
+              {{seller_gstin}} {{sac_code}} {{place_of_supply}} {{seller_address}} {{view_order_url}} {{support_url}}
+  All figures are filled by your system at send time. Nothing here is a hard-coded price or tax rate.
+  Host images/logo.png and replace the logo src.
+-->
+<title>Your AskMe.live receipt: Question to {{creator_name}}</title>
+<style>
+  body,table,td,a{-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%}
+  table,td{mso-table-lspace:0;mso-table-rspace:0}
+  img{border:0;display:block;outline:none;text-decoration:none}
+  body{margin:0!important;padding:0!important;width:100%!important;background:#EEEFF1}
+  @media only screen and (max-width:560px){
+    .wrap{width:100%!important}
+    .px{padding-left:20px!important;padding-right:20px!important}
+    .h1{font-size:30px!important;line-height:36px!important}
+  }
+  @media (prefers-color-scheme:dark){
+    body,.bg-out{background:#0B0B0C!important}
+    .card{background:#17191D!important}
+    .t1{color:#FFFFFF!important}.t2{color:#C9CBD0!important}.t3{color:#9B9DA3!important}
+    .line{border-color:#2E3138!important}.soft{background:#101114!important}
+  }
+</style>
+</head>
+<body style="margin:0;padding:0;background:#EEEFF1;">
+
+<!-- Preheader -->
+<div style="display:none;font-size:1px;line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden;mso-hide:all;">
+  Payment received: {{amount_total}} for your question to {{creator_name}}. Order {{order_no}}.
+  &#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;
+</div>
+
+<table role="presentation" class="bg-out" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#EEEFF1" style="background:#EEEFF1;">
+<tr><td align="center" style="padding:24px 12px;">
+<table role="presentation" class="wrap" width="560" cellpadding="0" cellspacing="0" border="0" style="width:560px;max-width:560px;font-family:Inter,'Segoe UI',Helvetica,Arial,sans-serif;">
+
+  <tr><td height="5" bgcolor="#FF3B30" style="background:#FF3B30;border-radius:20px 20px 0 0;font-size:0;line-height:0;">&nbsp;</td></tr>
+  <tr><td class="card px" bgcolor="#FFFFFF" style="background:#FFFFFF;padding:32px 36px 8px;">
+
+    <!-- Logo -->
+    <a href="https://ask-me.live"><img src="cid:askmelogo" width="110" alt="AskMe.live by FuturePast" style="width:110px;height:auto;"></a>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td class="line" style="border-bottom:1px solid #D9DBDF;font-size:0;line-height:0;height:16px;">&nbsp;</td></tr></table>
+
+    <!-- Heading -->
+    <h1 class="h1 t1" style="margin:24px 0 12px;font-size:36px;line-height:42px;font-weight:800;color:#101114;letter-spacing:-0.5px;">Thank you<span style="color:#FF3B30;">.</span></h1>
+    <p class="t2" style="margin:0 0 20px;font-size:15px;line-height:24px;color:#4A4D55;">Hi {{buyer_name}}, your payment to ask {{creator_name}} a question on AskMe.live was successful. This email is your receipt and GST invoice. A PDF copy is attached.</p>
+
+    <!-- Order meta -->
+    <p class="t2" style="margin:0 0 4px;font-size:14px;line-height:22px;color:#4A4D55;"><strong class="t1" style="color:#101114;">Order number:</strong> {{order_no}}</p>
+    <p class="t2" style="margin:0 0 4px;font-size:14px;line-height:22px;color:#4A4D55;"><strong class="t1" style="color:#101114;">Invoice number:</strong> {{invoice_no}}</p>
+    <p class="t2" style="margin:0 0 24px;font-size:14px;line-height:22px;color:#4A4D55;"><strong class="t1" style="color:#101114;">Order date:</strong> {{order_date}}</p>
+
+    <!-- Items -->
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+      <tr>
+        <td class="t3 line" style="padding:10px 0;border-bottom:2px solid #101114;font-size:12px;line-height:16px;font-weight:700;letter-spacing:1px;color:#6B6E76;">ITEM</td>
+        <td class="t3 line" align="right" style="padding:10px 0;border-bottom:2px solid #101114;font-size:12px;line-height:16px;font-weight:700;letter-spacing:1px;color:#6B6E76;">PRICE</td>
+      </tr>
+      <tr>
+        <td class="line" style="padding:16px 12px 16px 0;border-bottom:1px solid #D9DBDF;">
+          <div class="t1" style="font-size:15px;line-height:22px;font-weight:600;color:#101114;">Question to {{creator_name}} (AskMe.live)</div>
+          <div class="t3" style="font-size:13px;line-height:20px;color:#6B6E76;">Paid question for {{creator_name}}</div>
+        </td>
+        <td class="line t1" align="right" valign="top" style="padding:16px 0;border-bottom:1px solid #D9DBDF;font-size:15px;line-height:22px;font-weight:600;color:#101114;white-space:nowrap;">{{amount_total}}</td>
+      </tr>
+      <tr>
+        <td colspan="2" align="right" style="padding:16px 0 0;">
+          <div class="t1" style="font-size:20px;line-height:28px;font-weight:800;color:#101114;">Total: <span style="color:#FF3B30;">{{amount_total}}</span></div>
+          <div class="t3" style="font-size:13px;line-height:20px;color:#6B6E76;">(Includes {{gst_label}} of {{gst_amount}})</div>
+        </td>
+      </tr>
+    </table>
+
+    <!-- Payment -->
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:20px;"><tr>
+      <td class="line" style="border-top:1px solid #D9DBDF;padding:16px 0 4px;font-size:14px;line-height:22px;font-weight:700;color:#4A4D55;"><span class="t2">Payment method:</span></td>
+      <td class="line t2" align="right" style="border-top:1px solid #D9DBDF;padding:16px 0 4px;font-size:14px;line-height:22px;color:#4A4D55;">{{payment_method}}</td>
+    </tr><tr>
+      <td class="t2" style="padding:0 0 16px;font-size:14px;line-height:22px;font-weight:700;color:#4A4D55;">Transaction ID:</td>
+      <td class="t2" align="right" style="padding:0 0 16px;font-size:14px;line-height:22px;color:#4A4D55;">{{payment_ref}}</td>
+    </tr></table>
+
+    <!-- CTA -->
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:4px 0 24px;"><tr>
+      <td align="center" bgcolor="#FF3B30" style="background:#FF3B30;border-radius:12px;">
+        <a href="{{view_order_url}}" style="display:inline-block;padding:13px 28px;font-size:15px;line-height:20px;font-weight:700;color:#FFFFFF;text-decoration:none;">View order</a>
+      </td>
+    </tr></table>
+
+    <!-- Tax details -->
+    <table role="presentation" class="soft" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:24px;"><tr>
+      <td class="soft" bgcolor="#F6F6F8" style="background:#F6F6F8;border-radius:12px;padding:16px 18px;font-size:12px;line-height:20px;color:#6B6E76;">
+        <div class="t1" style="font-size:12px;font-weight:700;letter-spacing:1px;color:#101114;margin-bottom:6px;">TAX DETAILS</div>
+        <span class="t3">Sold by:</span> FuturePast Ventures LLP (AskMe.live)<br>
+        <span class="t3">GSTIN:</span> {{seller_gstin}}<br>
+        <span class="t3">Address:</span> {{seller_address}}<br>
+        <span class="t3">SAC:</span> {{sac_code}} &nbsp;|&nbsp; <span class="t3">Place of supply:</span> {{place_of_supply}}<br>
+        <span class="t3">Taxable value:</span> {{taxable_value}}
+      </td>
+    </tr></table>
+
+    <p class="t2" style="margin:0 0 24px;font-size:14px;line-height:22px;color:#4A4D55;">Questions about this payment? Visit <a href="{{support_url}}" style="color:#FF3B30;text-decoration:none;font-weight:600;">AskMe.live Help</a>.</p>
+  </td></tr>
+
+  <!-- Brand strip -->
+  <tr><td class="card px" bgcolor="#FFFFFF" style="background:#FFFFFF;padding:0 36px 28px;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td class="line" style="border-top:1px solid #D9DBDF;padding-top:20px;">
+      <div class="t1" style="font-size:15px;line-height:22px;font-weight:800;color:#101114;">AskMe.live</div>
+      <div class="t2" style="margin-top:2px;font-size:13px;line-height:20px;color:#4A4D55;">Discover. Connect. Monetise. <a href="https://ask-me.live" style="color:#FF3B30;text-decoration:none;font-weight:600;">Learn more &rsaquo;</a></div>
+    </td></tr></table>
+  </td></tr>
+  <tr><td height="4" bgcolor="#FFFFFF" style="background:#FFFFFF;border-radius:0 0 20px 20px;font-size:0;line-height:0;">&nbsp;</td></tr>
+
+  <!-- Footer -->
+  <tr><td class="px t3" align="center" style="padding:20px 28px 8px;font-size:11px;line-height:18px;color:#6B6E76;">
+    This is an automated receipt, so please don&rsquo;t reply to this message.<br>
+    &copy; 2026 FuturePast Ventures LLP. All rights reserved.<br>
+    Pune, Maharashtra, India
+  </td></tr>
+
+</table>
+</td></tr>
+</table>
+</body>
+</html>

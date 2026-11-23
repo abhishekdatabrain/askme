@@ -8,6 +8,7 @@ const { createCreatorNotificationService } = require("./notificationService");
 const { sendAskListedWhatsApp, sendNewAskReceivedWhatsApp } = require("../../services/whatsappService");
 const { getIO } = require("../../config/socket");
 const { normalizeMoney, subtractMoney } = require("../../utils/money");
+const { sendPaymentReceiptEmailAsync } = require("../../services/emailService");
 
 /**
  * Process Viewer Donation Payment for a Live Session
@@ -308,6 +309,22 @@ const processViewerDonationService = async (data, authenticatedUser = null) => {
         const creatorName = creatorObj?.full_name || creatorObj?.username || "Creator";
         const creatorMobile = creatorObj?.mobile;
 
+        // Trigger Automated Payment Receipt Email & GST Tax Invoice PDF
+        if (viewerEmailToSave) {
+          sendPaymentReceiptEmailAsync({
+            viewerEmail: viewerEmailToSave,
+            viewerName: donorDisplayName,
+            creatorName: creatorName,
+            donationId: donationRecord.id,
+            donationUuid: donationRecord.donation_uuid,
+            orderNo: realOrderId,
+            paymentRef: realPaymentId,
+            paymentMethod: paymentMethod ? String(paymentMethod).toUpperCase() : "UPI",
+            amount: parsedAmount,
+            paidAt: donationRecord.paid_at || new Date(),
+          }).catch(err => console.error('[Receipt Service] Error dispatching receipt email:', err.message));
+        }
+
         if (viewerMobileToSave) {
           sendAskListedWhatsApp({
             viewerPhone: viewerMobileToSave,
@@ -566,6 +583,30 @@ const handlePaymentWebhookService = async (body, headers = {}) => {
       );
 
       await transaction.commit();
+
+      // Trigger Automated Payment Receipt Email & GST Tax Invoice PDF via Webhook
+      if (donationRecord.viewer_email) {
+        (async () => {
+          try {
+            const creatorObj = await Creator.findByPk(targetCreatorId).catch(() => null);
+            const creatorName = creatorObj?.full_name || creatorObj?.username || "Creator";
+            sendPaymentReceiptEmailAsync({
+              viewerEmail: donationRecord.viewer_email,
+              viewerName: donationRecord.viewer_name || "Supporter",
+              creatorName: creatorName,
+              donationId: donationRecord.id,
+              donationUuid: donationRecord.donation_uuid,
+              orderNo: gatewayOrderId || `order_${donationRecord.donation_uuid}`,
+              paymentRef: gatewayPaymentId || donationRecord.donation_uuid,
+              paymentMethod: payload.paymentMethod || "UPI",
+              amount: parsedAmount,
+              paidAt: donationRecord.paid_at || new Date(),
+            }).catch(err => console.error('[Receipt Service] Error dispatching receipt email via webhook:', err.message));
+          } catch (hookErr) {
+            console.error('[Receipt Service] Error fetching creator for receipt email in webhook:', hookErr.message);
+          }
+        })();
+      }
     } catch (err) {
       if (transaction && !transaction.finished) await transaction.rollback();
       throw err;

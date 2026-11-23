@@ -18,7 +18,7 @@ const { sendLoginOtpWhatsApp } = require('../services/whatsappService');
 const { generateAndStoreOtp, verifyStoredOtp } = require('../utils/whatsappOtpStore');
 const { generateAndStoreEmailOtp, verifyStoredEmailOtp } = require('../utils/emailOtpStore');
 const { verifyTruecallerToken } = require('../services/truecallerService');
-const { sendWelcomeEmailAsync, sendEmailOtp } = require('../services/emailService');
+const { sendWelcomeEmailAsync, sendEmailOtp, sendAccountDeletionEmailAsync } = require('../services/emailService');
 const { Op } = require('sequelize');
 const jwt = require('jsonwebtoken');
 const { sequelize } = require('../config/db');
@@ -2177,7 +2177,20 @@ const deleteViewerAccount = async (req, res, next) => {
       });
     }
 
-    // Stage 1: Soft Delete (Immediately)
+    // Prevent duplicate processing & duplicate email notifications
+    if (user.is_deleted) {
+      return res.status(200).json({
+        status: 'success',
+        message: 'Your account deletion request has already been processed. A confirmation email was sent to your registered address.',
+        data: {
+          status: 'PENDING_DELETION',
+          deleted_at: user.deleted_at,
+          scheduled_permanent_deletion_at: user.scheduled_permanent_deletion_at,
+        },
+      });
+    }
+
+    // Stage 1: Soft Delete & Update Status to PENDING_DELETION
     const now = new Date();
     const scheduledDeletion = new Date(now);
     scheduledDeletion.setFullYear(scheduledDeletion.getFullYear() + 2);
@@ -2197,11 +2210,35 @@ const deleteViewerAccount = async (req, res, next) => {
     res.clearCookie('askme_token', { path: '/' });
     res.clearCookie('askme_user', { path: '/' });
 
-    console.log(`[Account Deactivation] Viewer account #${userId} (${user.email || user.name}) deactivated. Scheduled for permanent deletion at: ${scheduledDeletion.toISOString()}`);
+    const deletionDateStr = now.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
+    const scheduledDeletionDateStr = scheduledDeletion.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
+
+    // Trigger existing email service for Account Deletion Confirmation
+    sendAccountDeletionEmailAsync({
+      email: user.email,
+      name: user.name,
+      deletionDate: deletionDateStr,
+      scheduledDeletionDate: scheduledDeletionDateStr,
+    });
+
+    console.log(`[Account Deactivation] Viewer account #${userId} (${user.email || user.name}) marked as PENDING_DELETION. Scheduled permanent deletion at: ${scheduledDeletion.toISOString()}`);
 
     return res.status(200).json({
       status: 'success',
-      message: 'Your account has been deactivated successfully. Your data will be retained for 2 years before permanent deletion.',
+      message: 'Your request to delete your AskMe account has been successfully processed. A confirmation email has been sent to your registered email address.',
+      data: {
+        status: 'PENDING_DELETION',
+        deleted_at: now,
+        scheduled_permanent_deletion_at: scheduledDeletion,
+      },
     });
   } catch (error) {
     console.error('DEACTIVATE VIEWER ACCOUNT ERROR:', error);

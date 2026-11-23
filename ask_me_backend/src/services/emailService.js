@@ -1117,6 +1117,663 @@ const sendAccountActivatedEmailAsync = ({
   });
 };
 
+/**
+ * Generate Responsive HTML Email Template for Account Deletion Request
+ */
+const buildAccountDeletionEmailHtml = ({
+  userName = 'User',
+  userEmail = '',
+  deletionDate = '',
+  scheduledDeletionDate = '',
+  frontendUrl = process.env.FRONTEND_URL || 'https://ask-me.live',
+}) => {
+  const logoCid = 'askmelogo';
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Your AskMe Account Deletion Request Has Been Processed</title>
+  <style>
+    body { margin: 0; padding: 0; background-color: #0A0A0F; color: #F5F5F7; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; }
+    table { border-collapse: collapse; }
+    img { border: 0; display: block; }
+    a { color: inherit; text-decoration: none; }
+    @media only screen and (max-width: 600px) {
+      .container { width: 100% !important; padding: 16px 12px !important; }
+      .card-body { padding: 28px 20px !important; }
+    }
+  </style>
+</head>
+<body style="margin: 0; padding: 0; background-color: #0A0A0F; color: #F5F5F7; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+
+  <!-- Top red accent line -->
+  <div style="height: 3px; background-color: #EB1000; width: 100%;"></div>
+
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #0A0A0F; padding: 40px 16px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" class="container" width="560" cellpadding="0" cellspacing="0" style="max-width: 560px; width: 100%; margin: 0 auto;">
+
+          <!-- Brand Header -->
+          <tr>
+            <td align="center" style="padding-bottom: 24px;">
+              <a href="${frontendUrl}" style="text-decoration: none; display: inline-flex; align-items: center;">
+                <img src="cid:${logoCid}" alt="AskMe" width="36" height="36" style="vertical-align: middle; margin-right: 8px; border: 0;" />
+                <span style="font-size: 24px; font-weight: 900; color: #FFFFFF; letter-spacing: -0.5px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+                  AskMe<span style="color: #EB1000;">.live</span>
+                </span>
+              </a>
+            </td>
+          </tr>
+
+          <!-- Main Card -->
+          <tr>
+            <td class="card-body" style="background-color: #12121A; border: 1px solid #1F1F2E; border-radius: 20px; padding: 36px 32px; box-shadow: 0 20px 40px rgba(0,0,0,0.5);">
+
+              <!-- Title -->
+              <h1 style="margin: 0 0 16px 0; font-size: 20px; font-weight: 800; color: #FFFFFF; letter-spacing: -0.3px; line-height: 1.3;">
+                Account Deletion Request Processed
+              </h1>
+
+              <!-- Greeting & Notice -->
+              <p style="margin: 0 0 16px 0; font-size: 14.5px; line-height: 1.6; color: #E2E8F0;">
+                Hi <strong style="color: #FFFFFF;">${userName}</strong>,
+              </p>
+              <p style="margin: 0 0 24px 0; font-size: 14px; line-height: 1.6; color: #94A3B8;">
+                Your request to delete your AskMe account has been successfully processed.
+              </p>
+
+              <!-- Account Details Section -->
+              <div style="background-color: #181824; border: 1px solid #262638; border-radius: 14px; padding: 20px 22px; margin-bottom: 24px;">
+                <div style="font-size: 12px; font-weight: 800; color: #EB1000; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 14px;">
+                  Account Details
+                </div>
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-size: 13.5px;">
+                  <tr>
+                    <td style="padding: 6px 0; color: #94A3B8; width: 45%;">Registered Email:</td>
+                    <td style="padding: 6px 0; color: #FFFFFF; font-weight: 600; text-align: right;">${userEmail}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 6px 0; color: #94A3B8;">Deletion Request Date:</td>
+                    <td style="padding: 6px 0; color: #FFFFFF; font-weight: 600; text-align: right;">${deletionDate}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 6px 0; color: #94A3B8;">Scheduled Permanent Deletion:</td>
+                    <td style="padding: 6px 0; color: #FFFFFF; font-weight: 600; text-align: right;">${scheduledDeletionDate}</td>
+                  </tr>
+                </table>
+              </div>
+
+              <!-- What happens next? Section -->
+              <div style="margin-bottom: 24px;">
+                <div style="font-size: 14px; font-weight: 800; color: #FFFFFF; margin-bottom: 12px;">
+                  What happens next?
+                </div>
+                <ul style="margin: 0; padding-left: 20px; color: #94A3B8; font-size: 13.5px; line-height: 1.7;">
+                  <li style="margin-bottom: 6px;">Your AskMe profile has been hidden immediately.</li>
+                  <li style="margin-bottom: 6px;">Your account access has been disabled.</li>
+                  <li style="margin-bottom: 6px;">Your account data will be securely retained for 2 years in accordance with our data retention policy.</li>
+                  <li style="margin-bottom: 6px;">After the retention period, eligible personal data will be permanently deleted or anonymized.</li>
+                </ul>
+              </div>
+
+              <!-- Sign-in Note -->
+              <p style="margin: 0 0 20px 0; font-size: 13.5px; line-height: 1.6; color: #F87171;">
+                You will no longer be able to sign in to your AskMe account.
+              </p>
+
+              <!-- Account Recovery Note -->
+              <div style="background-color: rgba(235, 16, 0, 0.08); border: 1px solid rgba(235, 16, 0, 0.25); border-radius: 12px; padding: 14px 16px; margin-bottom: 24px; font-size: 13px; color: #E2E8F0; line-height: 1.5;">
+                <strong style="color: #FF6B6B;">Account Recovery:</strong> If you wish to recover or reactivate your account, you may do so at any time within the 2-year retention window by logging into <a href="${frontendUrl}" style="color: #FF6B6B; text-decoration: underline;">ask-me.live</a> or contacting our support team.
+              </div>
+
+              <!-- Support Note -->
+              <p style="margin: 0 0 24px 0; font-size: 13px; line-height: 1.6; color: #94A3B8;">
+                If you did not request this action, please contact our support team immediately at <a href="mailto:support@ask-me.live" style="color: #EB1000; text-decoration: underline;">support@ask-me.live</a>.
+              </p>
+
+              <!-- Sign off -->
+              <div style="border-top: 1px solid #1F1F2E; padding-top: 20px; font-size: 13.5px; color: #94A3B8; line-height: 1.5;">
+                Thank you,<br>
+                <strong style="color: #FFFFFF;">Team AskMe</strong><br>
+                <a href="https://ask-me.live" style="color: #EB1000; text-decoration: none;">https://ask-me.live</a>
+              </div>
+
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td align="center" style="padding-top: 24px; font-size: 12px; color: #64748B; line-height: 1.6;">
+              <div>Need assistance? Contact <a href="mailto:support@ask-me.live" style="color: #94A3B8; text-decoration: underline;">support@ask-me.live</a></div>
+              <div style="margin-top: 6px;">AskMe &bull; &copy; 2026 FuturePast Ventures LLP. All rights reserved.</div>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+
+</body>
+</html>`;
+};
+
+/**
+ * Asynchronous Account Deletion Confirmation Email Sender with Safe Retries
+ */
+const sendAccountDeletionEmailAsync = ({
+  email,
+  name,
+  deletionDate,
+  scheduledDeletionDate,
+}) => {
+  if (!email || !String(email).includes('@')) {
+    console.log('[EMAIL SERVICE NOTICE] Invalid or missing recipient email for account deletion notice.');
+    return;
+  }
+
+  const cleanEmail = String(email).trim().toLowerCase();
+  const userName = name || 'User';
+  const now = new Date();
+  const defaultDeletionDate = now.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
+  const defaultScheduled = new Date(now);
+  defaultScheduled.setFullYear(defaultScheduled.getFullYear() + 2);
+  const defaultScheduledDate = defaultScheduled.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
+
+  const finalDeletionDate = deletionDate || defaultDeletionDate;
+  const finalScheduledDate = scheduledDeletionDate || defaultScheduledDate;
+
+  // Run asynchronously without blocking HTTP response
+  setImmediate(async () => {
+    const maxRetries = 2; // total attempts: 1 initial + 2 retries = 3
+    let attempt = 0;
+    let delivered = false;
+
+    const frontendUrl = process.env.FRONTEND_URL || 'https://ask-me.live';
+    const fromEmail = process.env.SMTP_FROM || process.env.MAIL_FROM || 'AskMe Support <noreply@askme.live>';
+    const subject = 'Your AskMe Account Deletion Request Has Been Processed';
+
+    const text = `Hi ${userName},
+
+Your request to delete your AskMe account has been successfully processed.
+
+**Account Details**
+
+- Registered Email: ${cleanEmail}
+- Deletion Request Date: ${finalDeletionDate}
+- Scheduled Permanent Deletion Date: ${finalScheduledDate}
+
+**What happens next?**
+
+- Your AskMe profile has been hidden immediately.
+- Your account access has been disabled.
+- Your account data will be securely retained for 2 years in accordance with our data retention policy.
+- After the retention period, eligible personal data will be permanently deleted or anonymized.
+
+You will no longer be able to sign in to your AskMe account.
+
+If you did not request this action, please contact our support team immediately.
+
+Thank you,
+Team AskMe
+https://ask-me.live`;
+
+    const html = buildAccountDeletionEmailHtml({
+      userName,
+      userEmail: cleanEmail,
+      deletionDate: finalDeletionDate,
+      scheduledDeletionDate: finalScheduledDate,
+      frontendUrl,
+    });
+
+    const logoAtt = getLogoAttachment();
+    const attachments = logoAtt ? [logoAtt] : [];
+
+    while (attempt <= maxRetries && !delivered) {
+      attempt++;
+      try {
+        const transporter = getTransporter();
+        if (transporter) {
+          await transporter.sendMail({
+            from: fromEmail,
+            to: cleanEmail,
+            subject,
+            text,
+            html,
+            attachments,
+          });
+          delivered = true;
+          console.log(`[EMAIL SERVICE] Account Deletion confirmation email successfully delivered to ${cleanEmail}`);
+        } else {
+          // SMTP credentials not set (e.g. development environment)
+          delivered = true;
+          console.log(`[EMAIL SERVICE NOTICE] SMTP credentials not set. Simulated Account Deletion email dispatch to ${cleanEmail}`);
+        }
+      } catch (err) {
+        console.warn(`[EMAIL SERVICE NOTICE] Attempt ${attempt} failed to send deletion email to ${cleanEmail}:`, err.message);
+        if (attempt <= maxRetries) {
+          // Wait with exponential backoff before retry
+          await new Promise((resolve) => setTimeout(resolve, attempt * 1000));
+        } else {
+          console.error(`[EMAIL SERVICE ERROR] All ${attempt} delivery attempts failed for deletion email to ${cleanEmail}. Retention record preserved.`);
+        }
+      }
+    }
+  });
+};
+
+/**
+ * Generate Responsive HTML Email Template for Creator Account Deletion Request
+ */
+const buildCreatorAccountDeletionEmailHtml = ({
+  creatorName = 'Creator',
+  creatorEmail = '',
+  deletionDate = '',
+  scheduledDeletionDate = '',
+  frontendUrl = process.env.FRONTEND_URL || 'https://ask-me.live',
+}) => {
+  const logoCid = 'askmelogo';
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Your AskMe Creator Account Deletion Request Has Been Processed</title>
+  <style>
+    body { margin: 0; padding: 0; background-color: #0A0A0F; color: #F5F5F7; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; }
+    table { border-collapse: collapse; }
+    img { border: 0; display: block; }
+    a { color: inherit; text-decoration: none; }
+    @media only screen and (max-width: 600px) {
+      .container { width: 100% !important; padding: 16px 12px !important; }
+      .card-body { padding: 28px 20px !important; }
+    }
+  </style>
+</head>
+<body style="margin: 0; padding: 0; background-color: #0A0A0F; color: #F5F5F7; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+
+  <!-- Top red accent line -->
+  <div style="height: 3px; background-color: #EB1000; width: 100%;"></div>
+
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #0A0A0F; padding: 40px 16px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" class="container" width="560" cellpadding="0" cellspacing="0" style="max-width: 560px; width: 100%; margin: 0 auto;">
+
+          <!-- Brand Header -->
+          <tr>
+            <td align="center" style="padding-bottom: 24px;">
+              <a href="${frontendUrl}" style="text-decoration: none; display: inline-flex; align-items: center;">
+                <img src="cid:${logoCid}" alt="AskMe" width="36" height="36" style="vertical-align: middle; margin-right: 8px; border: 0;" />
+                <span style="font-size: 24px; font-weight: 900; color: #FFFFFF; letter-spacing: -0.5px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+                  AskMe<span style="color: #EB1000;">.live</span>
+                </span>
+              </a>
+            </td>
+          </tr>
+
+          <!-- Main Card -->
+          <tr>
+            <td class="card-body" style="background-color: #12121A; border: 1px solid #1F1F2E; border-radius: 20px; padding: 36px 32px; box-shadow: 0 20px 40px rgba(0,0,0,0.5);">
+
+              <!-- Title -->
+              <h1 style="margin: 0 0 16px 0; font-size: 20px; font-weight: 800; color: #FFFFFF; letter-spacing: -0.3px; line-height: 1.3;">
+                Creator Account Deletion Request Processed
+              </h1>
+
+              <!-- Greeting & Notice -->
+              <p style="margin: 0 0 20px 0; font-size: 14.5px; line-height: 1.6; color: #E2E8F0;">
+                Hi <strong style="color: #FFFFFF;">${creatorName}</strong>,
+              </p>
+              <p style="margin: 0 0 24px 0; font-size: 14px; line-height: 1.6; color: #94A3B8;">
+                Your request to delete your AskMe Creator account has been successfully processed.
+              </p>
+
+              <!-- Account Details Section -->
+              <div style="background-color: #181824; border: 1px solid #262638; border-radius: 14px; padding: 20px 22px; margin-bottom: 24px;">
+                <div style="font-size: 12px; font-weight: 800; color: #EB1000; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 14px;">
+                  Account Details
+                </div>
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-size: 13.5px;">
+                  <tr>
+                    <td style="padding: 6px 0; color: #94A3B8; width: 45%;">Registered Email:</td>
+                    <td style="padding: 6px 0; color: #FFFFFF; font-weight: 600; text-align: right;">${creatorEmail}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 6px 0; color: #94A3B8;">Deletion Request Date:</td>
+                    <td style="padding: 6px 0; color: #FFFFFF; font-weight: 600; text-align: right;">${deletionDate}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 6px 0; color: #94A3B8;">Scheduled Permanent Deletion:</td>
+                    <td style="padding: 6px 0; color: #FFFFFF; font-weight: 600; text-align: right;">${scheduledDeletionDate}</td>
+                  </tr>
+                </table>
+              </div>
+
+              <!-- What happens next? Section -->
+              <div style="margin-bottom: 24px;">
+                <div style="font-size: 14px; font-weight: 800; color: #FFFFFF; margin-bottom: 12px;">
+                  What happens next?
+                </div>
+                <ul style="margin: 0; padding-left: 20px; color: #94A3B8; font-size: 13.5px; line-height: 1.7;">
+                  <li style="margin-bottom: 6px;">Your creator profile is now hidden.</li>
+                  <li style="margin-bottom: 6px;">Your account access has been disabled.</li>
+                  <li style="margin-bottom: 6px;">Your account data will be securely retained for 2 years.</li>
+                  <li style="margin-bottom: 6px;">After the retention period, eligible personal data will be permanently deleted or anonymized.</li>
+                </ul>
+              </div>
+
+              <!-- Account Recovery Note -->
+              <div style="background-color: rgba(235, 16, 0, 0.08); border: 1px solid rgba(235, 16, 0, 0.25); border-radius: 12px; padding: 14px 16px; margin-bottom: 24px; font-size: 13px; color: #E2E8F0; line-height: 1.5;">
+                <strong style="color: #FF6B6B;">Account Recovery:</strong> If you wish to recover or reactivate your creator account during the 2-year retention window, you may do so at any time by logging into <a href="${frontendUrl}" style="color: #FF6B6B; text-decoration: underline;">ask-me.live</a> or contacting our support team.
+              </div>
+
+              <!-- Sign off -->
+              <div style="border-top: 1px solid #1F1F2E; padding-top: 20px; font-size: 13.5px; color: #94A3B8; line-height: 1.5;">
+                Thank you for being part of AskMe.<br><br>
+                <strong style="color: #FFFFFF;">Team AskMe</strong><br>
+                <a href="https://ask-me.live" style="color: #EB1000; text-decoration: none;">https://ask-me.live</a>
+              </div>
+
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td align="center" style="padding-top: 24px; font-size: 12px; color: #64748B; line-height: 1.6;">
+              <div>Need assistance? Contact <a href="mailto:support@ask-me.live" style="color: #94A3B8; text-decoration: underline;">support@ask-me.live</a></div>
+              <div style="margin-top: 6px;">AskMe &bull; &copy; 2026 FuturePast Ventures LLP. All rights reserved.</div>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+
+</body>
+</html>`;
+};
+
+/**
+ * Asynchronous Creator Account Deletion Confirmation Email Sender with Safe Retries
+ */
+const sendCreatorAccountDeletionEmailAsync = ({
+  email,
+  name,
+  deletionDate,
+  scheduledDeletionDate,
+}) => {
+  if (!email || !String(email).includes('@')) {
+    console.log('[EMAIL SERVICE NOTICE] Invalid or missing recipient email for creator account deletion notice.');
+    return;
+  }
+
+  const cleanEmail = String(email).trim().toLowerCase();
+  const creatorName = name || 'Creator';
+  const now = new Date();
+  const defaultDeletionDate = now.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
+  const defaultScheduled = new Date(now);
+  defaultScheduled.setFullYear(defaultScheduled.getFullYear() + 2);
+  const defaultScheduledDate = defaultScheduled.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
+
+  const finalDeletionDate = deletionDate || defaultDeletionDate;
+  const finalScheduledDate = scheduledDeletionDate || defaultScheduledDate;
+
+  // Run asynchronously without blocking HTTP response
+  setImmediate(async () => {
+    const maxRetries = 2; // total attempts: 1 initial + 2 retries = 3
+    let attempt = 0;
+    let delivered = false;
+
+    const frontendUrl = process.env.FRONTEND_URL || 'https://ask-me.live';
+    const fromEmail = process.env.SMTP_FROM || process.env.MAIL_FROM || 'AskMe Support <noreply@askme.live>';
+    const subject = 'Your AskMe Creator Account Deletion Request Has Been Processed';
+
+    const text = `Hi ${creatorName},
+
+Your request to delete your AskMe Creator account has been successfully processed.
+
+**Account Details**
+- Registered Email: ${cleanEmail}
+- Deletion Request Date: ${finalDeletionDate}
+- Scheduled Permanent Deletion Date: ${finalScheduledDate}
+
+**What happens next?**
+
+- Your creator profile is now hidden.
+- Your account access has been disabled.
+- Your account data will be securely retained for 2 years.
+- After the retention period, eligible personal data will be permanently deleted or anonymized.
+
+Thank you for being part of AskMe.
+
+Team AskMe
+https://ask-me.live`;
+
+    const html = buildCreatorAccountDeletionEmailHtml({
+      creatorName,
+      creatorEmail: cleanEmail,
+      deletionDate: finalDeletionDate,
+      scheduledDeletionDate: finalScheduledDate,
+      frontendUrl,
+    });
+
+    const logoAtt = getLogoAttachment();
+    const attachments = logoAtt ? [logoAtt] : [];
+
+    while (attempt <= maxRetries && !delivered) {
+      attempt++;
+      try {
+        const transporter = getTransporter();
+        if (transporter) {
+          await transporter.sendMail({
+            from: fromEmail,
+            to: cleanEmail,
+            subject,
+            text,
+            html,
+            attachments,
+          });
+          delivered = true;
+          console.log(`[EMAIL SERVICE] Creator Account Deletion confirmation email successfully delivered to ${cleanEmail}`);
+        } else {
+          // SMTP credentials not set (e.g. development environment)
+          delivered = true;
+          console.log(`[EMAIL SERVICE NOTICE] SMTP credentials not set. Simulated Creator Account Deletion email dispatch to ${cleanEmail}`);
+        }
+      } catch (err) {
+        console.warn(`[EMAIL SERVICE NOTICE] Attempt ${attempt} failed to send creator deletion email to ${cleanEmail}:`, err.message);
+        if (attempt <= maxRetries) {
+          // Wait with exponential backoff before retry
+          await new Promise((resolve) => setTimeout(resolve, attempt * 1000));
+        } else {
+          console.error(`[EMAIL SERVICE ERROR] All ${attempt} delivery attempts failed for creator deletion email to ${cleanEmail}. Retention record preserved.`);
+        }
+      }
+    }
+  });
+};
+
+// In-memory set for receipt deduplication
+const sentPaymentReceipts = new Set();
+
+/**
+ * Generate Responsive HTML Email from askme-receipt-email.html template
+ */
+const buildPaymentReceiptEmailHtml = (data) => {
+  const { compileTemplate } = require('./invoicePdfService');
+  const templatePath = path.join(__dirname, '../templates/askme-receipt-email.html');
+  if (fs.existsSync(templatePath)) {
+    const templateContent = fs.readFileSync(templatePath, 'utf8');
+    return compileTemplate(templateContent, data);
+  }
+  return '';
+};
+
+/**
+ * Asynchronous Payment Receipt Email Dispatcher with PDF GST Invoice Attachment & Retries
+ */
+const sendPaymentReceiptEmailAsync = async ({
+  viewerEmail,
+  viewerName,
+  creatorName,
+  donationId,
+  donationUuid,
+  orderNo,
+  paymentRef,
+  paymentMethod = 'UPI',
+  amount,
+  paidAt,
+  buyerState = 'Maharashtra',
+  buyerGstin = 'Not provided',
+}) => {
+  if (!viewerEmail || !String(viewerEmail).includes('@')) {
+    console.log(`[RECEIPT SERVICE NOTICE] No valid viewer email provided for donation #${donationId || donationUuid}. Receipt email skipped.`);
+    return;
+  }
+
+  const cleanEmail = String(viewerEmail).trim().toLowerCase();
+  const dedupeKey = `receipt_${donationId || donationUuid || orderNo}`;
+
+  // Deduplication check to prevent duplicate emails
+  if (sentPaymentReceipts.has(dedupeKey)) {
+    console.log(`[RECEIPT SERVICE NOTICE] Receipt email already dispatched for ${dedupeKey}. Skipping duplicate.`);
+    return;
+  }
+  sentPaymentReceipts.add(dedupeKey);
+
+  setImmediate(async () => {
+    try {
+      const {
+        formatOrderDate,
+        generateInvoiceNumber,
+        calculateGstBreakdown,
+        generateInvoicePdf,
+      } = require('./invoicePdfService');
+
+      const frontendUrl = process.env.FRONTEND_URL || 'https://ask-me.live';
+      const fromEmail = process.env.SMTP_FROM || process.env.MAIL_FROM || 'AskMe Receipts <noreply@askme.live>';
+      const sellerGstin = process.env.SELLER_GSTIN || '27AABCF1234F1Z5';
+      const sacCode = '998439';
+      const placeOfSupply = 'Maharashtra (27)';
+      const sellerAddress = 'FuturePast Ventures LLP, Pune, Maharashtra, India';
+
+      const invoiceNo = generateInvoiceNumber(donationId, paidAt);
+      const formattedDate = formatOrderDate(paidAt);
+      const gst = calculateGstBreakdown(amount);
+
+      const realOrderNo = orderNo || `order_${donationUuid || donationId}`;
+      const realPaymentRef = paymentRef || `pay_${donationUuid || donationId}`;
+      const safeCreatorName = creatorName || 'Creator';
+      const safeBuyerName = viewerName || 'Supporter';
+
+      const mergeData = {
+        buyer_name: safeBuyerName,
+        buyer_email: cleanEmail,
+        buyer_state: buyerState,
+        buyer_gstin: buyerGstin,
+        order_no: realOrderNo,
+        invoice_no: invoiceNo,
+        order_date: formattedDate,
+        creator_name: safeCreatorName,
+        amount_total: gst.amountTotalStr,
+        taxable_value: gst.taxableValueStr,
+        gst_label: gst.gstLabel,
+        gst_amount: gst.gstAmountStr,
+        payment_method: String(paymentMethod).toUpperCase(),
+        payment_ref: realPaymentRef,
+        seller_gstin: sellerGstin,
+        sac_code: sacCode,
+        place_of_supply: placeOfSupply,
+        seller_address: sellerAddress,
+        view_order_url: `${frontendUrl}/viewers/dashboard`,
+        support_url: `${frontendUrl}/contact`,
+      };
+
+      // 1. Generate A4 GST Invoice PDF
+      let pdfPath = null;
+      try {
+        pdfPath = await generateInvoicePdf(mergeData);
+      } catch (pdfErr) {
+        console.warn('[RECEIPT SERVICE NOTICE] PDF generation warning:', pdfErr.message);
+      }
+
+      // 2. Compile Email HTML
+      const html = buildPaymentReceiptEmailHtml(mergeData);
+      const subject = `Your AskMe.live receipt: Question to ${safeCreatorName} - Order ${realOrderNo}`;
+
+      // 3. Prepare Attachments
+      const logoAtt = getLogoAttachment();
+      const attachments = [];
+      if (logoAtt) attachments.push(logoAtt);
+
+      if (pdfPath && fs.existsSync(pdfPath)) {
+        attachments.push({
+          filename: `Invoice_${invoiceNo.replace(/[\/\\]/g, '_')}.pdf`,
+          path: pdfPath,
+          contentType: 'application/pdf',
+        });
+      }
+
+      // 4. Send Email with Retries
+      const maxRetries = 2;
+      let attempt = 0;
+      let delivered = false;
+
+      while (attempt <= maxRetries && !delivered) {
+        attempt++;
+        try {
+          const transporter = getTransporter();
+          if (transporter) {
+            await transporter.sendMail({
+              from: fromEmail,
+              to: cleanEmail,
+              subject,
+              html,
+              attachments,
+            });
+            delivered = true;
+            console.log(`[RECEIPT SERVICE] Payment receipt & tax invoice successfully sent to ${cleanEmail} for Order ${realOrderNo}`);
+          } else {
+            delivered = true;
+            console.log(`[RECEIPT SERVICE NOTICE] SMTP credentials not set. Simulated receipt email dispatch to ${cleanEmail} for Order ${realOrderNo}`);
+          }
+        } catch (err) {
+          console.warn(`[RECEIPT SERVICE NOTICE] Attempt ${attempt} failed to send receipt email to ${cleanEmail}: ${err.message}`);
+          if (attempt <= maxRetries) {
+            await new Promise((resolve) => setTimeout(resolve, attempt * 1000));
+          } else {
+            console.error(`[RECEIPT SERVICE ERROR] All ${attempt} delivery attempts failed for receipt email to ${cleanEmail}.`);
+          }
+        }
+      }
+    } catch (generalErr) {
+      console.error('[RECEIPT SERVICE ERROR] Unexpected error in payment receipt dispatcher:', generalErr.message);
+    }
+  });
+};
+
 module.exports = {
   sendWelcomeEmailAsync,
   sendEmailOtp,
@@ -1126,6 +1783,12 @@ module.exports = {
   buildAccountSuspendedEmailHtml,
   sendAccountActivatedEmailAsync,
   buildAccountActivatedEmailHtml,
+  sendAccountDeletionEmailAsync,
+  buildAccountDeletionEmailHtml,
+  sendCreatorAccountDeletionEmailAsync,
+  buildCreatorAccountDeletionEmailHtml,
+  sendPaymentReceiptEmailAsync,
+  buildPaymentReceiptEmailHtml,
 };
 
 

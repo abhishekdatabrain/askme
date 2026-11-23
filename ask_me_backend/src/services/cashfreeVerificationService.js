@@ -119,8 +119,8 @@ const calculateSimilarity = (s1, s2) => {
 };
 
 /**
- * Robust Name Comparison Engine
- * Handles exact matches, word-token permutations, subsets, and fuzzy string similarity.
+ * Strict 100% Exact Name Comparison Engine
+ * Requires all words/tokens of the name to match the official government registered name.
  */
 const compareNames = (name1, name2) => {
   const n1 = normalizeName(name1);
@@ -143,42 +143,30 @@ const compareNames = (name1, name2) => {
       score: 1.0,
       normalized1: n1,
       normalized2: n2,
-      reason: 'Exact normalized name match.',
+      reason: 'Exact 100% name match.',
     };
   }
 
-  const tokens1 = n1.split(' ').filter(Boolean);
-  const tokens2 = n2.split(' ').filter(Boolean);
+  // Token permutation match (e.g. "RAUSHAN ABHISHEK" and "ABHISHEK RAUSHAN")
+  const tokens1 = n1.split(' ').filter(Boolean).sort();
+  const tokens2 = n2.split(' ').filter(Boolean).sort();
 
-  // Check token set overlap
-  const set1 = new Set(tokens1);
-  const set2 = new Set(tokens2);
-  const commonTokens = tokens1.filter(t => set2.has(t));
-  const overlapRatio = (2 * commonTokens.length) / (tokens1.length + tokens2.length);
-
-  // Check if one name is subset of the other (e.g. "ABHISHEK" inside "ABHISHEK RAUSHAN")
-  const isSubset = tokens1.every(t => set2.has(t)) || tokens2.every(t => set1.has(t));
-
-  // Levenshtein Similarity
-  const similarity = calculateSimilarity(n1, n2);
-  const finalScore = Math.max(overlapRatio, similarity);
-
-  if (overlapRatio >= 0.75 || (isSubset && commonTokens.length >= 1) || similarity >= 0.75) {
+  if (tokens1.length === tokens2.length && tokens1.every((t, i) => t === tokens2[i])) {
     return {
       isMatch: true,
-      score: finalScore,
+      score: 1.0,
       normalized1: n1,
       normalized2: n2,
-      reason: 'Names matched with high confidence.',
+      reason: 'Exact 100% name token match.',
     };
   }
 
   return {
     isMatch: false,
-    score: finalScore,
+    score: 0,
     normalized1: n1,
     normalized2: n2,
-    reason: `Significant name mismatch ("${n1}" vs "${n2}").`,
+    reason: `Strict name mismatch: entered name ("${n1}") does not match official registered name ("${n2}").`,
   };
 };
 

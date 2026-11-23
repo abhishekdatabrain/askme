@@ -1702,6 +1702,7 @@ export default function CreatorKycPage() {
                                                     placeholder="Rohit Kumar"
                                                     className={`w-full px-4 py-3.5 rounded-xl border text-xs outline-none font-medium ${theme === 'light' ? 'bg-[#F8FAFC] border-[#CBD5E1] text-[#0F172A]' : 'bg-[#0B0B12] border-[#26263A] text-white'
                                                         }`}
+                                                    disabled
                                                 />
                                             </div>
                                         </div>
